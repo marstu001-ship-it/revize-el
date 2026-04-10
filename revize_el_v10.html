@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revize EL – Revizní zprávy</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══ RESET ═══ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#edeae4;--surface:#fafaf8;--border:#ccc9c0;--border-dark:#9a9488;
+  --text:#1c1a16;--muted:#6e6a60;--accent:#b5291c;--accent2:#1c3a5e;
+  --gold:#c8962a;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ═══ TOPBAR ═══ */
+.topbar{background:var(--accent2);color:#fff;display:flex;align-items:center;
+  justify-content:space-between;padding:0 1.5rem;height:54px;
+  position:sticky;top:0;z-index:300;border-bottom:3px solid var(--accent)}
+.brand{font-family:var(--mono);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase}
+.brand em{color:#f0c040;font-style:normal}
+.topbar-right{display:flex;gap:.5rem;align-items:center}
+.btn{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;padding:.4rem .9rem;border:none;cursor:pointer;
+  border-radius:2px;transition:all .15s;white-space:nowrap}
+.btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-ghost:hover{border-color:#f0c040;color:#f0c040}
+.btn-red{background:var(--accent);color:#fff}
+.btn-red:hover{background:#8f1f13}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover{background:#a07820}
+
+/* ═══ SCREENS ═══ */
+.screen{display:none}.screen.active{display:block}
+
+/* ═══ HOME ═══ */
+.home-wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+.home-header{text-align:center;margin-bottom:2.5rem}
+.home-header h1{font-family:var(--mono);font-size:1.4rem;letter-spacing:.1em;color:var(--accent2)}
+.home-header p{color:var(--muted);margin-top:.4rem;font-size:.9rem}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem}
+.home-card{background:var(--surface);border:1px solid var(--border);
+  border-top:3px solid var(--accent2);padding:1.5rem;cursor:pointer;transition:all .15s}
+.home-card:hover{border-top-color:var(--accent);transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.home-card-icon{font-size:1.8rem;margin-bottom:.75rem}
+.home-card-title{font-family:var(--mono);font-size:.8rem;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:.4rem}
+.home-card-desc{font-size:.84rem;color:var(--muted);line-height:1.5}
+.home-card{text-align:left;width:100%;font-family:inherit;cursor:pointer}
+
+/* ═══ PODTYP VÝBĚR ═══ */
+.podtyp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.podtyp-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--border-dark);
+  padding:1.25rem;cursor:pointer;transition:all .15s;text-align:center}
+.podtyp-card:hover,.podtyp-card.selected{border-top-color:var(--accent);background:#f0f4ff;
+  box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.podtyp-card.selected{border-color:var(--accent2)}
+.podtyp-icon{font-size:2rem;margin-bottom:.5rem}
+.podtyp-title{font-family:var(--mono);font-size:.75rem;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--accent2);margin-bottom:.3rem}
+.podtyp-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+
+/* ═══ CHARAKTERISTIKA - CHECKBOXY ═══ */
+.char-section{margin-bottom:1rem}
+.char-section-title{font-family:var(--mono);font-size:.62rem;font-weight:500;text-transform:uppercase;
+  color:var(--accent2);padding:.35rem 0;margin-bottom:.4rem;border-bottom:1px solid var(--border)}
+.char-row{display:flex;align-items:center;gap:.6rem;padding:.3rem .4rem;border-radius:2px}
+.char-row:hover{background:rgba(0,0,0,.03)}
+.char-row input[type=checkbox]{width:15px;height:15px;flex-shrink:0;cursor:pointer}
+.char-row label{font-size:.83rem;cursor:pointer;line-height:1.4;flex:1}
+.char-row input[type=text]{flex:0 0 140px;font-size:.8rem;padding:.25rem .5rem;
+  border:1px solid var(--border);border-radius:2px;background:var(--surface)}
+
+/* ═══ ARCHIV ═══ */
+.archiv-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.archiv-table th{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;
+  text-transform:uppercase;background:var(--accent2);color:#fff;padding:.6rem .75rem;text-align:left}
+.archiv-table td{border-bottom:1px solid var(--border);padding:.6rem .75rem}
+.archiv-table tr:hover td{background:#f0f4ff;cursor:pointer}
+.archiv-empty{text-align:center;padding:3rem;color:var(--muted);font-size:.88rem}
+.badge-el{background:#e3f0ff;color:#1c3a5e;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
+.badge-lps{background:#fff3e0;color:#8a5200;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
+
+/* ═══ NASTAVENÍ ═══ */
+.settings-wrap{max-width:700px;margin:0 auto;padding:2rem 1.5rem}
+
+/* ═══ FORMULÁŘ ═══ */
+.tab-bar{background:var(--surface);border-bottom:2px solid var(--border-dark);
+  display:flex;overflow-x:auto;padding:0 1.5rem;
+  position:sticky;top:54px;z-index:200}
+.tab-btn{font-family:var(--mono);font-size:.65rem;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;padding:.7rem 1rem;cursor:pointer;border:none;
+  background:transparent;color:var(--muted);border-bottom:2px solid transparent;
+  margin-bottom:-2px;white-space:nowrap;transition:all .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-panel{display:none;padding:1.5rem 1.5rem 5rem;max-width:960px;margin:0 auto}
+.tab-panel.active{display:block}
+
+/* ═══ CARDS ═══ */
+.scard{background:var(--surface);border:1px solid var(--border);
+  border-left:4px solid var(--accent2);padding:1.5rem 1.75rem;margin-bottom:1.2rem}
+.scard-title{font-family:var(--mono);font-size:.65rem;font-weight:500;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--accent2);
+  margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.normy-panel{background:var(--surface);border:1px solid var(--border);
+  border-left:4px solid var(--gold);padding:1.25rem 1.5rem;margin-bottom:1.2rem}
+.normy-title{font-family:var(--mono);font-size:.62rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+  margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+
+/* ═══ FIELDS ═══ */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem}
+.span2{grid-column:span 2}.span3{grid-column:span 3}.span4{grid-column:span 4}
+.f{display:flex;flex-direction:column;gap:.28rem}
+.f label{font-family:var(--mono);font-size:.58rem;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.f label .req{color:var(--accent)}
+.f label .nv{color:var(--accent);font-size:.52rem;display:block;margin-top:1px}
+.f input,.f select,.f textarea{font-family:var(--sans);font-size:.88rem;
+  padding:.5rem .7rem;border:1px solid var(--border);background:var(--bg);
+  color:var(--text);border-radius:2px;transition:border-color .15s;width:100%}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--accent2);background:#fff}
+.f textarea{resize:vertical;min-height:72px}
+.f .prefilled{background:#f0f6ff;border-color:#b8d0f0;color:var(--accent2)}
+.sep{height:1px;background:var(--border);margin:1rem 0}
+
+/* ═══ NORMY ═══ */
+.normy-skupina{margin-bottom:1rem}
+.normy-skupina-title{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.norma-item{display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem;border-radius:2px;cursor:pointer}
+.norma-item:hover{background:#fffbf0}
+.norma-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--gold);margin-top:2px;flex-shrink:0}
+.norma-item label{font-size:.82rem;cursor:pointer;line-height:1.4}
+.norma-item label em{font-style:normal;color:var(--muted);font-size:.75rem}
+
+/* ═══ TABLES ═══ */
+.data-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.data-table th{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;
+  text-transform:uppercase;background:var(--accent2);color:#fff;
+  padding:.4rem .5rem;border:1px solid #2a4a70;white-space:nowrap}
+.data-table td{border:1px solid var(--border);padding:.25rem .35rem;vertical-align:middle}
+.data-table td input,.data-table td select{font-family:var(--sans);font-size:.8rem;
+  width:100%;border:none;background:transparent;color:var(--text);text-align:center}
+.data-table td input:focus,.data-table td select:focus{outline:1px solid var(--accent2);background:#f0f5ff}
+.data-table tr:nth-child(even) td{background:#f5f4f0}
+.meas-table-wrap{overflow-x:auto;width:100%}
+.meas-table{width:100%;min-width:900px;table-layout:auto}
+.meas-table th.grp{background:#0f2540}
+.meas-table th{font-size:.52rem;padding:.3rem .2rem}
+.meas-table td input{font-size:.75rem}
+.meas-table td select{font-size:.72rem}
+.add-row{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent2);background:none;
+  border:1px dashed var(--accent2);padding:.38rem .9rem;cursor:pointer;
+  margin-top:.6rem;border-radius:2px;transition:all .15s}
+.add-row:hover{background:#edf3ff}
+.del-btn{font-family:var(--mono);font-size:.62rem;color:var(--accent);
+  background:none;border:none;cursor:pointer;padding:.15rem .3rem}
+
+/* ═══ ZÁVADY ═══ */
+.zavada-item{background:var(--surface);border:1px solid var(--border);
+  padding:1rem;margin-bottom:.75rem;border-radius:2px}
+.zavada-item.c1{border-left:4px solid #c62828}
+.zavada-item.c2{border-left:4px solid #f57c00}
+.zavada-item.c3{border-left:4px solid #2e7d32}
+.zavada-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+
+/* ═══ MAGIC / INFO ═══ */
+.magic-btn{font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;
+  text-transform:uppercase;background:linear-gradient(135deg,#1c3a5e,#2a5298);
+  color:#fff;border:none;padding:.4rem .9rem;cursor:pointer;
+  border-radius:2px;margin-bottom:.5rem;transition:all .15s}
+.magic-btn:hover{background:linear-gradient(135deg,#0f2540,#1a3a70)}
+.info-box{background:#f0f6ff;border:1px solid #b8d0f0;padding:.7rem 1rem;
+  font-size:.8rem;border-radius:2px;margin-bottom:.75rem;color:#1a3a6e}
+.warn-box{background:#fff8e1;border:1px solid #ffe082;padding:.7rem 1rem;
+  font-size:.8rem;border-radius:2px;margin-bottom:.75rem;color:#8a5200}
+
+/* ═══ PODPISY ═══ */
+.podpisy-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.5rem}
+.podpis-box{border:1px solid var(--border);padding:1rem;text-align:center}
+.podpis-line{border-top:1px solid var(--text);margin:2rem 1rem .4rem}
+.podpis-label{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted)}
+
+/* ═══ MODAL ═══ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:500;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-top:3px solid var(--accent2);
+  padding:2rem;width:90%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--mono);font-size:.8rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--accent2);margin-bottom:1.5rem}
+.modal-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem}
+
+/* ═══ BREADCRUMB ═══ */
+.breadcrumb{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);
+  font-size:.65rem;color:var(--muted);padding:.6rem 1.5rem;
+  background:var(--surface);border-bottom:1px solid var(--border)}
+.breadcrumb a{color:var(--accent2);cursor:pointer}
+.breadcrumb a:hover{text-decoration:underline}
+
+/* ═══ PDF PREVIEW ═══ */
+#screen-pdf{background:#888}
+.pdf-toolbar{background:#333;color:#fff;display:flex;align-items:center;
+  justify-content:space-between;padding:.6rem 1.5rem;gap:1rem}
+.pdf-toolbar-title{font-family:var(--mono);font-size:.8rem;letter-spacing:.1em}
+.pdf-actions{display:flex;gap:.5rem}
+.pbtn{font-family:var(--mono);font-size:.68rem;padding:.4rem .9rem;
+  border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;
+  cursor:pointer;border-radius:2px;transition:all .15s}
+.pbtn:hover{background:rgba(255,255,255,.15)}
+.pbtn-print{background:var(--accent);border-color:var(--accent)}
+.pbtn-print:hover{background:#8f1f13}
+.pdf-pages{padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+
+/* ═══ STRÁNKY A4 ═══ */
+.a4{width:210mm;min-height:297mm;background:#fff;
+  padding:12mm 14mm 10mm 14mm;
+  box-shadow:0 4px 20px rgba(0,0,0,.35);
+  display:flex;flex-direction:column;
+  font-family:'Courier Prime','Courier New',Courier,monospace;
+  font-size:10pt;color:#000;position:relative}
+.a4-header{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:4mm;border-bottom:.5pt solid #000;padding-bottom:2mm}
+.a4-hbox{border:1pt solid #000;padding:1mm 3mm;font-size:9pt;
+  min-width:28mm;text-align:center;font-weight:bold}
+.a4-footer{margin-top:auto;padding-top:2mm;border-top:.5pt solid #000;
+  display:flex;justify-content:space-between;font-size:7pt;color:#444}
+.a4-content{flex:1}
+
+/* BLOKY */
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
+.pbox{border:.75pt solid #000;padding:1.5mm 2mm;min-height:8mm;font-size:9.5pt;line-height:1.45}
+.pbox-label{font-size:7.5pt;font-weight:bold;margin-bottom:.75mm;display:block}
+.dtgrid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:9pt;align-items:baseline}
+.dtlabel{font-size:7.5pt;white-space:nowrap}
+.dtval{border-bottom:.5pt solid #888;min-width:18mm}
+.ptitle{text-align:center;margin:4mm 0 3mm}
+.ptitle h1{font-size:15pt;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.2}
+.ptitle p{font-size:8.5pt;margin-top:1.5mm}
+.sec-head{display:flex;align-items:stretch;border:.75pt solid #000;margin-bottom:3mm}
+.sec-num{background:#000;color:#fff;padding:1mm 3mm;font-weight:700;
+  font-size:9.5pt;display:flex;align-items:center;justify-content:center;min-width:8mm}
+.sec-name{padding:1.5mm 3mm;font-weight:700;font-size:9.5pt;
+  text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center}
+.podp-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-top:5mm}
+.podp-inner{border:.75pt solid #000;min-height:22mm;padding:1mm;
+  display:flex;align-items:flex-end;justify-content:center}
+.podp-line{border-top:.75pt solid #000;margin:0 8mm 1mm;text-align:center}
+.podp-lbl{font-size:7.5pt;text-align:center}
+
+/* TABULKA MĚŘENÍ v PDF */
+.pdf-meas{width:100%;border-collapse:collapse;font-size:7pt}
+.pdf-meas th{border:.75pt solid #000;padding:.6mm .8mm;text-align:center;
+  font-weight:bold;background:#e8e8e8;font-size:6pt;white-space:nowrap}
+.pdf-meas td{border:.75pt solid #000;padding:.6mm .8mm;font-size:7pt}
+
+/* PŘÍSTROJE PDF */
+.pdf-pristroje{width:100%;border-collapse:collapse;font-size:8.5pt}
+.pdf-pristroje th{border-bottom:.75pt solid #000;padding:.5mm 1mm;
+  font-size:7.5pt;font-weight:bold;text-align:left}
+.pdf-pristroje td{padding:.4mm 1mm;font-size:8.5pt}
+
+/* POČET STRAN PDF */
+.pocet-grid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:8.5pt}
+
+@media print{
+  body{background:white}
+  #screen-pdf{background:white}
+  .pdf-toolbar{display:none!important}
+  .pdf-pages{padding:0;gap:0}
+  .a4{box-shadow:none;page-break-after:always;width:100%;margin:0}
+}
+@page { size: A4 portrait; margin: 0; }
+@page landscape { size: A4 landscape; margin: 0; }
+
+@media(max-width:600px){
+  .home-grid{grid-template-columns:1fr}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .span2,.span3,.span4{grid-column:span 1}
+  .podpisy-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">⚡ Revize <em>EL</em></div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
+    <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
+    <button class="btn btn-ghost" data-action="ulozit">💾 Uložit</button>
+    <button class="btn btn-gold" data-action="generujPDF">📄 Generovat PDF</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     HLAVNÍ OBRAZOVKA
+═══════════════════════════════════════════════ -->
+<div class="screen active" id="screen-home">
+<div class="home-wrap">
+  <div class="home-header">
+    <h1>⚡ Revizní zprávy EL</h1>
+    <p>Profesionální nástroj pro tvorbu revizních zpráv elektrických zařízení a hromosvodů</p>
+  </div>
+  <div class="home-grid">
+    <button class="home-card" id="btn-nova-elektro">
+      <div class="home-card-icon">⚡</div>
+      <div class="home-card-title">Nová zpráva – Elektro</div>
+      <div class="home-card-desc">Revize elektrické instalace dle ČSN 33 1500, ČSN 33 2000-6 ed.2 a NV 190/2022 Sb.</div>
+    </button>
+    <button class="home-card" id="btn-nova-lps">
+      <div class="home-card-icon">⛈</div>
+      <div class="home-card-title">Nová zpráva – Hromosvod LPS</div>
+      <div class="home-card-desc">Revize ochrany před bleskem dle ČSN EN 62305, NV 190/2022 Sb.</div>
+    </button>
+  </div>
+  <div class="scard">
+    <div class="scard-title">📋 Archiv zpráv</div>
+    <div id="archiv-container"><div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše. 👆</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     VÝBĚR PODTYPU
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-podtyp">
+<div class="home-wrap">
+  <div class="home-header">
+    <h1 id="podtyp-header">⚡ Nová zpráva – Elektro</h1>
+    <p>Vyberte typ revidovaného objektu</p>
+  </div>
+  <div class="podtyp-grid">
+    <button class="podtyp-card" id="pt-dum">
+      <div class="podtyp-icon">🏠</div>
+      <div class="podtyp-title">Rodinný dům</div>
+      <div class="podtyp-desc">1NPE ~50Hz 230V / TN-C-S<br>RCD měření, poučení obsluhy</div>
+    </button>
+    <button class="podtyp-card" id="pt-byt">
+      <div class="podtyp-icon">🏢</div>
+      <div class="podtyp-title">Bytová jednotka</div>
+      <div class="podtyp-desc">1NPE + 3PEN ~50Hz<br>230/400V / TN-C-S</div>
+    </button>
+    <button class="podtyp-card" id="pt-prumysl">
+      <div class="podtyp-icon">🏭</div>
+      <div class="podtyp-title">Průmyslový objekt</div>
+      <div class="podtyp-desc">3PEN ~50Hz 400V / TN-C-S<br>Lhůta dle plánu revizí</div>
+    </button>
+  </div>
+  <div style="text-align:center;margin-top:1rem">
+    <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="home">← Zpět</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     NASTAVENÍ
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-nastaveni">
+<div class="breadcrumb"><a data-action="home">Hlavní</a> › Nastavení</div>
+<div class="settings-wrap">
+  <div class="scard">
+    <div class="scard-title">👤 Profil revizního technika</div>
+    <div class="info-box">Tyto údaje se automaticky propisují do každé nové zprávy i do PDF.</div>
+    <div class="g2">
+      <div class="f span2"><label>Jméno a příjmení, titul</label><input type="text" id="rt_jmeno" placeholder="Martin Novák"></div>
+      <div class="f"><label>Evidenční číslo osvědčení</label><input type="text" id="rt_osvedceni" placeholder="2901/24/R-EZ-E2A"></div>
+      <div class="f"><label>Číslo oprávnění</label><input type="text" id="rt_opravneni" placeholder="4339/24/EZ-M,O-E2A"></div>
+      <div class="f span2"><label>Ulice, č.p.</label><input type="text" id="rt_ulice" placeholder="Pod Vinohrady 2404/15"></div>
+      <div class="f"><label>Město</label><input type="text" id="rt_mesto" placeholder="Kyjov"></div>
+      <div class="f"><label>PSČ</label><input type="text" id="rt_psc" placeholder="697 01"></div>
+      <div class="f"><label>IČO</label><input type="text" id="rt_ico" placeholder="21068305"></div>
+      <div class="f"><label>DIČ</label><input type="text" id="rt_dic" placeholder="CZ21068305"></div>
+      <div class="f"><label>Mobil</label><input type="text" id="rt_mobil" placeholder="+420 605 000 000"></div>
+      <div class="f"><label>E-mail</label><input type="text" id="rt_email" placeholder="revize@email.cz"></div>
+      <div class="f span2"><label>Název firmy (pokud fakturujete přes firmu)</label><input type="text" id="rt_firma" placeholder="ponechte prázdné pokud ne"></div>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:.75rem">
+      <button class="btn btn-gold" data-action="ulozitTechnika">💾 Uložit profil</button>
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="home">Zpět</button>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">🔧 Měřicí přístroje (přednastavené)</div>
+    <div class="info-box">Přístroje se automaticky předvyplní při každé nové zprávě.</div>
+    <div id="pristroje-preset-list"></div>
+    <button class="add-row" data-action="addPristrojPreset">+ Přidat přístroj</button>
+    <div style="margin-top:1rem"><button class="btn btn-gold" data-action="ulozitPristroje">💾 Uložit přístroje</button></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     FORMULÁŘ
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-form">
+<div class="breadcrumb"><a data-action="home">Hlavní</a> › <span id="bc-typ">Nová zpráva</span></div>
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="titulni">1. Titulní strana</button>
+  <button class="tab-btn" data-tab="popis">A. Popis instalace</button>
+  <button class="tab-btn" data-tab="pristroje">C+D. Přístroje &amp; Úkony</button>
+  <button class="tab-btn" data-tab="mereni">E. Měření</button>
+  <button class="tab-btn" data-tab="zaver">F. Závěr &amp; Závady</button>
+  <button class="tab-btn" data-tab="checklist">Prohlídka</button>
+</div>
+
+<!-- TAB TITULNÍ -->
+<div class="tab-panel active" id="tab-titulni">
+  <div class="scard">
+    <div class="scard-title">Základní identifikace <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.e)</span></div>
+    <div class="g3">
+      <div class="f"><label>Ev. číslo zprávy</label><input type="text" id="f_ev_cislo" placeholder="RE-26-0001"></div>
+      <div class="f"><label>Výtisk č.</label><input type="text" id="f_vytisk" value="1"></div>
+      <div class="f"><label>Druh revize <span class="req">*</span></label>
+        <select id="f_druh"><option value="Výchozí">Výchozí</option><option value="Pravidelná" selected>Pravidelná</option><option value="Mimořádná">Mimořádná</option></select></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Místo a termíny <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.b) f)</span></div>
+    <div class="g2">
+      <div class="f"><label>Místo provádění revize <span class="req">*</span></label><textarea id="f_misto" placeholder="Budova M1 - SO12..."></textarea></div>
+      <div class="f"><label>Adresa revidovaného objektu <span class="req">*</span></label><textarea id="f_adresa" placeholder="Sokolovská 573&#10;686 01 Uherské Hradiště"></textarea></div>
+    </div>
+    <div class="sep"></div>
+    <div class="g4">
+      <div class="f"><label>Zahájení <span class="req">*</span></label><input type="date" id="f_zahajeni"></div>
+      <div class="f"><label>Přerušení od</label><input type="date" id="f_preruseni_od"></div>
+      <div class="f"><label>Přerušení do</label><input type="date" id="f_preruseni_do"></div>
+      <div class="f"><label>Ukončení <span class="req">*</span></label><input type="date" id="f_ukonceni"></div>
+      <div class="f"><label>Vypracování zprávy</label><input type="date" id="f_vypracovani"></div>
+      <div class="f"><label>Termín příští revize <span style="font-size:.5rem;color:var(--accent);display:block">dle ČSN 33 1500 č.3.9 + NV 190/2022 příloha č.4</span></label><input type="date" id="f_pristi"></div>
+      <div class="f span2" style="align-self:end"><button class="magic-btn" data-action="openModalRevize">🔮 Vypočítat termín</button></div>
+    </div>
+  </div>
+  <div class="normy-panel">
+    <div class="normy-title">📋 Použité normy a předpisy — zaklikněte použité</div>
+    <div id="normy-obsah"></div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Provozovatel <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
+    <div class="g2">
+      <div class="f span2"><label>Název a adresa provozovatele <span class="req">*</span></label><textarea id="f_provozovatel" placeholder="Firma s.r.o.&#10;Ulice 1&#10;686 01 Město&#10;IČ: 12345678"></textarea></div>
+      <div class="f"><label>Změnu v rozváděči provedla firma</label><input type="text" id="f_firma_zmena" placeholder="název firmy"></div>
+      <div class="f"><label>Ev. čís. oprávnění firmy</label><input type="text" id="f_firma_opravneni" placeholder="16680/9/21/EZ-M,O-E1A"></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Objednatel revize <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
+    <div class="g2">
+      <div class="f span2">
+        <label>Objednatel revize <span style="font-size:.7rem;color:var(--muted)">(pokud je stejný jako provozovatel, nechte prázdné)</span></label>
+        <input type="text" id="f_objednatel" placeholder="Stejný jako provozovatel / Firma XY s.r.o., Ulice 1, Praha">
+      </div>
+      <div class="f"><label>Při revizi byl přítomen</label><input type="text" id="f_pritomen2" placeholder="Jméno Příjmení, funkce"></div>
+      <div class="f"><label>Elektromontážní práce provedla firma</label><input type="text" id="f_firma_zmena2" placeholder="Firma s.r.o."></div>
+      <div class="f"><label>Ev. číslo oprávnění firmy <span style="font-size:.6rem;color:var(--muted)">(výchozí revize)</span></label><input type="text" id="f_firma_opravneni2" placeholder="16680/9/21/EZ-M"></div>
+    </div>
+  </div>
+  <div class="scard" id="scard-napetova">
+    <div class="scard-title">Charakteristika zařízení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">Napěťová soustava</span></div>
+    <div style="margin-bottom:.75rem">
+      <div style="font-family:var(--mono);font-size:.6rem;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Použité soustavy — zaklikněte</div>
+      <div id="napetova-checkboxy"></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Revizní technik <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.d)</span></div>
+    <div id="rt-badge"></div>
+    <div class="g3">
+      <div class="f"><label>Jméno a příjmení <span class="req">*</span></label><input type="text" id="f_rt_jmeno" class="prefilled"></div>
+      <div class="f"><label>Ev. číslo osvědčení <span class="req">*</span></label><input type="text" id="f_rt_osvedceni" class="prefilled"></div>
+      <div class="f"><label>Ev. číslo oprávnění</label><input type="text" id="f_rt_opravneni" class="prefilled"></div>
+      <div class="f span2"><label>Bydliště / sídlo firmy</label><input type="text" id="f_rt_adresa" class="prefilled"></div>
+      <div class="f"><label>IČO</label><input type="text" id="f_rt_ico" class="prefilled"></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">VTEZ a výsledek</div>
+    <div class="g2">
+      <div class="f"><label>Třída VTEZ dle §4 NV 190/2022 Sb.</label>
+        <select id="f_trida"><option value="Třída 1">Třída 1</option><option value="Třída 2" selected>Třída 2</option><option value="Třída 3">Třída 3</option></select></div>
+      <div class="f"><label>Celkový posudek / výsledek revize <span class="req">*</span></label>
+        <select id="f_vysledek"><option value="schopno">✅ Schopno provozu</option><option value="neschopno">❌ Neschopno provozu</option></select></div>
+    </div>
+    <div class="sep"></div>
+    <div class="f"><label>Zdroj elektrického proudu</label><input type="text" id="f_zdroj" placeholder="Distribuce ČEZ a.s. / vlastní / jiné"></div>
+    <div class="g2" style="margin-top:.75rem">
+      <div class="f"><label>Typ sítě</label><input type="text" id="f_sit" placeholder="TN-C-S 230V/50Hz AC"></div>
+      <div class="f"><label>Ochrana před úrazem el. proudem</label><input type="text" id="f_ochrana" placeholder="automatickým odpojením od zdroje dle 4-41 ed.2"></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Předání zprávy</div>
+    <div class="g3">
+      <div class="f"><label>Předáno v (město)</label><input type="text" id="f_predano_misto" placeholder="Uherském Hradišti"></div>
+      <div class="f"><label>Dne</label><input type="date" id="f_predano_datum"></div>
+      <div class="f"><label>Jméno osoby přebírající zprávu (VTZ)</label><input type="text" id="f_prebira" placeholder="Jméno Příjmení"></div>
+    </div>
+    <div class="g2" style="margin-top:.75rem">
+      <div class="f"><label>Počet vyhotovení</label><input type="text" id="f_vyhotoveni" value="3"></div>
+      <div class="f"><label>Rozdělovník</label><input type="text" id="f_rozdelovnik" value="2 x provozovatel, 1 x revizní technik"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB POPIS -->
+<div class="tab-panel" id="tab-popis">
+  <div class="scard" id="scard-ochrana-char">
+    <div class="scard-title">Ochrana před úrazem el. proudem <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">zaklikněte použité — ČSN 33 2000-4-41 ed.3</span></div>
+    <div id="ochrana-checkboxy"></div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">A. Rozsah a popis elektrické instalace</div>
+    <button class="magic-btn" data-action="magicPopis">🔮 Magic – vložit typický text</button>
+    <div class="g2">
+      <div class="f span2"><label>Předmětem této revize je</label><textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea></div>
+      <div class="f span2"><label>Předmětem této revize není</label><textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea></div>
+      <div class="f span2"><label>Popis revidované elektroinstalace</label><textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea></div>
+      <div class="f"><label>Revizi přítomen</label><input type="text" id="f_pritomen" placeholder="Jméno Příjmení"></div>
+      <div class="f"><label>Zdroje napájení</label><input type="text" id="f_zdroj_napajeni" placeholder="firemní rozvod nn: 3+PE+N, 400/230V, 50Hz, síť TN-C-S"></div>
+      <div class="f"><label>Typ a popis zemniče</label><input type="text" id="f_zemnič" placeholder="Zemnič typu A, okružní uzemňovací vedení..."></div>
+      <div class="f"><label>Naměřený zemní odpor (Ω)</label><input type="text" id="f_zemni_odpor" placeholder="12,5"></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">B. Předložená dokumentace</div>
+    <table class="data-table">
+      <thead><tr><th style="width:20%">č. dokumentace</th><th style="width:18%">Datum</th><th>Název dokumentace</th><th style="width:40px"></th></tr></thead>
+      <tbody id="dokumentace-body">
+        <tr><td><input type="text" placeholder="D 1.3.2."></td><td><input type="date"></td><td><input type="text" placeholder="Protokol o určení vnějších vlivů"></td><td><button class="del-btn" data-action="delRow">✕</button></td></tr>
+      </tbody>
+    </table>
+    <button class="add-row" data-action="addDokumentace">+ Přidat dokument</button>
+  </div>
+</div>
+
+<!-- TAB PŘÍSTROJE -->
+<div class="tab-panel" id="tab-pristroje">
+  <div class="scard">
+    <div class="scard-title">C. Použité měřicí přístroje <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.g)</span></div>
+    <div class="info-box">Přístroje z nastavení jsou předvyplněny automaticky.</div>
+    <table class="data-table">
+      <thead><tr><th style="width:30px">#</th><th>Název měřidla, typ</th><th style="width:22%">Výrobní číslo</th><th style="width:22%">Číslo kal. listu</th><th style="width:15%">Platnost kal.</th><th style="width:35px"></th></tr></thead>
+      <tbody id="pristroje-body"></tbody>
+    </table>
+    <button class="add-row" data-action="addPristroj">+ Přidat přístroj</button>
+  </div>
+  <div class="scard">
+    <div class="scard-title">D.1 – Prohlídka el. zařízení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 čl. 6.4.2</span></div>
+    <div class="f" style="margin-bottom:.75rem"><label>Výsledek prohlídky</label>
+      <select id="f_prohlídka"><option value="Vyhovuje">✅ Vyhovuje</option><option value="Nevyhovuje">❌ Nevyhovuje</option></select></div>
+    <div style="font-size:.84rem;line-height:1.9;color:var(--muted)">
+      a) ověření způsobu ochrany před úrazem elektrickým proudem<br>
+      b) ověření protipožárních opatření a ochrany před tepelnými účinky<br>
+      c) kontrola volby vodičů s ohledem na proudovou zatížitelnost a úbytek napětí<br>
+      d) kontrola ochranných a monitorovacích přístrojů<br>
+      e) kontrola použití a vhodného umístění odpojovacích a spínacích přístrojů<br>
+      f) kontrola volby předmětů, zařízení a ochranných opatření přiměřených k vnějším vlivům<br>
+      g) kontrola označení vodičů a způsobu jejich spojování<br>
+      h) kontrola vybavení schématy, varovnými nápisy a označení obvodů, spínačů, svorek a jistících prvků<br>
+      i) kontrola parametrů ochranných vodičů a vodičů ochranného a doplňujícího pospojování<br>
+      j) kontrola uložení vodičů a kabelů; ověření přístupnosti el. zařízení z hlediska obsluhy
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">D.2 – Zkoušení el. zařízení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 čl. 6.4.3</span></div>
+    <div class="f" style="margin-bottom:.75rem"><label>Výsledek zkoušení</label>
+      <select id="f_zkouseni"><option value="Vyhovuje">✅ Vyhovuje</option><option value="Nevyhovuje">❌ Nevyhovuje</option></select></div>
+    <div style="font-size:.84rem;line-height:1.9;color:var(--muted)">
+      a) spojitost ochranných vodičů a spojitost ochranného a doplňujícího pospojování<br>
+      b) izolační stav elektrického zařízení<br>
+      c) automatické odpojení od zdroje<br>
+      d) doplňková ochrana<br>
+      e) zapojení přístrojů<br>
+      f) pořadí fází<br>
+      g) funkční a provozní zkoušky<br>
+      h) úbytek napětí
+    </div>
+  </div>
+</div>
+
+<!-- TAB MĚŘENÍ -->
+<div class="tab-panel" id="tab-mereni">
+  <div class="scard">
+    <div class="scard-title">E. Obvody a výsledky zkoušek <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 Z2 – příloha G</span></div>
+    <div class="g2" style="margin-bottom:1rem">
+      <div class="f"><label>Rozváděč (označení)</label><input type="text" id="f_rozvadec" placeholder="MX, RP1"></div>
+      <div class="f"><label>Umístění rozváděče</label><input type="text" id="f_rozvadec_umisteni" placeholder="Sklad technických plynů - č.m.: 20a"></div>
+    </div>
+    <div class="meas-table-wrap">
+      <table class="data-table meas-table">
+        <thead>
+          <tr>
+            <th class="grp" rowspan="3" style="width:3%">Č.</th>
+            <th class="grp" rowspan="3" style="width:14%">Název obvodu</th>
+            <th class="grp" colspan="5">Jmenovité hodnoty jištění</th>
+            <th class="grp" colspan="3">Měření impedancí</th>
+            <th class="grp" colspan="5">Měření RCD</th>
+            <th class="grp" rowspan="3" style="width:12%">Kabel mm²</th>
+            <th class="grp" rowspan="3" style="width:3%"></th>
+          </tr>
+          <tr>
+            <th rowspan="2">Typ</th><th rowspan="2">Ch.</th><th rowspan="2">A</th>
+            <th rowspan="2">IΔn mA</th><th rowspan="2">Isc kA</th>
+            <th rowspan="2">Rpe Ω</th><th rowspan="2">Zsm Ω</th><th rowspan="2">Riso MΩ</th>
+            <th rowspan="2">Fáze</th><th colspan="2">Doba vyp. ms</th>
+            <th rowspan="2">IΔ mA</th><th rowspan="2">Uc V</th><th rowspan="2">Test</th>
+          </tr>
+          <tr><th>IΔn</th><th>5IΔn</th></tr>
+        </thead>
+        <tbody id="mereni-body"></tbody>
+      </table>
+    </div>
+    <button class="add-row" data-action="addMereniRow">+ Přidat obvod</button>
+  </div>
+</div>
+
+<!-- TAB ZÁVĚR -->
+<div class="tab-panel" id="tab-zaver">
+  <div class="scard">
+    <div class="scard-title">F. Zhodnocení a závěr revizní zprávy</div>
+    <button class="magic-btn" data-action="magicZaver">🔮 Magic – vložit typický text závěru</button>
+    <div class="f" style="margin-top:.75rem">
+      <label>Slovní zhodnocení</label>
+      <textarea id="f_zhodnoceni" style="min-height:180px" placeholder="Způsob a provedení elektroinstalace je v souladu s platnými ČSN..."></textarea>
+    </div>
+    <div class="sep"></div>
+    <div class="g2">
+      <div class="f"><label>Celkový výsledek <span class="req">*</span></label>
+        <select id="f_celkovy_vysledek"><option value="schopno">✅ Schopno provozu</option><option value="neschopno">❌ Neschopno provozu</option></select></div>
+      <div class="f"><label>Lhůta příští revize</label><input type="text" id="f_lhuta" placeholder="5 let – do 01/2031"></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Seznam zjištěných závad <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">ČSN 33 2000-6 ed.2 Z2 příloha č.6</span></div>
+    <div class="info-box" style="font-size:.78rem"><strong>C1</strong> – Existující nebezpečí, bezprostřední nápravná akce &nbsp;·&nbsp; <strong>C2</strong> – Potenciálně nebezpečné, naléhavá nápravná činnost &nbsp;·&nbsp; <strong>C3</strong> – Doporučuje se zlepšení</div>
+    <div id="zavady-list"></div>
+    <button class="add-row" data-action="addZavada">+ Přidat závadu</button>
+    <div class="sep"></div>
+    <div class="f"><label>Poznámka k závadám</label><textarea id="f_poznamka_zavady" placeholder="doplňující poznámky..."></textarea></div>
+  </div>
+</div>
+
+<!-- TAB CHECKLIST -->
+<div class="tab-panel" id="tab-checklist">
+  <div class="scard">
+    <div class="scard-title">Příloha – Prohlídka VEZ <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2</span></div>
+    <div id="checklist-container"></div>
+  </div>
+</div>
+</div><!-- /screen-form -->
+
+<!-- ═══════════════════════════════════════════════
+     PDF NÁHLED
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-pdf">
+  <div class="pdf-toolbar">
+    <div class="pdf-toolbar-title">📄 PDF náhled — připraveno k tisku</div>
+    <div class="pdf-actions">
+      <button class="pbtn" data-action="form">← Zpět do formuláře</button>
+      <button class="pbtn" data-action="tiskMereni" style="background:#c8962a;border-color:#c8962a">📐 Tisk měření (landscape)</button>
+      <button class="pbtn pbtn-print" data-action="print">🖨️ Tisk celé zprávy</button>
+    </div>
+  </div>
+  <div class="pdf-pages" id="pdf-pages"></div>
+</div>
+
+<!-- MODAL VÝPOČET REVIZE -->
+<div class="modal-overlay" id="modal-revize">
+  <div class="modal">
+    <div class="modal-title">🔮 Výpočet termínu příští revize</div>
+    <div class="f" style="margin-bottom:1rem"><label>Typ objektu</label>
+      <select id="m_typ_obj" data-action="updateLhuta">
+        <option value="5">Kanceláře, bytové domy (5 let)</option>
+        <option value="3">Školy, hotely, ubytovny (3 roky)</option>
+        <option value="2">Divadla, kina, obchodní domy (2 roky)</option>
+        <option value="1">Pojízdné prostředky, staveniště (1 rok)</option>
+        <option value="4">Průmyslové provozy – třída 2 VTEZ (4 roky)</option>
+        <option value="custom">Vlastní lhůta</option>
+      </select></div>
+    <div class="f" id="m_custom_wrap" style="display:none;margin-bottom:1rem">
+      <label>Vlastní lhůta (roky)</label><input type="number" id="m_custom_roky" value="3" min="1" max="10" data-action="updateLhuta"></div>
+    <div class="f" style="margin-bottom:1rem"><label>Datum zahájení revize</label><input type="date" id="m_datum" data-action="updateLhuta"></div>
+    <div class="warn-box" id="m_vysledek" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeRevize">Zrušit</button>
+      <button class="btn btn-gold" data-action="potvrditRevize">✓ Použít termín</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="json-input" accept=".json" style="display:none" data-action="nacistJSON">
+
+
+<script>
+var STORE = { technik: {}, pristroje: [], archiv: [] };
+var aktTyp = 'elektro';
+var zavadyN = 0;
+var archiv = [];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var sc = document.getElementById('screen-' + id);
+  if (sc) sc.classList.add('active');
+  if (id === 'nastaveni') nacistTechnika();
+  window.scrollTo(0, 0);
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  var panel = document.getElementById('tab-' + id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// Napěťové soustavy podle podtypu
+var NAPETOVE = {
+  dum:     ['1NPE ~50Hz 230V / TN-C-S', '3PEN ~50Hz 400V / TN-C-S'],
+  byt:     ['1NPE ~50Hz 230V / TN-C-S', '3PEN ~50Hz 400V / TN-C-S'],
+  prumysl: ['3PEN ~50Hz 400V / TN-C-S', '1NPE ~50Hz 230V / TN-C-S', '3PE ~50Hz 400V / IT']
+};
+
+var aktPodtyp = 'dum'; // default
+
+function volbaPodtypu(podtyp) {
+  aktPodtyp = podtyp;
+  // Zvýrazni vybranou kartu
+  document.querySelectorAll('.podtyp-card').forEach(function(c){ c.classList.remove('selected'); });
+  var card = document.getElementById('pt-' + podtyp);
+  if (card) card.classList.add('selected');
+  // Po krátkém zpoždění spusť formulář
+  setTimeout(function() { novaZprava(aktTyp); }, 150);
+}
+
+function renderNapetoveCheckboxy(podtyp) {
+  var c = document.getElementById('napetova-checkboxy');
+  if (!c) return;
+  var soustavy = NAPETOVE[podtyp] || NAPETOVE.dum;
+  c.innerHTML = '';
+  soustavy.forEach(function(s, i) {
+    var div = document.createElement('div');
+    div.className = 'char-row';
+    var chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.id = 'ns-' + i;
+    chk.checked = (i === 0); // první předvolena
+    var lbl = document.createElement('label');
+    lbl.htmlFor = 'ns-' + i;
+    lbl.textContent = s;
+    div.appendChild(chk);
+    div.appendChild(lbl);
+    c.appendChild(div);
+  });
+}
+
+function getNapetoveSoustavy() {
+  var result = [];
+  var items = document.querySelectorAll('#napetova-checkboxy .char-row input[type=checkbox]');
+  items.forEach(function(chk) {
+    if (chk.checked) {
+      var lbl = document.querySelector('label[for="' + chk.id + '"]');
+      if (lbl) result.push(lbl.textContent);
+    }
+  });
+  return result.join(', ');
+}
+
+function novaZprava(typ) {
+  aktTyp = typ;
+  var bcTyp = document.getElementById('bc-typ');
+  if (bcTyp) bcTyp.textContent = typ === 'elektro' ? 'Nova zprava - Elektro' : 'Nova zprava - LPS';
+  document.querySelectorAll('#screen-form input, #screen-form textarea, #screen-form select').forEach(function(el) {
+    if (el.type === 'checkbox') el.checked = false;
+    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  var mb = document.getElementById('mereni-body'); if (mb) mb.innerHTML = '';
+  var zl = document.getElementById('zavady-list'); if (zl) zl.innerHTML = '';
+  var pb = document.getElementById('pristroje-body'); if (pb) pb.innerHTML = '';
+  var db = document.getElementById('dokumentace-body'); if (db) db.innerHTML = '';
+  zavadyN = 0;
+  propsatTechnika();
+  renderNormy(typ);
+  propsatPristroje();
+  addMereniRow();
+  addMereniRow();
+  addDokumentace();
+  renderChecklist();
+  var d = new Date().toISOString().split('T')[0];
+  ['f_zahajeni','f_ukonceni','f_vypracovani','f_predano_datum'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.value = d;
+  });
+  var sit = document.getElementById('f_sit'); if (sit) sit.value = 'TN-C-S 230V/50Hz AC';
+  renderNapetoveCheckboxy(aktPodtyp);
+  // Magic texty dle podtypu
+  var f_predmet = document.getElementById('f_predmet_je');
+  if (f_predmet && !f_predmet.value) {
+    var predmety = {
+      dum: 'Elektricka instalace rodinneho domu - rozvodnice RD, vyvody svetelnych a zasuvkovych obvodu vcetne pevne pripojenych spotrebicu v rozsahu dle popisu.',
+      byt: 'Elektricka instalace bytove jednotky - bytova rozvodnice RB, vyvody svetelnych a zasuvkovych obvodu vcetne pevne pripojenych spotrebicu.',
+      prumysl: 'Elektricka zarizeni provozovny - hlavni privody pro rozvadec RH, vyvody z rozvadece RH pro strojni a technicka zarizeni, napajeni el. zarizeni zasuvkove a svetelne obvody v rozsahu dle popisu.'
+    };
+    f_predmet.value = predmety[aktPodtyp] || predmety.dum;
+  }
+  var och = document.getElementById('f_ochrana'); if (och) och.value = 'automatickym odpojenim od zdroje dle 4-41 ed.2';
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  var firstTab = document.querySelector('.tab-btn'); if (firstTab) firstTab.classList.add('active');
+  var titPanel = document.getElementById('tab-titulni'); if (titPanel) titPanel.classList.add('active');
+  showScreen('form');
+}
+
+function nacistTechnika() {
+  var t = STORE.technik || {};
+  ['jmeno','osvedceni','opravneni','ulice','mesto','psc','ico','dic','mobil','email','firma'].forEach(function(k) {
+    var el = document.getElementById('rt_' + k); if (el) el.value = t[k] || '';
+  });
+}
+
+function ulozitTechnika() {
+  var t = {};
+  ['jmeno','osvedceni','opravneni','ulice','mesto','psc','ico','dic','mobil','email','firma'].forEach(function(k) {
+    var el = document.getElementById('rt_' + k); if (el) t[k] = el.value;
+  });
+  STORE.technik = t;
+  alert('Profil ulozen');
+}
+
+function propsatTechnika() {
+  var t = STORE.technik || {};
+  var psc = t.psc || '';
+  var mesto = t.mesto || '';
+  var adr = [t.ulice, (psc + ' ' + mesto).trim()].filter(Boolean).join(', ');
+  function set(id, v) { var el = document.getElementById(id); if (el) el.value = v || ''; }
+  set('f_rt_jmeno', t.jmeno);
+  set('f_rt_osvedceni', t.osvedceni);
+  set('f_rt_opravneni', t.opravneni);
+  set('f_rt_adresa', adr);
+  set('f_rt_ico', t.ico);
+  var badge = document.getElementById('rt-badge');
+  if (!badge) return;
+  if (t.jmeno) {
+    badge.innerHTML = '<div style="background:#f0f6ff;border:1px solid #b8d0f0;padding:.6rem 1rem;border-radius:2px;margin-bottom:.75rem"><strong>' + t.jmeno + '</strong> | Ev.c.: ' + (t.osvedceni || '—') + ' | IČO: ' + (t.ico || '—') + '</div>';
+  } else {
+    badge.innerHTML = '<div class="warn-box">Profil RT neni nastaven. <a href="#" data-action="nastaveni" style="color:#1c3a5e;font-weight:600">Nastavit</a></div>';
+  }
+}
+
+var NORMY = {
+  elektro: [
+    { s: 'Narizeni vlady', items: [
+      { id: 'nv190', t: 'NV c. 190/2022 Sb. - vyhrazena technicka elektricka zarizeni', c: true },
+      { id: 'nv194', t: 'NV c. 194/2022 Sb. - technicke pozadavky na el. instalace', c: true }
+    ]},
+    { s: 'CSN - vyberte dle doby vzniku instalace', items: [
+      { id: 'csn331500', t: 'CSN 33 1500 - Revize elektrickych zarizeni', c: true },
+      { id: 'csn332000641', t: 'CSN 33 2000-4-41 ed.3 - Ochrana pred urazem el. proudem (po r. 2012)', c: true },
+      { id: 'csn3320006', t: 'CSN 33 2000-6 ed.2 - Revize elektrickych instalaci', c: true },
+      { id: 'csn641z1', t: 'CSN 33 2000-4-41 ed.2 + Z1 - stasi instalace (do r. 2012)', c: false }
+    ]}
+  ],
+  lps: [
+    { s: 'Narizeni vlady', items: [
+      { id: 'nv190lps', t: 'NV c. 190/2022 Sb. - vyhrazena technicka elektricka zarizeni', c: true }
+    ]},
+    { s: 'CSN EN 62305 - Ochrana pred bleskem', items: [
+      { id: 'csn623051', t: 'CSN EN 62305-1 ed.2 - Obecne principy', c: true },
+      { id: 'csn623052', t: 'CSN EN 62305-2 ed.2 - Rizeni rizika', c: true },
+      { id: 'csn623053', t: 'CSN EN 62305-3 ed.2 - Hmotne skody a ohrozeni zivota', c: true },
+      { id: 'csn341391', t: 'CSN 34 1391 - Hromosvody (stari instalace, do r. 2004)', c: false }
+    ]}
+  ]
+};
+
+function renderNormy(typ) {
+  var c = document.getElementById('normy-obsah');
+  if (!c) return;
+  var data = NORMY[typ] || NORMY.elektro;
+  var html = '';
+  data.forEach(function(sk) {
+    html += '<div style="margin-bottom:1rem">';
+    html += '<div style="font-family:monospace;font-size:.6rem;text-transform:uppercase;color:#6e6a60;margin-bottom:.4rem">' + sk.s + '</div>';
+    sk.items.forEach(function(n) {
+      html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
+      html += '<input type="checkbox" id="n-' + n.id + '"' + (n.c ? ' checked' : '') + '>';
+      html += '<label for="n-' + n.id + '" style="font-size:.82rem;cursor:pointer">' + n.t + '</label>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  c.innerHTML = html;
+}
+
+function getVybrane() {
+  var data = NORMY[aktTyp] || NORMY.elektro;
+  var vyb = [];
+  data.forEach(function(sk) {
+    sk.items.forEach(function(n) {
+      var el = document.getElementById('n-' + n.id);
+      if (el && el.checked) vyb.push(n.t);
+    });
+  });
+  return vyb.join(', ');
+}
+
+function renderPristrojePreset() {
+  var list = document.getElementById('pristroje-preset-list');
+  if (!list) return;
+  var p = STORE.pristroje || [];
+  list.innerHTML = '';
+  p.forEach(function(pr, i) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center';
+    var fields = [
+      { k: 'nazev', v: pr.nazev || '', ph: 'Nazev a typ', flex: '2' },
+      { k: 'vyrCislo', v: pr.vyrCislo || '', ph: 'Vyr. cislo', flex: '1' },
+      { k: 'kalibrace', v: pr.kalibrace || '', ph: 'Kalib. list', flex: '1' }
+    ];
+    fields.forEach(function(f) {
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = f.v;
+      inp.placeholder = f.ph;
+      inp.style.cssText = 'flex:' + f.flex + ';font-size:.85rem;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px';
+      inp.dataset.idx = i;
+      inp.dataset.key = f.k;
+      inp.addEventListener('input', function() { updatePreset(this, parseInt(this.dataset.idx), this.dataset.key); });
+      row.appendChild(inp);
+    });
+    var datInp = document.createElement('input');
+    datInp.type = 'date';
+    datInp.value = pr.platnost || '';
+    datInp.style.cssText = 'font-size:.82rem;padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px';
+    datInp.dataset.idx = i;
+    datInp.dataset.key = 'platnost';
+    datInp.addEventListener('input', function() { updatePreset(this, parseInt(this.dataset.idx), this.dataset.key); });
+    row.appendChild(datInp);
+    var btn = document.createElement('button');
+    btn.className = 'del-btn';
+    btn.textContent = 'X';
+    btn.dataset.action = 'delPreset';
+    btn.dataset.idx = i;
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
+
+function updatePreset(el, i, k) {
+  if (STORE.pristroje[i]) STORE.pristroje[i][k] = el.value;
+}
+
+function addPristrojPreset() {
+  STORE.pristroje.push({ nazev: '', vyrCislo: '', kalibrace: '', platnost: '' });
+  renderPristrojePreset();
+}
+
+function delPreset(i) {
+  STORE.pristroje.splice(i, 1);
+  renderPristrojePreset();
+}
+
+function ulozitPristroje() { alert('Pristroje ulozeny'); }
+
+function propsatPristroje() {
+  var tbody = document.getElementById('pristroje-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  var p = STORE.pristroje || [];
+  p.forEach(function(pr, i) { addPristrojRow(pr, i + 1); });
+  if (p.length === 0) addPristrojRow({}, 1);
+}
+
+function addPristroj() { addPristrojRow({}); }
+
+function addPristrojRow(d, num) {
+  d = d || {};
+  var tbody = document.getElementById('pristroje-body');
+  if (!tbody) return;
+  var n = num || tbody.rows.length + 1;
+  var tr = document.createElement('tr');
+  var td1 = document.createElement('td');
+  td1.style.cssText = 'text-align:center;color:#6e6a60;font-size:.72rem';
+  td1.textContent = n;
+  tr.appendChild(td1);
+  var fields = [
+    { v: d.nazev || '', ph: 'Metrel Eurotest MI3155' },
+    { v: d.vyrCislo || '', ph: 'vyrobni cislo' },
+    { v: d.kalibrace || '', ph: 'kalibraci list' }
+  ];
+  fields.forEach(function(f) {
+    var td = document.createElement('td');
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = f.v;
+    inp.placeholder = f.ph;
+    inp.style.cssText = 'width:100%;border:none;background:transparent;font-size:.82rem';
+    td.appendChild(inp);
+    tr.appendChild(td);
+  });
+  var tdDate = document.createElement('td');
+  var inpDate = document.createElement('input');
+  inpDate.type = 'date';
+  inpDate.value = d.platnost || '';
+  inpDate.style.cssText = 'width:100%;border:none;background:transparent;font-size:.82rem';
+  tdDate.appendChild(inpDate);
+  tr.appendChild(tdDate);
+  var tdBtn = document.createElement('td');
+  var btn = document.createElement('button');
+  btn.className = 'del-btn';
+  btn.textContent = 'X';
+  btn.dataset.action = 'delRow';
+  tdBtn.appendChild(btn);
+  tr.appendChild(tdBtn);
+  tbody.appendChild(tr);
+}
+
+function addMereniRow() {
+  var tbody = document.getElementById('mereni-body');
+  if (!tbody) return;
+  var tr = document.createElement('tr');
+  var cols = [
+    { ph: 'FI1' }, { ph: 'Nazev obvodu' }, { ph: 'OEZ' }, { ph: 'B' },
+    { ph: '1x16' }, { ph: '30' }, { ph: '10' }, { ph: 'Rpe O' }, { ph: 'Zsm O' },
+    { ph: 'Riso MO' }
+  ];
+  cols.forEach(function(col) {
+    var td = document.createElement('td');
+    td.style.border = '1px solid #ccc';
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = col.ph;
+    inp.style.cssText = 'width:100%;border:none;background:transparent;font-size:.78rem;text-align:center';
+    td.appendChild(inp);
+    tr.appendChild(td);
+  });
+  // Faze select
+  var tdFaze = document.createElement('td');
+  tdFaze.style.border = '1px solid #ccc';
+  var selFaze = document.createElement('select');
+  selFaze.style.cssText = 'width:100%;border:none;background:transparent;font-size:.75rem';
+  ['—','+','-'].forEach(function(o){ var opt=document.createElement('option'); opt.textContent=o; selFaze.appendChild(opt); });
+  tdFaze.appendChild(selFaze); tr.appendChild(tdFaze);
+  // t-IDn, t-5IDn, ID, Uc
+  ['ms','ms','mA','V'].forEach(function(ph) {
+    var td = document.createElement('td');
+    td.style.border = '1px solid #ccc';
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = ph;
+    inp.style.cssText = 'width:100%;border:none;background:transparent;font-size:.78rem;text-align:center';
+    td.appendChild(inp); tr.appendChild(td);
+  });
+  // Test select
+  var tdTest = document.createElement('td');
+  tdTest.style.border = '1px solid #ccc';
+  var selTest = document.createElement('select');
+  selTest.style.cssText = 'width:100%;border:none;background:transparent;font-size:.75rem';
+  ['—','OK','Fail'].forEach(function(o){ var opt=document.createElement('option'); opt.textContent=o; selTest.appendChild(opt); });
+  tdTest.appendChild(selTest); tr.appendChild(tdTest);
+  // Kabel
+  var tdKabel = document.createElement('td');
+  tdKabel.style.border = '1px solid #ccc';
+  var inpKabel = document.createElement('input');
+  inpKabel.type = 'text'; inpKabel.placeholder = 'CYKY-j 3x1,5';
+  inpKabel.style.cssText = 'width:100%;border:none;background:transparent;font-size:.78rem';
+  tdKabel.appendChild(inpKabel); tr.appendChild(tdKabel);
+  var tdBtn = document.createElement('td');
+  tdBtn.style.border = '1px solid #ccc';
+  var btn = document.createElement('button');
+  btn.className = 'del-btn';
+  btn.textContent = 'X';
+  btn.dataset.action = 'delRow';
+  tdBtn.appendChild(btn);
+  tr.appendChild(tdBtn);
+  tbody.appendChild(tr);
+}
+
+function addZavada() {
+  zavadyN++;
+  var list = document.getElementById('zavady-list');
+  if (!list) return;
+  var div = document.createElement('div');
+  div.className = 'zavada-item c3';
+
+  var header = document.createElement('div');
+  header.className = 'zavada-header';
+
+  var num = document.createElement('span');
+  num.style.cssText = 'font-family:monospace;font-size:.7rem;color:#6e6a60';
+  num.textContent = '#' + zavadyN;
+  header.appendChild(num);
+
+  var sel = document.createElement('select');
+  sel.style.cssText = 'font-family:monospace;font-size:.72rem;padding:.2rem .4rem;border:1px solid #ccc;border-radius:2px';
+  sel.dataset.action = 'updZavadaKod';
+  ['C1 - Nebezpeci', 'C2 - Potencialne nebezp.', 'C3 - Doporuceni'].forEach(function(opt, i) {
+    var o = document.createElement('option');
+    o.value = 'C' + (i + 1);
+    o.textContent = opt;
+    if (i === 2) o.selected = true;
+    sel.appendChild(o);
+  });
+  header.appendChild(sel);
+
+  var delBtn = document.createElement('button');
+  delBtn.className = 'del-btn';
+  delBtn.textContent = 'X Smazat';
+  delBtn.style.marginLeft = 'auto';
+  delBtn.dataset.action = 'removeZavada';
+  header.appendChild(delBtn);
+  div.appendChild(header);
+
+  var body = document.createElement('div');
+  body.className = 'g2';
+
+  var f1 = document.createElement('div');
+  f1.className = 'f span2';
+  var l1 = document.createElement('label');
+  l1.textContent = 'Popis zavady';
+  var ta = document.createElement('textarea');
+  ta.style.minHeight = '55px';
+  ta.placeholder = 'Popis...';
+  f1.appendChild(l1);
+  f1.appendChild(ta);
+  body.appendChild(f1);
+
+  var f2 = document.createElement('div');
+  f2.className = 'f';
+  var l2 = document.createElement('label');
+  l2.textContent = 'Po odstraneni dalsi prohlidka';
+  var inp2 = document.createElement('input');
+  inp2.type = 'text';
+  inp2.placeholder = 'ano - za 6 mesicu / ne';
+  f2.appendChild(l2);
+  f2.appendChild(inp2);
+  body.appendChild(f2);
+
+  var f3 = document.createElement('div');
+  f3.className = 'f';
+  var l3 = document.createElement('label');
+  l3.textContent = 'Odkaz na normu';
+  var inp3 = document.createElement('input');
+  inp3.type = 'text';
+  inp3.placeholder = 'CSN 33 2000-4-41 cl. 411.3';
+  f3.appendChild(l3);
+  f3.appendChild(inp3);
+  body.appendChild(f3);
+
+  div.appendChild(body);
+  list.appendChild(div);
+}
+
+function updZavadaKod(sel) {
+  var item = sel.closest('.zavada-item');
+  if (item) item.className = 'zavada-item ' + sel.value.toLowerCase();
+}
+
+var CL = [
+  { s: 'Elektricka zarizeni na vstupu', items: ['Kabelova domovni pripojka', 'Provozni (hlavni) vypinac / pojistky', 'Vybaveni elektromerove rozvodnice - strana distributora', 'Vybaveni elektromerove rozvodnice - strana zakaznika', 'Merici zarizeni', 'Odpojovaci zarizeni'] },
+  { s: 'Automaticke odpojeni od zdroje', items: ['Soustava hlavniho uzemneni', 'Uzemniovaci privod a jeho pripojeni', 'Vodice hlavniho ochraneho pospojovani', 'Stitky uzemneni', 'Vsechna pripojeni ochraneho pospojovani', 'FELV - pozadavky splneny'] },
+  { s: 'Zakladni ochrana a ochrana pri poruse', items: ['SELV', 'PELV', 'Dvojita izolace', 'Zesilena izolace', 'Izolace zivych casti', 'Prepazky nebo kryty', 'Zabrany', 'Mimo dosah'] },
+  { s: 'Doplnkova ochrana', items: ['Proudove chranic <= 30 mA', 'Doplnujici pospojovani'] },
+  { s: 'Rozvodna zarizeni', items: ['Pristupnost k zarizeni', 'Bezpecne upevneni', 'Izolace zivych casti neni poskozena', 'Vhodnost krytu z hlediska IP', 'Kryty nebyly poskozeny', 'Rucni ovladani jisticu a chranichu', 'Test tlacitka proudoveho chranice', 'Pritomnost schemat a napisu'] },
+  { s: 'Vodice a kabely', items: ['Spravne dimenzovani vodicu', 'Spravne ulozeni a ochrana', 'Barevne oznaceni vodicu', 'Spoje vodicu spravne', 'Ochranne vodice odpovidajici'] }
+];
+
+function renderChecklist() {
+  var c = document.getElementById('checklist-container');
+  if (!c) return;
+  var html = '';
+  CL.forEach(function(sec, si) {
+    html += '<div style="margin-bottom:1rem">';
+    html += '<div style="font-family:monospace;font-size:.62rem;font-weight:500;text-transform:uppercase;color:#1c3a5e;padding:.35rem 0;margin-bottom:.4rem;border-bottom:1px solid #ccc">' + sec.s + '</div>';
+    sec.items.forEach(function(item, ii) {
+      html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
+      html += '<input type="checkbox" id="chk-' + si + '-' + ii + '" style="width:14px;height:14px;margin-top:2px;flex-shrink:0">';
+      html += '<label for="chk-' + si + '-' + ii + '" style="font-size:.83rem;cursor:pointer;line-height:1.4">' + item + '</label>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  c.innerHTML = html;
+}
+
+function addDokumentace() {
+  var tbody = document.getElementById('dokumentace-body');
+  if (!tbody) return;
+  var tr = document.createElement('tr');
+  var phs = ['cislo dokumentu', '', 'Nazev dokumentace'];
+  var types = ['text', 'date', 'text'];
+  phs.forEach(function(ph, i) {
+    var td = document.createElement('td');
+    var inp = document.createElement('input');
+    inp.type = types[i];
+    inp.placeholder = ph;
+    inp.style.cssText = 'width:100%;border:none;background:transparent;font-size:.82rem';
+    td.appendChild(inp);
+    tr.appendChild(td);
+  });
+  var tdBtn = document.createElement('td');
+  var btn = document.createElement('button');
+  btn.className = 'del-btn';
+  btn.textContent = 'X';
+  btn.dataset.action = 'delRow';
+  tdBtn.appendChild(btn);
+  tr.appendChild(tdBtn);
+  tbody.appendChild(tr);
+}
+
+function magicPopis() {
+  var el = document.getElementById('f_popis');
+  if (!el) return;
+  var texty = {
+    dum: 'Elektricka instalace rodinneho domu je provedena kabely CYKY-J ulozenymi v elektroinstalacnich trubkach a kabelovych zlabech. Hlavni privod z elektroměroveho rozvadece je proveden kabelem CYKY-J 4x16 ulozenym v zemi v hrankach kopoflex v cele delce v hloubce 80 cm. Bytovy rozvadec RD je nainstalovan v technicke mistnosti. Pod rozvaděcem je instalovana pripojnice MET - hlavni uzemnovaci svorka. Zasuvkove obvody jsou jisteny jistitcemi charakteristiky B a chraneny proudovymi chranic s IDn = 30 mA. Osvetleni je provedeno LED svitidly s odpovídajícím krytim IP. V rozvaděci je osazena prepetova ochrana stupne T2 (C) pro sit TN-C.',
+    byt: 'Elektricka instalace bytove jednotky je provedena kabely CYKY-J ulozenymi pod omitkou a v podlahach. Hlavni privod z elektroměroveho rozvadece ve spolecnych prostorach bytoveho domu je proveden kabelem CYKY-J 4x10 spolecne s hlavnim privodem je ulozena barevna kombinace zl/zeluta ochraneho pospojovani prurezu 10mm2. Bytovy rozvadec RB je nainstalovan ve vstupni chodbe bytove jednotky. Zasuvkove obvody jsou jisteny jistitci charakteristiky B a chraneny proudovymi chranic s IDn = 30 mA. V rozvaděci je osazena prepetova ochrana stupne T2 (C) pro sit TN-C.',
+    prumysl: 'Jedna se o rozsahly prumyslovy objekt. Hlavni rozvadec RH je napajan z vlastni transformatorove stanice TS. Z rozvadece RH jsou napajeny podruzne rozvadece vyrobniho objektu, administrativni budovy a technickeho zazemi. Kabelove rozvody jsou ulozeny na lavkach, v dratenych nosnych systemech a elektroinstalacnich ohebnych trubkach. V rozvodne VN/NN je instalovana pripojnice MET - hlavni uzemnovaci svorka. V rozvadeci RH vedle hlavniho jistice je osazena svodic bleskových proudu Typ T1.'
+  };
+  el.value = texty[aktPodtyp] || texty.dum;
+}
+
+function magicZaver() {
+  var el = document.getElementById('f_zhodnoceni');
+  if (el) el.value = 'Zpusob a provedeni elektroinstalace je v souladu s platnymi CSN. Kvalita provedenych praci je hodnocena jako dobra. Ochrana pred urazem elektrickym proudem v siti TN automatickym odpojenim od zdroje je provedena v souladu s pozadavky CSN 33 2000-4-41 ed.3. Pri mereni spojitosti ochranych vodicu byla namerena hodnota vzdy mensi nez 0,7 Ohm. Pri mereni izolacnich stavu byly namerene hodnoty vyrazne nad minimem Riso. Pri mereni impedance vypinaci smycky hodnoty odpovidaji CSN 33 2000-4-41 ed.3, cl. 411.4.4.';
+}
+
+function openModalRevize() {
+  var m = document.getElementById('modal-revize');
+  if (!m) return;
+  var zahajeni = document.getElementById('f_zahajeni');
+  var mdat = document.getElementById('m_datum');
+  if (mdat) mdat.value = (zahajeni && zahajeni.value) ? zahajeni.value : new Date().toISOString().split('T')[0];
+  // Přednastavení dle podtypu
+  var typObj = document.getElementById('m_typ_obj');
+  if (typObj) {
+    if (aktPodtyp === 'dum') typObj.value = '4';
+    else if (aktPodtyp === 'byt') typObj.value = '4';
+    else if (aktPodtyp === 'prumysl') typObj.value = '3';
+  }
+  updateRevizeLhuta();
+  m.classList.add('open');
+}
+
+function updateRevizeLhuta() {
+  var typ = document.getElementById('m_typ_obj');
+  if (!typ) return;
+  var cw = document.getElementById('m_custom_wrap');
+  if (cw) cw.style.display = typ.value === 'custom' ? 'block' : 'none';
+  var datum = document.getElementById('m_datum');
+  if (!datum || !datum.value) return;
+  var roky = typ.value === 'custom' ? (parseInt((document.getElementById('m_custom_roky') || {}).value) || 3) : parseInt(typ.value);
+  var d = new Date(datum.value);
+  d.setFullYear(d.getFullYear() + roky);
+  var vysl = document.getElementById('m_vysledek');
+  if (vysl) {
+    vysl.style.display = 'block';
+    vysl.textContent = 'Termin pristi revize: ' + d.toLocaleDateString('cs-CZ') + ' (za ' + roky + ' let)';
+  }
+}
+
+function potvrditRevize() {
+  var typ = document.getElementById('m_typ_obj');
+  var datum = document.getElementById('m_datum');
+  if (!typ || !datum || !datum.value) { alert('Zadejte datum!'); return; }
+  var roky = typ.value === 'custom' ? (parseInt((document.getElementById('m_custom_roky') || {}).value) || 3) : parseInt(typ.value);
+  var d = new Date(datum.value);
+  d.setFullYear(d.getFullYear() + roky);
+  var fp = document.getElementById('f_pristi'); if (fp) fp.value = d.toISOString().split('T')[0];
+  var fl = document.getElementById('f_lhuta');
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var lhutaText = '';
+  if (aktPodtyp === 'prumysl') {
+    lhutaText = 've smyslu NV c. 101/2005 Sb. §3 (4a) dle vypracovaneho radu el. zarizeni a planu revizi provozovatele do konce roku ' + d.getFullYear();
+  } else {
+    lhutaText = roky + ' let - do ' + mm + '/' + d.getFullYear() + ' (dle NV c. 190/2022 Sb. §10 pism. n, CSN 33 1500 c. 3.9)';
+  }
+  if (fl) fl.value = lhutaText;
+  closeModal('modal-revize');
+}
+
+function closeModal(id) {
+  var m = document.getElementById(id); if (m) m.classList.remove('open');
+}
+
+function gv(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+
+function getData() {
+  var t = STORE.technik || {};
+  var pristroje = [];
+  document.querySelectorAll('#pristroje-body tr').forEach(function(tr) {
+    var inp = tr.querySelectorAll('input');
+    if (inp.length >= 4) pristroje.push({ nazev: inp[0].value, vyrCislo: inp[1].value, kalibrace: inp[2].value, platnost: inp[3].value });
+  });
+  var mereni = [];
+  document.querySelectorAll('#mereni-body tr').forEach(function(tr) {
+    var inp = tr.querySelectorAll('input');
+    var sels = tr.querySelectorAll('select'); var faze = sels[0] ? sels[0].value : ''; var test = sels[1] ? sels[1].value : ''; if (inp.length >= 14) mereni.push({ c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value, a: inp[4].value, idn: inp[5].value, isc: inp[6].value, rpe: inp[7].value, zsm: inp[8].value, riso: inp[9].value, vidn: inp[10].value, v5idn: inp[11].value, id: inp[12].value, uc: inp[13] ? inp[13].value : '', kabel: inp[14] ? inp[14].value : inp[13].value, faze: faze, test: test });
+  });
+  var zavady = [];
+  document.querySelectorAll('.zavada-item').forEach(function(div) {
+    var sel = div.querySelector('select');
+    var kod = sel ? sel.value : 'C3';
+    var ta = div.querySelectorAll('textarea');
+    var inps = div.querySelectorAll('input[type=text]');
+    zavady.push({ kod: kod, popis: ta[0] ? ta[0].value : '', dalsi: inps[0] ? inps[0].value : '', norma: inps[1] ? inps[1].value : '' });
+  });
+  var dokumentace = [];
+  document.querySelectorAll('#dokumentace-body tr').forEach(function(tr) {
+    var inp = tr.querySelectorAll('input');
+    if (inp.length >= 3) dokumentace.push({ cislo: inp[0].value, datum: inp[1].value, nazev: inp[2].value });
+  });
+  var psc = t.psc || '';
+  var mesto = t.mesto || '';
+  var adr = [t.ulice, (psc + ' ' + mesto).trim()].filter(Boolean).join(', ');
+  return {
+    typ: aktTyp, ev_cislo: gv('f_ev_cislo'), vytisk: gv('f_vytisk'), druh: gv('f_druh'),
+    misto: gv('f_misto'), adresa: gv('f_adresa'),
+    zahajeni: gv('f_zahajeni'), ukonceni: gv('f_ukonceni'), vypracovani: gv('f_vypracovani'), pristi: gv('f_pristi'),
+    normy: getVybrane(),
+    provozovatel: gv('f_provozovatel'), firma_zmena: gv('f_firma_zmena'), firma_opravneni: gv('f_firma_opravneni'),
+    rt_jmeno: gv('f_rt_jmeno') || t.jmeno || '',
+    rt_osvedceni: gv('f_rt_osvedceni') || t.osvedceni || '',
+    rt_opravneni: gv('f_rt_opravneni') || t.opravneni || '',
+    rt_adresa: gv('f_rt_adresa') || adr,
+    rt_ico: gv('f_rt_ico') || t.ico || '',
+    trida: gv('f_trida'), vysledek: gv('f_vysledek'),
+    zdroj: gv('f_zdroj'), sit: gv('f_sit'), ochrana: gv('f_ochrana'),
+    predano_misto: gv('f_predano_misto'), predano_datum: gv('f_predano_datum'),
+    prebira: gv('f_prebira'), vyhotoveni: gv('f_vyhotoveni'), rozdelovnik: gv('f_rozdelovnik'),
+    predmet_je: gv('f_predmet_je'), predmet_neni: gv('f_predmet_neni'), popis: gv('f_popis'),
+    pritomen: gv('f_pritomen'), zdroj_napajeni: gv('f_zdroj_napajeni'),
+    zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
+    rozvadec: gv('f_rozvadec'), rozvadec_umisteni: gv('f_rozvadec_umisteni'),
+    zhodnoceni: gv('f_zhodnoceni'), celkovy_vysledek: gv('f_celkovy_vysledek'), lhuta: gv('f_lhuta'),
+    poznamka_zavady: gv('f_poznamka_zavady'),
+    pristroje: pristroje, mereni: mereni, zavady: zavady, dokumentace: dokumentace,
+    timestamp: new Date().toISOString()
+  };
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('cs-CZ'); } catch(e) { return iso; }
+}
+
+function fmtPristi(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso);
+    return String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+  } catch(e) { return ''; }
+}
+
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function generujPDF() {
+  var D = getData();
+  var pages = document.getElementById('pdf-pages');
+  if (!pages) return;
+  pages.innerHTML = '';
+  var total = 4;
+  // Přidej landscape style pro tisk
+  var existingStyle = document.getElementById('landscape-print-style');
+  if (existingStyle) existingStyle.remove();
+  var ls = document.createElement('style');
+  ls.id = 'landscape-print-style';
+  ls.textContent = '@media print { .a4-landscape { size: A4 landscape; } @page { size: A4; } }';
+  document.head.appendChild(ls);
+
+  function hdr(n) {
+    return '<div class="a4-header">' +
+      '<div class="a4-hbox">' + fmtDate(D.zahajeni) + '</div>' +
+      '<div class="a4-hbox">' + String(n).padStart(3, '0') + '/' + String(total).padStart(3, '0') + '</div>' +
+      '<div class="a4-hbox">' + (D.ev_cislo || '—') + '</div>' +
+      '</div>';
+  }
+
+  function ftr() {
+    return '<div class="a4-footer">' +
+      '<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>' +
+      '<span>ev. cislo: ' + esc(D.rt_osvedceni) + '</span>' +
+      '<span>Revize EL 2025</span>' +
+      '</div>';
+  }
+
+  var nadpis = D.typ === 'lps'
+    ? 'ZPRAVA O ' + (D.druh || '').toUpperCase() + ' REVIZI LPS - OCHRANY PRED BLESKEM'
+    : 'ZPRAVA O ' + (D.druh || '').toUpperCase() + ' REVIZI ELEKTRICKEHO ZARIZENI';
+  var podnadpis = 'provedene dle NV c. 190/2022 Sb., CSN 33 1500 a CSN 33 2000-6 ed.2';
+  var posudek = D.celkovy_vysledek === 'schopno'
+    ? 'Provedenou prohlidkou a merenim bylo zjisteno, ze revidovana elektricka instalace je z hlediska bezpecnosti schopna provozu.'
+    : 'Revidovane elektricke zarizeni NENI z hlediska bezpecnosti schopno provozu.';
+
+  var p1 = document.createElement('div');
+  p1.className = 'a4';
+  p1.innerHTML = hdr(1) +
+    '<div class="a4-content">' +
+    '<div class="r2" style="margin-bottom:4mm">' +
+    '<div><div class="pbox-label">Revizni technik:</div>' +
+    '<div class="pbox" style="min-height:16mm;font-size:9.5pt;line-height:1.5">' + esc(D.rt_jmeno) + '<br>' + esc(D.rt_adresa) + '</div>' +
+    '<div class="pbox" style="margin-top:1mm;font-size:9.5pt">Ev.c. ' + esc(D.rt_osvedceni) + '<br>Opr.c. ' + esc(D.rt_opravneni) + '</div></div>' +
+    '<div><div class="pbox-label">Predmet revize / Provozovatel:</div>' +
+    '<div class="pbox" style="min-height:24mm;font-size:9.5pt;line-height:1.5">' + esc(D.provozovatel) + '</div></div>' +
+    '</div>' +
+    '<div class="ptitle"><h1>' + nadpis + '</h1><p>' + podnadpis + '</p></div>' +
+    '<div class="r2" style="margin-bottom:2.5mm">' +
+    '<div><div class="pbox-label">Zdroj el. proudu:</div>' +
+    '<div class="pbox" style="min-height:12mm;font-size:9pt">cizi: ' + esc(D.zdroj) + '</div></div>' +
+    '<div><div class="pbox-label">Ochrana pred urazem:</div>' +
+    '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
+    '<div style="margin-top:1mm"><div class="pbox-label">Sit:</div>' +
+    '<div class="pbox" style="font-size:9pt">' + esc(D.sit) + '</div></div></div>' +
+    '</div>' +
+    '<div class="r2" style="margin-bottom:2.5mm">' +
+    '<div><div class="pbox-label">Pouzite normy:</div>' +
+    '<div class="pbox" style="font-size:8pt;min-height:18mm;line-height:1.5">' + esc(D.normy) + '</div></div>' +
+    '<div><div class="pbox-label">Datum revize:</div>' +
+    '<div class="pbox" style="min-height:18mm">' +
+    '<div class="dtgrid">' +
+    '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
+    '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
+    '<span class="dtlabel">predchozi</span><span class="dtval"></span>' +
+    '<span class="dtlabel">vyhotoveni</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
+    '<span class="dtlabel">pristi revize</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
+    '</div></div></div>' +
+    '</div>' +
+    '<div style="margin-bottom:2.5mm"><div class="pbox-label">Celkovy posudek:</div>' +
+    '<div class="pbox" style="font-size:9.5pt;min-height:14mm;line-height:1.5">' + posudek + '</div></div>' +
+    '<div class="r2" style="margin-bottom:3mm">' +
+    '<div><div class="pbox-label">Pouzite pristroje:</div>' +
+    '<div class="pbox" style="min-height:20mm;font-size:8.5pt">' +
+    D.pristroje.map(function(p) { return esc(p.nazev) + ' | ' + esc(p.vyrCislo) + ' | ' + fmtDate(p.platnost) + '<br>'; }).join('') +
+    '</div></div>' +
+    '<div><div class="pbox-label">Pocet stran, kopii...</div>' +
+    '<div class="pbox" style="min-height:20mm;font-size:8.5pt">' +
+    'stran: ' + total + '<br>vyhotoveni: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
+    '</div></div></div>' +
+    '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje prevzeti zpravy dne: ___________</div>' +
+    '<div class="podp-grid">' +
+    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
+    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis revizniho technika</div></div></div></div>' +
+    '</div></div>' + ftr();
+  pages.appendChild(p1);
+
+  var p2 = document.createElement('div');
+  p2.className = 'a4';
+  var vymText = 'Predmetem ' + (D.druh || '').toLowerCase() + ' revize bylo VEZ vysloveně uvedene v teto zprave.';
+  if (D.predmet_je) vymText += '\n\nPredmetem je: ' + D.predmet_je;
+  if (D.predmet_neni) vymText += '\n\nPredmetem neni: ' + D.predmet_neni;
+  vymText += '\n\nRevizi pritomen: ' + (D.pritomen || '—');
+  vymText += '\n\nZkouseni dle CSN 33 2000-6 ed.2 cl.6.4.3.1:\na) spojitost ochranych vodicu\nb) izolacni odpor\nc) automaticke odpojeni od zdroje\nd) doplnkova ochrana\ne) funkcni zkousky\nf) ubytek napeti';
+  p2.innerHTML = hdr(2) +
+    '<div class="a4-content">' +
+    '<div class="sec-head"><div class="sec-num">1.</div><div class="sec-name">Vymezeni rozsahu revize</div></div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;margin-bottom:4mm;white-space:pre-line">' + esc(vymText) + '</div>' +
+    '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zarizeni</div></div>' +
+    '<div style="font-size:9pt;padding:0 2mm;margin-bottom:3mm">' +
+    (D.napetova_soustava ? '<strong>Napetova soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '') +
+    (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
+    (D.pritomen2 ? '<strong>Pri revizi byl pritomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
+    (D.firma_zmena2 ? '<strong>Elektromontazni prace provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.c. opr.: ' + esc(D.firma_opravneni2) : '') : '') +
+    '</div>' +
+    '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technicky popis objektu</div></div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || 'Doplnte v zalozce A.') + '</div>' +
+    '</div>' + ftr();
+  pages.appendChild(p2);
+
+  var mereniRows = D.mereni.map(function(m) {
+    return '<tr>' +
+      '<td style="text-align:center">' + esc(m.c) + '</td>' +
+      '<td>' + esc(m.n) + '</td>' +
+      '<td style="text-align:center">' + esc(m.typ) + '</td>' +
+      '<td style="text-align:center">' + esc(m.ch) + '</td>' +
+      '<td style="text-align:center">' + esc(m.a) + '</td>' +
+      '<td style="text-align:center">' + esc(m.idn) + '</td>' +
+      '<td style="text-align:center">' + esc(m.isc) + '</td>' +
+      '<td style="text-align:center">' + esc(m.rpe) + '</td>' +
+      '<td style="text-align:center">' + esc(m.zsm) + '</td>' +
+      '<td style="text-align:center">' + esc(m.riso) + '</td>' +
+      '<td style="text-align:center">' + esc(m.faze||'') + '</td>' +
+      '<td style="text-align:center">' + esc(m.vidn) + '</td>' +
+      '<td style="text-align:center">' + esc(m.v5idn) + '</td>' +
+      '<td style="text-align:center">' + esc(m.id) + '</td>' +
+      '<td style="text-align:center">' + esc(m.uc||'') + '</td>' +
+      '<td style="text-align:center">' + esc(m.test||'') + '</td>' +
+      '<td>' + esc(m.kabel) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  var p3 = document.createElement('div');
+  p3.className = 'a4 a4-landscape';
+  p3.innerHTML = hdr(3) +
+    '<div class="a4-content">' +
+    '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Rozvadece - mereni</div></div>' +
+    (D.rozvadec ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>[1] ' + esc(D.rozvadec) + '</strong> - ' + esc(D.rozvadec_umisteni) + '</div>' : '') +
+    '<table class="pdf-meas"><thead><tr>' +
+    '<th rowspan="2">C.</th><th rowspan="2" style="min-width:90px">Nazev obvodu</th><th colspan="5">Jmenovite hodnoty jisteni</th><th colspan="3">Mereni impedanci</th><th colspan="6">Mereni RCD</th><th rowspan="2" style="min-width:80px">Kabel typ, prurezu mm2</th>' +
+    '</tr><tr><th>Typ</th><th>Ch.</th><th>A</th><th>IDn mA</th><th>Isc kA</th><th>Rpe O</th><th>Zsm max O</th><th>Riso MO</th><th>Faze</th><th>t-IDn ms</th><th>t-5IDn ms</th><th>ID mA</th><th>Uc V</th><th>Test</th></tr></thead>' +
+    '<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Zadne obvody</td></tr>') + '</tbody></table>' +
+    '<div class="sec-head" style="margin-top:5mm"><div class="sec-num">4.</div><div class="sec-name">Hodnoceni ochrany pred urazem</div></div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm">Automaticke odpojeni od zdroje v siti TN — cl. 411<br>Proudovy chranic — cl.415.1<br>Doplnujici pospojovani — cl.415.2</div>' +
+    '</div>' + ftr();
+  pages.appendChild(p3);
+
+  var zavadyHtml = D.zavady.length > 0
+    ? D.zavady.map(function(z, i) {
+        return '<div style="margin-bottom:2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + esc(z.popis) +
+          (z.dalsi ? '<br><em>Po odstraneni: ' + esc(z.dalsi) + '</em>' : '') + '</div>';
+      }).join('')
+    : '<div style="font-size:9.5pt;padding:0 2mm">Nebyly zjisteny.</div>';
+
+  var p4 = document.createElement('div');
+  p4.className = 'a4';
+  p4.innerHTML = hdr(4) +
+    '<div class="a4-content">' +
+    '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Nedodelky a neshody</div></div>' +
+    '<div style="padding:0 2mm;margin-bottom:4mm">' + zavadyHtml + '</div>' +
+    '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Zaver</div></div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.zhodnoceni || 'Zaver nebyl vyplnen.') + '</div>' +
+    (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Pristi revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
+    '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm">Normy: ' + esc(D.normy) + '</div>' +
+    '</div>' + ftr();
+  pages.appendChild(p4);
+
+  archiv.unshift({ typ: D.typ, ev_cislo: D.ev_cislo, misto: D.misto, datum: D.zahajeni, vysledek: D.celkovy_vysledek });
+  STORE.archiv = archiv;
+  renderArchiv();
+  showScreen('pdf');
+  window.scrollTo(0, 0);
+}
+
+function tiskMereni() {
+  var D = getData();
+  var mereniRows = D.mereni.map(function(m) {
+    return '<tr>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.c) + '</td>' +
+      '<td style="padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.n) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.typ) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.ch) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.a) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.idn) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.isc) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.rpe) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.zsm) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.riso) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.faze||'') + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.vidn) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.v5idn) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.id) + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.uc||'') + '</td>' +
+      '<td style="text-align:center;padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.test||'') + '</td>' +
+      '<td style="padding:1mm 1.5mm;border:.75pt solid #000">' + esc(m.kabel) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  win.document.write('<title>Mereni - ' + (D.ev_cislo||'RZ') + '</title>');
+  win.document.write('<style>');
+  win.document.write('@page { size: A4 landscape; margin: 10mm 12mm; }');
+  win.document.write('* { box-sizing: border-box; margin: 0; padding: 0; }');
+  win.document.write('body { font-family: "Courier New", Courier, monospace; font-size: 8pt; color: #000; }');
+  win.document.write('.header { display: flex; justify-content: space-between; border-bottom: 1pt solid #000; padding-bottom: 2mm; margin-bottom: 4mm; }');
+  win.document.write('.hbox { border: 1pt solid #000; padding: 1mm 3mm; font-size: 8pt; font-weight: bold; min-width: 25mm; text-align: center; }');
+  win.document.write('.sec { display: flex; align-items: center; border: .75pt solid #000; margin-bottom: 3mm; }');
+  win.document.write('.sec-num { background: #000; color: #fff; padding: 1mm 3mm; font-weight: bold; font-size: 9pt; }');
+  win.document.write('.sec-name { padding: 1.5mm 3mm; font-weight: bold; font-size: 9pt; text-transform: uppercase; letter-spacing: .04em; }');
+  win.document.write('table { width: 100%; border-collapse: collapse; }');
+  win.document.write('th { border: .75pt solid #000; padding: .8mm 1mm; text-align: center; font-weight: bold; background: #e8e8e8; font-size: 6.5pt; white-space: nowrap; }');
+  win.document.write('td { border: .75pt solid #000; font-size: 7.5pt; }');
+  win.document.write('.footer { position: fixed; bottom: 8mm; left: 12mm; right: 12mm; border-top: .5pt solid #000; padding-top: 1mm; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }');
+  win.document.write('@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
+  win.document.write('</style></head><body>');
+  win.document.write('<div class="header">');
+  win.document.write('<div class="hbox">' + fmtDate(D.zahajeni) + '</div>');
+  win.document.write('<div class="hbox">Mereni obvodu – ' + esc(D.rozvadec||'') + '</div>');
+  win.document.write('<div class="hbox">' + esc(D.ev_cislo||'—') + '</div>');
+  win.document.write('</div>');
+  win.document.write('<div class="sec"><div class="sec-num">E.</div><div class="sec-name">Obvody a vysledky zkousek dle CSN 33 2000-6 ed.2 Z2 – priloha G</div></div>');
+  if (D.rozvadec) {
+    win.document.write('<div style="font-size:8.5pt;margin-bottom:2mm"><strong>[1] ' + esc(D.rozvadec) + '</strong> &mdash; ' + esc(D.rozvadec_umisteni) + '</div>');
+  }
+  win.document.write('<table>');
+  win.document.write('<thead>');
+  win.document.write('<tr>');
+  win.document.write('<th rowspan="2">C.</th>');
+  win.document.write('<th rowspan="2" style="min-width:70pt">Nazev obvodu</th>');
+  win.document.write('<th colspan="5">Jmenovite hodnoty jisteni</th>');
+  win.document.write('<th colspan="3">Mereni impedanci</th>');
+  win.document.write('<th colspan="6">Mereni RCD</th>');
+  win.document.write('<th rowspan="2" style="min-width:55pt">Kabel typ, prurezu mm2</th>');
+  win.document.write('</tr>');
+  win.document.write('<tr>');
+  win.document.write('<th>Typ</th><th>Ch.</th><th>A</th><th>IDn mA</th><th>Isc kA</th>');
+  win.document.write('<th>Rpe O</th><th>Zsm max O</th><th>Riso MO</th>');
+  win.document.write('<th>Faze</th><th>t-IDn ms</th><th>t-5IDn ms</th><th>ID mA</th><th>Uc V</th><th>Test</th>');
+  win.document.write('</tr>');
+  win.document.write('</thead>');
+  win.document.write('<tbody>' + (mereniRows || '<tr><td colspan="17" style="text-align:center;padding:3mm;color:#888">Zadne obvody</td></tr>') + '</tbody>');
+  win.document.write('</table>');
+  win.document.write('<div class="footer">');
+  win.document.write('<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>');
+  win.document.write('<span>ev. cislo: ' + esc(D.rt_osvedceni) + '</span>');
+  win.document.write('<span>Revize EL 2025</span>');
+  win.document.write('</div>');
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function() { win.print(); }, 500);
+}
+
+function ulozit() {
+  var D = getData();
+  var blob = new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'RZ_' + (D.ev_cislo || 'nova') + '_' + (D.zahajeni || 'datum') + '.json';
+  a.click();
+  alert('Zprava ulozena jako JSON');
+}
+
+function renderArchiv() {
+  var c = document.getElementById('archiv-container');
+  if (!c) return;
+  if (!archiv || archiv.length === 0) {
+    c.innerHTML = '<div class="archiv-empty">Zatim zadne zpravy. Vytvorte novou vyse.</div>';
+    return;
+  }
+  var html = '<table class="archiv-table"><thead><tr><th>#</th><th>Typ</th><th>Ev. cislo</th><th>Misto</th><th>Datum</th><th>Vysledek</th><th></th></tr></thead><tbody>';
+  archiv.forEach(function(z, i) {
+    html += '<tr>';
+    html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
+    html += '<td><span class="' + (z.typ === 'elektro' ? 'badge-el' : 'badge-lps') + '">' + (z.typ === 'elektro' ? 'Elektro' : 'LPS') + '</span></td>';
+    html += '<td style="font-family:monospace;font-size:.8rem">' + (z.ev_cislo || '—') + '</td>';
+    html += '<td style="font-size:.85rem">' + (z.misto || '—') + '</td>';
+    html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + '</td>';
+    html += '<td>' + (z.vysledek === 'schopno' ? 'OK' : '!') + '</td>';
+    var delBtn = '<button class="del-btn" data-action="smazatZpravu" data-idx="' + i + '">X</button>';
+    html += '<td>' + delBtn + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  c.innerHTML = html;
+}
+
+function smazatZpravu(i) {
+  if (!confirm('Smazat zpravu?')) return;
+  archiv.splice(i, 1);
+  STORE.archiv = archiv;
+  renderArchiv();
+}
+
+function delRow(btn) { if (btn) btn.closest('tr').remove(); }
+function delRowEl(el) { if (el) el.closest('tr').remove(); }
+
+function init() {
+  archiv = STORE.archiv || [];
+  renderArchiv();
+  renderPristrojePreset();
+  var bEl = document.getElementById('btn-nova-elektro');
+  if (bEl) bEl.addEventListener('click', function() {
+    aktTyp = 'elektro';
+    var h = document.getElementById('podtyp-header');
+    if (h) h.textContent = '⚡ Nová zpráva – Elektro';
+    showScreen('podtyp');
+  });
+  var bLps = document.getElementById('btn-nova-lps');
+  if (bLps) bLps.addEventListener('click', function() { aktTyp = 'lps'; novaZprava('lps'); });
+  // Podtyp karty
+  ['dum','byt','prumysl'].forEach(function(pt) {
+    var btn = document.getElementById('pt-' + pt);
+    if (btn) btn.addEventListener('click', function() { volbaPodtypu(pt); });
+  });
+}
+
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('[data-action],[data-tab]');
+  if (!el) return;
+  var action = el.getAttribute('data-action');
+  var tab = el.getAttribute('data-tab');
+  if (tab) { switchTab(tab, el); return; }
+  switch (action) {
+    case 'home': showScreen('home'); break;
+    case 'nastaveni': showScreen('nastaveni'); break;
+    case 'ulozit': ulozit(); break;
+    case 'generujPDF': generujPDF(); break;
+    case 'ulozitTechnika': ulozitTechnika(); break;
+    case 'ulozitPristroje': ulozitPristroje(); break;
+    case 'addPristrojPreset': addPristrojPreset(); break;
+    case 'openModalRevize': openModalRevize(); break;
+    case 'magicPopis': magicPopis(); break;
+    case 'magicZaver': magicZaver(); break;
+    case 'addDokumentace': addDokumentace(); break;
+    case 'addPristroj': addPristroj(); break;
+    case 'addMereniRow': addMereniRow(); break;
+    case 'addZavada': addZavada(); break;
+    case 'potvrditRevize': potvrditRevize(); break;
+    case 'closeRevize': closeModal('modal-revize'); break;
+    case 'print': window.print(); break;
+    case 'tiskMereni': tiskMereni(); break;
+    case 'delRow': delRowEl(el); break;
+    case 'delPreset': delPreset(parseInt(el.getAttribute('data-idx'))); break;
+    case 'smazatZpravu': smazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
+    case 'removeZavada': var zi = el.closest('.zavada-item'); if (zi) zi.remove(); break;
+    case 'pdf': showScreen('pdf'); break;
+    case 'form': showScreen('form'); break;
+  }
+});
+
+document.addEventListener('change', function(e) {
+  var el = e.target;
+  var action = el.getAttribute('data-action');
+  if (action === 'updateLhuta') updateRevizeLhuta();
+  if (action === 'updZavadaKod') updZavadaKod(el);
+});
+
+window.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
