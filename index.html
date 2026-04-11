@@ -407,13 +407,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 ═══════════════════════════════════════════════ -->
 <div class="screen" id="screen-form">
 <div class="breadcrumb"><a data-action="home">Hlavní</a> › <span id="bc-typ">Nová zpráva</span></div>
-<div class="tab-bar">
+<div class="tab-bar" id="tab-bar-el">
   <button class="tab-btn active" data-tab="titulni">1. Titulní strana</button>
   <button class="tab-btn" data-tab="popis">A. Popis instalace</button>
   <button class="tab-btn" data-tab="pristroje">C+D. Přístroje &amp; Úkony</button>
   <button class="tab-btn" data-tab="mereni">E. Měření</button>
   <button class="tab-btn" data-tab="zaver">F. Závěr &amp; Závady</button>
   <button class="tab-btn" data-tab="checklist">Prohlídka</button>
+</div>
+<div class="tab-bar" id="tab-bar-lps" style="display:none">
+  <button class="tab-btn active" data-tab="titulni">1. Titulní strana</button>
+  <button class="tab-btn" data-tab="lps-objekt">2. Objekt &amp; LPS</button>
+  <button class="tab-btn" data-tab="pristroje">3. Přístroje</button>
+  <button class="tab-btn" data-tab="lps-prohlidka">4. Prohlídka LPS</button>
+  <button class="tab-btn" data-tab="lps-mereni">5. Měření zemničů</button>
+  <button class="tab-btn" data-tab="zaver">6. Závěr &amp; Závady</button>
 </div>
 
 <!-- TAB TITULNÍ -->
@@ -709,6 +717,91 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div id="checklist-container"></div>
   </div>
 </div>
+<!-- TAB LPS OBJEKT -->
+<div class="tab-panel" id="tab-lps-objekt">
+  <div class="scard">
+    <div class="scard-title">Základní údaje o objektu</div>
+    <div class="g2">
+      <div class="f"><label>Typ objektu</label>
+        <select id="lps_typ_objektu">
+          <option value="pro bytové účely">pro bytové účely</option>
+          <option value="pro administrativní účely">pro administrativní účely</option>
+          <option value="průmyslový objekt" selected>průmyslový objekt</option>
+          <option value="objekt s nebezpečím požáru">objekt s nebezpečím požáru</option>
+          <option value="objekt s nebezpečím výbuchu">objekt s nebezpečím výbuchu</option>
+          <option value="jiný typ objektu">jiný typ objektu</option>
+        </select></div>
+      <div class="f"><label>Zařízení na střeše</label><input type="text" id="lps_strecha_zarizeni" placeholder="STA, anténa mobil. operátorů, solární panely, klimatizační jednotky"></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Parametry LPS</div>
+    <div class="g2">
+      <div class="f"><label>Třída LPS (hladina ochrany LPL)</label>
+        <select id="lps_trida"><option value="I">I</option><option value="II">II</option><option value="III" selected>III</option><option value="IV">IV</option></select></div>
+      <div class="f"><label>Typ jímací soustavy</label>
+        <select id="lps_jimaci"><option value="tyče">tyče</option><option value="závěsná lana">závěsná lana</option><option value="vodiče mřížové soustavy" selected>vodiče mřížové soustavy</option><option value="kombinace">kombinace</option></select></div>
+      <div class="f"><label>Velikost ok mřížové soustavy</label>
+        <select id="lps_mrizka"><option value="5x5m">5×5m</option><option value="10x10m">10×10m</option><option value="15x15m" selected>15×15m</option><option value="20x20m">20×20m</option><option value="jiné">jiné</option></select></div>
+      <div class="f"><label>Výška tyčového jímače (m)</label><input type="text" id="lps_vyska_jimace" placeholder="1,0"></div>
+      <div class="f"><label>Materiál střechy</label><input type="text" id="lps_material_strechy" placeholder="pálená krytina, plech, beton"></div>
+      <div class="f"><label>Typ uspořádání zemnící soustavy</label>
+        <select id="lps_zemneni_typ"><option value="Typ A">Uspořádání typu A</option><option value="Typ B" selected>Uspořádání typu B</option></select></div>
+      <div class="f"><label>Druh zeminy</label>
+        <select id="lps_zemina"><option value="písčitá">písčitá</option><option value="štěrk">štěrk</option><option value="jíl" selected>jíl</option><option value="ornice">ornice</option><option value="rašelina">rašelina</option><option value="kamenitá">kamenitá</option><option value="beton">beton</option></select></div>
+      <div class="f"><label>Stav zeminy</label>
+        <select id="lps_stav_zeminy"><option value="suchá">suchá</option><option value="vlhká" selected>vlhká</option><option value="zmrzlá">zmrzlá</option></select></div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Zóny ochrany před bleskem (LPZ) a SPD</div>
+    <div class="g2">
+      <div class="f"><label>Zóny LPZ — zaklikněte použité</label>
+        <div id="lps-lpz-checkboxy" style="margin-top:.4rem"></div>
+      </div>
+      <div class="f"><label>Potenciálové vyrovnání</label>
+        <select id="lps_potencial"><option value="TT">síť TT</option><option value="TN" selected>síť TN</option><option value="IT">síť IT</option></select></div>
+      <div class="f span2"><label>Osazené typy SPD</label><textarea id="lps_spd" placeholder="Výrobce, typové označení, místo instalace" style="min-height:60px"></textarea></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB LPS PROHLÍDKA -->
+<div class="tab-panel" id="tab-lps-prohlidka">
+  <div class="scard">
+    <div class="scard-title">Prohlídka — vnější ochrana před bleskem</div>
+    <div id="lps-prohlidka-container"></div>
+  </div>
+</div>
+
+<!-- TAB LPS MĚŘENÍ -->
+<div class="tab-panel" id="tab-lps-mereni">
+  <div class="scard">
+    <div class="scard-title">Měření zemních odporů <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">ČSN EN 62305-3 ed.2, čl. 5.4.1</span></div>
+    <div class="f" style="margin-bottom:1rem"><label>Celkový zemní odpor soustavy (Ω)</label><input type="text" id="lps_celkovy_odpor" placeholder="9,5"></div>
+    <table class="data-table">
+      <thead><tr><th style="width:6%">P.č.</th><th>Označení zkušební svorky</th><th>Odpor zemní smyčky (Ω)</th><th>Odpor zemniče (Ω)</th><th>Přechodový odpor ZS (Ω)</th><th style="width:5%"></th></tr></thead>
+      <tbody id="lps-mereni-body"></tbody>
+    </table>
+    <button class="add-row" data-action="addLpsMereni">+ Přidat měření</button>
+    <div class="info-box" style="margin-top:.75rem;font-size:.76rem">
+      Minimální hodnota zemního odporu jednoho zemniče je menší rovna 10 Ω.<br>
+      ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.4.1
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Metoda měření</div>
+    <div class="g2">
+      <div class="f"><label>Měření přechodových odporů spojů vodičů</label>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.3rem">Naměřený odpor by měl být menší nebo roven 0,2 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.3.5</div>
+      </div>
+      <div class="f"><label>Měření zemních odporů (uzemňovací soustavy)</label>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.3rem">Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.4.1</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /screen-form -->
 
 <!-- ═══════════════════════════════════════════════
@@ -991,9 +1084,26 @@ function novaZprava(typ) {
     if (el) el.placeholder = podtypPh[id];
   });
   var och = document.getElementById('f_ochrana'); if (och) och.value = 'automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3';
+  // Přepnout tab-bary dle typu
+  var tabBarEl = document.getElementById('tab-bar-el');
+  var tabBarLps = document.getElementById('tab-bar-lps');
+  if (tabBarEl) tabBarEl.style.display = (typ === 'lps') ? 'none' : 'flex';
+  if (tabBarLps) tabBarLps.style.display = (typ === 'lps') ? 'flex' : 'none';
+  // LPS specifické inicializace
+  if (typ === 'lps') {
+    renderLpsLpz();
+    renderLpsProhlidka();
+    var lmb = document.getElementById('lps-mereni-body'); if (lmb) lmb.innerHTML = '';
+    addLpsMereni();
+    addLpsMereni();
+    addLpsMereni();
+    addLpsMereni();
+  }
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
-  var firstTab = document.querySelector('.tab-btn'); if (firstTab) firstTab.classList.add('active');
+  var activeBar = (typ === 'lps') ? tabBarLps : tabBarEl;
+  var firstTab = activeBar ? activeBar.querySelector('.tab-btn') : document.querySelector('.tab-btn');
+  if (firstTab) firstTab.classList.add('active');
   var titPanel = document.getElementById('tab-titulni'); if (titPanel) titPanel.classList.add('active');
   showScreen('form');
 }
@@ -1676,6 +1786,95 @@ function renderChecklist() {
     html += '</div>';
   });
   c.innerHTML = html;
+}
+
+// ═══ LPS FUNKCE ═══
+var LPS_LPZ = ['LPZ 0', 'LPZ 0A', 'LPZ 0B', 'LPZ 1', 'LPZ 2'];
+var LPS_PROHLIDKA = [
+  { s: 'Jímací soustava', items: [
+    { t: 'Parametry náhodných jímačů', csn: 'ČSN EN 62305-3 ed.2, čl. 5.2.5, tabulka 3' },
+    { t: 'Zvolené jímací zařízení', csn: 'ČSN EN 62305-3 ed.2, čl. 5.2.1' },
+    { t: 'Ochranný úhel', csn: 'ČSN EN 62305-3 ed.2, čl. 5.2.2, tab. 2' },
+    { t: 'Mřížová soustava', csn: 'ČSN EN 62305-3 ed.2, čl. 5.2.2, tab. 2' },
+    { t: 'Vzdálenost pokládaných vodičů jímací soustavy od střechy', csn: 'ČSN EN 62305-3 ed.2, čl. 5.2.4' }
+  ]},
+  { s: 'Soustava svodů', items: [
+    { t: 'Počet svodů — soustava svodů', csn: 'ČSN EN 62305-3 ed.2, 5.3' },
+    { t: 'Vzdálenost mezi svody', csn: 'ČSN EN 62305-3 ed.2, čl. 5.3.3, tabulka 4' },
+    { t: 'Svody rozmístěny rovnoměrně po obvodu objektu', csn: 'ČSN EN 62305-3 ed.2, čl. E.5.3.3' },
+    { t: 'Instalace svodů', csn: 'ČSN EN 62305-3 ed.2, čl. E.5.3.4' },
+    { t: 'Elektrická izolace vnějšího LPS', csn: 'ČSN EN 62305-3 ed.2, čl. 6.3' },
+    { t: 'Použité materiály', csn: 'ČSN EN 62305-3 ed.2, čl. 5.6.2' },
+    { t: 'Zkušební svorka (vč. označení)', csn: 'ČSN EN 62305-3 ed.2, čl. 5.3.6' }
+  ]},
+  { s: 'Uzemňovací soustava', items: [
+    { t: 'Uspořádání uzemňovací soustavy vhodné pro daný objekt', csn: 'ČSN EN 62305-3 ed.2, čl. 5.4.2' },
+    { t: 'Délka zemničů dle třídy LPS', csn: 'ČSN EN 62305-3 ed.2, čl. 5.4.2.1, E5.4.2.2' },
+    { t: 'Použité materiály', csn: 'ČSN EN 62305-3 ed.2, čl. 5.6.2' },
+    { t: 'Pasivní ochrana proti korozi', csn: 'ČSN 33 2000-5-54 ed.3' }
+  ]},
+  { s: 'Ekvipotenciální pospojování — vnější i vnitřní prostory', items: [
+    { t: 'Ekvipotenciální pospojování', csn: 'ČSN EN 62305-3 ed.2, čl. 6.2.2' },
+    { t: 'Min. průřezy vodičů pospojování', csn: 'ČSN EN 62305-3 ed.2, čl. 6.2.2, tab. 8,9' },
+    { t: 'Provedení uzemnění', csn: 'ČSN EN 62305-4 ed.2, čl. 5.1' },
+    { t: 'Zabezpečena co nejnižší hodnota impedance pospojování', csn: 'ČSN EN 62305-4 ed.2, čl. 5.2' }
+  ]},
+  { s: 'Koordinovaná SPD ochrana', items: [
+    { t: 'SPD koordinovaně umístěny na vstupu vedení do každé zóny', csn: 'ČSN EN 62305-4 ed.2, tab. 4.3' },
+    { t: 'SPD instalovány tak, aby byla možná jejich revize', csn: 'ČSN EN 62305-3 ed.2, čl. 6.2.1' },
+    { t: 'Spojovací vodiče k SPD mají minimální průřez', csn: 'ČSN EN 62305-4 ed.2, tab. 1' }
+  ]}
+];
+
+function renderLpsLpz() {
+  var c = document.getElementById('lps-lpz-checkboxy');
+  if (!c) return;
+  c.innerHTML = '';
+  LPS_LPZ.forEach(function(z, i) {
+    var div = document.createElement('div');
+    div.className = 'char-row';
+    div.innerHTML = '<input type="checkbox" id="lpz-' + i + '"' + (i < 2 ? ' checked' : '') + '><label for="lpz-' + i + '">' + z + '</label>';
+    c.appendChild(div);
+  });
+}
+
+function renderLpsProhlidka() {
+  var c = document.getElementById('lps-prohlidka-container');
+  if (!c) return;
+  var html = '';
+  LPS_PROHLIDKA.forEach(function(sec, si) {
+    html += '<div style="margin-bottom:1rem">';
+    html += '<div style="font-family:var(--mono);font-size:.62rem;font-weight:500;text-transform:uppercase;color:var(--accent2);padding:.35rem 0;margin-bottom:.4rem;border-bottom:1px solid var(--border)">' + sec.s + '</div>';
+    sec.items.forEach(function(item, ii) {
+      html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
+      html += '<select style="flex:0 0 100px;font-size:.75rem;padding:2px 4px" id="lps-p-' + si + '-' + ii + '">';
+      html += '<option value="Odpovídá" selected>Odpovídá</option><option value="Neodpovídá">Neodpovídá</option><option value="—">—</option></select>';
+      html += '<label style="font-size:.82rem;flex:1;line-height:1.4">' + item.t + '</label>';
+      html += '<span style="font-size:.68rem;color:#9a9488;flex:0 0 200px;text-align:right">' + item.csn + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  c.innerHTML = html;
+}
+
+function addLpsMereni() {
+  var tbody = document.getElementById('lps-mereni-body');
+  if (!tbody) return;
+  var n = tbody.rows.length + 1;
+  var tr = document.createElement('tr');
+  [n.toString(), '', '', '', ''].forEach(function(v, i) {
+    var td = document.createElement('td');
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = v;
+    inp.placeholder = i === 0 ? n.toString() : (i === 1 ? 'Svorka ' + n : 'Ω');
+    inp.style.cssText = 'width:100%;border:none;background:transparent;font-size:.82rem;text-align:center';
+    td.appendChild(inp);
+    tr.appendChild(td);
+  });
+  tr.appendChild(mkDelTd());
+  tbody.appendChild(tr);
 }
 
 function addDokumentace() {
@@ -2517,6 +2716,7 @@ document.addEventListener('click', function(e) {
     case 'addMereniRow': addMereniRow(el); break;
     case 'addRcdRow': addRcdRow(el); break;
     case 'addRozvadec': addRozvadec(); break;
+    case 'addLpsMereni': addLpsMereni(); break;
     case 'delRozvadec': delRozvadec(el); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
