@@ -1151,36 +1151,39 @@ function addMereniRow() {
   tbody.appendChild(tr);
 }
 
-function addRcdRow() {
-  var tbody = document.getElementById('mereni-body');
-  if (!tbody) return;
-  // Hlavní RCD řádek s popisem chrániče
-  var trMain = document.createElement('tr');
-  trMain.dataset.rowtype = 'rcd-header';
-  trMain.style.background = '#f0f6ff';
-  // Č. — prázdné
-  trMain.appendChild(mkTd(''));
-  // Název — "RCD" popis
-  trMain.appendChild(mkTd('RCD - proudový chránič', ';text-align:left;font-size:.72rem'));
-  // Typ-pol, Ch., A, IΔn
-  trMain.appendChild(mkTd('Hager'));
-  trMain.appendChild(mkTd('A'));
-  trMain.appendChild(mkTd('25'));
-  trMain.appendChild(mkTd('0,03'));
-  // Zsm, Riso
-  trMain.appendChild(mkTd('0,65'));
-  trMain.appendChild(mkTd('>20'));
-  // Fáze, Vyp, čas, 5×, Ut — prázdné na hlavním
-  for (var i = 0; i < 5; i++) trMain.appendChild(mkTd(''));
-  // Kabel
-  trMain.appendChild(mkTd('CYKY 3×2,5', ';text-align:left'));
-  trMain.appendChild(mkDelTd());
-  tbody.appendChild(trMain);
+function mkSelectTd(options, selected, onChange) {
+  var td = document.createElement('td');
+  td.style.border = '1px solid #ccc';
+  var sel = document.createElement('select');
+  sel.style.cssText = 'width:100%;border:none;background:transparent;font-size:.78rem;text-align:center;cursor:pointer';
+  options.forEach(function(o) {
+    var opt = document.createElement('option');
+    opt.value = o;
+    opt.textContent = o;
+    if (o === selected) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  if (onChange) sel.addEventListener('change', onChange);
+  td.appendChild(sel);
+  return td;
+}
 
-  // 4 pod-řádky: AC+, AC-, A+, A-
-  ['AC+','AC-','A+','A-'].forEach(function(faze) {
+function getRcdFazeByType(typ) {
+  if (typ === 'AC') return ['AC+', 'AC-'];
+  return ['AC+', 'AC-', 'A+', 'A-']; // A, B, F
+}
+
+function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
+  // Smaž existující podřádky této skupiny
+  var existing = tbody.querySelectorAll('tr[data-rcd-group="' + rcdGroupId + '"]');
+  existing.forEach(function(r) { r.remove(); });
+  // Vlož nové podřádky
+  var faze = getRcdFazeByType(typ);
+  var insertAfter = afterRow;
+  faze.forEach(function(f) {
     var tr = document.createElement('tr');
     tr.dataset.rowtype = 'rcd-mereni';
+    tr.dataset.rcdGroup = rcdGroupId;
     tr.style.background = '#f8f8f0';
     // Č., Název — prázdné
     tr.appendChild(mkTd(''));
@@ -1190,12 +1193,13 @@ function addRcdRow() {
     // Zsm, Riso — prázdné
     tr.appendChild(mkTd(''));
     tr.appendChild(mkTd(''));
-    // Fáze
-    var tdF = mkTd(faze);
-    tdF.querySelector('input').value = faze;
+    // Fáze — předvyplněná, tučná
+    var tdF = mkTd(f);
+    tdF.querySelector('input').value = f;
     tdF.querySelector('input').style.fontWeight = 'bold';
+    tdF.querySelector('input').readOnly = true;
     tr.appendChild(tdF);
-    // Vyb. mA, čas ms, 5×IΔn ms, Ut V
+    // Vyp. mA, čas ms, 5×IΔn ms, Ut V
     tr.appendChild(mkTd('mA'));
     tr.appendChild(mkTd('ms'));
     tr.appendChild(mkTd('ms'));
@@ -1203,8 +1207,64 @@ function addRcdRow() {
     // Kabel — prázdné
     tr.appendChild(mkTd(''));
     tr.appendChild(mkDelTd());
-    tbody.appendChild(tr);
+    if (insertAfter.nextSibling) {
+      tbody.insertBefore(tr, insertAfter.nextSibling);
+    } else {
+      tbody.appendChild(tr);
+    }
+    insertAfter = tr;
   });
+}
+
+var rcdGroupCounter = 0;
+
+function addRcdRow() {
+  var tbody = document.getElementById('mereni-body');
+  if (!tbody) return;
+  rcdGroupCounter++;
+  var groupId = 'rcd-' + rcdGroupCounter;
+  // Hlavní RCD řádek
+  var trMain = document.createElement('tr');
+  trMain.dataset.rowtype = 'rcd-header';
+  trMain.dataset.rcdGroup = groupId;
+  trMain.style.background = '#f0f6ff';
+  // Č. — prázdné
+  trMain.appendChild(mkTd(''));
+  // Název — RCD popis
+  trMain.appendChild(mkTd('RCD', ';text-align:left'));
+  // Typ-pol — výrobce
+  trMain.appendChild(mkTd('Hager'));
+  // Ch. — rozbalovací pole s typem chrániče
+  var chTd = mkSelectTd(['A', 'AC', 'B', 'F'], 'A', function() {
+    addRcdSubRows(tbody, trMain, this.value, groupId);
+  });
+  trMain.appendChild(chTd);
+  // A, IΔn
+  trMain.appendChild(mkTd('25'));
+  trMain.appendChild(mkTd('0,03'));
+  // Zsm, Riso
+  trMain.appendChild(mkTd('0,65'));
+  trMain.appendChild(mkTd('>20'));
+  // Fáze, Vyp, čas, 5×, Ut — prázdné na hlavním
+  for (var i = 0; i < 5; i++) trMain.appendChild(mkTd(''));
+  // Kabel
+  trMain.appendChild(mkTd('CYKY 3×2,5', ';text-align:left'));
+  // Delete — smaže i podřádky
+  var delTd = document.createElement('td');
+  delTd.style.border = '1px solid #ccc';
+  var delBtn = document.createElement('button');
+  delBtn.className = 'del-btn';
+  delBtn.textContent = '✕';
+  delBtn.addEventListener('click', function() {
+    var subs = tbody.querySelectorAll('tr[data-rcd-group="' + groupId + '"]');
+    subs.forEach(function(r) { r.remove(); });
+    trMain.remove();
+  });
+  delTd.appendChild(delBtn);
+  trMain.appendChild(delTd);
+  tbody.appendChild(trMain);
+  // Vygeneruj podřádky dle výchozího typu (A)
+  addRcdSubRows(tbody, trMain, 'A', groupId);
 }
 
 function addZavada() {
@@ -1429,14 +1489,32 @@ function getData() {
   document.querySelectorAll('#mereni-body tr').forEach(function(tr) {
     var inp = tr.querySelectorAll('input');
     var rowtype = tr.dataset.rowtype || 'obvod';
-    if (inp.length >= 14) {
-      mereni.push({
-        rowtype: rowtype,
-        c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
-        a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value,
-        faze: inp[8].value,
-        vyp: inp[9].value, cas: inp[10].value, t5idn: inp[11].value, ut: inp[12].value,
-        kabel: inp[13].value
+    var rcdGroup = tr.dataset.rcdGroup || '';
+    // RCD header má select místo input pro Ch.
+    var sel = tr.querySelector('select');
+    var chVal = sel ? sel.value : '';
+    // Počet inputů: obvod=14, rcd-header=13 (Ch. je select), rcd-mereni=14
+    var minLen = (rowtype === 'rcd-header') ? 13 : 14;
+    if (inp.length >= minLen) {
+      if (rowtype === 'rcd-header') {
+        mereni.push({
+          rowtype: rowtype, rcdGroup: rcdGroup,
+          c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: chVal,
+          a: inp[3].value, idn: inp[4].value, zsm: inp[5].value, riso: inp[6].value,
+          faze: inp[7].value,
+          vyp: inp[8].value, cas: inp[9].value, t5idn: inp[10].value, ut: inp[11].value,
+          kabel: inp[12].value
+        });
+      } else {
+        mereni.push({
+          rowtype: rowtype, rcdGroup: rcdGroup,
+          c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
+          a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value,
+          faze: inp[8].value,
+          vyp: inp[9].value, cas: inp[10].value, t5idn: inp[11].value, ut: inp[12].value,
+          kabel: inp[13].value
+        });
+      }
       });
     }
   });
@@ -1856,22 +1934,67 @@ function nacistJSON(e) {
       if (mb) mb.innerHTML = '';
       if (D.mereni && D.mereni.length > 0) {
         D.mereni.forEach(function(m) {
-          // Create appropriate row type
-          var tr = document.createElement('tr');
-          tr.dataset.rowtype = m.rowtype || 'obvod';
-          if (m.rowtype === 'rcd-mereni') tr.style.background = '#f8f8f0';
-          else if (m.rowtype === 'rcd-header') tr.style.background = '#f0f6ff';
-          else tr.style.background = '#fafaf8';
-          var vals = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, m.riso, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
-          vals.forEach(function(v, i) {
-            var align = (i === 1 || i === 14) ? ';text-align:left' : '';
-            var bold = (i === 9 && m.rowtype === 'rcd-mereni') ? ';font-weight:bold' : '';
-            tr.appendChild(mkTd(''));
-            var inp = tr.lastElementChild.querySelector('input');
-            if (inp) { inp.value = v || ''; inp.style.cssText += align + bold; }
-          });
-          tr.appendChild(mkDelTd());
-          mb.appendChild(tr);
+          if (m.rowtype === 'rcd-header') {
+            // RCD header — use addRcdRow-like logic but with saved values
+            rcdGroupCounter++;
+            var gid = 'rcd-' + rcdGroupCounter;
+            var trR = document.createElement('tr');
+            trR.dataset.rowtype = 'rcd-header';
+            trR.dataset.rcdGroup = gid;
+            trR.style.background = '#f0f6ff';
+            trR.appendChild(mkTd('')); trR.querySelector('input').value = m.c || '';
+            trR.appendChild(mkTd('', ';text-align:left')); trR.querySelectorAll('input')[1].value = m.n || '';
+            trR.appendChild(mkTd('')); trR.querySelectorAll('input')[2].value = m.typ || '';
+            var chTd = mkSelectTd(['A','AC','B','F'], m.ch || 'A', function() {
+              addRcdSubRows(mb, trR, this.value, gid);
+            });
+            trR.appendChild(chTd);
+            var rvals = [m.a, m.idn, m.zsm, m.riso, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
+            rvals.forEach(function(v, i) {
+              var s = (i === 9) ? ';text-align:left' : '';
+              trR.appendChild(mkTd('', s));
+              trR.querySelectorAll('input')[3 + i].value = v || '';
+            });
+            var delTd2 = document.createElement('td');
+            delTd2.style.border = '1px solid #ccc';
+            var delBtn2 = document.createElement('button');
+            delBtn2.className = 'del-btn';
+            delBtn2.textContent = '✕';
+            delBtn2.addEventListener('click', (function(g, r) { return function() {
+              mb.querySelectorAll('tr[data-rcd-group="' + g + '"]').forEach(function(x) { x.remove(); });
+              r.remove();
+            };})(gid, trR));
+            delTd2.appendChild(delBtn2);
+            trR.appendChild(delTd2);
+            mb.appendChild(trR);
+            // Sub-rows will be added when we encounter rcd-mereni with same group
+          } else if (m.rowtype === 'rcd-mereni') {
+            var tr2 = document.createElement('tr');
+            tr2.dataset.rowtype = 'rcd-mereni';
+            tr2.dataset.rcdGroup = m.rcdGroup || '';
+            tr2.style.background = '#f8f8f0';
+            var vals2 = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, m.riso, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
+            vals2.forEach(function(v, i) {
+              var s = (i === 1 || i === 13) ? ';text-align:left' : '';
+              var bold = (i === 8) ? ';font-weight:bold' : '';
+              tr2.appendChild(mkTd('', s + bold));
+              tr2.querySelectorAll('input')[i].value = v || '';
+            });
+            tr2.appendChild(mkDelTd());
+            mb.appendChild(tr2);
+          } else {
+            var tr3 = document.createElement('tr');
+            tr3.dataset.rowtype = 'obvod';
+            tr3.style.background = '#fafaf8';
+            var vals3 = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, m.riso, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
+            vals3.forEach(function(v, i) {
+              var s = (i === 1 || i === 13) ? ';text-align:left' : '';
+              tr3.appendChild(mkTd('', s));
+              tr3.querySelectorAll('input')[i].value = v || '';
+            });
+            tr3.appendChild(mkDelTd());
+            mb.appendChild(tr3);
+          }
         });
       }
       // Restore zavady
