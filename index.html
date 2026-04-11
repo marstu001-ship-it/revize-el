@@ -1117,13 +1117,36 @@ function mkTd(ph, style) {
 }
 function mkDelTd() {
   var td = document.createElement('td');
-  td.style.border = '1px solid #ccc';
+  td.style.cssText = 'border:1px solid #ccc;white-space:nowrap;text-align:center';
+  var cpBtn = document.createElement('button');
+  cpBtn.className = 'del-btn';
+  cpBtn.textContent = '⧉';
+  cpBtn.title = 'Kopírovat řádek';
+  cpBtn.style.cssText = 'color:#1c3a5e;font-size:.72rem;margin-right:2px';
+  cpBtn.dataset.action = 'copyRow';
+  td.appendChild(cpBtn);
   var btn = document.createElement('button');
   btn.className = 'del-btn';
   btn.textContent = '✕';
+  btn.title = 'Smazat řádek';
   btn.dataset.action = 'delRow';
   td.appendChild(btn);
   return td;
+}
+
+function copyRow(el) {
+  var tr = el.closest('tr');
+  if (!tr) return;
+  var tbody = tr.parentNode;
+  var clone = tr.cloneNode(true);
+  // Re-attach event listeners for copy/delete buttons
+  // (cloneNode doesn't copy event listeners, but we use data-action delegation)
+  // Insert after the original row
+  if (tr.nextSibling) {
+    tbody.insertBefore(clone, tr.nextSibling);
+  } else {
+    tbody.appendChild(clone);
+  }
 }
 
 function addMereniRow() {
@@ -2144,6 +2167,7 @@ document.addEventListener('click', function(e) {
     case 'print': window.print(); break;
     case 'tiskMereni': tiskMereni(); break;
     case 'delRow': delRowEl(el); break;
+    case 'copyRow': copyRow(el); break;
     case 'delPreset': delPreset(parseInt(el.getAttribute('data-idx'))); break;
     case 'smazatZpravu': smazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'removeZavada': var zi = el.closest('.zavada-item'); if (zi) zi.remove(); break;
