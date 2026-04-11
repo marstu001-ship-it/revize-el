@@ -146,9 +146,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   background:var(--accent2);color:#fff;
   padding:.4rem .5rem;border:1px solid #2a4a70;white-space:nowrap}
 .data-table td{border:1px solid var(--border);padding:.25rem .35rem;vertical-align:middle}
-.data-table td input,.data-table td select{font-family:var(--sans);font-size:.8rem;
+.data-table td input{font-family:var(--sans);font-size:.8rem;
   width:100%;border:none;background:transparent;color:var(--text);text-align:center}
-.data-table td input:focus,.data-table td select:focus{outline:1px solid var(--accent2);background:#f0f5ff}
+.data-table td select{font-family:var(--sans);font-size:.8rem;color:var(--text)}
+.data-table td input:focus{outline:1px solid var(--accent2);background:#f0f5ff}
 .data-table tr:nth-child(even) td{background:#f5f4f0}
 .meas-table-wrap{overflow-x:auto;width:100%}
 .meas-table{width:100%;min-width:900px;table-layout:auto}
@@ -1173,10 +1174,16 @@ function getRcdFazeByType(typ) {
   return ['AC+', 'AC-', 'A+', 'A-']; // A, B, F
 }
 
+function mkEmptyTd() {
+  var td = document.createElement('td');
+  td.style.cssText = 'border:1px solid #ccc;background:#f0efe8';
+  return td;
+}
+
 function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
   // Smaž existující podřádky této skupiny
   var existing = tbody.querySelectorAll('tr[data-rcd-group="' + rcdGroupId + '"]');
-  existing.forEach(function(r) { r.remove(); });
+  existing.forEach(function(r) { if (r !== afterRow) r.remove(); });
   // Vlož nové podřádky
   var faze = getRcdFazeByType(typ);
   var insertAfter = afterRow;
@@ -1185,27 +1192,21 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
     tr.dataset.rowtype = 'rcd-mereni';
     tr.dataset.rcdGroup = rcdGroupId;
     tr.style.background = '#f8f8f0';
-    // Č., Název — prázdné
-    tr.appendChild(mkTd(''));
-    tr.appendChild(mkTd(''));
-    // Typ-pol, Ch., A, IΔn — prázdné
-    for (var j = 0; j < 4; j++) tr.appendChild(mkTd(''));
-    // Zsm, Riso — prázdné
-    tr.appendChild(mkTd(''));
-    tr.appendChild(mkTd(''));
+    // 8 prázdných buněk (Č., Název, Typ-pol, Ch., A, IΔn, Zsm, Riso) — bez inputů
+    for (var j = 0; j < 8; j++) tr.appendChild(mkEmptyTd());
     // Fáze — předvyplněná, tučná
     var tdF = mkTd(f);
     tdF.querySelector('input').value = f;
-    tdF.querySelector('input').style.fontWeight = 'bold';
+    tdF.querySelector('input').style.cssText += ';font-weight:bold;color:#1c3a5e';
     tdF.querySelector('input').readOnly = true;
     tr.appendChild(tdF);
-    // Vyp. mA, čas ms, 5×IΔn ms, Ut V
-    tr.appendChild(mkTd('mA'));
-    tr.appendChild(mkTd('ms'));
-    tr.appendChild(mkTd('ms'));
-    tr.appendChild(mkTd('V'));
-    // Kabel — prázdné
+    // Vyp. mA, čas ms, 5×IΔn ms, Ut V — editovatelné
     tr.appendChild(mkTd(''));
+    tr.appendChild(mkTd(''));
+    tr.appendChild(mkTd(''));
+    tr.appendChild(mkTd(''));
+    // Kabel — prázdná buňka
+    tr.appendChild(mkEmptyTd());
     tr.appendChild(mkDelTd());
     if (insertAfter.nextSibling) {
       tbody.insertBefore(tr, insertAfter.nextSibling);
@@ -1490,31 +1491,35 @@ function getData() {
     var inp = tr.querySelectorAll('input');
     var rowtype = tr.dataset.rowtype || 'obvod';
     var rcdGroup = tr.dataset.rcdGroup || '';
-    // RCD header má select místo input pro Ch.
-    var sel = tr.querySelector('select');
-    var chVal = sel ? sel.value : '';
-    // Počet inputů: obvod=14, rcd-header=13 (Ch. je select), rcd-mereni=14
-    var minLen = (rowtype === 'rcd-header') ? 13 : 14;
-    if (inp.length >= minLen) {
-      if (rowtype === 'rcd-header') {
-        mereni.push({
-          rowtype: rowtype, rcdGroup: rcdGroup,
-          c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: chVal,
-          a: inp[3].value, idn: inp[4].value, zsm: inp[5].value, riso: inp[6].value,
-          faze: inp[7].value,
-          vyp: inp[8].value, cas: inp[9].value, t5idn: inp[10].value, ut: inp[11].value,
-          kabel: inp[12].value
-        });
-      } else {
-        mereni.push({
-          rowtype: rowtype, rcdGroup: rcdGroup,
-          c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
-          a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value,
-          faze: inp[8].value,
-          vyp: inp[9].value, cas: inp[10].value, t5idn: inp[11].value, ut: inp[12].value,
-          kabel: inp[13].value
-        });
-      }
+    if (rowtype === 'rcd-header') {
+      // RCD hlavička: 13 inputů + 1 select pro Ch.
+      var sel = tr.querySelector('select');
+      if (inp.length >= 13) mereni.push({
+        rowtype: rowtype, rcdGroup: rcdGroup,
+        c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: sel ? sel.value : '',
+        a: inp[3].value, idn: inp[4].value, zsm: inp[5].value, riso: inp[6].value,
+        faze: '', vyp: '', cas: '', t5idn: '', ut: '',
+        kabel: inp[12].value
+      });
+    } else if (rowtype === 'rcd-mereni') {
+      // RCD podřádek: jen 5 inputů (fáze, vyp, čas, t5idn, ut)
+      if (inp.length >= 5) mereni.push({
+        rowtype: rowtype, rcdGroup: rcdGroup,
+        c: '', n: '', typ: '', ch: '', a: '', idn: '', zsm: '', riso: '',
+        faze: inp[0].value,
+        vyp: inp[1].value, cas: inp[2].value, t5idn: inp[3].value, ut: inp[4].value,
+        kabel: ''
+      });
+    } else {
+      // Normální obvod: 14 inputů
+      if (inp.length >= 14) mereni.push({
+        rowtype: rowtype, rcdGroup: rcdGroup,
+        c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
+        a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value,
+        faze: inp[8].value,
+        vyp: inp[9].value, cas: inp[10].value, t5idn: inp[11].value, ut: inp[12].value,
+        kabel: inp[13].value
+      });
     }
   });
   var zavady = [];
@@ -1972,13 +1977,22 @@ function nacistJSON(e) {
             tr2.dataset.rowtype = 'rcd-mereni';
             tr2.dataset.rcdGroup = m.rcdGroup || '';
             tr2.style.background = '#f8f8f0';
-            var vals2 = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, m.riso, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
-            vals2.forEach(function(v, i) {
-              var s = (i === 1 || i === 13) ? ';text-align:left' : '';
-              var bold = (i === 8) ? ';font-weight:bold' : '';
-              tr2.appendChild(mkTd('', s + bold));
-              tr2.querySelectorAll('input')[i].value = v || '';
+            // 8 prázdných buněk
+            for (var k = 0; k < 8; k++) tr2.appendChild(mkEmptyTd());
+            // Fáze (bold, readonly)
+            var tdFi = mkTd(m.faze || '');
+            tdFi.querySelector('input').value = m.faze || '';
+            tdFi.querySelector('input').style.cssText += ';font-weight:bold;color:#1c3a5e';
+            tdFi.querySelector('input').readOnly = true;
+            tr2.appendChild(tdFi);
+            // Vyp, čas, t5idn, ut
+            [m.vyp, m.cas, m.t5idn, m.ut].forEach(function(v) {
+              var td = mkTd('');
+              td.querySelector('input').value = v || '';
+              tr2.appendChild(td);
             });
+            // Kabel — prázdná buňka
+            tr2.appendChild(mkEmptyTd());
             tr2.appendChild(mkDelTd());
             mb.appendChild(tr2);
           } else {
