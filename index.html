@@ -299,6 +299,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
     <button class="btn btn-ghost" data-action="ulozit">💾 Uložit</button>
+    <button class="btn btn-ghost" data-action="nacist">📂 Načíst</button>
     <button class="btn btn-gold" data-action="generujPDF">📄 Generovat PDF</button>
   </div>
 </div>
@@ -422,7 +423,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="f"><label>Ev. číslo zprávy</label><input type="text" id="f_ev_cislo" placeholder="RE-26-0001"></div>
       <div class="f"><label>Výtisk č.</label><input type="text" id="f_vytisk" value="1"></div>
       <div class="f"><label>Druh revize <span class="req">*</span></label>
-        <select id="f_druh"><option value="Výchozí">Výchozí</option><option value="Pravidelná" selected>Pravidelná</option><option value="Mimořádná">Mimořádná</option></select></div>
+        <select id="f_druh"><option value="Výchozí">Výchozí</option><option value="Výchozí souhrnná">Výchozí souhrnná</option><option value="Pravidelná" selected>Pravidelná</option><option value="Mimořádná">Mimořádná</option></select></div>
     </div>
   </div>
   <div class="scard">
@@ -708,6 +709,21 @@ var aktTyp = 'elektro';
 var zavadyN = 0;
 var archiv = [];
 
+function saveStore() {
+  try { localStorage.setItem('revize_el_store', JSON.stringify(STORE)); } catch(e) {}
+}
+function loadStore() {
+  try {
+    var s = localStorage.getItem('revize_el_store');
+    if (s) {
+      var d = JSON.parse(s);
+      STORE.technik = d.technik || {};
+      STORE.pristroje = d.pristroje || [];
+      STORE.archiv = d.archiv || [];
+    }
+  } catch(e) {}
+}
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
   var sc = document.getElementById('screen-' + id);
@@ -776,10 +792,54 @@ function getNapetoveSoustavy() {
   return result.join(', ');
 }
 
+var OCHRANA = [
+  { s: 'Ochranná opatření (ČSN 33 2000-4-41 ed.3 / ČSN EN 61 140 ed.3)', items: [
+    'Automatické odpojení od zdroje v síti TN (TT, IT) — čl. 411 / čl. 6.2',
+    'Dvojitá nebo zesílená izolace — čl. 412 / čl. 6.3',
+    'Elektrické oddělení — čl. 413 / čl. 6.5',
+    'Ochrana malým napětím SELV, PELV — čl. 414 / čl. 6.7, 6.8'
+  ]},
+  { s: 'Prostředky základní ochrany (v bezporuchovém stavu)', items: [
+    'Základní izolace živých částí — příloha A, čl. A.1 / čl. 5.2.2',
+    'Ochranné přepážky nebo kryty — příloha A, čl. A.2 / čl. 5.2.3',
+    'Zábrany a ochrana polohou — příloha A, čl. B.2, B.3 / čl. 5.2.4, 5.2.5',
+    'Omezení napětí — čl. 411.7 / čl. 5.2.6'
+  ]},
+  { s: 'Prostředky ochrany při poruše', items: [
+    'Přídavná izolace — čl. 412.1.1 / čl. 5.3.3',
+    'Ochranné pospojování — čl. 411.3.1.2 / čl. 5.2.2',
+    'Automatické odpojení od zdroje (jedna porucha) — čl. 411.3.2 / čl. 5.3.6',
+    'Jednoduché oddělení (obvodů) — čl. 413.1.1, čl. 413.1.2 / čl. 5.3.7',
+    'Nevodivé okolí — příloha C, čl. C1 / čl. 5.3.8'
+  ]},
+  { s: 'Doplňková ochrana', items: [
+    'Proudový chránič s IΔn ≤ 30 mA — čl. 415.1 / čl. 5.5.1',
+    'Doplňující ochranné pospojování — čl. 415.2 / čl. 5.5.2'
+  ]}
+];
+
+function renderOchranaCheckboxy() {
+  var c = document.getElementById('ochrana-checkboxy');
+  if (!c) return;
+  var html = '';
+  OCHRANA.forEach(function(sec, si) {
+    html += '<div class="char-section">';
+    html += '<div class="char-section-title">' + sec.s + '</div>';
+    sec.items.forEach(function(item, ii) {
+      html += '<div class="char-row">';
+      html += '<input type="checkbox" id="och-' + si + '-' + ii + '">';
+      html += '<label for="och-' + si + '-' + ii + '">' + item + '</label>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  c.innerHTML = html;
+}
+
 function novaZprava(typ) {
   aktTyp = typ;
   var bcTyp = document.getElementById('bc-typ');
-  if (bcTyp) bcTyp.textContent = typ === 'elektro' ? 'Nova zprava - Elektro' : 'Nova zprava - LPS';
+  if (bcTyp) bcTyp.textContent = typ === 'elektro' ? 'Nová zpráva — Elektro' : 'Nová zpráva — LPS';
   document.querySelectorAll('#screen-form input, #screen-form textarea, #screen-form select').forEach(function(el) {
     if (el.type === 'checkbox') el.checked = false;
     else if (el.tagName === 'SELECT') el.selectedIndex = 0;
@@ -803,17 +863,18 @@ function novaZprava(typ) {
   });
   var sit = document.getElementById('f_sit'); if (sit) sit.value = 'TN-C-S 230V/50Hz AC';
   renderNapetoveCheckboxy(aktPodtyp);
+  renderOchranaCheckboxy();
   // Magic texty dle podtypu
   var f_predmet = document.getElementById('f_predmet_je');
   if (f_predmet && !f_predmet.value) {
     var predmety = {
-      dum: 'Elektricka instalace rodinneho domu - rozvodnice RD, vyvody svetelnych a zasuvkovych obvodu vcetne pevne pripojenych spotrebicu v rozsahu dle popisu.',
-      byt: 'Elektricka instalace bytove jednotky - bytova rozvodnice RB, vyvody svetelnych a zasuvkovych obvodu vcetne pevne pripojenych spotrebicu.',
-      prumysl: 'Elektricka zarizeni provozovny - hlavni privody pro rozvadec RH, vyvody z rozvadece RH pro strojni a technicka zarizeni, napajeni el. zarizeni zasuvkove a svetelne obvody v rozsahu dle popisu.'
+      dum: 'Elektrická instalace rodinného domu — rozvodnice RD, vývody světelných a zásuvkových obvodů včetně pevně připojených spotřebičů v rozsahu dle popisu.',
+      byt: 'Elektrická instalace bytové jednotky — bytová rozvodnice RB, vývody světelných a zásuvkových obvodů včetně pevně připojených spotřebičů.',
+      prumysl: 'Elektrická zařízení provozovny — hlavní přívody pro rozváděč RH, vývody z rozváděče RH pro strojní a technická zařízení, napájení el. zařízení zásuvkové a světelné obvody v rozsahu dle popisu.'
     };
     f_predmet.value = predmety[aktPodtyp] || predmety.dum;
   }
-  var och = document.getElementById('f_ochrana'); if (och) och.value = 'automatickym odpojenim od zdroje dle 4-41 ed.2';
+  var och = document.getElementById('f_ochrana'); if (och) och.value = 'automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3';
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
   var firstTab = document.querySelector('.tab-btn'); if (firstTab) firstTab.classList.add('active');
@@ -834,7 +895,8 @@ function ulozitTechnika() {
     var el = document.getElementById('rt_' + k); if (el) t[k] = el.value;
   });
   STORE.technik = t;
-  alert('Profil ulozen');
+  alert('Profil uložen');
+  saveStore();
 }
 
 function propsatTechnika() {
@@ -859,26 +921,35 @@ function propsatTechnika() {
 
 var NORMY = {
   elektro: [
-    { s: 'Narizeni vlady', items: [
-      { id: 'nv190', t: 'NV c. 190/2022 Sb. - vyhrazena technicka elektricka zarizeni', c: true },
-      { id: 'nv194', t: 'NV c. 194/2022 Sb. - technicke pozadavky na el. instalace', c: true }
+    { s: 'Nařízení vlády', items: [
+      { id: 'nv190', t: 'NV č. 190/2022 Sb. — vyhrazená technická elektrická zařízení', c: true },
+      { id: 'nv194', t: 'NV č. 194/2022 Sb. — technické požadavky na el. instalace', c: true }
     ]},
-    { s: 'CSN - vyberte dle doby vzniku instalace', items: [
-      { id: 'csn331500', t: 'CSN 33 1500 - Revize elektrickych zarizeni', c: true },
-      { id: 'csn332000641', t: 'CSN 33 2000-4-41 ed.3 - Ochrana pred urazem el. proudem (po r. 2012)', c: true },
-      { id: 'csn3320006', t: 'CSN 33 2000-6 ed.2 - Revize elektrickych instalaci', c: true },
-      { id: 'csn641z1', t: 'CSN 33 2000-4-41 ed.2 + Z1 - stasi instalace (do r. 2012)', c: false }
+    { s: 'ČSN — vyberte dle doby vzniku instalace', items: [
+      { id: 'csn331500', t: 'ČSN 33 1500 (Z1–Z4) — Revize elektrických zařízení', c: true },
+      { id: 'csn332000641', t: 'ČSN 33 2000-4-41 ed.3 — Ochrana před úrazem el. proudem', c: true },
+      { id: 'csn3320006', t: 'ČSN 33 2000-6 ed.2 — Revize elektrických instalací', c: true },
+      { id: 'csn61140', t: 'ČSN EN 61140 ed.3 — Ochrana před úrazem elektrickým proudem', c: true },
+      { id: 'csn2130', t: 'ČSN 33 2130 ed.4 — Elektrický rozvod v místnostech pro lékařské účely / instalační zóny', c: false },
+      { id: 'csn2000554', t: 'ČSN 33 2000-5-54 ed.3 — Uzemnění a ochranné vodiče', c: false },
+      { id: 'csn2000551', t: 'ČSN 33 2000-5-51 ed.3 — Výběr a stavba el. zařízení', c: false },
+      { id: 'csn2000552', t: 'ČSN 33 2000-5-52 ed.2 — Elektrické rozvody', c: false },
+      { id: 'csn2000701', t: 'ČSN 33 2000-7-701 ed.3 — Prostory s vanou nebo sprchou', c: false },
+      { id: 'csn641z1', t: 'ČSN 33 2000-4-41 ed.2 + Z1 — starší instalace (do r. 2012)', c: false },
+      { id: 'csn50110', t: 'ČSN EN 50110-1 ed.3 — Obsluha a práce na elektrických zařízeních', c: false },
+      { id: 'csn60445', t: 'ČSN EN IEC 60445 ed.6 — Označování svorek a vodičů', c: false },
+      { id: 'csn60073', t: 'ČSN EN 60073 ed.2 — Kódování sdělovačů a ovládačů', c: false }
     ]}
   ],
   lps: [
-    { s: 'Narizeni vlady', items: [
-      { id: 'nv190lps', t: 'NV c. 190/2022 Sb. - vyhrazena technicka elektricka zarizeni', c: true }
+    { s: 'Nařízení vlády', items: [
+      { id: 'nv190lps', t: 'NV č. 190/2022 Sb. — vyhrazená technická elektrická zařízení', c: true }
     ]},
-    { s: 'CSN EN 62305 - Ochrana pred bleskem', items: [
-      { id: 'csn623051', t: 'CSN EN 62305-1 ed.2 - Obecne principy', c: true },
-      { id: 'csn623052', t: 'CSN EN 62305-2 ed.2 - Rizeni rizika', c: true },
-      { id: 'csn623053', t: 'CSN EN 62305-3 ed.2 - Hmotne skody a ohrozeni zivota', c: true },
-      { id: 'csn341391', t: 'CSN 34 1391 - Hromosvody (stari instalace, do r. 2004)', c: false }
+    { s: 'ČSN EN 62305 — Ochrana před bleskem', items: [
+      { id: 'csn623051', t: 'ČSN EN 62305-1 ed.2 — Obecné principy', c: true },
+      { id: 'csn623052', t: 'ČSN EN 62305-2 ed.2 — Řízení rizika', c: true },
+      { id: 'csn623053', t: 'ČSN EN 62305-3 ed.2 — Hmotné škody a ohrožení života', c: true },
+      { id: 'csn341391', t: 'ČSN 34 1391 — Hromosvody (starší instalace, do r. 2004)', c: false }
     ]}
   ]
 };
@@ -970,7 +1041,7 @@ function delPreset(i) {
   renderPristrojePreset();
 }
 
-function ulozitPristroje() { alert('Pristroje ulozeny'); }
+function ulozitPristroje() { saveStore(); alert('Přístroje uloženy'); }
 
 function propsatPristroje() {
   var tbody = document.getElementById('pristroje-body');
@@ -1166,12 +1237,12 @@ function updZavadaKod(sel) {
 }
 
 var CL = [
-  { s: 'Elektricka zarizeni na vstupu', items: ['Kabelova domovni pripojka', 'Provozni (hlavni) vypinac / pojistky', 'Vybaveni elektromerove rozvodnice - strana distributora', 'Vybaveni elektromerove rozvodnice - strana zakaznika', 'Merici zarizeni', 'Odpojovaci zarizeni'] },
-  { s: 'Automaticke odpojeni od zdroje', items: ['Soustava hlavniho uzemneni', 'Uzemniovaci privod a jeho pripojeni', 'Vodice hlavniho ochraneho pospojovani', 'Stitky uzemneni', 'Vsechna pripojeni ochraneho pospojovani', 'FELV - pozadavky splneny'] },
-  { s: 'Zakladni ochrana a ochrana pri poruse', items: ['SELV', 'PELV', 'Dvojita izolace', 'Zesilena izolace', 'Izolace zivych casti', 'Prepazky nebo kryty', 'Zabrany', 'Mimo dosah'] },
-  { s: 'Doplnkova ochrana', items: ['Proudove chranic <= 30 mA', 'Doplnujici pospojovani'] },
-  { s: 'Rozvodna zarizeni', items: ['Pristupnost k zarizeni', 'Bezpecne upevneni', 'Izolace zivych casti neni poskozena', 'Vhodnost krytu z hlediska IP', 'Kryty nebyly poskozeny', 'Rucni ovladani jisticu a chranichu', 'Test tlacitka proudoveho chranice', 'Pritomnost schemat a napisu'] },
-  { s: 'Vodice a kabely', items: ['Spravne dimenzovani vodicu', 'Spravne ulozeni a ochrana', 'Barevne oznaceni vodicu', 'Spoje vodicu spravne', 'Ochranne vodice odpovidajici'] }
+  { s: 'Elektrická zařízení na vstupu', items: ['Kabelová domovní přípojka', 'Provozní (hlavní) vypínač / pojistky', 'Vybavení elektroměrové rozvodnice — strana distributora', 'Vybavení elektroměrové rozvodnice — strana zákazníka', 'Měřicí zařízení', 'Odpojovací zařízení'] },
+  { s: 'Automatické odpojení od zdroje', items: ['Soustava hlavního uzemnění', 'Uzemňovací přívod a jeho připojení', 'Vodiče hlavního ochranného pospojování', 'Štítky uzemnění', 'Všechna připojení ochranného pospojování', 'FELV — požadavky splněny'] },
+  { s: 'Základní ochrana a ochrana při poruše', items: ['SELV', 'PELV', 'Dvojitá izolace', 'Zesílená izolace', 'Izolace živých částí', 'Přepážky nebo kryty', 'Zábrany', 'Mimo dosah'] },
+  { s: 'Doplňková ochrana', items: ['Proudový chránič ≤ 30 mA', 'Doplňující pospojování'] },
+  { s: 'Rozvodná zařízení', items: ['Přístupnost k zařízení', 'Bezpečné upevnění', 'Izolace živých částí není poškozena', 'Vhodnost krytů z hlediska IP', 'Kryty nebyly poškozeny', 'Ruční ovládání jističů a chráničů', 'Test tlačítka proudového chrániče', 'Přítomnost schémat a nápisů'] },
+  { s: 'Vodiče a kabely', items: ['Správné dimenzování vodičů', 'Správné uložení a ochrana', 'Barevné označení vodičů', 'Spoje vodičů správně provedeny', 'Ochranné vodiče odpovídající'] }
 ];
 
 function renderChecklist() {
@@ -1221,16 +1292,16 @@ function magicPopis() {
   var el = document.getElementById('f_popis');
   if (!el) return;
   var texty = {
-    dum: 'Elektricka instalace rodinneho domu je provedena kabely CYKY-J ulozenymi v elektroinstalacnich trubkach a kabelovych zlabech. Hlavni privod z elektroměroveho rozvadece je proveden kabelem CYKY-J 4x16 ulozenym v zemi v hrankach kopoflex v cele delce v hloubce 80 cm. Bytovy rozvadec RD je nainstalovan v technicke mistnosti. Pod rozvaděcem je instalovana pripojnice MET - hlavni uzemnovaci svorka. Zasuvkove obvody jsou jisteny jistitcemi charakteristiky B a chraneny proudovymi chranic s IDn = 30 mA. Osvetleni je provedeno LED svitidly s odpovídajícím krytim IP. V rozvaděci je osazena prepetova ochrana stupne T2 (C) pro sit TN-C.',
-    byt: 'Elektricka instalace bytove jednotky je provedena kabely CYKY-J ulozenymi pod omitkou a v podlahach. Hlavni privod z elektroměroveho rozvadece ve spolecnych prostorach bytoveho domu je proveden kabelem CYKY-J 4x10 spolecne s hlavnim privodem je ulozena barevna kombinace zl/zeluta ochraneho pospojovani prurezu 10mm2. Bytovy rozvadec RB je nainstalovan ve vstupni chodbe bytove jednotky. Zasuvkove obvody jsou jisteny jistitci charakteristiky B a chraneny proudovymi chranic s IDn = 30 mA. V rozvaděci je osazena prepetova ochrana stupne T2 (C) pro sit TN-C.',
-    prumysl: 'Jedna se o rozsahly prumyslovy objekt. Hlavni rozvadec RH je napajan z vlastni transformatorove stanice TS. Z rozvadece RH jsou napajeny podruzne rozvadece vyrobniho objektu, administrativni budovy a technickeho zazemi. Kabelove rozvody jsou ulozeny na lavkach, v dratenych nosnych systemech a elektroinstalacnich ohebnych trubkach. V rozvodne VN/NN je instalovana pripojnice MET - hlavni uzemnovaci svorka. V rozvadeci RH vedle hlavniho jistice je osazena svodic bleskových proudu Typ T1.'
+    dum: 'Elektrická instalace rodinného domu je provedena kabely CYKY-J uloženými v elektroinstalačních trubkách a kabelových žlabech. Hlavní přívod z elektroměrového rozváděče je proveden kabelem CYKY-J 4x16 uloženým v zemi v chráničkách Kopoflex v celé délce v hloubce 80 cm. Bytový rozváděč RD je nainstalován v technické místnosti. Pod rozváděčem je instalována přípojnice MET — hlavní uzemňovací svorka. Zásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. Osvětlení je provedeno LED svítidly s odpovídajícím krytím IP. V rozváděči je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C.',
+    byt: 'Elektrická instalace bytové jednotky je provedena kabely CYKY-J uloženými pod omítkou a v podlahách. Hlavní přívod z elektroměrového rozváděče ve společných prostorách bytového domu je proveden kabelem CYKY-J 4x10, společně s hlavním přívodem je uložena barevná kombinace žl/zel ochranného pospojování průřezu 10 mm². Bytový rozváděč RB je nainstalován ve vstupní chodbě bytové jednotky. Zásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. V rozváděči je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C.',
+    prumysl: 'Jedná se o rozsáhlý průmyslový objekt. Hlavní rozváděč RH je napájen z vlastní transformátorové stanice TS. Z rozváděče RH jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy a technického zázemí. Kabelové rozvody jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách. V rozvodně VN/NN je instalována přípojnice MET — hlavní uzemňovací svorka. V rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů Typ T1.'
   };
   el.value = texty[aktPodtyp] || texty.dum;
 }
 
 function magicZaver() {
   var el = document.getElementById('f_zhodnoceni');
-  if (el) el.value = 'Zpusob a provedeni elektroinstalace je v souladu s platnymi CSN. Kvalita provedenych praci je hodnocena jako dobra. Ochrana pred urazem elektrickym proudem v siti TN automatickym odpojenim od zdroje je provedena v souladu s pozadavky CSN 33 2000-4-41 ed.3. Pri mereni spojitosti ochranych vodicu byla namerena hodnota vzdy mensi nez 0,7 Ohm. Pri mereni izolacnich stavu byly namerene hodnoty vyrazne nad minimem Riso. Pri mereni impedance vypinaci smycky hodnoty odpovidaji CSN 33 2000-4-41 ed.3, cl. 411.4.4.';
+  if (el) el.value = 'Způsob a provedení elektroinstalace je v souladu s platnými ČSN. Kvalita provedených prací je hodnocena jako dobrá. Ochrana před úrazem elektrickým proudem v síti TN automatickým odpojením od zdroje je provedena v souladu s požadavky ČSN 33 2000-4-41 ed.3. Při měření spojitosti ochranných vodičů byla naměřena hodnota vždy menší než 0,7 Ω. Při měření izolačních stavů byly naměřené hodnoty výrazně nad minimem Riso. Při měření impedance vypínací smyčky hodnoty odpovídají ČSN 33 2000-4-41 ed.3, čl. 411.4.4. Proudové chrániče jsou funkční, reagují v předepsaných mezích. Elektrická instalace je z hlediska bezpečnosti schopna provozu.';
 }
 
 function openModalRevize() {
@@ -1263,7 +1334,8 @@ function updateRevizeLhuta() {
   var vysl = document.getElementById('m_vysledek');
   if (vysl) {
     vysl.style.display = 'block';
-    vysl.textContent = 'Termin pristi revize: ' + d.toLocaleDateString('cs-CZ') + ' (za ' + roky + ' let)';
+    var letTxt = roky === 1 ? '1 rok' : (roky < 5 ? roky + ' roky' : roky + ' let');
+    vysl.textContent = 'Termín příští revize: ' + d.toLocaleDateString('cs-CZ') + ' (za ' + letTxt + ')';
   }
 }
 
@@ -1271,6 +1343,7 @@ function potvrditRevize() {
   var typ = document.getElementById('m_typ_obj');
   var datum = document.getElementById('m_datum');
   if (!typ || !datum || !datum.value) { alert('Zadejte datum!'); return; }
+
   var roky = typ.value === 'custom' ? (parseInt((document.getElementById('m_custom_roky') || {}).value) || 3) : parseInt(typ.value);
   var d = new Date(datum.value);
   d.setFullYear(d.getFullYear() + roky);
@@ -1279,9 +1352,10 @@ function potvrditRevize() {
   var mm = String(d.getMonth() + 1).padStart(2, '0');
   var lhutaText = '';
   if (aktPodtyp === 'prumysl') {
-    lhutaText = 've smyslu NV c. 101/2005 Sb. §3 (4a) dle vypracovaneho radu el. zarizeni a planu revizi provozovatele do konce roku ' + d.getFullYear();
+    lhutaText = 've smyslu NV č. 190/2022 Sb. dle vypracovaného řádu el. zařízení a plánu revizí provozovatele do konce roku ' + d.getFullYear();
   } else {
-    lhutaText = roky + ' let - do ' + mm + '/' + d.getFullYear() + ' (dle NV c. 190/2022 Sb. §10 pism. n, CSN 33 1500 c. 3.9)';
+    var letText = roky === 1 ? '1 rok' : (roky < 5 ? roky + ' roky' : roky + ' let');
+    lhutaText = letText + ' — do ' + mm + '/' + d.getFullYear() + ' (dle NV č. 190/2022 Sb. §10 písm. n), ČSN 33 1500 č. 3.9)';
   }
   if (fl) fl.value = lhutaText;
   closeModal('modal-revize');
@@ -1322,11 +1396,16 @@ function getData() {
   var mesto = t.mesto || '';
   var adr = [t.ulice, (psc + ' ' + mesto).trim()].filter(Boolean).join(', ');
   return {
-    typ: aktTyp, ev_cislo: gv('f_ev_cislo'), vytisk: gv('f_vytisk'), druh: gv('f_druh'),
+    typ: aktTyp, podtyp: aktPodtyp,
+    ev_cislo: gv('f_ev_cislo'), vytisk: gv('f_vytisk'), druh: gv('f_druh'),
     misto: gv('f_misto'), adresa: gv('f_adresa'),
-    zahajeni: gv('f_zahajeni'), ukonceni: gv('f_ukonceni'), vypracovani: gv('f_vypracovani'), pristi: gv('f_pristi'),
+    zahajeni: gv('f_zahajeni'), preruseni_od: gv('f_preruseni_od'), preruseni_do: gv('f_preruseni_do'),
+    ukonceni: gv('f_ukonceni'), vypracovani: gv('f_vypracovani'), pristi: gv('f_pristi'),
     normy: getVybrane(),
     provozovatel: gv('f_provozovatel'), firma_zmena: gv('f_firma_zmena'), firma_opravneni: gv('f_firma_opravneni'),
+    objednatel: gv('f_objednatel'), pritomen2: gv('f_pritomen2'),
+    firma_zmena2: gv('f_firma_zmena2'), firma_opravneni2: gv('f_firma_opravneni2'),
+    napetova_soustava: getNapetoveSoustavy(),
     rt_jmeno: gv('f_rt_jmeno') || t.jmeno || '',
     rt_osvedceni: gv('f_rt_osvedceni') || t.osvedceni || '',
     rt_opravneni: gv('f_rt_opravneni') || t.opravneni || '',
@@ -1339,6 +1418,7 @@ function getData() {
     predmet_je: gv('f_predmet_je'), predmet_neni: gv('f_predmet_neni'), popis: gv('f_popis'),
     pritomen: gv('f_pritomen'), zdroj_napajeni: gv('f_zdroj_napajeni'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
+    prohlídka: gv('f_prohlídka'), zkouseni: gv('f_zkouseni'),
     rozvadec: gv('f_rozvadec'), rozvadec_umisteni: gv('f_rozvadec_umisteni'),
     zhodnoceni: gv('f_zhodnoceni'), celkovy_vysledek: gv('f_celkovy_vysledek'), lhuta: gv('f_lhuta'),
     poznamka_zavady: gv('f_poznamka_zavady'),
@@ -1394,89 +1474,96 @@ function generujPDF() {
     return '<div class="a4-footer">' +
       '<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>' +
       '<span>ev. cislo: ' + esc(D.rt_osvedceni) + '</span>' +
-      '<span>Revize EL 2025</span>' +
+      '<span>Revize EL ' + new Date().getFullYear() + '</span>' +
       '</div>';
   }
 
   var nadpis = D.typ === 'lps'
-    ? 'ZPRAVA O ' + (D.druh || '').toUpperCase() + ' REVIZI LPS - OCHRANY PRED BLESKEM'
-    : 'ZPRAVA O ' + (D.druh || '').toUpperCase() + ' REVIZI ELEKTRICKEHO ZARIZENI';
-  var podnadpis = 'provedene dle NV c. 190/2022 Sb., CSN 33 1500 a CSN 33 2000-6 ed.2';
+    ? 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'
+    : 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ';
+  var podnadpis = 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 33 1500 (Z1–Z4), ČSN 33 2000-6 ed.2';
   var posudek = D.celkovy_vysledek === 'schopno'
-    ? 'Provedenou prohlidkou a merenim bylo zjisteno, ze revidovana elektricka instalace je z hlediska bezpecnosti schopna provozu.'
-    : 'Revidovane elektricke zarizeni NENI z hlediska bezpecnosti schopno provozu.';
+    ? 'Provedenou prohlídkou a měřením bylo zjištěno, že revidovaná elektrická instalace je z hlediska bezpečnosti schopna provozu.'
+    : 'Revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.';
 
   var p1 = document.createElement('div');
   p1.className = 'a4';
   p1.innerHTML = hdr(1) +
     '<div class="a4-content">' +
     '<div class="r2" style="margin-bottom:4mm">' +
-    '<div><div class="pbox-label">Revizni technik:</div>' +
+    '<div><div class="pbox-label">Revizní technik:</div>' +
     '<div class="pbox" style="min-height:16mm;font-size:9.5pt;line-height:1.5">' + esc(D.rt_jmeno) + '<br>' + esc(D.rt_adresa) + '</div>' +
-    '<div class="pbox" style="margin-top:1mm;font-size:9.5pt">Ev.c. ' + esc(D.rt_osvedceni) + '<br>Opr.c. ' + esc(D.rt_opravneni) + '</div></div>' +
-    '<div><div class="pbox-label">Predmet revize / Provozovatel:</div>' +
+    '<div class="pbox" style="margin-top:1mm;font-size:9.5pt">Ev.č. ' + esc(D.rt_osvedceni) + '<br>Opr.č. ' + esc(D.rt_opravneni) + '</div></div>' +
+    '<div><div class="pbox-label">Předmět revize / Provozovatel:</div>' +
     '<div class="pbox" style="min-height:24mm;font-size:9.5pt;line-height:1.5">' + esc(D.provozovatel) + '</div></div>' +
     '</div>' +
     '<div class="ptitle"><h1>' + nadpis + '</h1><p>' + podnadpis + '</p></div>' +
     '<div class="r2" style="margin-bottom:2.5mm">' +
     '<div><div class="pbox-label">Zdroj el. proudu:</div>' +
-    '<div class="pbox" style="min-height:12mm;font-size:9pt">cizi: ' + esc(D.zdroj) + '</div></div>' +
-    '<div><div class="pbox-label">Ochrana pred urazem:</div>' +
+    '<div class="pbox" style="min-height:12mm;font-size:9pt">cizí: ' + esc(D.zdroj) + '</div></div>' +
+    '<div><div class="pbox-label">Ochrana před úrazem:</div>' +
     '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
-    '<div style="margin-top:1mm"><div class="pbox-label">Sit:</div>' +
+    '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
     '<div class="pbox" style="font-size:9pt">' + esc(D.sit) + '</div></div></div>' +
     '</div>' +
     '<div class="r2" style="margin-bottom:2.5mm">' +
-    '<div><div class="pbox-label">Pouzite normy:</div>' +
+    '<div><div class="pbox-label">Použité normy:</div>' +
     '<div class="pbox" style="font-size:8pt;min-height:18mm;line-height:1.5">' + esc(D.normy) + '</div></div>' +
     '<div><div class="pbox-label">Datum revize:</div>' +
     '<div class="pbox" style="min-height:18mm">' +
     '<div class="dtgrid">' +
     '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
     '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
-    '<span class="dtlabel">predchozi</span><span class="dtval"></span>' +
-    '<span class="dtlabel">vyhotoveni</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
-    '<span class="dtlabel">pristi revize</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
+    '<span class="dtlabel">předchozí</span><span class="dtval"></span>' +
+    '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
+    '<span class="dtlabel">příští revize</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
     '</div></div></div>' +
     '</div>' +
-    '<div style="margin-bottom:2.5mm"><div class="pbox-label">Celkovy posudek:</div>' +
+    '<div style="margin-bottom:2.5mm"><div class="pbox-label">Celkový posudek:</div>' +
     '<div class="pbox" style="font-size:9.5pt;min-height:14mm;line-height:1.5">' + posudek + '</div></div>' +
     '<div class="r2" style="margin-bottom:3mm">' +
-    '<div><div class="pbox-label">Pouzite pristroje:</div>' +
+    '<div><div class="pbox-label">Použité přístroje:</div>' +
     '<div class="pbox" style="min-height:20mm;font-size:8.5pt">' +
-    D.pristroje.map(function(p) { return esc(p.nazev) + ' | ' + esc(p.vyrCislo) + ' | ' + fmtDate(p.platnost) + '<br>'; }).join('') +
+    D.pristroje.map(function(p) { return esc(p.nazev) + ' | ' + esc(p.vyrCislo) + ' | kal.: ' + esc(p.kalibrace) + ' | platnost: ' + fmtDate(p.platnost) + '<br>'; }).join('') +
     '</div></div>' +
-    '<div><div class="pbox-label">Pocet stran, kopii...</div>' +
+    '<div><div class="pbox-label">Počet stran, kopií:</div>' +
     '<div class="pbox" style="min-height:20mm;font-size:8.5pt">' +
-    'stran: ' + total + '<br>vyhotoveni: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
+    'Počet listů: ' + total + '<br>Výtisk č.: ' + esc(D.vytisk) + '<br>Počet příloh: —<br>Vyhotovení: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
     '</div></div></div>' +
-    '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje prevzeti zpravy dne: ___________</div>' +
+    (D.objednatel ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '</div>' : '') +
+    (D.pritomen2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '</div>' : '') +
+    (D.firma_zmena2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. oprávnění: ' + esc(D.firma_opravneni2) : '') + '</div>' : '') +
+    '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje převzetí zprávy dne: ___________</div>' +
     '<div class="podp-grid">' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
-    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis revizniho technika</div></div></div></div>' +
+    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
     '</div></div>' + ftr();
   pages.appendChild(p1);
 
   var p2 = document.createElement('div');
   p2.className = 'a4';
-  var vymText = 'Predmetem ' + (D.druh || '').toLowerCase() + ' revize bylo VEZ vysloveně uvedene v teto zprave.';
-  if (D.predmet_je) vymText += '\n\nPredmetem je: ' + D.predmet_je;
-  if (D.predmet_neni) vymText += '\n\nPredmetem neni: ' + D.predmet_neni;
-  vymText += '\n\nRevizi pritomen: ' + (D.pritomen || '—');
-  vymText += '\n\nZkouseni dle CSN 33 2000-6 ed.2 cl.6.4.3.1:\na) spojitost ochranych vodicu\nb) izolacni odpor\nc) automaticke odpojeni od zdroje\nd) doplnkova ochrana\ne) funkcni zkousky\nf) ubytek napeti';
+  var vymText = 'Předmětem ' + (D.druh || '').toLowerCase() + ' revize bylo VEZ výslovně uvedené v této zprávě.';
+  if (D.predmet_je) vymText += '\n\nPředmětem revize je: ' + D.predmet_je;
+  if (D.predmet_neni) vymText += '\n\nPředmětem revize není: ' + D.predmet_neni;
+  vymText += '\n\nRevizi přítomen: ' + (D.pritomen || '—');
+  var zkouseniText = '\n\nProvedené zkoušky dle ČSN 33 2000-6 ed.2 čl. 6.4.3:\na) spojitost ochranných vodičů (viz 6.4.3.2)\nb) izolační odpor elektrické instalace (viz 6.4.3.3)\nc) zkoušení izolačních odporů pro potvrzení účinnosti ochrany pomocí SELV, PELV nebo elektrickým oddělením (viz 6.4.3.4)\nd) zkoušení pro potvrzení účinnosti automatického odpojení od zdroje (viz 6.4.3.7)\ne) zkoušení pro potvrzení účinnosti doplňkové ochrany (viz 6.4.3.8)\nf) zkouška pořadí fází (viz 6.4.3.9)\ng) funkční a provozní zkoušky (viz 6.4.3.10)\nh) ověření úbytků napětí (viz 6.4.3.11)';
+  vymText += zkouseniText;
   p2.innerHTML = hdr(2) +
     '<div class="a4-content">' +
-    '<div class="sec-head"><div class="sec-num">1.</div><div class="sec-name">Vymezeni rozsahu revize</div></div>' +
+    '<div class="sec-head"><div class="sec-num">1.</div><div class="sec-name">Vymezení rozsahu revize</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;margin-bottom:4mm;white-space:pre-line">' + esc(vymText) + '</div>' +
-    '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zarizeni</div></div>' +
+    '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zařízení</div></div>' +
     '<div style="font-size:9pt;padding:0 2mm;margin-bottom:3mm">' +
-    (D.napetova_soustava ? '<strong>Napetova soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '') +
+    (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '') +
+    '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>' +
     (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
-    (D.pritomen2 ? '<strong>Pri revizi byl pritomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
-    (D.firma_zmena2 ? '<strong>Elektromontazni prace provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.c. opr.: ' + esc(D.firma_opravneni2) : '') : '') +
+    (D.pritomen2 ? '<strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
+    (D.firma_zmena2 ? '<strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. opr.: ' + esc(D.firma_opravneni2) : '') + '<br>' : '') +
+    (D.zemnič ? '<strong>Typ a popis zemniče:</strong> ' + esc(D.zemnič) + '<br>' : '') +
+    (D.zemni_odpor ? '<strong>Naměřený zemní odpor:</strong> ' + esc(D.zemni_odpor) + ' Ω<br>' : '') +
     '</div>' +
-    '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technicky popis objektu</div></div>' +
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || 'Doplnte v zalozce A.') + '</div>' +
+    '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technický popis vyhrazeného elektrického zařízení</div></div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || 'Doplňte v záložce A.') + '</div>' +
     '</div>' + ftr();
   pages.appendChild(p2);
 
@@ -1506,39 +1593,54 @@ function generujPDF() {
   p3.className = 'a4 a4-landscape';
   p3.innerHTML = hdr(3) +
     '<div class="a4-content">' +
-    '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Rozvadece - mereni</div></div>' +
-    (D.rozvadec ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>[1] ' + esc(D.rozvadec) + '</strong> - ' + esc(D.rozvadec_umisteni) + '</div>' : '') +
+    '<div class="sec-head"><div class="sec-num">E.</div><div class="sec-name">Obvody a výsledky zkoušek dle ČSN 33 2000-6 ed.2 Z2 — příloha G</div></div>' +
+    (D.rozvadec ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>[1] ' + esc(D.rozvadec) + '</strong> — ' + esc(D.rozvadec_umisteni) + '</div>' : '') +
     '<table class="pdf-meas"><thead><tr>' +
-    '<th rowspan="2">C.</th><th rowspan="2" style="min-width:90px">Nazev obvodu</th><th colspan="5">Jmenovite hodnoty jisteni</th><th colspan="3">Mereni impedanci</th><th colspan="6">Mereni RCD</th><th rowspan="2" style="min-width:80px">Kabel typ, prurezu mm2</th>' +
-    '</tr><tr><th>Typ</th><th>Ch.</th><th>A</th><th>IDn mA</th><th>Isc kA</th><th>Rpe O</th><th>Zsm max O</th><th>Riso MO</th><th>Faze</th><th>t-IDn ms</th><th>t-5IDn ms</th><th>ID mA</th><th>Uc V</th><th>Test</th></tr></thead>' +
-    '<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Zadne obvody</td></tr>') + '</tbody></table>' +
-    '<div class="sec-head" style="margin-top:5mm"><div class="sec-num">4.</div><div class="sec-name">Hodnoceni ochrany pred urazem</div></div>' +
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm">Automaticke odpojeni od zdroje v siti TN — cl. 411<br>Proudovy chranic — cl.415.1<br>Doplnujici pospojovani — cl.415.2</div>' +
+    '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:90px">Název obvodu</th><th colspan="5">Jmenovité hodnoty jištění</th><th colspan="3">Měření impedancí</th><th colspan="6">Měření RCD</th><th rowspan="2" style="min-width:80px">Kabel typ, průřezu mm²</th>' +
+    '</tr><tr><th>Typ</th><th>Ch.</th><th>A</th><th>IΔn mA</th><th>Isc kA</th><th>Rpe Ω</th><th>Zsm max Ω</th><th>Riso MΩ</th><th>Fáze</th><th>t-IΔn ms</th><th>t-5IΔn ms</th><th>IΔ mA</th><th>Uc V</th><th>Test</th></tr></thead>' +
+    '<tbody>' + (mereniRows || '<tr><td colspan="17" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>' +
+    '<div class="sec-head" style="margin-top:5mm"><div class="sec-num">4.</div><div class="sec-name">Hodnocení ochrany před úrazem</div></div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm">Automatické odpojení od zdroje v síti TN — čl. 411<br>Proudový chránič — čl. 415.1<br>Doplňující pospojování — čl. 415.2</div>' +
     '</div>' + ftr();
   pages.appendChild(p3);
 
   var zavadyHtml = D.zavady.length > 0
     ? D.zavady.map(function(z, i) {
         return '<div style="margin-bottom:2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + esc(z.popis) +
-          (z.dalsi ? '<br><em>Po odstraneni: ' + esc(z.dalsi) + '</em>' : '') + '</div>';
+          (z.norma ? ' <em style="font-size:8.5pt;color:#444">(porušení: ' + esc(z.norma) + ')</em>' : '') +
+          (z.dalsi ? '<br><em>Po odstranění: ' + esc(z.dalsi) + '</em>' : '') + '</div>';
       }).join('')
-    : '<div style="font-size:9.5pt;padding:0 2mm">Nebyly zjisteny.</div>';
+    : '<div style="font-size:9.5pt;padding:0 2mm">Závady nebyly zjištěny.</div>';
 
   var p4 = document.createElement('div');
   p4.className = 'a4';
+  var posudekZaver = D.celkovy_vysledek === 'schopno'
+    ? 'VYHRAZENÉ ELEKTRICKÉ ZAŘÍZENÍ JE Z HLEDISKA BEZPEČNOSTI\nSCHOPNO PROVOZU'
+    : 'VYHRAZENÉ ELEKTRICKÉ ZAŘÍZENÍ NENÍ Z HLEDISKA BEZPEČNOSTI\nSCHOPNO PROVOZU';
   p4.innerHTML = hdr(4) +
     '<div class="a4-content">' +
-    '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Nedodelky a neshody</div></div>' +
+    '<div class="sec-head"><div class="sec-num">9.</div><div class="sec-name">Přehled zjištěných závad</div></div>' +
     '<div style="padding:0 2mm;margin-bottom:4mm">' + zavadyHtml + '</div>' +
-    '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Zaver</div></div>' +
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.zhodnoceni || 'Zaver nebyl vyplnen.') + '</div>' +
-    (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Pristi revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
-    '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm">Normy: ' + esc(D.normy) + '</div>' +
+    '<div class="sec-head"><div class="sec-num">10.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.zhodnoceni || 'Závěr nebyl vyplněn.') + '</div>' +
+    (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
+    '<div style="text-align:center;margin:6mm 0 4mm;padding:4mm;border:1pt solid #000">' +
+    '<div style="font-size:12pt;font-weight:bold;margin-bottom:2mm">Celkový posudek — slovní zhodnocení</div>' +
+    '<div style="font-size:11pt;font-weight:bold;white-space:pre-line">' + posudekZaver + '</div>' +
+    '</div>' +
+    '<div style="font-size:8.5pt;padding:0 2mm;margin-bottom:3mm">V ' + esc(D.predano_misto || '..........') + ' dne ' + fmtDate(D.predano_datum) + '</div>' +
+    '<div style="font-size:8pt;padding:0 2mm;margin-bottom:2mm">Potvrzení o převzetí nebo předání zprávy o revizi dle NV č. 190/2022 Sb. §10 písmeno o)</div>' +
+    '<div class="podp-grid">' +
+    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">Podpis objednatele (razítko)</div></div></div></div>' +
+    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">Jméno a podpis revizního technika (razítko)</div></div></div></div>' +
+    '</div>' +
+    '<div style="margin-top:4mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
     '</div>' + ftr();
   pages.appendChild(p4);
 
   archiv.unshift({ typ: D.typ, ev_cislo: D.ev_cislo, misto: D.misto, datum: D.zahajeni, vysledek: D.celkovy_vysledek });
   STORE.archiv = archiv;
+  saveStore();
   renderArchiv();
   showScreen('pdf');
   window.scrollTo(0, 0);
@@ -1588,35 +1690,35 @@ function tiskMereni() {
   win.document.write('</style></head><body>');
   win.document.write('<div class="header">');
   win.document.write('<div class="hbox">' + fmtDate(D.zahajeni) + '</div>');
-  win.document.write('<div class="hbox">Mereni obvodu – ' + esc(D.rozvadec||'') + '</div>');
+  win.document.write('<div class="hbox">Měření obvodů – ' + esc(D.rozvadec||'') + '</div>');
   win.document.write('<div class="hbox">' + esc(D.ev_cislo||'—') + '</div>');
   win.document.write('</div>');
-  win.document.write('<div class="sec"><div class="sec-num">E.</div><div class="sec-name">Obvody a vysledky zkousek dle CSN 33 2000-6 ed.2 Z2 – priloha G</div></div>');
+  win.document.write('<div class="sec"><div class="sec-num">E.</div><div class="sec-name">Obvody a výsledky zkoušek dle ČSN 33 2000-6 ed.2 Z2 — příloha G</div></div>');
   if (D.rozvadec) {
     win.document.write('<div style="font-size:8.5pt;margin-bottom:2mm"><strong>[1] ' + esc(D.rozvadec) + '</strong> &mdash; ' + esc(D.rozvadec_umisteni) + '</div>');
   }
   win.document.write('<table>');
   win.document.write('<thead>');
   win.document.write('<tr>');
-  win.document.write('<th rowspan="2">C.</th>');
-  win.document.write('<th rowspan="2" style="min-width:70pt">Nazev obvodu</th>');
-  win.document.write('<th colspan="5">Jmenovite hodnoty jisteni</th>');
-  win.document.write('<th colspan="3">Mereni impedanci</th>');
-  win.document.write('<th colspan="6">Mereni RCD</th>');
-  win.document.write('<th rowspan="2" style="min-width:55pt">Kabel typ, prurezu mm2</th>');
+  win.document.write('<th rowspan="2">Č.</th>');
+  win.document.write('<th rowspan="2" style="min-width:70pt">Název obvodu</th>');
+  win.document.write('<th colspan="5">Jmenovité hodnoty jištění</th>');
+  win.document.write('<th colspan="3">Měření impedancí</th>');
+  win.document.write('<th colspan="6">Měření RCD</th>');
+  win.document.write('<th rowspan="2" style="min-width:55pt">Kabel typ, průřezu mm²</th>');
   win.document.write('</tr>');
   win.document.write('<tr>');
-  win.document.write('<th>Typ</th><th>Ch.</th><th>A</th><th>IDn mA</th><th>Isc kA</th>');
-  win.document.write('<th>Rpe O</th><th>Zsm max O</th><th>Riso MO</th>');
-  win.document.write('<th>Faze</th><th>t-IDn ms</th><th>t-5IDn ms</th><th>ID mA</th><th>Uc V</th><th>Test</th>');
+  win.document.write('<th>Typ</th><th>Ch.</th><th>A</th><th>IΔn mA</th><th>Isc kA</th>');
+  win.document.write('<th>Rpe Ω</th><th>Zsm max Ω</th><th>Riso MΩ</th>');
+  win.document.write('<th>Fáze</th><th>t-IΔn ms</th><th>t-5IΔn ms</th><th>IΔ mA</th><th>Uc V</th><th>Test</th>');
   win.document.write('</tr>');
   win.document.write('</thead>');
-  win.document.write('<tbody>' + (mereniRows || '<tr><td colspan="17" style="text-align:center;padding:3mm;color:#888">Zadne obvody</td></tr>') + '</tbody>');
+  win.document.write('<tbody>' + (mereniRows || '<tr><td colspan="17" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody>');
   win.document.write('</table>');
   win.document.write('<div class="footer">');
   win.document.write('<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>');
   win.document.write('<span>ev. cislo: ' + esc(D.rt_osvedceni) + '</span>');
-  win.document.write('<span>Revize EL 2025</span>');
+  win.document.write('<span>Revize EL ' + new Date().getFullYear() + '</span>');
   win.document.write('</div>');
   win.document.write('</body></html>');
   win.document.close();
@@ -1630,14 +1732,121 @@ function ulozit() {
   a.href = URL.createObjectURL(blob);
   a.download = 'RZ_' + (D.ev_cislo || 'nova') + '_' + (D.zahajeni || 'datum') + '.json';
   a.click();
-  alert('Zprava ulozena jako JSON');
+  alert('Zpráva uložena jako JSON');
+}
+
+function nacist() {
+  document.getElementById('json-input').click();
+}
+
+function nacistJSON(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var D = JSON.parse(ev.target.result);
+      aktTyp = D.typ || 'elektro';
+      aktPodtyp = D.podtyp || 'dum';
+      novaZprava(aktTyp);
+      // Fill form fields
+      var fields = {
+        'f_ev_cislo': D.ev_cislo, 'f_vytisk': D.vytisk, 'f_druh': D.druh,
+        'f_misto': D.misto, 'f_adresa': D.adresa,
+        'f_zahajeni': D.zahajeni, 'f_preruseni_od': D.preruseni_od, 'f_preruseni_do': D.preruseni_do,
+        'f_ukonceni': D.ukonceni, 'f_vypracovani': D.vypracovani, 'f_pristi': D.pristi,
+        'f_provozovatel': D.provozovatel, 'f_firma_zmena': D.firma_zmena, 'f_firma_opravneni': D.firma_opravneni,
+        'f_objednatel': D.objednatel, 'f_pritomen2': D.pritomen2,
+        'f_firma_zmena2': D.firma_zmena2, 'f_firma_opravneni2': D.firma_opravneni2,
+        'f_rt_jmeno': D.rt_jmeno, 'f_rt_osvedceni': D.rt_osvedceni, 'f_rt_opravneni': D.rt_opravneni,
+        'f_rt_adresa': D.rt_adresa, 'f_rt_ico': D.rt_ico,
+        'f_trida': D.trida, 'f_vysledek': D.vysledek,
+        'f_zdroj': D.zdroj, 'f_sit': D.sit, 'f_ochrana': D.ochrana,
+        'f_predano_misto': D.predano_misto, 'f_predano_datum': D.predano_datum,
+        'f_prebira': D.prebira, 'f_vyhotoveni': D.vyhotoveni, 'f_rozdelovnik': D.rozdelovnik,
+        'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni, 'f_popis': D.popis,
+        'f_pritomen': D.pritomen, 'f_zdroj_napajeni': D.zdroj_napajeni,
+        'f_zemnič': D.zemnič, 'f_zemni_odpor': D.zemni_odpor,
+        'f_prohlídka': D.prohlídka, 'f_zkouseni': D.zkouseni,
+        'f_rozvadec': D.rozvadec, 'f_rozvadec_umisteni': D.rozvadec_umisteni,
+        'f_zhodnoceni': D.zhodnoceni, 'f_celkovy_vysledek': D.celkovy_vysledek, 'f_lhuta': D.lhuta,
+        'f_poznamka_zavady': D.poznamka_zavady
+      };
+      Object.keys(fields).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && fields[id]) el.value = fields[id];
+      });
+      // Restore pristroje
+      var pb = document.getElementById('pristroje-body');
+      if (pb) pb.innerHTML = '';
+      if (D.pristroje && D.pristroje.length > 0) {
+        D.pristroje.forEach(function(pr, i) { addPristrojRow(pr, i + 1); });
+      }
+      // Restore mereni
+      var mb = document.getElementById('mereni-body');
+      if (mb) mb.innerHTML = '';
+      if (D.mereni && D.mereni.length > 0) {
+        D.mereni.forEach(function(m) {
+          addMereniRow();
+          var tr = mb.lastElementChild;
+          if (!tr) return;
+          var inp = tr.querySelectorAll('input');
+          var sels = tr.querySelectorAll('select');
+          var vals = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.isc, m.rpe, m.zsm, m.riso];
+          vals.forEach(function(v, i) { if (inp[i]) inp[i].value = v || ''; });
+          if (sels[0]) sels[0].value = m.faze || '—';
+          if (inp[10]) inp[10].value = m.vidn || '';
+          if (inp[11]) inp[11].value = m.v5idn || '';
+          if (inp[12]) inp[12].value = m.id || '';
+          if (inp[13]) inp[13].value = m.uc || '';
+          if (sels[1]) sels[1].value = m.test || '—';
+          if (inp[14]) inp[14].value = m.kabel || '';
+        });
+      }
+      // Restore zavady
+      if (D.zavady && D.zavady.length > 0) {
+        D.zavady.forEach(function(z) {
+          addZavada();
+          var items = document.querySelectorAll('.zavada-item');
+          var last = items[items.length - 1];
+          if (!last) return;
+          var sel = last.querySelector('select');
+          if (sel) { sel.value = z.kod; updZavadaKod(sel); }
+          var ta = last.querySelectorAll('textarea');
+          if (ta[0]) ta[0].value = z.popis || '';
+          var inps = last.querySelectorAll('input[type=text]');
+          if (inps[0]) inps[0].value = z.dalsi || '';
+          if (inps[1]) inps[1].value = z.norma || '';
+        });
+      }
+      // Restore dokumentace
+      var db = document.getElementById('dokumentace-body');
+      if (db) db.innerHTML = '';
+      if (D.dokumentace && D.dokumentace.length > 0) {
+        D.dokumentace.forEach(function(d) {
+          addDokumentace();
+          var tr = db.lastElementChild;
+          if (!tr) return;
+          var inp = tr.querySelectorAll('input');
+          if (inp[0]) inp[0].value = d.cislo || '';
+          if (inp[1]) inp[1].value = d.datum || '';
+          if (inp[2]) inp[2].value = d.nazev || '';
+        });
+      }
+      alert('Zpráva načtena: ' + (D.ev_cislo || 'bez čísla'));
+    } catch(err) {
+      alert('Chyba při načítání souboru: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function renderArchiv() {
   var c = document.getElementById('archiv-container');
   if (!c) return;
   if (!archiv || archiv.length === 0) {
-    c.innerHTML = '<div class="archiv-empty">Zatim zadne zpravy. Vytvorte novou vyse.</div>';
+    c.innerHTML = '<div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše.</div>';
     return;
   }
   var html = '<table class="archiv-table"><thead><tr><th>#</th><th>Typ</th><th>Ev. cislo</th><th>Misto</th><th>Datum</th><th>Vysledek</th><th></th></tr></thead><tbody>';
@@ -1658,9 +1867,10 @@ function renderArchiv() {
 }
 
 function smazatZpravu(i) {
-  if (!confirm('Smazat zpravu?')) return;
+  if (!confirm('Smazat zprávu?')) return;
   archiv.splice(i, 1);
   STORE.archiv = archiv;
+  saveStore();
   renderArchiv();
 }
 
@@ -1668,6 +1878,7 @@ function delRow(btn) { if (btn) btn.closest('tr').remove(); }
 function delRowEl(el) { if (el) el.closest('tr').remove(); }
 
 function init() {
+  loadStore();
   archiv = STORE.archiv || [];
   renderArchiv();
   renderPristrojePreset();
@@ -1697,6 +1908,7 @@ document.addEventListener('click', function(e) {
     case 'home': showScreen('home'); break;
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'ulozit': ulozit(); break;
+    case 'nacist': nacist(); break;
     case 'generujPDF': generujPDF(); break;
     case 'ulozitTechnika': ulozitTechnika(); break;
     case 'ulozitPristroje': ulozitPristroje(); break;
@@ -1727,6 +1939,8 @@ document.addEventListener('change', function(e) {
   if (action === 'updateLhuta') updateRevizeLhuta();
   if (action === 'updZavadaKod') updZavadaKod(el);
 });
+
+document.getElementById('json-input').addEventListener('change', nacistJSON);
 
 window.addEventListener('DOMContentLoaded', init);
 
