@@ -593,45 +593,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 
 <!-- TAB MĚŘENÍ -->
 <div class="tab-panel" id="tab-mereni">
-  <div class="scard">
-    <div class="scard-title">E. Obvody a výsledky zkoušek <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 Z2 – příloha G</span></div>
-    <div class="g2" style="margin-bottom:1rem">
-      <div class="f"><label>Rozváděč (označení)</label><input type="text" id="f_rozvadec" placeholder="R1 - plastový, zapuštěný, IP30, v.č. 3230"></div>
-      <div class="f"><label>Umístění / popis rozváděče</label><input type="text" id="f_rozvadec_umisteni" placeholder="Kamil Holub, Sklad technických plynů"></div>
-    </div>
-    <div class="meas-table-wrap">
-      <table class="data-table meas-table">
-        <thead>
-          <tr>
-            <th class="grp" rowspan="2" style="width:3%">Č.</th>
-            <th class="grp" rowspan="2" style="width:13%">Název obvodu</th>
-            <th class="grp" colspan="4">Jmenovité hodnoty jištění</th>
-            <th class="grp" rowspan="2">Zsm<br>max Ω</th>
-            <th class="grp" rowspan="2">Riso<br>MΩ</th>
-            <th class="grp" rowspan="2">Fáze</th>
-            <th class="grp" colspan="4">Měření RCD</th>
-            <th class="grp" rowspan="2" style="width:11%">Kabel<br>typ, průřez mm²</th>
-            <th class="grp" rowspan="2" style="width:3%"></th>
-          </tr>
-          <tr>
-            <th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th>
-            <th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>
-          </tr>
-        </thead>
-        <tbody id="mereni-body"></tbody>
-      </table>
-    </div>
-    <div style="display:flex;gap:.75rem;margin-top:.6rem">
-      <button class="add-row" data-action="addMereniRow">+ Přidat obvod</button>
-      <button class="add-row" data-action="addRcdRow" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD (AC+/AC-/A+/A-)</button>
-    </div>
-    <div class="info-box" style="margin-top:.75rem;font-size:.76rem">
-      U RCD je součástí měření ověření funkce testovacího tlačítka.<br>
-      <strong>NV č. 190/2022 Sb. Příloha č. 1 — Část B:</strong> a) spojitost ochranných vodičů, b) izolační stav el. zařízení,
-      c) ochrana oddělením obvodů (SELV/PELV), d) izolační odpor podlahy a stěn, e) automatické odpojení od zdroje,
-      f) zkouška zapojení přístrojů, g) zkouška elektrické pevnosti, h) funkční zkouška, i) tepelné účinky,
-      j) úbytek napětí, k) zkouška polarity, l) pořadí fází.
-    </div>
+  <div id="rozvadece-container"></div>
+  <div style="display:flex;gap:.75rem;margin-top:1rem;margin-bottom:1rem">
+    <button class="add-row" data-action="addRozvadec" style="border-color:var(--accent2);color:var(--accent2);font-size:.7rem;padding:.5rem 1.2rem">+ Přidat další rozváděč</button>
+  </div>
+  <div class="info-box" style="font-size:.76rem">
+    U RCD je součástí měření ověření funkce testovacího tlačítka.<br>
+    <strong>NV č. 190/2022 Sb. Příloha č. 1 — Část B:</strong> a) spojitost ochranných vodičů, b) izolační stav el. zařízení,
+    c) ochrana oddělením obvodů (SELV/PELV), d) izolační odpor podlahy a stěn, e) automatické odpojení od zdroje,
+    f) zkouška zapojení přístrojů, g) zkouška elektrické pevnosti, h) funkční zkouška, i) tepelné účinky,
+    j) úbytek napětí, k) zkouška polarity, l) pořadí fází.
   </div>
 </div>
 
@@ -854,7 +825,8 @@ function novaZprava(typ) {
     else if (el.tagName === 'SELECT') el.selectedIndex = 0;
     else el.value = '';
   });
-  var mb = document.getElementById('mereni-body'); if (mb) mb.innerHTML = '';
+  var rc = document.getElementById('rozvadece-container'); if (rc) rc.innerHTML = '';
+  rozvadecCounter = 0;
   var zl = document.getElementById('zavady-list'); if (zl) zl.innerHTML = '';
   var pb = document.getElementById('pristroje-body'); if (pb) pb.innerHTML = '';
   var db = document.getElementById('dokumentace-body'); if (db) db.innerHTML = '';
@@ -862,8 +834,7 @@ function novaZprava(typ) {
   propsatTechnika();
   renderNormy(typ);
   propsatPristroje();
-  addMereniRow();
-  addMereniRow();
+  addRozvadec();
   addDokumentace();
   renderChecklist();
   var d = new Date().toISOString().split('T')[0];
@@ -1287,8 +1258,77 @@ function copyRcdGroup(el) {
   });
 }
 
-function addMereniRow() {
-  var tbody = document.getElementById('mereni-body');
+var rozvadecCounter = 0;
+
+function getMeasTableHtml() {
+  return '<table class="data-table meas-table"><thead>' +
+    '<tr>' +
+    '<th class="grp" rowspan="2" style="width:3%">Č.</th>' +
+    '<th class="grp" rowspan="2" style="width:13%">Název obvodu</th>' +
+    '<th class="grp" colspan="4">Jmenovité hodnoty jištění</th>' +
+    '<th class="grp" rowspan="2">Zsm<br>max Ω</th>' +
+    '<th class="grp" rowspan="2">Riso<br>MΩ</th>' +
+    '<th class="grp" rowspan="2">Fáze</th>' +
+    '<th class="grp" colspan="4">Měření RCD</th>' +
+    '<th class="grp" rowspan="2" style="width:11%">Kabel<br>typ, průřez mm²</th>' +
+    '<th class="grp" rowspan="2" style="width:3%"></th>' +
+    '</tr><tr>' +
+    '<th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th>' +
+    '<th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>' +
+    '</tr></thead><tbody></tbody></table>';
+}
+
+function addRozvadec() {
+  rozvadecCounter++;
+  var n = rozvadecCounter;
+  var container = document.getElementById('rozvadece-container');
+  if (!container) return;
+  var div = document.createElement('div');
+  div.className = 'scard';
+  div.dataset.rozvadecId = 'rozv-' + n;
+  var phNazev = { dum: 'RD — plastový, zapuštěný, IP30', byt: 'RB — plastový, zapuštěný, IP30', prumysl: 'RH — skříňový OCEP, 1600A, IP40/00' };
+  var phUmist = { dum: 'Technická místnost rodinného domu', byt: 'Vstupní chodba bytové jednotky', prumysl: 'Rozvodna VN/NN, trafostanice' };
+  div.innerHTML = '<div class="scard-title" style="display:flex;justify-content:space-between;align-items:center">' +
+    '<span>Rozváděč [' + n + '] <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 Z2 – příloha G</span></span>' +
+    (n > 1 ? '<button class="del-btn" style="font-size:.75rem" data-action="delRozvadec" data-rozvadec="rozv-' + n + '">✕ Odebrat rozváděč</button>' : '') +
+    '</div>' +
+    '<div class="g2" style="margin-bottom:1rem">' +
+    '<div class="f"><label>Rozváděč (označení)</label><input type="text" class="rozv-nazev" placeholder="' + (phNazev[aktPodtyp] || phNazev.dum) + '"></div>' +
+    '<div class="f"><label>Umístění / popis</label><input type="text" class="rozv-umisteni" placeholder="' + (phUmist[aktPodtyp] || phUmist.dum) + '"></div>' +
+    '</div>' +
+    '<div class="meas-table-wrap">' + getMeasTableHtml() + '</div>' +
+    '<div style="display:flex;gap:.75rem;margin-top:.6rem">' +
+    '<button class="add-row" data-action="addMereniRow" data-rozvadec="rozv-' + n + '">+ Přidat obvod</button>' +
+    '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD</button>' +
+    '</div>';
+  container.appendChild(div);
+  // Přidej 2 výchozí řádky
+  var tbody = div.querySelector('tbody');
+  addMereniRowTo(tbody);
+  addMereniRowTo(tbody);
+}
+
+function delRozvadec(el) {
+  var id = el.dataset.rozvadec;
+  var div = document.querySelector('[data-rozvadec-id="' + id + '"]');
+  if (div && confirm('Smazat rozváděč včetně všech obvodů?')) div.remove();
+}
+
+function getTbodyForRozvadec(el) {
+  var rozId = el.dataset.rozvadec;
+  if (rozId) {
+    var card = document.querySelector('[data-rozvadec-id="' + rozId + '"]');
+    return card ? card.querySelector('tbody') : null;
+  }
+  return null;
+}
+
+function addMereniRow(el) {
+  var tbody = el ? getTbodyForRozvadec(el) : document.querySelector('#rozvadece-container tbody');
+  addMereniRowTo(tbody);
+}
+
+function addMereniRowTo(tbody) {
   if (!tbody) return;
   var tr = document.createElement('tr');
   tr.dataset.rowtype = 'obvod';
@@ -1412,8 +1452,8 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
 
 var rcdGroupCounter = 0;
 
-function addRcdRow() {
-  var tbody = document.getElementById('mereni-body');
+function addRcdRow(el) {
+  var tbody = el ? getTbodyForRozvadec(el) : document.querySelector('#rozvadece-container tbody');
   if (!tbody) return;
   rcdGroupCounter++;
   var groupId = 'rcd-' + rcdGroupCounter;
@@ -1683,41 +1723,43 @@ function getData() {
     var inp = tr.querySelectorAll('input');
     if (inp.length >= 4) pristroje.push({ nazev: inp[0].value, vyrCislo: inp[1].value, kalibrace: inp[2].value, platnost: inp[3].value });
   });
-  var mereni = [];
-  document.querySelectorAll('#mereni-body tr').forEach(function(tr) {
-    var inp = tr.querySelectorAll('input');
-    var rowtype = tr.dataset.rowtype || 'obvod';
-    var rcdGroup = tr.dataset.rcdGroup || '';
-    if (rowtype === 'rcd-header') {
-      // RCD hlavička: 13 inputů + 1 select pro Ch.
-      var sel = tr.querySelector('select');
-      if (inp.length >= 13) mereni.push({
-        rowtype: rowtype, rcdGroup: rcdGroup,
-        c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: sel ? sel.value : '',
-        a: inp[3].value, idn: inp[4].value, zsm: inp[5].value, riso: inp[6].value,
-        faze: '', vyp: '', cas: '', t5idn: '', ut: '',
-        kabel: inp[12].value
-      });
-    } else if (rowtype === 'rcd-mereni') {
-      // RCD podřádek: jen 5 inputů (fáze, vyp, čas, t5idn, ut)
-      if (inp.length >= 5) mereni.push({
-        rowtype: rowtype, rcdGroup: rcdGroup,
-        c: '', n: '', typ: '', ch: '', a: '', idn: '', zsm: '', riso: '',
-        faze: inp[0].value,
-        vyp: inp[1].value, cas: inp[2].value, t5idn: inp[3].value, ut: inp[4].value,
-        kabel: ''
-      });
-    } else {
-      // Normální obvod: 14 inputů
-      if (inp.length >= 14) mereni.push({
-        rowtype: rowtype, rcdGroup: rcdGroup,
-        c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
-        a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value,
-        faze: inp[8].value,
-        vyp: inp[9].value, cas: inp[10].value, t5idn: inp[11].value, ut: inp[12].value,
-        kabel: inp[13].value
-      });
-    }
+  var rozvadece = [];
+  document.querySelectorAll('#rozvadece-container .scard').forEach(function(card) {
+    var nazevEl = card.querySelector('.rozv-nazev');
+    var umistEl = card.querySelector('.rozv-umisteni');
+    var rozv = {
+      nazev: nazevEl ? nazevEl.value : '',
+      umisteni: umistEl ? umistEl.value : '',
+      mereni: []
+    };
+    card.querySelectorAll('tbody tr').forEach(function(tr) {
+      var inp = tr.querySelectorAll('input');
+      var rowtype = tr.dataset.rowtype || 'obvod';
+      var rcdGroup = tr.dataset.rcdGroup || '';
+      if (rowtype === 'rcd-header') {
+        var sel = tr.querySelector('select');
+        if (inp.length >= 13) rozv.mereni.push({
+          rowtype: rowtype, rcdGroup: rcdGroup,
+          c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: sel ? sel.value : '',
+          a: inp[3].value, idn: inp[4].value, zsm: inp[5].value, riso: inp[6].value,
+          faze: '', vyp: '', cas: '', t5idn: '', ut: '', kabel: inp[12].value
+        });
+      } else if (rowtype === 'rcd-mereni') {
+        if (inp.length >= 5) rozv.mereni.push({
+          rowtype: rowtype, rcdGroup: rcdGroup,
+          c: '', n: '', typ: '', ch: '', a: '', idn: '', zsm: '', riso: '',
+          faze: inp[0].value, vyp: inp[1].value, cas: inp[2].value, t5idn: inp[3].value, ut: inp[4].value, kabel: ''
+        });
+      } else {
+        if (inp.length >= 14) rozv.mereni.push({
+          rowtype: rowtype, rcdGroup: rcdGroup,
+          c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
+          a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value,
+          faze: inp[8].value, vyp: inp[9].value, cas: inp[10].value, t5idn: inp[11].value, ut: inp[12].value, kabel: inp[13].value
+        });
+      }
+    });
+    rozvadece.push(rozv);
   });
   var zavady = [];
   document.querySelectorAll('.zavada-item').forEach(function(div) {
@@ -1759,10 +1801,12 @@ function getData() {
     pritomen: gv('f_pritomen'), zdroj_napajeni: gv('f_zdroj_napajeni'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
     prohlídka: gv('f_prohlídka'), zkouseni: gv('f_zkouseni'),
-    rozvadec: gv('f_rozvadec'), rozvadec_umisteni: gv('f_rozvadec_umisteni'),
     zhodnoceni: gv('f_zhodnoceni'), celkovy_vysledek: gv('f_celkovy_vysledek'), lhuta: gv('f_lhuta'),
     poznamka_zavady: gv('f_poznamka_zavady'),
-    pristroje: pristroje, mereni: mereni, zavady: zavady, dokumentace: dokumentace,
+    pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
+    // Zpětná kompatibilita — první rozváděč
+    rozvadec: rozvadece[0] ? rozvadece[0].nazev : '', rozvadec_umisteni: rozvadece[0] ? rozvadece[0].umisteni : '',
+    mereni: rozvadece[0] ? rozvadece[0].mereni : [],
     timestamp: new Date().toISOString()
   };
 }
@@ -1930,21 +1974,24 @@ function generujPDF() {
         '</tr>';
     }).join('');
   }
-  var mereniRows = renderMereniRows(D.mereni);
+  var pdfMeasHeader = '<table class="pdf-meas"><thead><tr>' +
+    '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
+    '</tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
+
+  var rozvadeceHtml = '';
+  (D.rozvadece || [{ nazev: D.rozvadec, umisteni: D.rozvadec_umisteni, mereni: D.mereni }]).forEach(function(rozv, ri) {
+    var mereniRows = renderMereniRows(rozv.mereni || []);
+    rozvadeceHtml += '<div class="sec-head" style="' + (ri > 0 ? 'margin-top:5mm' : '') + '"><div class="sec-num">' + (ri + 1) + '</div><div class="sec-name">Měření: ' + esc(rozv.nazev || 'Rozváděč ' + (ri+1)) + '</div></div>';
+    if (rozv.nazev) rozvadeceHtml += '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>' + esc(rozv.nazev) + '</strong> — ' + esc(rozv.umisteni || '') + '</div>';
+    rozvadeceHtml += pdfMeasHeader + '<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>';
+  });
 
   var p3 = document.createElement('div');
   p3.className = 'a4 a4-landscape';
   p3.innerHTML = hdr(3) +
     '<div class="a4-content">' +
-    '<div class="sec-head"><div class="sec-num">E.</div><div class="sec-name">Měření: ' + esc(D.rozvadec || '') + '</div></div>' +
-    (D.rozvadec ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>' + esc(D.rozvadec) + '</strong> — ' + esc(D.rozvadec_umisteni) + '</div>' : '') +
-    '<table class="pdf-meas"><thead><tr>' +
-    '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
-    '</tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>' +
-    '<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>' +
+    rozvadeceHtml +
     '<div style="font-size:7.5pt;margin-top:2mm;padding:0 2mm;color:#444">U RCD je součástí měření ověření funkce testovacího tlačítka.</div>' +
-    '<div class="sec-head" style="margin-top:5mm"><div class="sec-num">4.</div><div class="sec-name">Hodnocení ochrany před úrazem</div></div>' +
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm">Automatické odpojení od zdroje v síti TN — čl. 411<br>Proudový chránič — čl. 415.1<br>Doplňující pospojování — čl. 415.2</div>' +
     '</div>' + ftr();
   pages.appendChild(p3);
 
@@ -2325,8 +2372,10 @@ document.addEventListener('click', function(e) {
     case 'magicZaver': magicZaver(); break;
     case 'addDokumentace': addDokumentace(); break;
     case 'addPristroj': addPristroj(); break;
-    case 'addMereniRow': addMereniRow(); break;
-    case 'addRcdRow': addRcdRow(); break;
+    case 'addMereniRow': addMereniRow(el); break;
+    case 'addRcdRow': addRcdRow(el); break;
+    case 'addRozvadec': addRozvadec(); break;
+    case 'delRozvadec': delRozvadec(el); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;
