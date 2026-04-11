@@ -994,8 +994,8 @@ function renderPristrojePreset() {
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center';
     var fields = [
-      { k: 'nazev', v: pr.nazev || '', ph: 'Nazev a typ', flex: '2' },
-      { k: 'vyrCislo', v: pr.vyrCislo || '', ph: 'Vyr. cislo', flex: '1' },
+      { k: 'nazev', v: pr.nazev || '', ph: 'Název a typ', flex: '2' },
+      { k: 'vyrCislo', v: pr.vyrCislo || '', ph: 'Výr. číslo', flex: '1' },
       { k: 'kalibrace', v: pr.kalibrace || '', ph: 'Kalib. list', flex: '1' }
     ];
     fields.forEach(function(f) {
@@ -1066,8 +1066,8 @@ function addPristrojRow(d, num) {
   tr.appendChild(td1);
   var fields = [
     { v: d.nazev || '', ph: 'Metrel Eurotest MI3155' },
-    { v: d.vyrCislo || '', ph: 'vyrobni cislo' },
-    { v: d.kalibrace || '', ph: 'kalibraci list' }
+    { v: d.vyrCislo || '', ph: 'výrobní číslo' },
+    { v: d.kalibrace || '', ph: 'kalibrační list' }
   ];
   fields.forEach(function(f) {
     var td = document.createElement('td');
@@ -1101,7 +1101,7 @@ function addMereniRow() {
   if (!tbody) return;
   var tr = document.createElement('tr');
   var cols = [
-    { ph: 'FI1' }, { ph: 'Nazev obvodu' }, { ph: 'OEZ' }, { ph: 'B' },
+    { ph: 'FI1' }, { ph: 'Název obvodu' }, { ph: 'OEZ' }, { ph: 'B' },
     { ph: '1x16' }, { ph: '30' }, { ph: '10' }, { ph: 'Rpe O' }, { ph: 'Zsm O' },
     { ph: 'Riso MO' }
   ];
@@ -1197,7 +1197,7 @@ function addZavada() {
   var f1 = document.createElement('div');
   f1.className = 'f span2';
   var l1 = document.createElement('label');
-  l1.textContent = 'Popis zavady';
+  l1.textContent = 'Popis závady';
   var ta = document.createElement('textarea');
   ta.style.minHeight = '55px';
   ta.placeholder = 'Popis...';
@@ -1208,10 +1208,10 @@ function addZavada() {
   var f2 = document.createElement('div');
   f2.className = 'f';
   var l2 = document.createElement('label');
-  l2.textContent = 'Po odstraneni dalsi prohlidka';
+  l2.textContent = 'Po odstranění další prohlídka';
   var inp2 = document.createElement('input');
   inp2.type = 'text';
-  inp2.placeholder = 'ano - za 6 mesicu / ne';
+  inp2.placeholder = 'ano — za 6 měsíců / ne';
   f2.appendChild(l2);
   f2.appendChild(inp2);
   body.appendChild(f2);
@@ -1222,7 +1222,7 @@ function addZavada() {
   l3.textContent = 'Odkaz na normu';
   var inp3 = document.createElement('input');
   inp3.type = 'text';
-  inp3.placeholder = 'CSN 33 2000-4-41 cl. 411.3';
+  inp3.placeholder = 'ČSN 33 2000-4-41 čl. 411.3';
   f3.appendChild(l3);
   f3.appendChild(inp3);
   body.appendChild(f3);
@@ -1267,7 +1267,7 @@ function addDokumentace() {
   var tbody = document.getElementById('dokumentace-body');
   if (!tbody) return;
   var tr = document.createElement('tr');
-  var phs = ['cislo dokumentu', '', 'Nazev dokumentace'];
+  var phs = ['číslo dokumentu', '', 'Název dokumentace'];
   var types = ['text', 'date', 'text'];
   phs.forEach(function(ph, i) {
     var td = document.createElement('td');
@@ -1473,7 +1473,7 @@ function generujPDF() {
   function ftr() {
     return '<div class="a4-footer">' +
       '<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>' +
-      '<span>ev. cislo: ' + esc(D.rt_osvedceni) + '</span>' +
+      '<span>ev. číslo: ' + esc(D.rt_osvedceni) + '</span>' +
       '<span>Revize EL ' + new Date().getFullYear() + '</span>' +
       '</div>';
   }
@@ -1717,7 +1717,7 @@ function tiskMereni() {
   win.document.write('</table>');
   win.document.write('<div class="footer">');
   win.document.write('<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>');
-  win.document.write('<span>ev. cislo: ' + esc(D.rt_osvedceni) + '</span>');
+  win.document.write('<span>ev. číslo: ' + esc(D.rt_osvedceni) + '</span>');
   win.document.write('<span>Revize EL ' + new Date().getFullYear() + '</span>');
   win.document.write('</div>');
   win.document.write('</body></html>');
