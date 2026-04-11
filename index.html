@@ -908,6 +908,47 @@ function novaZprava(typ) {
     };
     zdroj.value = zdroje[aktPodtyp] || zdroje.dum;
   }
+  // Dynamické placeholdery dle podtypu
+  var ph = {
+    dum: {
+      f_misto: 'Rodinný dům č.p. 123, na pozemku p.č. 456/1',
+      f_adresa: 'Nováková 777\n326 29 Horní Dolní',
+      f_provozovatel: 'Jan Novák\nNováková 777\n326 29 Horní Dolní',
+      f_rozvadec: 'RD — plastový, zapuštěný, IP30',
+      f_rozvadec_umisteni: 'Technická místnost rodinného domu',
+      f_zemnič: 'Zemnič typu B — základový, uzavřená smyčka v betonu',
+      f_zemni_odpor: '9,5',
+      f_zdroj_napajeni: 'Distribuční síť nn: 1NPE+3PEN, 230/400V, 50Hz, TN-C-S',
+      f_predmet_neni: ''
+    },
+    byt: {
+      f_misto: 'Bytová jednotka č. 5, 2.NP vlevo',
+      f_adresa: 'Pod Bodalcem xxx\nPraha 10',
+      f_provozovatel: 'Jan Novák\nPod Bodalcem xxx\nPraha 10',
+      f_rozvadec: 'RB — plastový, zapuštěný, IP30',
+      f_rozvadec_umisteni: 'Vstupní chodba bytové jednotky',
+      f_zemnič: 'Společný zemnič bytového domu',
+      f_zemni_odpor: '4,2',
+      f_zdroj_napajeni: 'Distribuční síť nn: 1NPE+3PEN, 230/400V, 50Hz, TN-C-S',
+      f_predmet_neni: 'Elektroměrový rozváděč, společné prostory bytového domu'
+    },
+    prumysl: {
+      f_misto: 'Provozovna XXXXX s.r.o., výrobní hala + administrativní budova',
+      f_adresa: 'Průmyslová 123\n686 01 Uherské Hradiště',
+      f_provozovatel: 'XXXXX s.r.o.\nPrůmyslová 123\n686 01 Uherské Hradiště\nIČ: 12345678',
+      f_rozvadec: 'RH — skříňový OCEP, 1600A, IP40/00, 16kA',
+      f_rozvadec_umisteni: 'Rozvodna VN/NN, trafostanice',
+      f_zemnič: 'Uzemňovací soustava rozsáhlého objektu — typ B',
+      f_zemni_odpor: '2,8',
+      f_zdroj_napajeni: 'Vlastní trafostanice 22/0,4kV: 3PEN, 400V, 50Hz, TN-C-S',
+      f_predmet_neni: ''
+    }
+  };
+  var podtypPh = ph[aktPodtyp] || ph.dum;
+  Object.keys(podtypPh).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.placeholder = podtypPh[id];
+  });
   var och = document.getElementById('f_ochrana'); if (och) och.value = 'automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3';
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
