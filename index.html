@@ -589,6 +589,76 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       h) úbytek napětí
     </div>
   </div>
+  <div class="scard">
+    <div class="scard-title">D.3 – Tabulka zkoušení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 čl. 6.4.3</span></div>
+    <table class="data-table" style="font-size:.8rem">
+      <thead>
+        <tr><th style="width:5%"></th><th style="text-align:left">Zkouška</th><th style="width:18%">Výsledek</th><th style="text-align:left;width:35%">Vyhovuje dle</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align:center;font-weight:600">a)</td>
+          <td>Spojitost vodičů (ochranných vodičů, ale i spojitost hlavního a doplňujícího ochranného pospojování a uzemnění)</td>
+          <td><select id="zk_a" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 6.4.3.2<br>ČSN 33 2000-4-41 ed.3, čl. 411.3.1.2, čl. 415.2</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">b)</td>
+          <td>Izolační odpor elektrické instalace</td>
+          <td><select id="zk_b" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 6.4.3.3 a tabulka č. 6.1</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">c)</td>
+          <td>Zkoušení izolačních odporů pro potvrzení účinnosti ochrany pomocí SELV, PELV nebo elektrickým oddělením</td>
+          <td><select id="zk_c" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 6.4.3.4<br>ČSN 33 2000-4-41 ed.3, čl. 414, čl. 413<br>ČSN EN 61140 ed.3, čl. 6.5, 6.7, 6.8</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">d)</td>
+          <td>Izolační odpor/impedance podlahy a stěn (nevodivé okolí)</td>
+          <td><select id="zk_d" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.3, čl. 6.4.3.5, příl. B<br>ČSN 33 2000-4-41 ed.3, příloha C</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">e)</td>
+          <td>Automatické odpojení od zdroje</td>
+          <td><select id="zk_e" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 6.4.3.7<br>ČSN 33 2000-4-41 ed.3, čl. 411<br>ČSN EN 61140 ed.3, čl. 5.3.6</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">f)</td>
+          <td>Doplňková ochrana: proudovým chráničem / doplňující ochranné pospojování</td>
+          <td><select id="zk_f" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 6.4.3.8, příloha NA<br>ČSN 33 2000-4-41 ed.3, čl. 415.1, čl. 415.2</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">g)</td>
+          <td>Zkouška zapojení přístrojů</td>
+          <td><select id="zk_g" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 61.3.10</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">h)</td>
+          <td>Kontrola sledu fází</td>
+          <td><select id="zk_h" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 6.4.3.9</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">ch)</td>
+          <td>Funkční a provozní zkouška</td>
+          <td><select id="zk_ch" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 64.3.10</td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-weight:600">i)</td>
+          <td>Ověření úbytků napětí</td>
+          <td><select id="zk_i" style="width:100%;font-size:.8rem"><option value="Vyhovuje" selected>Vyhovuje</option><option value="Nevyhovuje">Nevyhovuje</option><option value="Neprovedeno">Neprovedeno</option></select></td>
+          <td style="font-size:.72rem;color:var(--muted)">ČSN 33 2000-6 ed.2, čl. 6.4.3.11<br>ČSN 33 2000-5-52 ed.2, čl. 525, tab. G.52.1<br>ČSN 33 2130 ed.4, čl. 4.7.3</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- TAB MĚŘENÍ -->
@@ -1801,6 +1871,10 @@ function getData() {
     pritomen: gv('f_pritomen'), zdroj_napajeni: gv('f_zdroj_napajeni'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
     prohlídka: gv('f_prohlídka'), zkouseni: gv('f_zkouseni'),
+    zkousky: {
+      a: gv('zk_a'), b: gv('zk_b'), c: gv('zk_c'), d: gv('zk_d'), e: gv('zk_e'),
+      f: gv('zk_f'), g: gv('zk_g'), h: gv('zk_h'), ch: gv('zk_ch'), i: gv('zk_i')
+    },
     zhodnoceni: gv('f_zhodnoceni'), celkovy_vysledek: gv('f_celkovy_vysledek'), lhuta: gv('f_lhuta'),
     poznamka_zavady: gv('f_poznamka_zavady'),
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
@@ -1837,7 +1911,7 @@ function generujPDF() {
   var pages = document.getElementById('pdf-pages');
   if (!pages) return;
   pages.innerHTML = '';
-  var total = 4;
+  var total = 5;
   // Přidej landscape style pro tisk
   var existingStyle = document.getElementById('landscape-print-style');
   if (existingStyle) existingStyle.remove();
@@ -1995,6 +2069,74 @@ function generujPDF() {
     '</div>' + ftr();
   pages.appendChild(p3);
 
+  // STRÁNKA 4 — Zkoušení, impedance, RCD
+  var zk = D.zkousky || {};
+  var zkNazvy = {
+    a: 'Spojitost vodičů (ochranných, pospojování, uzemnění)',
+    b: 'Izolační odpor elektrické instalace',
+    c: 'Zkoušení SELV, PELV nebo elektrickým oddělením',
+    d: 'Izolační odpor/impedance podlahy a stěn',
+    e: 'Automatické odpojení od zdroje',
+    f: 'Doplňková ochrana (proudový chránič, pospojování)',
+    g: 'Zkouška zapojení přístrojů',
+    h: 'Kontrola sledu fází',
+    ch: 'Funkční a provozní zkouška',
+    i: 'Ověření úbytků napětí'
+  };
+  var zkCsn = {
+    a: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.2; ČSN 33 2000-4-41 ed.3, čl. 411.3.1.2, čl. 415.2',
+    b: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.3 a tabulka č. 6.1',
+    c: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.4; ČSN 33 2000-4-41 ed.3, čl. 414, čl. 413; ČSN EN 61140 ed.3 čl. 6.5, 6.7, 6.8',
+    d: 'ČSN 33 2000-6 ed.3, čl. 6.4.3.5, příl. B; ČSN 33 2000-4-41 ed.3, příloha C',
+    e: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.7; ČSN 33 2000-4-41 ed.3, čl. 411; ČSN EN 61140 ed.3, čl. 5.3.6',
+    f: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.8, příloha NA; ČSN 33 2000-4-41 ed.3, čl. 415.1, čl. 415.2',
+    g: 'ČSN 33 2000-6 ed.2, čl. 61.3.10',
+    h: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.9',
+    ch: 'ČSN 33 2000-6 ed.2, čl. 64.3.10',
+    i: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.11; ČSN 33 2000-5-52 ed.2, čl. 525, tab. G.52.1'
+  };
+  var zkRows = '';
+  ['a','b','c','d','e','f','g','h','ch','i'].forEach(function(k) {
+    var vysl = zk[k] || 'Vyhovuje';
+    zkRows += '<tr><td style="text-align:center;font-weight:bold;padding:1mm 2mm">' + k + ')</td>' +
+      '<td style="padding:1mm 2mm;font-size:8.5pt">' + zkNazvy[k] + '</td>' +
+      '<td style="text-align:center;padding:1mm 2mm;font-weight:bold;font-size:8.5pt">' + vysl + '</td>' +
+      '<td style="padding:1mm 2mm;font-size:7pt;color:#444">' + zkCsn[k] + '</td></tr>';
+  });
+
+  var p4 = document.createElement('div');
+  p4.className = 'a4';
+  total++;
+  p4.innerHTML = hdr(4) +
+    '<div class="a4-content">' +
+    '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Zkoušení (dle čl. 6.4.3)</div></div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:3mm">' +
+    '<thead><tr><th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;width:5%"></th>' +
+    '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;text-align:left">Zkouška</th>' +
+    '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;width:12%">Výsledek</th>' +
+    '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;text-align:left;width:38%">Vyhovuje dle</th></tr></thead>' +
+    '<tbody>' + zkRows + '</tbody></table>' +
+    '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Měření impedance poruchové smyčky</div></div>' +
+    '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm;margin-bottom:3mm">' +
+    'Pokud nebylo možné změřit impedanci vypínací smyčky přímo (možnost poškození — citlivá elektronická zařízení) byla použita náhradní metoda měření odporu ochranných vodičů k hlavní zemnící svorce — ochrannému vodiči dle ČSN 33 2000-6 ed.2, čl. 6.4.3.7.1.' +
+    '<br>Před měřením impedance poruchové smyčky byla provedena zkouška elektrické spojitosti dle požadavků ČSN 33 2000-6 ed.2, čl. 6.4.3.7.3.' +
+    '<br>Naměřená hodnota impedance smyčky odpovídá požadavkům ČSN 33 2000-4-41 ed.3, čl. 411.3.2. a požadavky normy se považují za splněné, protože naměřená hodnota vyhovuje nerovnosti:' +
+    '<div style="text-align:center;margin:2mm 0;font-weight:bold;font-size:10pt">Zs (m) ≤ ⅔ × Uo / Ia</div>' +
+    'Bylo provedeno dle požadavků přílohy D ČSN 33 2000-6 ed.2, čl. D.6.4.3.7.3. Hodnoty impedancí smyček uváděné v tabulce naměřených hodnot jsou skutečně naměřené hodnoty impedance na spotřebičích příslušných vývodů. U skutečně naměřených hodnot byl proveden kontrolní výpočet s bezpečnostním koeficientem 1,5. Naměřené hodnoty jsou nižší než vypočítané hodnoty.' +
+    '</div>' +
+    '<div class="sec-head"><div class="sec-num">7.</div><div class="sec-name">Proudové chrániče</div></div>' +
+    '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
+    'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla provedena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2 a přílohy NA.' +
+    '<br>Bylo provedeno měření přechodových odporů a kontrola průřezu vodičů doplňujícího ochranného pospojování — ČSN 33 2000-4-41 ed.3, čl. 415.2, ČSN 33 2000-5-54 ed.3 čl. 544, ČSN EN 61140 ed.3 čl. 5.5.2.' +
+    '<br><br>Měření a zkoušení proudových chráničů bylo provedeno následujícím postupem:' +
+    '<br>— Ověření mezních hodnot reziduálních proudů a časů proudových chráničů.' +
+    '<br>— Měření dotykového napětí Ua na ochranném vodiči způsobené průchodem proudu IΔn.' +
+    '<br>— Ověření funkce kontrolního tlačítka na chráničích.' +
+    '<br><br>Výsledky vyhověly požadavkům norem a jsou uvedeny v tabulce měření této zprávy o revizi.' +
+    '</div>' +
+    '</div>' + ftr();
+  pages.appendChild(p4);
+
   var zavadyHtml = D.zavady.length > 0
     ? D.zavady.map(function(z, i) {
         return '<div style="margin-bottom:2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + esc(z.popis) +
@@ -2003,12 +2145,12 @@ function generujPDF() {
       }).join('')
     : '<div style="font-size:9.5pt;padding:0 2mm">Závady nebyly zjištěny.</div>';
 
-  var p4 = document.createElement('div');
-  p4.className = 'a4';
+  var p5 = document.createElement('div');
+  p5.className = 'a4';
   var posudekZaver = D.celkovy_vysledek === 'schopno'
     ? 'VYHRAZENÉ ELEKTRICKÉ ZAŘÍZENÍ JE Z HLEDISKA BEZPEČNOSTI\nSCHOPNO PROVOZU'
     : 'VYHRAZENÉ ELEKTRICKÉ ZAŘÍZENÍ NENÍ Z HLEDISKA BEZPEČNOSTI\nSCHOPNO PROVOZU';
-  p4.innerHTML = hdr(4) +
+  p5.innerHTML = hdr(5) +
     '<div class="a4-content">' +
     '<div class="sec-head"><div class="sec-num">9.</div><div class="sec-name">Přehled zjištěných závad</div></div>' +
     '<div style="padding:0 2mm;margin-bottom:4mm">' + zavadyHtml + '</div>' +
@@ -2027,7 +2169,7 @@ function generujPDF() {
     '</div>' +
     '<div style="margin-top:4mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
     '</div>' + ftr();
-  pages.appendChild(p4);
+  pages.appendChild(p5);
 
   archiv.unshift({ typ: D.typ, ev_cislo: D.ev_cislo, misto: D.misto, datum: D.zahajeni, vysledek: D.celkovy_vysledek });
   STORE.archiv = archiv;
