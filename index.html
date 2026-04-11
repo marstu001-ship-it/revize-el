@@ -867,9 +867,12 @@ function novaZprava(typ) {
   addDokumentace();
   renderChecklist();
   var d = new Date().toISOString().split('T')[0];
+  var rok = new Date().getFullYear().toString().slice(-2);
   ['f_zahajeni','f_ukonceni','f_vypracovani','f_predano_datum'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.value = d;
   });
+  var evCislo = document.getElementById('f_ev_cislo');
+  if (evCislo) evCislo.value = 'RE-' + rok + '-0001';
   var sit = document.getElementById('f_sit');
   var sits = { dum: 'TN-C-S 230/400V 50Hz AC', byt: 'TN-C-S 230/400V 50Hz AC', prumysl: 'TN-C-S 400V 50Hz AC' };
   if (sit) sit.value = sits[aktPodtyp] || sits.dum;
