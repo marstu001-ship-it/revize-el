@@ -1153,9 +1153,9 @@ function addMereniRow() {
 
 function mkSelectTd(options, selected, onChange) {
   var td = document.createElement('td');
-  td.style.border = '1px solid #ccc';
+  td.style.cssText = 'border:1px solid #ccc;background:#f0f6ff';
   var sel = document.createElement('select');
-  sel.style.cssText = 'width:100%;border:none;background:transparent;font-size:.78rem;text-align:center;cursor:pointer';
+  sel.style.cssText = 'width:100%;border:1px solid #b8d0f0;background:#fff;font-size:.8rem;text-align:center;cursor:pointer;padding:2px 4px;border-radius:2px;font-weight:600;color:#1c3a5e';
   options.forEach(function(o) {
     var opt = document.createElement('option');
     opt.value = o;
