@@ -615,7 +615,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
           </tr>
           <tr>
             <th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th>
-            <th>Vyb.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyb. ms</th><th>Ut<br>(V)</th>
+            <th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>
           </tr>
         </thead>
         <tbody id="mereni-body"></tbody>
@@ -1667,7 +1667,7 @@ function generujPDF() {
     (D.rozvadec ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>' + esc(D.rozvadec) + '</strong> — ' + esc(D.rozvadec_umisteni) + '</div>' : '') +
     '<table class="pdf-meas"><thead><tr>' +
     '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Dr.<br>odp.</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
-    '</tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyb.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>ms</th><th>Ut<br>(V)</th></tr></thead>' +
+    '</tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>' +
     '<tbody>' + (mereniRows || '<tr><td colspan="15" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>' +
     '<div style="font-size:7.5pt;margin-top:2mm;padding:0 2mm;color:#444">U RCD je součástí měření ověření funkce testovacího tlačítka.</div>' +
     '<div class="sec-head" style="margin-top:5mm"><div class="sec-num">4.</div><div class="sec-name">Hodnocení ochrany před úrazem</div></div>' +
@@ -1786,7 +1786,7 @@ function tiskMereni() {
   win.document.write('</tr>');
   win.document.write('<tr>');
   win.document.write('<th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th>');
-  win.document.write('<th>Vyb.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>ms</th><th>Ut<br>(V)</th>');
+  win.document.write('<th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>');
   win.document.write('</tr>');
   win.document.write('</thead>');
   win.document.write('<tbody>' + (mereniRows || '<tr><td colspan="15" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody>');
