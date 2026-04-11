@@ -1139,14 +1139,63 @@ function copyRow(el) {
   if (!tr) return;
   var tbody = tr.parentNode;
   var clone = tr.cloneNode(true);
-  // Re-attach event listeners for copy/delete buttons
-  // (cloneNode doesn't copy event listeners, but we use data-action delegation)
-  // Insert after the original row
   if (tr.nextSibling) {
     tbody.insertBefore(clone, tr.nextSibling);
   } else {
     tbody.appendChild(clone);
   }
+}
+
+function copyRcdGroup(el) {
+  var groupId = el.dataset.group;
+  if (!groupId) return;
+  var tbody = document.getElementById('mereni-body');
+  if (!tbody) return;
+  // Najdi všechny řádky skupiny (header + podřádky)
+  var rows = tbody.querySelectorAll('tr[data-rcd-group="' + groupId + '"]');
+  if (rows.length === 0) return;
+  // Najdi poslední řádek skupiny
+  var lastRow = rows[rows.length - 1];
+  // Nová skupina
+  rcdGroupCounter++;
+  var newGroupId = 'rcd-' + rcdGroupCounter;
+  // Klonuj všechny řádky a vlož za poslední
+  var insertAfter = lastRow;
+  rows.forEach(function(r) {
+    var clone = r.cloneNode(true);
+    clone.dataset.rcdGroup = newGroupId;
+    // Aktualizuj groupId v copy/delete tlačítkách
+    var cpBtns = clone.querySelectorAll('[data-group]');
+    cpBtns.forEach(function(b) { b.dataset.group = newGroupId; });
+    // Aktualizuj onChange na selectu v RCD header
+    if (clone.dataset.rowtype === 'rcd-header') {
+      var sel = clone.querySelector('select');
+      if (sel) {
+        sel.addEventListener('change', function() {
+          addRcdSubRows(tbody, clone, this.value, newGroupId);
+        });
+      }
+      // Aktualizuj delete tlačítko na hlavičce
+      var headerDels = clone.querySelectorAll('button');
+      headerDels.forEach(function(b) {
+        if (b.textContent === '✕' && !b.dataset.action) {
+          var newDel = b.cloneNode(true);
+          newDel.addEventListener('click', function() {
+            var subs = tbody.querySelectorAll('tr[data-rcd-group="' + newGroupId + '"]');
+            subs.forEach(function(x) { x.remove(); });
+            clone.remove();
+          });
+          b.parentNode.replaceChild(newDel, b);
+        }
+      });
+    }
+    if (insertAfter.nextSibling) {
+      tbody.insertBefore(clone, insertAfter.nextSibling);
+    } else {
+      tbody.appendChild(clone);
+    }
+    insertAfter = clone;
+  });
 }
 
 function addMereniRow() {
@@ -1202,6 +1251,27 @@ function mkEmptyTd() {
   td.style.cssText = 'border:1px solid #eee;background:#f8f8f0;padding:.15rem';
   return td;
 }
+function mkRcdActionTd(rcdGroupId, isLast) {
+  var td = document.createElement('td');
+  td.style.cssText = 'border:1px solid #eee;background:#f8f8f0;white-space:nowrap;text-align:center';
+  if (isLast) {
+    var cpBtn = document.createElement('button');
+    cpBtn.className = 'del-btn';
+    cpBtn.textContent = '⧉';
+    cpBtn.title = 'Kopírovat celý chránič';
+    cpBtn.style.cssText = 'color:#1c3a5e;font-size:.72rem;margin-right:2px';
+    cpBtn.dataset.action = 'copyRcdGroup';
+    cpBtn.dataset.group = rcdGroupId;
+    td.appendChild(cpBtn);
+  }
+  var btn = document.createElement('button');
+  btn.className = 'del-btn';
+  btn.textContent = '✕';
+  btn.title = 'Smazat řádek';
+  btn.dataset.action = 'delRow';
+  td.appendChild(btn);
+  return td;
+}
 
 function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
   // Smaž existující podřádky této skupiny
@@ -1236,9 +1306,11 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
     tr.appendChild(mkTd(''));
     tr.appendChild(mkTd(''));
     tr.appendChild(mkTd(''));
-    // Kabel — prázdná sloučená buňka
+    // Kabel — prázdná buňka
     tr.appendChild(mkEmptyTd());
-    tr.appendChild(mkDelTd());
+    // Akce — kopírování celé skupiny jen na posledním řádku
+    var isLast = (idx === faze.length - 1);
+    tr.appendChild(mkRcdActionTd(rcdGroupId, isLast));
     if (insertAfter.nextSibling) {
       tbody.insertBefore(tr, insertAfter.nextSibling);
     } else {
@@ -2168,6 +2240,7 @@ document.addEventListener('click', function(e) {
     case 'tiskMereni': tiskMereni(); break;
     case 'delRow': delRowEl(el); break;
     case 'copyRow': copyRow(el); break;
+    case 'copyRcdGroup': copyRcdGroup(el); break;
     case 'delPreset': delPreset(parseInt(el.getAttribute('data-idx'))); break;
     case 'smazatZpravu': smazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'removeZavada': var zi = el.closest('.zavada-item'); if (zi) zi.remove(); break;
