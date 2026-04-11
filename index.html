@@ -870,18 +870,40 @@ function novaZprava(typ) {
   ['f_zahajeni','f_ukonceni','f_vypracovani','f_predano_datum'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.value = d;
   });
-  var sit = document.getElementById('f_sit'); if (sit) sit.value = 'TN-C-S 230V/50Hz AC';
+  var sit = document.getElementById('f_sit');
+  var sits = { dum: 'TN-C-S 230/400V 50Hz AC', byt: 'TN-C-S 230/400V 50Hz AC', prumysl: 'TN-C-S 400V 50Hz AC' };
+  if (sit) sit.value = sits[aktPodtyp] || sits.dum;
   renderNapetoveCheckboxy(aktPodtyp);
   renderOchranaCheckboxy();
-  // Magic texty dle podtypu
+  // Předmět revize dle podtypu
   var f_predmet = document.getElementById('f_predmet_je');
   if (f_predmet && !f_predmet.value) {
     var predmety = {
-      dum: 'Elektrická instalace rodinného domu — rozvodnice RD, vývody světelných a zásuvkových obvodů včetně pevně připojených spotřebičů v rozsahu dle popisu.',
-      byt: 'Elektrická instalace bytové jednotky — bytová rozvodnice RB, vývody světelných a zásuvkových obvodů včetně pevně připojených spotřebičů.',
-      prumysl: 'Elektrická zařízení provozovny — hlavní přívody pro rozváděč RH, vývody z rozváděče RH pro strojní a technická zařízení, napájení el. zařízení zásuvkové a světelné obvody v rozsahu dle popisu.'
+      dum: 'Elektrické zařízení rodinného domu, hlavní přívod z pojistkové skříně, elektroměrový rozváděč, vývod z elektroměrového rozváděče — přívod pro rozváděč RD, který je nainstalován v technické místnosti rodinného domu. Dále vývody z rozváděče RD, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
+      byt: 'Elektrické zařízení bytové jednotky, rozváděč RB v bytové jednotce, vývody z rozváděče RB, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
+      prumysl: 'Elektrické zařízení provozovny, hlavní přívody pro rozváděč RH (vlastní trafostanice). Vývody z rozváděče RH, přívody pro strojní a technologické zařízení, napájení el. zařízení zásuvkové a světelné obvody v rozsahu dle popisu revidovaného zařízení.'
     };
     f_predmet.value = predmety[aktPodtyp] || predmety.dum;
+  }
+  // Předmět revize NENÍ dle podtypu
+  var f_neni = document.getElementById('f_predmet_neni');
+  if (f_neni && !f_neni.value) {
+    var neníTexty = {
+      dum: '',
+      byt: 'Elektroměrový rozváděč, hlavní přívod — část společné prostory bytového domu.',
+      prumysl: ''
+    };
+    f_neni.value = neníTexty[aktPodtyp] || '';
+  }
+  // Zdroj el. proudu dle podtypu
+  var zdroj = document.getElementById('f_zdroj');
+  if (zdroj && !zdroj.value) {
+    var zdroje = {
+      dum: 'Distribuční síť ČEZ / E.ON / PRE — cizí zdroj',
+      byt: 'Distribuční síť ČEZ / E.ON / PRE — cizí zdroj',
+      prumysl: 'Vlastní trafostanice / distribuční síť — cizí zdroj'
+    };
+    zdroj.value = zdroje[aktPodtyp] || zdroje.dum;
   }
   var och = document.getElementById('f_ochrana'); if (och) och.value = 'automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3';
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -928,6 +950,13 @@ function propsatTechnika() {
   }
 }
 
+// Předvolby norem dle podtypu: true = zaškrtnuto, false = nezaškrtnuto, undefined = skryté
+var NORMY_PODTYP = {
+  dum:     { csn2000701: true, csn2130: true, csn2000554: true, csn2000551: true, csn2000552: true },
+  byt:     { csn2000701: true, csn2130: true, csn2000554: true, csn2000551: true, csn2000552: true },
+  prumysl: { csn2000554: true, csn2000551: true, csn2000552: true, csn60073: true }
+};
+
 var NORMY = {
   elektro: [
     { s: 'Nařízení vlády', items: [
@@ -939,15 +968,16 @@ var NORMY = {
       { id: 'csn332000641', t: 'ČSN 33 2000-4-41 ed.3 — Ochrana před úrazem el. proudem', c: true },
       { id: 'csn3320006', t: 'ČSN 33 2000-6 ed.2 — Revize elektrických instalací', c: true },
       { id: 'csn61140', t: 'ČSN EN 61140 ed.3 — Ochrana před úrazem elektrickým proudem', c: true },
-      { id: 'csn2130', t: 'ČSN 33 2130 ed.4 — Elektrický rozvod v místnostech pro lékařské účely / instalační zóny', c: false },
+      { id: 'csn2130', t: 'ČSN 33 2130 ed.4 — Elektrický rozvod, instalační zóny', c: false },
       { id: 'csn2000554', t: 'ČSN 33 2000-5-54 ed.3 — Uzemnění a ochranné vodiče', c: false },
-      { id: 'csn2000551', t: 'ČSN 33 2000-5-51 ed.3 — Výběr a stavba el. zařízení', c: false },
+      { id: 'csn2000551', t: 'ČSN 33 2000-5-51 ed.3 +Z1+Z2 — Výběr a stavba el. zařízení', c: false },
       { id: 'csn2000552', t: 'ČSN 33 2000-5-52 ed.2 — Elektrické rozvody', c: false },
       { id: 'csn2000701', t: 'ČSN 33 2000-7-701 ed.3 — Prostory s vanou nebo sprchou', c: false },
       { id: 'csn641z1', t: 'ČSN 33 2000-4-41 ed.2 + Z1 — starší instalace (do r. 2012)', c: false },
-      { id: 'csn50110', t: 'ČSN EN 50110-1 ed.3 — Obsluha a práce na elektrických zařízeních', c: false },
+      { id: 'csn50110', t: 'ČSN EN 50110-1 ed.3 — Obsluha a práce na el. zařízeních', c: false },
       { id: 'csn60445', t: 'ČSN EN IEC 60445 ed.6 — Označování svorek a vodičů', c: false },
-      { id: 'csn60073', t: 'ČSN EN 60073 ed.2 — Kódování sdělovačů a ovládačů', c: false }
+      { id: 'csn60073', t: 'ČSN EN 60073 ed.2 — Kódování sdělovačů a ovládačů', c: false },
+      { id: 'csn60529', t: 'ČSN EN 60529 — Stupně ochrany krytem (IP kód)', c: false }
     ]}
   ],
   lps: [
@@ -967,13 +997,16 @@ function renderNormy(typ) {
   var c = document.getElementById('normy-obsah');
   if (!c) return;
   var data = NORMY[typ] || NORMY.elektro;
+  var podtypPreset = NORMY_PODTYP[aktPodtyp] || {};
   var html = '';
   data.forEach(function(sk) {
     html += '<div style="margin-bottom:1rem">';
     html += '<div style="font-family:monospace;font-size:.6rem;text-transform:uppercase;color:#6e6a60;margin-bottom:.4rem">' + sk.s + '</div>';
     sk.items.forEach(function(n) {
+      // Podtypový preset přebíjí výchozí hodnotu
+      var checked = (podtypPreset[n.id] !== undefined) ? podtypPreset[n.id] : n.c;
       html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
-      html += '<input type="checkbox" id="n-' + n.id + '"' + (n.c ? ' checked' : '') + '>';
+      html += '<input type="checkbox" id="n-' + n.id + '"' + (checked ? ' checked' : '') + '>';
       html += '<label for="n-' + n.id + '" style="font-size:.82rem;cursor:pointer">' + n.t + '</label>';
       html += '</div>';
     });
@@ -1519,16 +1552,20 @@ function magicPopis() {
   var el = document.getElementById('f_popis');
   if (!el) return;
   var texty = {
-    dum: 'Elektrická instalace rodinného domu je provedena kabely CYKY-J uloženými v elektroinstalačních trubkách a kabelových žlabech. Hlavní přívod z elektroměrového rozváděče je proveden kabelem CYKY-J 4x16 uloženým v zemi v chráničkách Kopoflex v celé délce v hloubce 80 cm. Bytový rozváděč RD je nainstalován v technické místnosti. Pod rozváděčem je instalována přípojnice MET — hlavní uzemňovací svorka. Zásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. Osvětlení je provedeno LED svítidly s odpovídajícím krytím IP. V rozváděči je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C.',
-    byt: 'Elektrická instalace bytové jednotky je provedena kabely CYKY-J uloženými pod omítkou a v podlahách. Hlavní přívod z elektroměrového rozváděče ve společných prostorách bytového domu je proveden kabelem CYKY-J 4x10, společně s hlavním přívodem je uložena barevná kombinace žl/zel ochranného pospojování průřezu 10 mm². Bytový rozváděč RB je nainstalován ve vstupní chodbě bytové jednotky. Zásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. V rozváděči je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C.',
-    prumysl: 'Jedná se o rozsáhlý průmyslový objekt. Hlavní rozváděč RH je napájen z vlastní transformátorové stanice TS. Z rozváděče RH jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy a technického zázemí. Kabelové rozvody jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách. V rozvodně VN/NN je instalována přípojnice MET — hlavní uzemňovací svorka. V rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů Typ T1.'
+    dum: 'Jedná se o novostavbu rodinného domu. Rodinný dům je připojen k distribuční síti prostřednictvím pojistkové skříně typ SPP2C, řešeno jako svodová přípojka. Elektroměrový rozváděč je nainstalován v elektroměrovém pilíři na hranici pozemku. Rozváděč RD pro rodinný dům je nainstalován v technické místnosti. Hlavní přívod z elektroměrového rozváděče je proveden kabelem CYKY-J 4x16, který je uložen v zemi v chráničkách Kopoflex v celé délce v hloubce 80 cm. Kabel je zakončen na vstupní svorkovnici rozváděče RD. Souběžně s hlavním přívodem je uložen i kabel CYKY-J 5x2,5 — povelový pro HDO a kabel CYKY-J 3x2,5 pro pohon brány.\n\n— Pod rozváděčem je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nRp doplňujícího ochranného pospojování v koupelně vyhověly ČSN 33 2000-4-41 ed.3, čl. 415.2. Odpor R mezi neživými částmi současně přístupnými dotyku a cizími vodivými částmi splnil podmínku: R ≤ 50V/Ia.\n\nV rozváděči RD vedle hlavního jističe je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C. Délka vodičů přívodu a vývodu z přepěťové ochrany je 30 cm. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. Osvětlení je provedeno LED svítidly s odpovídajícím krytím IP.\n\nU rodinného domu je proveden základový zemnič typu B, který tvoří uzavřenou smyčku. Zemnič je uložen minimálně 10 cm v betonu. Jedná se o společný zemnič pro elektrické zařízení i ochranu před bleskem. Uzemňovací přívody jsou antikorozně ošetřeny dle ČSN 33 2000-5-54 ed.3 příloha ZB čl. 542.2.5.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.',
+
+    byt: 'Jedná se o bytovou jednotku v bytovém domě. Bytová jednotka je ve druhém nadzemním podlaží vlevo. Bytový dům je postaven z cihel. Hlavní přívod z elektroměrového rozváděče, který je nainstalovaný na společné chodbě bytového domu je proveden kabelem CYKY-J 4x10, společně s hlavním přívodem je uložen vodič pospojování v barevné kombinaci žel/žlutá průřezu 10 mm².\n\nBytový rozváděč RB je nainstalován ve vstupní chodbě bytové jednotky. Kabelové rozvody jsou uloženy pod omítkou a v podlahách. Přípojnice pospojování pro BJ je nainstalována v šachtě přístupné z WC.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nRp doplňujícího ochranného pospojování v koupelně vyhověly ČSN 33 2000-4-41 ed.3, čl. 415.2. Odpor R mezi neživými částmi současně přístupnými dotyku a cizími vodivými částmi splnil podmínku: R ≤ 50V/Ia.\n\nV rozváděči BD vedle hlavního jističe je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C typ OEZ SVC-350—3PEN - MZ pro výbojový proud 20 kA (8/20 μs) pro předpokládané nízké účinky bleskového proudu. Délka vodičů přívodu a vývodu z přepěťové ochrany je 45 cm. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.',
+
+    prumysl: 'Jedná se o rozsáhlý průmyslový objekt s vlastní trafostanicí, která je mimo výrobní objekt u příjezdové komunikace. V trafostanici je nainstalován hlavní rozváděč RH, ze kterého jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy, šaten a technického zázemí.\n\nKabelové rozvody jsou uloženy v zemi — v případě pravidelné revize je vhodné uvést, že stav kabelů a uzemňovací soustavy uložených v zemi nebylo možné zkontrolovat, protože jsou nepřístupné. Kabely jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách.\n\n— V rozvodně VN/NN je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— neživé části zařízení — nádoba transformátoru;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nV rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů. V podružných rozváděčích osazeny SPD.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.'
   };
   el.value = texty[aktPodtyp] || texty.dum;
 }
 
 function magicZaver() {
   var el = document.getElementById('f_zhodnoceni');
-  if (el) el.value = 'Způsob a provedení elektroinstalace je v souladu s platnými ČSN. Kvalita provedených prací je hodnocena jako dobrá. Ochrana před úrazem elektrickým proudem v síti TN automatickým odpojením od zdroje je provedena v souladu s požadavky ČSN 33 2000-4-41 ed.3. Při měření spojitosti ochranných vodičů byla naměřena hodnota vždy menší než 0,7 Ω. Při měření izolačních stavů byly naměřené hodnoty výrazně nad minimem Riso. Při měření impedance vypínací smyčky hodnoty odpovídají ČSN 33 2000-4-41 ed.3, čl. 411.4.4. Proudové chrániče jsou funkční, reagují v předepsaných mezích. Elektrická instalace je z hlediska bezpečnosti schopna provozu.';
+  if (!el) return;
+  var zaverText = 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledy měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).';
+  el.value = zaverText;
 }
 
 function openModalRevize() {
