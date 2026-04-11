@@ -1187,13 +1187,21 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
   // Vlož nové podřádky
   var faze = getRcdFazeByType(typ);
   var insertAfter = afterRow;
-  faze.forEach(function(f) {
+  faze.forEach(function(f, idx) {
     var tr = document.createElement('tr');
     tr.dataset.rowtype = 'rcd-mereni';
     tr.dataset.rcdGroup = rcdGroupId;
     tr.style.background = '#f8f8f0';
-    // 8 prázdných buněk s jemným borderem — splývají vizuálně
-    for (var j = 0; j < 8; j++) tr.appendChild(mkEmptyTd());
+    // Sloučená buňka vlevo — na prvním řádku popisek, na dalších prázdná
+    var tdEmpty = document.createElement('td');
+    tdEmpty.colSpan = 8;
+    if (idx === 0) {
+      tdEmpty.style.cssText = 'border:none;background:#f8f8f0;text-align:right;padding:.2rem .5rem;font-family:var(--mono);font-size:.62rem;color:#9a9488;vertical-align:middle';
+      tdEmpty.textContent = 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →';
+    } else {
+      tdEmpty.style.cssText = 'border:none;background:#f8f8f0;padding:.15rem';
+    }
+    tr.appendChild(tdEmpty);
     // Fáze — předvyplněná, tučná
     var tdF = mkTd(f);
     tdF.querySelector('input').value = f;
@@ -1977,8 +1985,11 @@ function nacistJSON(e) {
             tr2.dataset.rowtype = 'rcd-mereni';
             tr2.dataset.rcdGroup = m.rcdGroup || '';
             tr2.style.background = '#f8f8f0';
-            // 8 prázdných buněk
-            for (var k2 = 0; k2 < 8; k2++) tr2.appendChild(mkEmptyTd());
+            // Sloučená prázdná buňka vlevo
+            var tdE2 = document.createElement('td');
+            tdE2.colSpan = 8;
+            tdE2.style.cssText = 'border:none;background:#f8f8f0;padding:.15rem';
+            tr2.appendChild(tdE2);
             // Fáze (bold, readonly)
             var tdFi = mkTd(m.faze || '');
             tdFi.querySelector('input').value = m.faze || '';
