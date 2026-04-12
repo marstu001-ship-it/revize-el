@@ -1393,10 +1393,11 @@ function copyRow(el) {
 function delRcdGroup(el) {
   var groupId = el.dataset.group;
   if (!groupId) return;
-  var tbody = document.getElementById('mereni-body');
+  var tr = el.closest('tr');
+  var tbody = tr ? tr.parentNode : null;
   if (!tbody) return;
   tbody.querySelectorAll('tr[data-rcd-group="' + groupId + '"]').forEach(function(r) { r.remove(); });
-  // Smaž i hlavičku (má vlastní delete listener)
+  // Smaž i hlavičku
   var header = tbody.querySelector('tr[data-rowtype="rcd-header"][data-rcd-group="' + groupId + '"]');
   if (header) header.remove();
 }
