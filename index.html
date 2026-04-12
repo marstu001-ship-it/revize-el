@@ -826,9 +826,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="pdf-toolbar-title">📄 PDF náhled — připraveno k tisku</div>
     <div class="pdf-actions">
       <button class="pbtn" data-action="form">← Zpět do formuláře</button>
-      <button class="pbtn" data-action="tiskMereni" style="background:#c8962a;border-color:#c8962a">📐 Tisk měření</button>
       <button class="pbtn pbtn-print" data-action="print">🖨️ Tisk</button>
-      <button class="pbtn" data-action="stahnoutPDF" style="background:#2e7d32;border-color:#2e7d32">📥 Stáhnout PDF</button>
+      <button class="pbtn" data-action="stahnoutPDF" style="background:#2e7d32;border-color:#2e7d32">📥 Stáhnout zprávu PDF</button>
+      <button class="pbtn" data-action="stahnoutMereniPDF" style="background:#c8962a;border-color:#c8962a">📥 Stáhnout měření PDF</button>
     </div>
   </div>
   <div class="pdf-pages" id="pdf-pages"></div>
@@ -2409,19 +2409,40 @@ function stahnoutPDF() {
   if (!pages) return;
   var D = getData();
   var filename = 'RZ_' + (D.ev_cislo || 'zprava') + '_' + (D.zahajeni || 'datum') + '.pdf';
+  // Skryj landscape stránky (měření se tiskne zvlášť)
+  var lp = pages.querySelectorAll('.a4-landscape');
+  lp.forEach(function(p) { p.style.display = 'none'; });
   var opt = {
     margin: 0,
     filename: filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    image: { type: 'png', quality: 1 },
+    html2canvas: { scale: 3, useCORS: true, letterRendering: true, logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['css', 'legacy'], before: '.a4' }
   };
-  // Dočasně skryj landscape stránky (měření) — ty se tisknou zvlášť
-  var landscapePages = pages.querySelectorAll('.a4-landscape');
-  landscapePages.forEach(function(p) { p.style.display = 'none'; });
   html2pdf().set(opt).from(pages).save().then(function() {
-    landscapePages.forEach(function(p) { p.style.display = ''; });
+    lp.forEach(function(p) { p.style.display = ''; });
+  });
+}
+
+function stahnoutMereniPDF() {
+  var pages = document.getElementById('pdf-pages');
+  if (!pages) return;
+  var D = getData();
+  var filename = 'RZ_' + (D.ev_cislo || 'zprava') + '_mereni.pdf';
+  // Skryj portrait stránky
+  var pp = pages.querySelectorAll('.a4:not(.a4-landscape)');
+  pp.forEach(function(p) { p.style.display = 'none'; });
+  var opt = {
+    margin: 0,
+    filename: filename,
+    image: { type: 'png', quality: 1 },
+    html2canvas: { scale: 3, useCORS: true, letterRendering: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+    pagebreak: { mode: ['css', 'legacy'], before: '.a4' }
+  };
+  html2pdf().set(opt).from(pages).save().then(function() {
+    pp.forEach(function(p) { p.style.display = ''; });
   });
 }
 
@@ -2795,6 +2816,7 @@ document.addEventListener('click', function(e) {
     case 'closeRevize': closeModal('modal-revize'); break;
     case 'print': window.print(); break;
     case 'stahnoutPDF': stahnoutPDF(); break;
+    case 'stahnoutMereniPDF': stahnoutMereniPDF(); break;
     case 'tiskMereni': tiskMereni(); break;
     case 'delRow': delRowEl(el); break;
     case 'copyRow': copyRow(el); break;
