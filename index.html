@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Revize EL – Revizní zprávy</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 /* ═══ RESET ═══ */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -825,8 +826,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="pdf-toolbar-title">📄 PDF náhled — připraveno k tisku</div>
     <div class="pdf-actions">
       <button class="pbtn" data-action="form">← Zpět do formuláře</button>
-      <button class="pbtn" data-action="tiskMereni" style="background:#c8962a;border-color:#c8962a">📐 Tisk měření (landscape)</button>
-      <button class="pbtn pbtn-print" data-action="print">🖨️ Tisk celé zprávy</button>
+      <button class="pbtn" data-action="tiskMereni" style="background:#c8962a;border-color:#c8962a">📐 Tisk měření</button>
+      <button class="pbtn pbtn-print" data-action="print">🖨️ Tisk</button>
+      <button class="pbtn" data-action="stahnoutPDF" style="background:#2e7d32;border-color:#2e7d32">📥 Stáhnout PDF</button>
     </div>
   </div>
   <div class="pdf-pages" id="pdf-pages"></div>
@@ -2412,6 +2414,27 @@ function generujPDF() {
   window.scrollTo(0, 0);
 }
 
+function stahnoutPDF() {
+  var pages = document.getElementById('pdf-pages');
+  if (!pages) return;
+  var D = getData();
+  var filename = 'RZ_' + (D.ev_cislo || 'zprava') + '_' + (D.zahajeni || 'datum') + '.pdf';
+  var opt = {
+    margin: 0,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['css', 'legacy'], before: '.a4' }
+  };
+  // Dočasně skryj landscape stránky (měření) — ty se tisknou zvlášť
+  var landscapePages = pages.querySelectorAll('.a4-landscape');
+  landscapePages.forEach(function(p) { p.style.display = 'none'; });
+  html2pdf().set(opt).from(pages).save().then(function() {
+    landscapePages.forEach(function(p) { p.style.display = ''; });
+  });
+}
+
 function renderTiskRows(data) {
   return data.map(function(m) {
     var isRcd = m.rowtype === 'rcd-mereni';
@@ -2781,6 +2804,7 @@ document.addEventListener('click', function(e) {
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;
     case 'print': window.print(); break;
+    case 'stahnoutPDF': stahnoutPDF(); break;
     case 'tiskMereni': tiskMereni(); break;
     case 'delRow': delRowEl(el); break;
     case 'copyRow': copyRow(el); break;
