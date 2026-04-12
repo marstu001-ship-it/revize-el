@@ -1667,8 +1667,11 @@ function addRcdRow(el) {
   trMain.dataset.rowtype = 'rcd-header';
   trMain.dataset.rcdGroup = groupId;
   trMain.style.background = '#f0f6ff';
-  // Č. — prázdné
-  trMain.appendChild(mkTd(''));
+  // Č. — automatické číslování
+  var num = getNextRowNum(tbody);
+  var tdNum = mkTd('');
+  tdNum.querySelector('input').value = '' + num;
+  trMain.appendChild(tdNum);
   // Název — RCD popis
   trMain.appendChild(mkTd('RCD', ';text-align:left'));
   // Typ-pol — výrobce
