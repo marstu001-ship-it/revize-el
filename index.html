@@ -2394,17 +2394,7 @@ function generujPDF() {
     '<div class="sec-head"><div class="sec-num">10.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.zhodnoceni || 'Závěr nebyl vyplněn.') + '</div>' +
     (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
-    '<div style="text-align:center;margin:6mm 0 4mm;padding:4mm;border:1pt solid #000">' +
-    '<div style="font-size:12pt;font-weight:bold;margin-bottom:2mm">Celkový posudek — slovní zhodnocení</div>' +
-    '<div style="font-size:11pt;font-weight:bold;white-space:pre-line">' + posudekZaver + '</div>' +
-    '</div>' +
-    '<div style="font-size:8.5pt;padding:0 2mm;margin-bottom:3mm">V ' + esc(D.predano_misto || '..........') + ' dne ' + fmtDate(D.predano_datum) + '</div>' +
-    '<div style="font-size:8pt;padding:0 2mm;margin-bottom:2mm">Potvrzení o převzetí nebo předání zprávy o revizi dle NV č. 190/2022 Sb. §10 písmeno o)</div>' +
-    '<div class="podp-grid">' +
-    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">Podpis objednatele (razítko)</div></div></div></div>' +
-    '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">Jméno a podpis revizního technika (razítko)</div></div></div></div>' +
-    '</div>' +
-    '<div style="margin-top:4mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
+    '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
     (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + esc(D.prilohy) + '</span></div>' : '') +
     '</div>' + ftr();
   pages.appendChild(p5);
