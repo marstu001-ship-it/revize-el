@@ -1691,19 +1691,10 @@ function addRcdRow(el) {
   for (var i = 0; i < 5; i++) trMain.appendChild(mkTd(''));
   // Kabel
   trMain.appendChild(mkTd('CYKY 3×2,5', ';text-align:left'));
-  // Delete — smaže i podřádky
-  var delTd = document.createElement('td');
-  delTd.style.border = '1px solid #ccc';
-  var delBtn = document.createElement('button');
-  delBtn.className = 'del-btn';
-  delBtn.textContent = '✕';
-  delBtn.addEventListener('click', function() {
-    var subs = tbody.querySelectorAll('tr[data-rcd-group="' + groupId + '"]');
-    subs.forEach(function(r) { r.remove(); });
-    trMain.remove();
-  });
-  delTd.appendChild(delBtn);
-  trMain.appendChild(delTd);
+  // Prázdná buňka — akce jsou na posledním podřádku
+  var emptyActionTd = document.createElement('td');
+  emptyActionTd.style.cssText = 'border:1px solid #ccc';
+  trMain.appendChild(emptyActionTd);
   tbody.appendChild(trMain);
   // Vygeneruj podřádky dle výchozího typu (A)
   addRcdSubRows(tbody, trMain, 'A', groupId);
