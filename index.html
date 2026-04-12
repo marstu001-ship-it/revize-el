@@ -289,6 +289,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   .g2,.g3,.g4{grid-template-columns:1fr}
   .span2,.span3,.span4{grid-column:span 1}
   .podpisy-grid{grid-template-columns:1fr}
+  .meas-table th{font-size:.45rem!important;padding:.2rem .1rem!important}
+  .meas-table td input{font-size:.7rem!important}
+  .meas-table td select{font-size:.7rem!important}
+  .meas-table{min-width:700px}
+  .tab-bar,.tab-bar-lps{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab-btn{font-size:.55rem!important;padding:.5rem .6rem!important}
+  .scard{padding:1rem}
+  .podtyp-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -448,8 +456,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="f"><label>Přerušení do</label><input type="date" id="f_preruseni_do"></div>
       <div class="f"><label>Ukončení <span class="req">*</span></label><input type="date" id="f_ukonceni"></div>
       <div class="f"><label>Vypracování zprávy</label><input type="date" id="f_vypracovani"></div>
+      <div class="f"><label>Datum předchozí revize</label><input type="date" id="f_predchozi"></div>
       <div class="f"><label>Termín příští revize <span style="font-size:.5rem;color:var(--accent);display:block">dle ČSN 33 1500 č.3.9 + NV 190/2022 příloha č.4</span></label><input type="date" id="f_pristi"></div>
-      <div class="f span2" style="align-self:end"><button class="magic-btn" data-action="openModalRevize">🔮 Vypočítat termín</button></div>
+      <div class="f" style="align-self:end"><button class="magic-btn" data-action="openModalRevize">🔮 Vypočítat termín</button></div>
     </div>
   </div>
   <div class="normy-panel">
@@ -518,7 +527,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     </div>
     <div class="g2" style="margin-top:.75rem">
       <div class="f"><label>Počet vyhotovení</label><input type="text" id="f_vyhotoveni" value="3"></div>
-      <div class="f"><label>Rozdělovník</label><input type="text" id="f_rozdelovnik" value="2 x provozovatel, 1 x revizní technik"></div>
+      <div class="f"><label>Rozdělovník</label><input type="text" id="f_rozdelovnik" value="Výtisk č. 1: Provozovatel zařízení, Výtisk č. 2: Montážní organizace, Výtisk č. 3: Revizní technik"></div>
+    </div>
+    <div class="f" style="margin-top:.75rem">
+      <label>Seznam příloh</label>
+      <textarea id="f_prilohy" style="min-height:50px" placeholder="1. Protokol o určení vnějších vlivů&#10;2. Prohlášení o shodě jednotlivých zařízení"></textarea>
     </div>
   </div>
 </div>
@@ -1389,7 +1402,8 @@ function delRcdGroup(el) {
 function copyRcdGroup(el) {
   var groupId = el.dataset.group;
   if (!groupId) return;
-  var tbody = document.getElementById('mereni-body');
+  var tr = el.closest('tr');
+  var tbody = tr ? tr.parentNode : null;
   if (!tbody) return;
   // Najdi všechny řádky skupiny (header + podřádky)
   var rows = tbody.querySelectorAll('tr[data-rcd-group="' + groupId + '"]');
@@ -1508,17 +1522,28 @@ function addMereniRow(el) {
   addMereniRowTo(tbody);
 }
 
+function getNextRowNum(tbody) {
+  var n = 0;
+  tbody.querySelectorAll('tr[data-rowtype="obvod"], tr[data-rowtype="rcd-header"]').forEach(function() { n++; });
+  return n + 1;
+}
+
 function addMereniRowTo(tbody) {
   if (!tbody) return;
+  var num = getNextRowNum(tbody);
   var tr = document.createElement('tr');
   tr.dataset.rowtype = 'obvod';
   tr.style.background = '#fafaf8';
   // Č., Název obvodu, Typ-pol, Ch., A, IΔn, Zsm, Riso
   var hlavni = [
-    { ph: 'FA1' }, { ph: 'Zásuvky', s: ';text-align:left' }, { ph: 'EATON' }, { ph: 'B' },
+    { ph: '' + num, v: '' + num }, { ph: 'Zásuvky', s: ';text-align:left' }, { ph: 'EATON' }, { ph: 'B' },
     { ph: '16' }, { ph: '0,03' }, { ph: '0,23' }, { ph: '>20' }
   ];
-  hlavni.forEach(function(col) { tr.appendChild(mkTd(col.ph, col.s)); });
+  hlavni.forEach(function(col) {
+    var td = mkTd(col.ph, col.s);
+    if (col.v) td.querySelector('input').value = col.v;
+    tr.appendChild(td);
+  });
   // Fáze — prázdný u normálního obvodu
   tr.appendChild(mkTd(''));
   // Vyp. mA, čas ms, 5×IΔn ms, Ut V — prázdné u normálního obvodu
@@ -2065,7 +2090,9 @@ function getData() {
     trida: gv('f_trida'), vysledek: gv('f_vysledek'),
     zdroj: gv('f_zdroj'), sit: gv('f_sit'), ochrana: gv('f_ochrana'),
     predano_misto: gv('f_predano_misto'), predano_datum: gv('f_predano_datum'),
+    predchozi: gv('f_predchozi'),
     prebira: gv('f_prebira'), vyhotoveni: gv('f_vyhotoveni'), rozdelovnik: gv('f_rozdelovnik'),
+    prilohy: gv('f_prilohy'),
     predmet_je: gv('f_predmet_je'), predmet_neni: gv('f_predmet_neni'), popis: gv('f_popis'),
     pritomen: gv('f_pritomen'), zdroj_napajeni: gv('f_zdroj_napajeni'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
@@ -2171,7 +2198,7 @@ function generujPDF() {
     '<div class="dtgrid">' +
     '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
     '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
-    '<span class="dtlabel">předchozí</span><span class="dtval"></span>' +
+    '<span class="dtlabel">předchozí</span><span class="dtval">' + fmtDate(D.predchozi) + '</span>' +
     '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
     '<span class="dtlabel">příští revize</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
     '</div></div></div>' +
@@ -2221,6 +2248,21 @@ function generujPDF() {
     '</div>' +
     '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technický popis vyhrazeného elektrického zařízení</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || 'Doplňte v záložce A.') + '</div>' +
+    '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
+    '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
+    '<strong>Prohlídka část A</strong> — prohlídka předchází zkoušce. Prohlídkou se zkontroluje zejména:<br>' +
+    'a) způsob, popřípadě stav ochrany před úrazem elektrickým proudem včetně měření vzdáleností,<br>' +
+    'b) použití protipožárních přepážek nebo jiných bezpečnostních opatření proti šíření ohně a ochrana před tepelnými účinky,<br>' +
+    'c) volba vodičů s ohledem na proudovou zatížitelnost a úbytek napětí,<br>' +
+    'd) volba, seřízení a stav ukazatelů ochranných a kontrolních prvků,<br>' +
+    'e) použití odpovídajících, vhodně umístěných a dostatečně oddělujících spínacích prvků,<br>' +
+    'f) volba elektrických zařízení a ochranných opatření s ohledem na vnější vlivy, oprávněnost zatřídění a označení prostorů z hlediska vnějších vlivů,<br>' +
+    'g) označení středních a ochranných vodičů,<br>' +
+    'h) vybavení schématy, varovnými nápisy a jinými podobnými informacemi požadovanými jinými právními předpisy nebo technickými normami,<br>' +
+    'i) označení obvodů, pojistek, spínačů, svorek,<br>' +
+    'j) odpovídající způsob spojení vodičů,<br>' +
+    'k) přístupnost z hlediska provozu a údržby.' +
+    '</div>' +
     '</div>' + ftr();
   pages.appendChild(p2);
 
@@ -2367,6 +2409,7 @@ function generujPDF() {
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">Jméno a podpis revizního technika (razítko)</div></div></div></div>' +
     '</div>' +
     '<div style="margin-top:4mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
+    (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + esc(D.prilohy) + '</span></div>' : '') +
     '</div>' + ftr();
   pages.appendChild(p5);
 
@@ -2375,9 +2418,8 @@ function generujPDF() {
   window.scrollTo(0, 0);
 }
 
-function tiskMereni() {
-  var D = getData();
-  var mereniRows = D.mereni.map(function(m) {
+function renderTiskRows(data) {
+  return data.map(function(m) {
     var isRcd = m.rowtype === 'rcd-mereni';
     var isRcdH = m.rowtype === 'rcd-header';
     var bg = isRcd ? ' background:#f8f8f0;' : (isRcdH ? ' background:#f0f4ff;' : '');
@@ -2399,7 +2441,10 @@ function tiskMereni() {
       '<td style="padding:1mm 1.5mm;border:.75pt solid #000;' + bg + '">' + esc(m.kabel) + '</td>' +
       '</tr>';
   }).join('');
+}
 
+function tiskMereni() {
+  var D = getData();
   var win = window.open('', '_blank');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
   win.document.write('<title>Měření - ' + (D.ev_cislo||'RZ') + '</title>');
@@ -2419,34 +2464,18 @@ function tiskMereni() {
   win.document.write('.note { font-size: 7pt; margin-top: 2mm; color: #444; }');
   win.document.write('@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
   win.document.write('</style></head><body>');
+  var thHtml = '<thead><tr><th rowspan="2">Č.</th><th rowspan="2" style="min-width:60pt">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:50pt">Kabel typ,<br>průřezu mm²</th></tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
   win.document.write('<div class="header">');
   win.document.write('<div class="hbox">' + fmtDate(D.zahajeni) + '</div>');
-  win.document.write('<div class="hbox">Měření: ' + esc(D.rozvadec||'') + '</div>');
   win.document.write('<div class="hbox">' + esc(D.ev_cislo||'—') + '</div>');
   win.document.write('</div>');
-  win.document.write('<div class="sec"><div class="sec-num">E.</div><div class="sec-name">Měření: ' + esc(D.rozvadec||'') + '</div></div>');
-  if (D.rozvadec) {
-    win.document.write('<div style="font-size:8.5pt;margin-bottom:2mm"><strong>' + esc(D.rozvadec) + '</strong> &mdash; ' + esc(D.rozvadec_umisteni) + '</div>');
-  }
-  win.document.write('<table>');
-  win.document.write('<thead>');
-  win.document.write('<tr>');
-  win.document.write('<th rowspan="2">Č.</th>');
-  win.document.write('<th rowspan="2" style="min-width:60pt">Název obvodu</th>');
-  win.document.write('<th colspan="4">Jmenovité hodnoty jištění</th>');
-  win.document.write('<th rowspan="2">Zsm<br>max Ω</th>');
-  win.document.write('<th rowspan="2">Riso<br>MΩ</th>');
-  win.document.write('<th rowspan="2">Fáze</th>');
-  win.document.write('<th colspan="4">Měření RCD</th>');
-  win.document.write('<th rowspan="2" style="min-width:50pt">Kabel typ,<br>průřezu mm²</th>');
-  win.document.write('</tr>');
-  win.document.write('<tr>');
-  win.document.write('<th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th>');
-  win.document.write('<th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>');
-  win.document.write('</tr>');
-  win.document.write('</thead>');
-  win.document.write('<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody>');
-  win.document.write('</table>');
+  var rozvList = D.rozvadece || [{ nazev: D.rozvadec, umisteni: D.rozvadec_umisteni, mereni: D.mereni }];
+  rozvList.forEach(function(rozv, ri) {
+    var rows = renderTiskRows(rozv.mereni || []);
+    win.document.write('<div class="sec"><div class="sec-num">' + (ri+1) + '</div><div class="sec-name">Měření: ' + esc(rozv.nazev||'') + '</div></div>');
+    if (rozv.nazev) win.document.write('<div style="font-size:8.5pt;margin-bottom:2mm"><strong>' + esc(rozv.nazev) + '</strong> &mdash; ' + esc(rozv.umisteni||'') + '</div>');
+    win.document.write('<table>' + thHtml + '<tbody>' + (rows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>');
+  });
   win.document.write('<div class="note">U RCD je součástí měření ověření funkce testovacího tlačítka.</div>');
   win.document.write('<div class="footer">');
   win.document.write('<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>');
@@ -2519,7 +2548,9 @@ function nacistData(D) {
     'f_rt_adresa': D.rt_adresa, 'f_rt_ico': D.rt_ico,
     'f_trida': D.trida, 'f_vysledek': D.vysledek,
     'f_zdroj': D.zdroj, 'f_sit': D.sit, 'f_ochrana': D.ochrana,
+    'f_predchozi': D.predchozi,
     'f_predano_misto': D.predano_misto, 'f_predano_datum': D.predano_datum,
+    'f_prilohy': D.prilohy,
     'f_prebira': D.prebira, 'f_vyhotoveni': D.vyhotoveni, 'f_rozdelovnik': D.rozdelovnik,
     'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni, 'f_popis': D.popis,
     'f_pritomen': D.pritomen, 'f_zdroj_napajeni': D.zdroj_napajeni,
