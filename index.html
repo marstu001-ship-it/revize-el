@@ -2211,7 +2211,7 @@ function generujPDF() {
     '</div></div>' +
     '<div><div class="pbox-label">Počet stran, kopií:</div>' +
     '<div class="pbox" style="min-height:20mm;font-size:8.5pt">' +
-    'Počet listů: ' + total + '<br>Výtisk č.: ' + esc(D.vytisk) + '<br>Počet příloh: —<br>Vyhotovení: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
+    'Počet listů: <span data-pocet-listu>' + total + '</span><br>Výtisk č.: ' + esc(D.vytisk) + '<br>Počet příloh: —<br>Vyhotovení: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
     '</div></div></div>' +
     (D.objednatel ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '</div>' : '') +
     (D.pritomen2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '</div>' : '') +
@@ -2233,8 +2233,11 @@ function generujPDF() {
   vymText += zkouseniText;
   p2.innerHTML = hdr(2) +
     '<div class="a4-content">' +
+    '<div data-p2sec="1">' +
     '<div class="sec-head"><div class="sec-num">1.</div><div class="sec-name">Vymezení rozsahu revize</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;margin-bottom:4mm;white-space:pre-line">' + esc(vymText) + '</div>' +
+    '</div>' +
+    '<div data-p2sec="2">' +
     '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zařízení</div></div>' +
     '<div style="font-size:9pt;padding:0 2mm;margin-bottom:3mm">' +
     (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '') +
@@ -2245,8 +2248,12 @@ function generujPDF() {
     (D.zemnič ? '<strong>Typ a popis zemniče:</strong> ' + esc(D.zemnič) + '<br>' : '') +
     (D.zemni_odpor ? '<strong>Naměřený zemní odpor:</strong> ' + esc(D.zemni_odpor) + ' Ω<br>' : '') +
     '</div>' +
+    '</div>' +
+    '<div data-p2sec="3">' +
     '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technický popis vyhrazeného elektrického zařízení</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || 'Doplňte v záložce A.') + '</div>' +
+    '</div>' +
+    '<div data-p2sec="4">' +
     '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
     '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
     '<strong>Prohlídka část A</strong> — prohlídka předchází zkoušce. Prohlídkou se zkontroluje zejména:<br>' +
@@ -2261,6 +2268,7 @@ function generujPDF() {
     'i) označení obvodů, pojistek, spínačů, svorek,<br>' +
     'j) odpovídající způsob spojení vodičů,<br>' +
     'k) přístupnost z hlediska provozu a údržby.' +
+    '</div>' +
     '</div>' +
     '</div>' + ftr();
   pages.appendChild(p2);
@@ -2426,6 +2434,55 @@ function generujPDF() {
   saveToArchiv();
   showScreen('pdf');
   window.scrollTo(0, 0);
+
+  // === Overflow detekce a přečíslování stran ===
+  // Musí běžet PO showScreen('pdf'), jinak getBoundingClientRect()
+  // vrátí nuly (neaktivní .screen má display:none).
+  // requestAnimationFrame zaručí, že browser dokončil layout.
+  requestAnimationFrame(function() {
+    var mmToPx = 96 / 25.4;
+    var maxA4Px = 297 * mmToPx;
+    var content = p2.querySelector('.a4-content');
+    if (content) {
+      // Pokud se sekce 3 (dlouhý Technický popis) nevejde na str. 2,
+      // přesuneme sekci 4 (Prohlídky) na novou očíslovanou stránku.
+      if (p2.getBoundingClientRect().height > maxA4Px + 2) {
+        var sec4 = content.querySelector('[data-p2sec="4"]');
+        if (sec4) {
+          var pe = document.createElement('div');
+          pe.className = 'a4';
+          pe.innerHTML = hdr(0) + '<div class="a4-content"></div>' + ftr();
+          var sh = sec4.querySelector('.sec-head');
+          if (sh) sh.style.marginTop = '0';
+          pe.querySelector('.a4-content').appendChild(sec4);
+          pages.insertBefore(pe, p2.nextSibling);
+        }
+      }
+      // Pokud str. 2 stále přetéká (velmi dlouhý popis), přesuneme i sekci 3
+      if (p2.getBoundingClientRect().height > maxA4Px + 2) {
+        var sec3 = content.querySelector('[data-p2sec="3"]');
+        if (sec3) {
+          var pe2 = document.createElement('div');
+          pe2.className = 'a4';
+          pe2.innerHTML = hdr(0) + '<div class="a4-content"></div>' + ftr();
+          pe2.querySelector('.a4-content').appendChild(sec3);
+          pages.insertBefore(pe2, p2.nextSibling);
+        }
+      }
+    }
+    // Přečíslování hlaviček a "Počet listů" podle skutečného počtu stran
+    var ps = pages.querySelectorAll('.a4');
+    var totalFinal = ps.length;
+    ps.forEach(function(pg, i) {
+      var n = i + 1;
+      var hboxes = pg.querySelectorAll('.a4-header .a4-hbox');
+      if (hboxes.length >= 2) {
+        hboxes[1].textContent = String(n).padStart(3, '0') + '/' + String(totalFinal).padStart(3, '0');
+      }
+    });
+    var poc = pages.querySelector('[data-pocet-listu]');
+    if (poc) poc.textContent = String(totalFinal);
+  });
 }
 
 // Univerzální funkce pro uložení/sdílení PDF souboru
