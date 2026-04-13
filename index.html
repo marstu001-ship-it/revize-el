@@ -278,9 +278,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 @media print{
   body{background:white}
   #screen-pdf{background:white}
+  .topbar{display:none!important}
   .pdf-toolbar{display:none!important}
   .pdf-pages{padding:0;gap:0}
-  .a4{box-shadow:none;page-break-after:always;width:100%;margin:0}
+  .a4{box-shadow:none;width:210mm;height:297mm;min-height:0;margin:0;
+      overflow:hidden;page-break-inside:avoid;break-inside:avoid}
+  .a4:not(:last-child){page-break-after:always;break-after:page}
 }
 @page { size: A4 portrait; margin: 0; }
 @page landscape { size: A4 landscape; margin: 0; }
@@ -2344,7 +2347,6 @@ function generujPDF() {
 
   var p4 = document.createElement('div');
   p4.className = 'a4';
-  total++;
   p4.innerHTML = hdr(4) +
     '<div class="a4-content">' +
     '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Zkoušení (dle čl. 6.4.3)</div></div>' +
