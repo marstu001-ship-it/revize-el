@@ -2325,9 +2325,11 @@ function generujPDF() {
   var rozvadeceHtml = '';
   (D.rozvadece || [{ nazev: D.rozvadec, umisteni: D.rozvadec_umisteni, mereni: D.mereni }]).forEach(function(rozv, ri) {
     var mereniRows = renderMereniRows(rozv.mereni || []);
+    rozvadeceHtml += '<div data-rozv="' + ri + '">';
     rozvadeceHtml += '<div class="sec-head" style="' + (ri > 0 ? 'margin-top:5mm' : '') + '"><div class="sec-num">' + (ri + 1) + '</div><div class="sec-name">Měření: ' + esc(rozv.nazev || 'Rozváděč ' + (ri+1)) + '</div></div>';
     if (rozv.nazev) rozvadeceHtml += '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>' + esc(rozv.nazev) + '</strong> — ' + esc(rozv.umisteni || '') + '</div>';
     rozvadeceHtml += pdfMeasHeader + '<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>';
+    rozvadeceHtml += '</div>';
   });
 
   var p3 = document.createElement('div');
@@ -2442,16 +2444,21 @@ function generujPDF() {
   requestAnimationFrame(function() {
     var mmToPx = 96 / 25.4;
     var maxA4Px = 297 * mmToPx;
+    function overflows(el) { return el.getBoundingClientRect().height > maxA4Px + 2; }
+    function newA4(className) {
+      var np = document.createElement('div');
+      np.className = className;
+      np.innerHTML = hdr(0) + '<div class="a4-content"></div>' + ftr();
+      return np;
+    }
     var content = p2.querySelector('.a4-content');
     if (content) {
       // Pokud se sekce 3 (dlouhý Technický popis) nevejde na str. 2,
       // přesuneme sekci 4 (Prohlídky) na novou očíslovanou stránku.
-      if (p2.getBoundingClientRect().height > maxA4Px + 2) {
+      if (overflows(p2)) {
         var sec4 = content.querySelector('[data-p2sec="4"]');
         if (sec4) {
-          var pe = document.createElement('div');
-          pe.className = 'a4';
-          pe.innerHTML = hdr(0) + '<div class="a4-content"></div>' + ftr();
+          var pe = newA4('a4');
           var sh = sec4.querySelector('.sec-head');
           if (sh) sh.style.marginTop = '0';
           pe.querySelector('.a4-content').appendChild(sec4);
@@ -2459,16 +2466,80 @@ function generujPDF() {
         }
       }
       // Pokud str. 2 stále přetéká (velmi dlouhý popis), přesuneme i sekci 3
-      if (p2.getBoundingClientRect().height > maxA4Px + 2) {
+      if (overflows(p2)) {
         var sec3 = content.querySelector('[data-p2sec="3"]');
         if (sec3) {
-          var pe2 = document.createElement('div');
-          pe2.className = 'a4';
-          pe2.innerHTML = hdr(0) + '<div class="a4-content"></div>' + ftr();
+          var pe2 = newA4('a4');
           pe2.querySelector('.a4-content').appendChild(sec3);
           pages.insertBefore(pe2, p2.nextSibling);
         }
       }
+    }
+
+    // === Rozdělení strany 3 (měření) při mnoha rozváděčích / dlouhých tabulkách ===
+    function splitLandscapePage(page) {
+      if (!overflows(page)) return null;
+      var pContent = page.querySelector('.a4-content');
+      if (!pContent) return null;
+      var rozvs = pContent.querySelectorAll('[data-rozv]');
+      // 1) Více rozváděčů: přesuň trailing rozváděče na novou stránku
+      if (rozvs.length > 1) {
+        var np = newA4('a4 a4-landscape');
+        var npContent = np.querySelector('.a4-content');
+        while (rozvs.length > 1 && overflows(page)) {
+          var last = rozvs[rozvs.length - 1];
+          // Vložit dopředu nové stránky, aby zůstalo původní pořadí
+          npContent.insertBefore(last, npContent.firstChild);
+          rozvs = pContent.querySelectorAll('[data-rozv]');
+        }
+        pages.insertBefore(np, page.nextSibling);
+        return np;
+      }
+      // 2) Jediný rozváděč s příliš dlouhou tabulkou: rozdělit po řádcích
+      var rozv = rozvs[0];
+      if (!rozv) return null;
+      var table = rozv.querySelector('table');
+      var tbody = table && table.querySelector('tbody');
+      if (!tbody) return null;
+      var movedRows = [];
+      while (overflows(page)) {
+        var trs = tbody.querySelectorAll('tr');
+        if (trs.length <= 1) break;
+        var lastRow = trs[trs.length - 1];
+        movedRows.unshift(lastRow);
+        tbody.removeChild(lastRow);
+      }
+      if (movedRows.length === 0) return null;
+      var np2 = newA4('a4 a4-landscape');
+      var np2Content = np2.querySelector('.a4-content');
+      var newRozv = document.createElement('div');
+      newRozv.setAttribute('data-rozv', rozv.getAttribute('data-rozv') || '');
+      var secHead = rozv.querySelector('.sec-head');
+      if (secHead) {
+        var clonedHead = secHead.cloneNode(true);
+        clonedHead.style.marginTop = '0';
+        var secName = clonedHead.querySelector('.sec-name');
+        if (secName) secName.textContent += ' (pokračování)';
+        newRozv.appendChild(clonedHead);
+      }
+      var newTable = document.createElement('table');
+      newTable.className = 'pdf-meas';
+      var thead = table.querySelector('thead');
+      if (thead) newTable.appendChild(thead.cloneNode(true));
+      var newTbody = document.createElement('tbody');
+      movedRows.forEach(function(r) { newTbody.appendChild(r); });
+      newTable.appendChild(newTbody);
+      newRozv.appendChild(newTable);
+      np2Content.appendChild(newRozv);
+      pages.insertBefore(np2, page.nextSibling);
+      return np2;
+    }
+    // Iterativně: p3 -> split -> další -> split, dokud se vše nevejde
+    var cur = p3;
+    var safetyCounter = 0;
+    while (cur && safetyCounter < 50) {
+      cur = splitLandscapePage(cur);
+      safetyCounter++;
     }
     // Přečíslování hlaviček a "Počet listů" podle skutečného počtu stran
     var ps = pages.querySelectorAll('.a4');
