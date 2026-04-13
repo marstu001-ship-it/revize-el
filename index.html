@@ -2267,10 +2267,32 @@ function generujPDF() {
   pages.appendChild(p2);
 
   function renderMereniRows(data) {
+    var prevGroup = '';
     return data.map(function(m) {
       var isRcd = m.rowtype === 'rcd-mereni';
       var isRcdH = m.rowtype === 'rcd-header';
       var bg = isRcd ? ' style="background:#f8f8f0"' : (isRcdH ? ' style="background:#f0f4ff"' : '');
+      if (isRcd) {
+        // První pod-řádek skupiny dostane popisek; další jsou prázdné, sloučené přes 8 sloupců
+        var isFirstSub = m.rcdGroup && m.rcdGroup !== prevGroup;
+        prevGroup = m.rcdGroup || prevGroup;
+        var leadStyle = isFirstSub
+          ? 'border:none;background:#f8f8f0;text-align:right;padding:.4mm 1mm;font-size:6pt;color:#666;vertical-align:middle'
+          : 'border:none;background:#f8f8f0';
+        var leadText = isFirstSub ? 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →' : '';
+        return '<tr' + bg + '>' +
+          '<td colspan="8" style="' + leadStyle + '">' + leadText + '</td>' +
+          '<td style="text-align:center;font-weight:bold">' + esc(m.faze||'') + '</td>' +
+          '<td style="text-align:center">' + esc(m.vyp||'') + '</td>' +
+          '<td style="text-align:center">' + esc(m.cas||'') + '</td>' +
+          '<td style="text-align:center">' + esc(m.t5idn||'') + '</td>' +
+          '<td style="text-align:center">' + esc(m.ut||'') + '</td>' +
+          '<td style="border:none;background:#f8f8f0"></td>' +
+          '</tr>';
+      }
+      // U běžných obvodů a hlaviček RCD reset prevGroup, aby další skupina měla vlastní popisek
+      if (!isRcdH) prevGroup = '';
+      else prevGroup = m.rcdGroup || prevGroup;
       return '<tr' + bg + '>' +
         '<td style="text-align:center">' + esc(m.c) + '</td>' +
         '<td>' + esc(m.n) + '</td>' +
@@ -2280,7 +2302,7 @@ function generujPDF() {
         '<td style="text-align:center">' + esc(m.idn) + '</td>' +
         '<td style="text-align:center">' + esc(m.zsm) + '</td>' +
         '<td style="text-align:center">' + esc(m.riso) + '</td>' +
-        '<td style="text-align:center;font-weight:' + (isRcd ? 'bold' : 'normal') + '">' + esc(m.faze||'') + '</td>' +
+        '<td style="text-align:center;font-weight:' + (isRcdH ? 'bold' : 'normal') + '">' + esc(m.faze||'') + '</td>' +
         '<td style="text-align:center">' + esc(m.vyp||'') + '</td>' +
         '<td style="text-align:center">' + esc(m.cas||'') + '</td>' +
         '<td style="text-align:center">' + esc(m.t5idn||'') + '</td>' +
@@ -2497,11 +2519,31 @@ function stahnoutMereniPDF() {
 }
 
 function renderTiskRows(data) {
+  var prevGroup = '';
   return data.map(function(m) {
     var isRcd = m.rowtype === 'rcd-mereni';
     var isRcdH = m.rowtype === 'rcd-header';
     var bg = isRcd ? ' background:#f8f8f0;' : (isRcdH ? ' background:#f0f4ff;' : '');
     var s = 'text-align:center;padding:1mm 1.5mm;border:.75pt solid #000;' + bg;
+    if (isRcd) {
+      var isFirstSub = m.rcdGroup && m.rcdGroup !== prevGroup;
+      prevGroup = m.rcdGroup || prevGroup;
+      var leadStyle = isFirstSub
+        ? 'border:none;background:#f8f8f0;text-align:right;padding:1mm 1.5mm;font-size:7pt;color:#666;vertical-align:middle'
+        : 'border:none;background:#f8f8f0';
+      var leadText = isFirstSub ? 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →' : '';
+      return '<tr>' +
+        '<td colspan="8" style="' + leadStyle + '">' + leadText + '</td>' +
+        '<td style="' + s + 'font-weight:bold">' + esc(m.faze||'') + '</td>' +
+        '<td style="' + s + '">' + esc(m.vyp||'') + '</td>' +
+        '<td style="' + s + '">' + esc(m.cas||'') + '</td>' +
+        '<td style="' + s + '">' + esc(m.t5idn||'') + '</td>' +
+        '<td style="' + s + '">' + esc(m.ut||'') + '</td>' +
+        '<td style="border:none;background:#f8f8f0"></td>' +
+        '</tr>';
+    }
+    if (!isRcdH) prevGroup = '';
+    else prevGroup = m.rcdGroup || prevGroup;
     return '<tr>' +
       '<td style="' + s + '">' + esc(m.c) + '</td>' +
       '<td style="padding:1mm 1.5mm;border:.75pt solid #000;' + bg + '">' + esc(m.n) + '</td>' +
@@ -2511,7 +2553,7 @@ function renderTiskRows(data) {
       '<td style="' + s + '">' + esc(m.idn) + '</td>' +
       '<td style="' + s + '">' + esc(m.zsm) + '</td>' +
       '<td style="' + s + '">' + esc(m.riso) + '</td>' +
-      '<td style="' + s + 'font-weight:' + (isRcd?'bold':'normal') + '">' + esc(m.faze||'') + '</td>' +
+      '<td style="' + s + 'font-weight:' + (isRcdH?'bold':'normal') + '">' + esc(m.faze||'') + '</td>' +
       '<td style="' + s + '">' + esc(m.vyp||'') + '</td>' +
       '<td style="' + s + '">' + esc(m.cas||'') + '</td>' +
       '<td style="' + s + '">' + esc(m.t5idn||'') + '</td>' +
