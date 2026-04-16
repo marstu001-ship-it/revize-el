@@ -478,8 +478,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="scard-title">Provozovatel <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
     <div class="g2">
       <div class="f span2"><label>Název a adresa provozovatele <span class="req">*</span></label><textarea id="f_provozovatel" placeholder="Firma s.r.o.&#10;Ulice 1&#10;686 01 Město&#10;IČ: 12345678"></textarea></div>
-      <div class="f"><label>Změnu v rozváděči provedla firma</label><input type="text" id="f_firma_zmena" placeholder="název firmy"></div>
-      <div class="f"><label>Ev. čís. oprávnění firmy</label><input type="text" id="f_firma_opravneni" placeholder="16680/9/21/EZ-M,O-E1A"></div>
     </div>
   </div>
   <div class="scard">
@@ -490,7 +488,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
         <input type="text" id="f_objednatel" placeholder="Stejný jako provozovatel / Firma XY s.r.o., Ulice 1, Praha">
       </div>
       <div class="f"><label>Při revizi byl přítomen</label><input type="text" id="f_pritomen2" placeholder="Jméno Příjmení, funkce"></div>
-      <div class="f"><label>Elektromontážní práce provedla firma</label><input type="text" id="f_firma_zmena2" placeholder="Firma s.r.o."></div>
+      <div class="f"><label>Elektromontážní práce provedeny firmou <span style="font-size:.6rem;color:var(--muted)">(v případě výchozí revize)</span></label><input type="text" id="f_firma_zmena2" placeholder="Firma s.r.o."></div>
       <div class="f"><label>Ev. číslo oprávnění firmy <span style="font-size:.6rem;color:var(--muted)">(výchozí revize)</span></label><input type="text" id="f_firma_opravneni2" placeholder="16680/9/21/EZ-M"></div>
     </div>
   </div>
@@ -2083,7 +2081,7 @@ function getData() {
     zahajeni: gv('f_zahajeni'), preruseni_od: gv('f_preruseni_od'), preruseni_do: gv('f_preruseni_do'),
     ukonceni: gv('f_ukonceni'), vypracovani: gv('f_vypracovani'), pristi: gv('f_pristi'),
     normy: getVybrane(),
-    provozovatel: gv('f_provozovatel'), firma_zmena: gv('f_firma_zmena'), firma_opravneni: gv('f_firma_opravneni'),
+    provozovatel: gv('f_provozovatel'),
     objednatel: gv('f_objednatel'), pritomen2: gv('f_pritomen2'),
     firma_zmena2: gv('f_firma_zmena2'), firma_opravneni2: gv('f_firma_opravneni2'),
     napetova_soustava: getNapetoveSoustavy(),
@@ -2221,7 +2219,7 @@ function generujPDF() {
     '</div></div></div>' +
     (D.objednatel ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '</div>' : '') +
     (D.pritomen2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '</div>' : '') +
-    (D.firma_zmena2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. oprávnění: ' + esc(D.firma_opravneni2) : '') + '</div>' : '') +
+    (D.firma_zmena2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Elektromontážní práce provedeny firmou:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. oprávnění: ' + esc(D.firma_opravneni2) : '') + '</div>' : '') +
     '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje převzetí zprávy dne: ___________</div>' +
     '<div class="podp-grid">' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
@@ -2250,7 +2248,7 @@ function generujPDF() {
     '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>' +
     (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
     (D.pritomen2 ? '<strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
-    (D.firma_zmena2 ? '<strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. opr.: ' + esc(D.firma_opravneni2) : '') + '<br>' : '') +
+    (D.firma_zmena2 ? '<strong>Elektromontážní práce provedeny firmou:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. opr.: ' + esc(D.firma_opravneni2) : '') + '<br>' : '') +
     (D.zemnič ? '<strong>Typ a popis zemniče:</strong> ' + esc(D.zemnič) + '<br>' : '') +
     (D.zemni_odpor ? '<strong>Naměřený zemní odpor:</strong> ' + esc(D.zemni_odpor) + ' Ω<br>' : '') +
     '</div>' +
@@ -2794,7 +2792,7 @@ function nacistData(D) {
     'f_misto': D.misto, 'f_adresa': D.adresa,
     'f_zahajeni': D.zahajeni, 'f_preruseni_od': D.preruseni_od, 'f_preruseni_do': D.preruseni_do,
     'f_ukonceni': D.ukonceni, 'f_vypracovani': D.vypracovani, 'f_pristi': D.pristi,
-    'f_provozovatel': D.provozovatel, 'f_firma_zmena': D.firma_zmena, 'f_firma_opravneni': D.firma_opravneni,
+    'f_provozovatel': D.provozovatel,
     'f_objednatel': D.objednatel, 'f_pritomen2': D.pritomen2,
     'f_firma_zmena2': D.firma_zmena2, 'f_firma_opravneni2': D.firma_opravneni2,
     'f_rt_jmeno': D.rt_jmeno, 'f_rt_osvedceni': D.rt_osvedceni, 'f_rt_opravneni': D.rt_opravneni,
