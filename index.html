@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1c3a5e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Revize EL">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%231c3a5e'/><text x='256' y='340' text-anchor='middle' font-size='280' fill='%23fff'>⚡</text></svg>">
 <title>Revize EL – Revizní zprávy</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -3064,6 +3070,11 @@ document.addEventListener('input', function(e) {
 document.getElementById('json-input').addEventListener('change', nacistJSON);
 
 window.addEventListener('DOMContentLoaded', init);
+
+// Service Worker — offline podpora (PWA)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(function() {});
+}
 
 </script>
 </body>
