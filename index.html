@@ -2602,7 +2602,8 @@ function stahnoutPDF() {
   var pages = document.getElementById('pdf-pages');
   if (!pages) return;
   var D = getData();
-  var filename = 'RZ_' + (D.ev_cislo || 'zprava') + '_' + (D.zahajeni || 'datum') + '.pdf';
+  var mistoSlug = (D.misto || '').replace(/[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/g, '_').replace(/^_|_$/g, '');
+  var filename = 'RZ_' + (D.ev_cislo || 'zprava') + (mistoSlug ? '_' + mistoSlug : '') + '_' + (D.zahajeni || 'datum') + '.pdf';
   // Skryj landscape stránky
   var lp = pages.querySelectorAll('.a4-landscape');
   lp.forEach(function(p) { p.style.display = 'none'; });
@@ -2920,7 +2921,8 @@ function ulozit() {
   var D = getData();
   saveToArchiv();
   var blob = new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' });
-  var filename = 'RZ_' + (D.ev_cislo || 'nova') + '_' + (D.zahajeni || 'datum') + '.json';
+  var mistoSlug = (D.misto || '').replace(/[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/g, '_').replace(/^_|_$/g, '');
+  var filename = 'RZ_' + (D.ev_cislo || 'nova') + (mistoSlug ? '_' + mistoSlug : '') + '_' + (D.zahajeni || 'datum') + '.json';
   ulozitSoubor(blob, filename);
 }
 
