@@ -2611,6 +2611,9 @@ function nacistData(D) {
   aktTyp = D.typ || 'elektro';
   aktPodtyp = D.podtyp || 'dum';
   novaZprava(aktTyp);
+  // Migrace starého značení tříd VTEZ (pre-NV 190/2022 §4 → I/II)
+  if (D.trida === 'Třída 1') D.trida = 'Třída I';
+  else if (D.trida === 'Třída 2' || D.trida === 'Třída 3') D.trida = 'Třída II';
   // Fill form fields
   var fields = {
     'f_ev_cislo': D.ev_cislo, 'f_vytisk': D.vytisk, 'f_druh': D.druh,
