@@ -183,3 +183,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2498.md`](pages/IMG_2498.md) – tabulka zkoušek body f–i + Prohlídka část A (výrobní objekt)
 - [`pages/IMG_2500.md`](pages/IMG_2500.md) – kap. 7 Proudové chrániče, tabulka zkoušek RCD 1–5 (výrobní objekt)
 - [`pages/IMG_2501.md`](pages/IMG_2501.md) – kap. 8 Měření: rozváděč RH (OCEP 1600A), FAQ1/FAQ2, 3FU1–3FU5
+- [`pages/IMG_2499.md`](pages/IMG_2499.md) – Část B Zkouška/měření + impedance smyčky (výrobní objekt, paralela k IMG_2481)
+- [`pages/IMG_2502.md`](pages/IMG_2502.md) – pokračování tabulky měření 4FU1–4FU20 (chem. čerpadla) + kap. 9/10 (výrobní objekt)
+- [`pages/IMG_2503.md`](pages/IMG_2503.md) – závěrečná podpisová strana výrobního objektu (Celkový posudek)
+- [`pages/IMG_2506.md`](pages/IMG_2506.md) – úplná tabulka ochranných opatření (bytová jednotka)
+- [`pages/IMG_2507.md`](pages/IMG_2507.md) – seznam podkladů + technický popis bytové jednotky (CYKY 4×16, OEZ SVG-350, koupelna)
