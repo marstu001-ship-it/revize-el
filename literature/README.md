@@ -57,9 +57,9 @@ literature/normy/CSN-33-2000-4-41/
 
 ## Aktuálně dostupné dokumenty
 
-*Zatím žádné — čeká se na první nahrání.*
+- [LPE-vzory-revize-VEZ](prirucky/LPE-vzory-revize-VEZ/index.md) — *Možné vzory zprávy o revizi VEZ* (Macháček, Dolenský / LPE). Skeny 4 šablon: bytová jednotka, rodinný dům, výrobní objekt, LPS.
 
-Jakmile přidáte dokument, doplňte do tohoto seznamu řádek ve formátu:
+Jakmile přidáte nový dokument, doplňte do tohoto seznamu řádek ve formátu:
 `- [CSN-33-2000-4-41](normy/CSN-33-2000-4-41/index.md) — Ochrana před úrazem elektrickým proudem`
 
 ## Právní upozornění
