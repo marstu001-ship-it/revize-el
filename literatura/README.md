@@ -155,6 +155,11 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 
 - [`pages/IMG_2470.md`](pages/IMG_2470.md) – titulní strana vzoru zprávy (rodinný dům)
 - [`pages/IMG_2471.md`](pages/IMG_2471.md) – napěťová soustava, tabulka ochranných opatření
+- [`pages/IMG_2472.md`](pages/IMG_2472.md) – úplná tabulka mapování ČSN 33 2000-4-41 ↔ ČSN EN 61140
 - [`pages/IMG_2473.md`](pages/IMG_2473.md) – seznam podkladů + technický popis
+- [`pages/IMG_2475.md`](pages/IMG_2475.md) – definice revize/prohlídky/zkoušení + checklist prohlídky
 - [`pages/IMG_2476.md`](pages/IMG_2476.md) – provedené zkoušky + izolační odpor
+- [`pages/IMG_2477.md`](pages/IMG_2477.md) – POZOR postup RT, SPD, protipožární přepážky
 - [`pages/IMG_2478.md`](pages/IMG_2478.md) – checklist prohlídkové části revize
+- [`pages/IMG_2479.md`](pages/IMG_2479.md) – tabulka zkoušek čl. 6.4.3 body a–e
+- [`pages/IMG_2480.md`](pages/IMG_2480.md) – tabulka zkoušek body f–i + Prohlídka část A
