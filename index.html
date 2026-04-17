@@ -556,7 +556,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="f span2"><label>Předmětem této revize je</label><textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea></div>
       <div class="f span2"><label>Předmětem této revize není</label><textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea></div>
       <div class="f span2"><label>Popis revidované elektroinstalace</label><textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea></div>
-      <div class="f"><label>Revizi přítomen</label><input type="text" id="f_pritomen" placeholder="Jméno Příjmení"></div>
       <div class="f"><label>Zdroje napájení</label><input type="text" id="f_zdroj_napajeni" placeholder="firemní rozvod nn: 3+PE+N, 400/230V, 50Hz, síť TN-C-S"></div>
       <div class="f"><label>Typ a popis zemniče</label><input type="text" id="f_zemnič" placeholder="Zemnič typu A, okružní uzemňovací vedení..."></div>
       <div class="f"><label>Naměřený zemní odpor (Ω)</label><input type="text" id="f_zemni_odpor" placeholder="12,5"></div>
@@ -717,7 +716,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="g2">
       <div class="f"><label>Celkový výsledek <span class="req">*</span></label>
         <select id="f_celkovy_vysledek"><option value="schopno">✅ Schopno provozu</option><option value="neschopno">❌ Neschopno provozu</option></select></div>
-      <div class="f"><label>Lhůta příští revize</label><input type="text" id="f_lhuta" placeholder="5 let – do 01/2031"></div>
+      <div class="f"><label>Doporučená lhůta provedení příští revize <span style="font-size:.5rem;color:var(--accent);display:block">dle NV 190/2022 Sb. §10 písm. n)</span></label><input type="text" id="f_lhuta" placeholder="5 let – do 01/2031"></div>
     </div>
   </div>
   <div class="scard">
@@ -2097,7 +2096,7 @@ function getData() {
     prebira: gv('f_prebira'), vyhotoveni: gv('f_vyhotoveni'), rozdelovnik: gv('f_rozdelovnik'),
     prilohy: gv('f_prilohy'),
     predmet_je: gv('f_predmet_je'), predmet_neni: gv('f_predmet_neni'), popis: gv('f_popis'),
-    pritomen: gv('f_pritomen'), zdroj_napajeni: gv('f_zdroj_napajeni'),
+    zdroj_napajeni: gv('f_zdroj_napajeni'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
     prohlídka: gv('f_prohlídka'), zkouseni: gv('f_zkouseni'),
     zkousky: {
@@ -2232,7 +2231,6 @@ function generujPDF() {
   var vymText = 'Předmětem ' + (D.druh || '').toLowerCase() + ' revize bylo VEZ výslovně uvedené v této zprávě.';
   if (D.predmet_je) vymText += '\n\nPředmětem revize je: ' + D.predmet_je;
   if (D.predmet_neni) vymText += '\n\nPředmětem revize není: ' + D.predmet_neni;
-  vymText += '\n\nRevizi přítomen: ' + (D.pritomen || '—');
   var zkouseniText = '\n\nProvedené zkoušky dle ČSN 33 2000-6 ed.2 čl. 6.4.3:\na) spojitost ochranných vodičů (viz 6.4.3.2)\nb) izolační odpor elektrické instalace (viz 6.4.3.3)\nc) zkoušení izolačních odporů pro potvrzení účinnosti ochrany pomocí SELV, PELV nebo elektrickým oddělením (viz 6.4.3.4)\nd) zkoušení pro potvrzení účinnosti automatického odpojení od zdroje (viz 6.4.3.7)\ne) zkoušení pro potvrzení účinnosti doplňkové ochrany (viz 6.4.3.8)\nf) zkouška pořadí fází (viz 6.4.3.9)\ng) funkční a provozní zkoušky (viz 6.4.3.10)\nh) ověření úbytků napětí (viz 6.4.3.11)';
   vymText += zkouseniText;
   p2.innerHTML = hdr(2) +
@@ -2804,7 +2802,7 @@ function nacistData(D) {
     'f_prilohy': D.prilohy,
     'f_prebira': D.prebira, 'f_vyhotoveni': D.vyhotoveni, 'f_rozdelovnik': D.rozdelovnik,
     'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni, 'f_popis': D.popis,
-    'f_pritomen': D.pritomen, 'f_zdroj_napajeni': D.zdroj_napajeni,
+    'f_zdroj_napajeni': D.zdroj_napajeni,
     'f_zemnič': D.zemnič, 'f_zemni_odpor': D.zemni_odpor,
     'f_prohlídka': D.prohlídka, 'f_zkouseni': D.zkouseni,
     'f_zhodnoceni': D.zhodnoceni, 'f_celkovy_vysledek': D.celkovy_vysledek, 'f_lhuta': D.lhuta,
