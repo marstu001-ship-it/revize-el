@@ -188,3 +188,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2503.md`](pages/IMG_2503.md) – závěrečná podpisová strana výrobního objektu (Celkový posudek)
 - [`pages/IMG_2506.md`](pages/IMG_2506.md) – úplná tabulka ochranných opatření (bytová jednotka)
 - [`pages/IMG_2507.md`](pages/IMG_2507.md) – seznam podkladů + technický popis bytové jednotky (CYKY 4×16, OEZ SVG-350, koupelna)
+- [`pages/IMG_2504.md`](pages/IMG_2504.md) – titulní strana vzoru pro bytovou jednotku
+- [`pages/IMG_2505.md`](pages/IMG_2505.md) – rozsah revize bytu 4+KK, 1NPE+3PEN TN-C-S, ochranná opatření
+- [`pages/IMG_2509.md`](pages/IMG_2509.md) – prohlídka i–p + provedené zkoušky + izolační odpor (bytová jednotka)
+- [`pages/IMG_2510.md`](pages/IMG_2510.md) – POZOR postup RT pro bytovou jednotku (SPD, SELV/PELV, protipožární přepážky)
+- [`pages/IMG_2511.md`](pages/IMG_2511.md) – checklist prohlídky (bytová jednotka)
