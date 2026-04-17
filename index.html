@@ -478,8 +478,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="scard-title">Provozovatel <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
     <div class="g2">
       <div class="f span2"><label>Název a adresa provozovatele <span class="req">*</span></label><textarea id="f_provozovatel" placeholder="Firma s.r.o.&#10;Ulice 1&#10;686 01 Město&#10;IČ: 12345678"></textarea></div>
-      <div class="f"><label>Změnu v rozváděči provedla firma</label><input type="text" id="f_firma_zmena" placeholder="název firmy"></div>
-      <div class="f"><label>Ev. čís. oprávnění firmy</label><input type="text" id="f_firma_opravneni" placeholder="16680/9/21/EZ-M,O-E1A"></div>
     </div>
   </div>
   <div class="scard">
@@ -2083,7 +2081,7 @@ function getData() {
     zahajeni: gv('f_zahajeni'), preruseni_od: gv('f_preruseni_od'), preruseni_do: gv('f_preruseni_do'),
     ukonceni: gv('f_ukonceni'), vypracovani: gv('f_vypracovani'), pristi: gv('f_pristi'),
     normy: getVybrane(),
-    provozovatel: gv('f_provozovatel'), firma_zmena: gv('f_firma_zmena'), firma_opravneni: gv('f_firma_opravneni'),
+    provozovatel: gv('f_provozovatel'),
     objednatel: gv('f_objednatel'), pritomen2: gv('f_pritomen2'),
     firma_zmena2: gv('f_firma_zmena2'), firma_opravneni2: gv('f_firma_opravneni2'),
     napetova_soustava: getNapetoveSoustavy(),
@@ -2794,7 +2792,7 @@ function nacistData(D) {
     'f_misto': D.misto, 'f_adresa': D.adresa,
     'f_zahajeni': D.zahajeni, 'f_preruseni_od': D.preruseni_od, 'f_preruseni_do': D.preruseni_do,
     'f_ukonceni': D.ukonceni, 'f_vypracovani': D.vypracovani, 'f_pristi': D.pristi,
-    'f_provozovatel': D.provozovatel, 'f_firma_zmena': D.firma_zmena, 'f_firma_opravneni': D.firma_opravneni,
+    'f_provozovatel': D.provozovatel,
     'f_objednatel': D.objednatel, 'f_pritomen2': D.pritomen2,
     'f_firma_zmena2': D.firma_zmena2, 'f_firma_opravneni2': D.firma_opravneni2,
     'f_rt_jmeno': D.rt_jmeno, 'f_rt_osvedceni': D.rt_osvedceni, 'f_rt_opravneni': D.rt_opravneni,
