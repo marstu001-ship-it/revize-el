@@ -168,3 +168,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2483.md`](pages/IMG_2483.md) – kap. 8 Měření, rozváděč RD, FA1–FA4, ověření RCD
 - [`pages/IMG_2484.md`](pages/IMG_2484.md) – pokračování měření FA4–FA13, RCD ověření
 - [`pages/IMG_2485.md`](pages/IMG_2485.md) – duplikát IMG_2484 (druhý záběr str. 14)
+- [`pages/IMG_2486.md`](pages/IMG_2486.md) – FA14, kap. 9 zjištěné závady + kap. 10 závěr a vyhodnocení
+- [`pages/IMG_2488.md`](pages/IMG_2488.md) – titulní strana vzoru pro výrobní objekt
+- [`pages/IMG_2489.md`](pages/IMG_2489.md) – rozsah revize výrobního objektu, 3PEN 400V TN-C-S, ochranná opatření
+- [`pages/IMG_2493_2.md`](pages/IMG_2493_2.md) – druhý záběr str. 6 výrobního objektu (duplikát k IMG_2493)
+- [`pages/IMG_2495.md`](pages/IMG_2495.md) – POZOR postup RT pro výrobní objekt (SPD, SELV/PELV, IP, ČSN EN 61558)
