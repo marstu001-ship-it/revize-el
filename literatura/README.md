@@ -198,3 +198,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2513.md`](pages/IMG_2513.md) – dokončení tab. zkoušek h–i + Prohlídka část A + Část B obecné pož. (byt)
 - [`pages/IMG_2514.md`](pages/IMG_2514.md) – II. Další požadavky + 6. Impedance + 7. Proudové chrániče úvod (byt)
 - [`pages/IMG_2516.md`](pages/IMG_2516.md) – kap. 8 Měření: rozváděč RB, FA1–FA5 + ověření RCD (byt)
+- [`pages/IMG_2515.md`](pages/IMG_2515.md) – kap. 7 proudové chrániče, kompletní tabulka RCD zkoušek + meze dotykového napětí (byt)
+- [`pages/IMG_2518.md`](pages/IMG_2518.md) – dokončení měření (pračka/koupelna) + kap. 9 závady + kap. 10 závěr (byt)
+- [`pages/IMG_2519.md`](pages/IMG_2519.md) – závěrečná podpisová strana bytové jednotky (Celkový posudek)
+- [`pages/IMG_2524.md`](pages/IMG_2524.md) – LPS: ekv. pospojování, SPD koordinace, měření zemních odporů (tab. 4 svorek)
+- [`pages/IMG_2525.md`](pages/IMG_2525.md) – LPS: celkový zemní odpor 9,5 Ω + závěrečný posudek LPS
