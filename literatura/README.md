@@ -193,3 +193,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2509.md`](pages/IMG_2509.md) – prohlídka i–p + provedené zkoušky + izolační odpor (bytová jednotka)
 - [`pages/IMG_2510.md`](pages/IMG_2510.md) – POZOR postup RT pro bytovou jednotku (SPD, SELV/PELV, protipožární přepážky)
 - [`pages/IMG_2511.md`](pages/IMG_2511.md) – checklist prohlídky (bytová jednotka)
+- [`pages/IMG_2508.md`](pages/IMG_2508.md) – definice prohlídky/zkoušení + checklist a–h (bytová jednotka)
+- [`pages/IMG_2512.md`](pages/IMG_2512.md) – tabulka zkoušek čl. 6.4.3 body a–g (bytová jednotka)
+- [`pages/IMG_2513.md`](pages/IMG_2513.md) – dokončení tab. zkoušek h–i + Prohlídka část A + Část B obecné pož. (byt)
+- [`pages/IMG_2514.md`](pages/IMG_2514.md) – II. Další požadavky + 6. Impedance + 7. Proudové chrániče úvod (byt)
+- [`pages/IMG_2516.md`](pages/IMG_2516.md) – kap. 8 Měření: rozváděč RB, FA1–FA5 + ověření RCD (byt)
