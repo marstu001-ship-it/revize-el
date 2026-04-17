@@ -27,6 +27,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   justify-content:space-between;padding:0 1.5rem;height:54px;
   position:sticky;top:0;z-index:300;border-bottom:3px solid var(--accent)}
 .brand{font-family:var(--mono);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase}
+.brand .ver{font-size:.55rem;letter-spacing:.08em;opacity:.6;margin-left:.6rem;font-weight:normal;text-transform:none}
 .brand em{color:#f0c040;font-style:normal}
 .topbar-right{display:flex;gap:.5rem;align-items:center}
 .btn{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.08em;
@@ -312,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.1 · 2026-04-17</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
