@@ -178,3 +178,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2491.md`](pages/IMG_2491.md) – seznam podkladů + technický popis výrobního objektu (trafostanice, SPD T2)
 - [`pages/IMG_2492.md`](pages/IMG_2492.md) – definice revize/prohlídky/zkoušení + checklist pro výrobní objekt
 - [`pages/IMG_2493.md`](pages/IMG_2493.md) – prohlídka body f–p + zkoušky + izolační odpor (výrobní objekt)
+- [`pages/IMG_2496.md`](pages/IMG_2496.md) – checklist prohlídky (výrobní objekt)
+- [`pages/IMG_2497.md`](pages/IMG_2497.md) – tabulka zkoušek čl. 6.4.3 body a–e (výrobní objekt)
+- [`pages/IMG_2498.md`](pages/IMG_2498.md) – tabulka zkoušek body f–i + Prohlídka část A (výrobní objekt)
+- [`pages/IMG_2500.md`](pages/IMG_2500.md) – kap. 7 Proudové chrániče, tabulka zkoušek RCD 1–5 (výrobní objekt)
+- [`pages/IMG_2501.md`](pages/IMG_2501.md) – kap. 8 Měření: rozváděč RH (OCEP 1600A), FAQ1/FAQ2, 3FU1–3FU5
