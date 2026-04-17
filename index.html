@@ -2429,7 +2429,7 @@ function generujPDF() {
     '<div style="padding:0 2mm;margin-bottom:4mm">' + zavadyHtml + '</div>' +
     '<div class="sec-head"><div class="sec-num">10.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.zhodnoceni || 'Závěr nebyl vyplněn.') + '</div>' +
-    (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
+    (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta provedení příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
     '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
     (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + esc(D.prilohy) + '</span></div>' : '') +
     '</div>' + ftr();
