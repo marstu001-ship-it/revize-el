@@ -147,11 +147,9 @@ instalací), ČSN 33 2000-4-41 ed.3 (Ochrana před úrazem el. proudem),
 ## Detaily po stranách
 
 Strukturované textové přepisy jednotlivých stran (formát: Zdroj, Téma, Klíčové
-body, Normy zmíněné na stránce) se průběžně doplňují do složky
-[`pages/`](pages/). Soubory mají název `IMG_NNNN.md` odpovídající
-názvu JPEG fotografie v této složce.
-
-Aktuálně zpracováno (zbytek se doplňuje po dávkách):
+body, Normy zmíněné na stránce) se nachází ve složce [`pages/`](pages/).
+Soubory mají název `IMG_NNNN.md` odpovídající názvu JPEG fotografie v této
+složce. **Všech 55 stran je zpracováno.**
 
 - [`pages/IMG_2470.md`](pages/IMG_2470.md) – titulní strana vzoru zprávy (rodinný dům)
 - [`pages/IMG_2471.md`](pages/IMG_2471.md) – napěťová soustava, tabulka ochranných opatření
@@ -203,3 +201,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2519.md`](pages/IMG_2519.md) – závěrečná podpisová strana bytové jednotky (Celkový posudek)
 - [`pages/IMG_2524.md`](pages/IMG_2524.md) – LPS: ekv. pospojování, SPD koordinace, měření zemních odporů (tab. 4 svorek)
 - [`pages/IMG_2525.md`](pages/IMG_2525.md) – LPS: celkový zemní odpor 9,5 Ω + závěrečný posudek LPS
+- [`pages/IMG_2517.md`](pages/IMG_2517.md) – pokračování měření bytu FA5–FA9 (LED SELV 12V DC, balkon, kuchyně, myčka)
+- [`pages/IMG_2520.md`](pages/IMG_2520.md) – LPS titulní strana (vzor zprávy pro hromosvod)
+- [`pages/IMG_2521.md`](pages/IMG_2521.md) – LPS: vymezení rozsahu + základní údaje objektu (typ, třída I–IV, zemina, LPZ)
+- [`pages/IMG_2522.md`](pages/IMG_2522.md) – LPS: potenciálové vyrovnání + seznam podkladů + technický popis (sběrnice EB, svody, antikorozní páska)
+- [`pages/IMG_2523.md`](pages/IMG_2523.md) – LPS: SPD (AlMgSi drát 50mm²) + soupis úkonů (jímač, svody, uzemnění)
