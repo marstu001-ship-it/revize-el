@@ -163,3 +163,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2478.md`](pages/IMG_2478.md) – checklist prohlídkové části revize
 - [`pages/IMG_2479.md`](pages/IMG_2479.md) – tabulka zkoušek čl. 6.4.3 body a–e
 - [`pages/IMG_2480.md`](pages/IMG_2480.md) – tabulka zkoušek body f–i + Prohlídka část A
+- [`pages/IMG_2481.md`](pages/IMG_2481.md) – Část B Zkouška/měření + měření impedance smyčky Zs(m) ≤ (2/3)·Uo/Ia
+- [`pages/IMG_2482.md`](pages/IMG_2482.md) – kap. 7 proudové chrániče, tabulka zkoušek RCD 1–5 (selektivita, typ B)
+- [`pages/IMG_2483.md`](pages/IMG_2483.md) – kap. 8 Měření, rozváděč RD, FA1–FA4, ověření RCD
+- [`pages/IMG_2484.md`](pages/IMG_2484.md) – pokračování měření FA4–FA13, RCD ověření
+- [`pages/IMG_2485.md`](pages/IMG_2485.md) – duplikát IMG_2484 (druhý záběr str. 14)
