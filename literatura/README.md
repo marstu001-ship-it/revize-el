@@ -173,3 +173,8 @@ Aktuálně zpracováno (zbytek se doplňuje po dávkách):
 - [`pages/IMG_2489.md`](pages/IMG_2489.md) – rozsah revize výrobního objektu, 3PEN 400V TN-C-S, ochranná opatření
 - [`pages/IMG_2493_2.md`](pages/IMG_2493_2.md) – druhý záběr str. 6 výrobního objektu (duplikát k IMG_2493)
 - [`pages/IMG_2495.md`](pages/IMG_2495.md) – POZOR postup RT pro výrobní objekt (SPD, SELV/PELV, IP, ČSN EN 61558)
+- [`pages/IMG_2487.md`](pages/IMG_2487.md) – závěrečná podpisová strana (Celkový posudek) rodinného domu
+- [`pages/IMG_2490.md`](pages/IMG_2490.md) – úplná tabulka ochranných opatření pro výrobní objekt
+- [`pages/IMG_2491.md`](pages/IMG_2491.md) – seznam podkladů + technický popis výrobního objektu (trafostanice, SPD T2)
+- [`pages/IMG_2492.md`](pages/IMG_2492.md) – definice revize/prohlídky/zkoušení + checklist pro výrobní objekt
+- [`pages/IMG_2493.md`](pages/IMG_2493.md) – prohlídka body f–p + zkoušky + izolační odpor (výrobní objekt)
