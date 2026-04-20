@@ -489,7 +489,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
         <input type="text" id="f_objednatel" placeholder="Stejný jako provozovatel / Firma XY s.r.o., Ulice 1, Praha">
       </div>
       <div class="f"><label>Při revizi byl přítomen</label><input type="text" id="f_pritomen2" placeholder="Jméno Příjmení, funkce"></div>
-      <div class="f"><label>Elektromontážní práce provedla firma</label><input type="text" id="f_firma_zmena2" placeholder="Firma s.r.o."></div>
+      <div class="f"><label>Elektromontážní práce provedeny firmou <span style="font-size:.6rem;color:var(--muted)">(v případě výchozí revize)</span></label><input type="text" id="f_firma_zmena2" placeholder="Firma s.r.o."></div>
       <div class="f"><label>Ev. číslo oprávnění firmy <span style="font-size:.6rem;color:var(--muted)">(výchozí revize)</span></label><input type="text" id="f_firma_opravneni2" placeholder="16680/9/21/EZ-M"></div>
     </div>
   </div>
@@ -1057,8 +1057,8 @@ function novaZprava(typ) {
   var zdroj = document.getElementById('f_zdroj');
   if (zdroj && !zdroj.value) {
     var zdroje = {
-      dum: 'Distribuční síť ČEZ / E.ON / PRE — cizí zdroj',
-      byt: 'Distribuční síť ČEZ / E.ON / PRE — cizí zdroj',
+      dum: 'Distribuční síť ČEZ / EG.D / PRE — cizí zdroj',
+      byt: 'Distribuční síť ČEZ / EG.D / PRE — cizí zdroj',
       prumysl: 'Vlastní trafostanice / distribuční síť — cizí zdroj'
     };
     zdroj.value = zdroje[aktPodtyp] || zdroje.dum;
@@ -2219,7 +2219,7 @@ function generujPDF() {
     '</div></div></div>' +
     (D.objednatel ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '</div>' : '') +
     (D.pritomen2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '</div>' : '') +
-    (D.firma_zmena2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. oprávnění: ' + esc(D.firma_opravneni2) : '') + '</div>' : '') +
+    (D.firma_zmena2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Elektromontážní práce provedeny firmou:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. oprávnění: ' + esc(D.firma_opravneni2) : '') + '</div>' : '') +
     '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje převzetí zprávy dne: ___________</div>' +
     '<div class="podp-grid">' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
@@ -2247,7 +2247,7 @@ function generujPDF() {
     '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>' +
     (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
     (D.pritomen2 ? '<strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
-    (D.firma_zmena2 ? '<strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. opr.: ' + esc(D.firma_opravneni2) : '') + '<br>' : '') +
+    (D.firma_zmena2 ? '<strong>Elektromontážní práce provedeny firmou:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. opr.: ' + esc(D.firma_opravneni2) : '') + '<br>' : '') +
     (D.zemnič ? '<strong>Typ a popis zemniče:</strong> ' + esc(D.zemnič) + '<br>' : '') +
     (D.zemni_odpor ? '<strong>Naměřený zemní odpor:</strong> ' + esc(D.zemni_odpor) + ' Ω<br>' : '') +
     '</div>' +
