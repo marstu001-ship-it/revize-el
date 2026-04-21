@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.0 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.1 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -1170,15 +1170,16 @@ function novaZprava(typ) {
     };
     f_neni.value = neníTexty[aktPodtyp] || '';
   }
-  // Zdroj el. proudu dle podtypu — předvyplní se jednou z hodnot datalistu
+  // Zdroj el. proudu — jen placeholder (hint), ne hodnota. Hodnota by
+  // blokovala datalist dropdown; uživatel klikne a rovnou vybere.
   var zdroj = document.getElementById('f_zdroj');
-  if (zdroj && !zdroj.value) {
-    var zdroje = {
-      dum: 'ČEZ Distribuce, a.s.',
-      byt: 'ČEZ Distribuce, a.s.',
-      prumysl: 'Vlastní trafostanice 22/0,4 kV'
+  if (zdroj) {
+    var zdrojPh = {
+      dum: 'např. ČEZ Distribuce, a.s. — vyberte ze seznamu',
+      byt: 'např. ČEZ Distribuce, a.s. — vyberte ze seznamu',
+      prumysl: 'např. Vlastní trafostanice 22/0,4 kV'
     };
-    zdroj.value = zdroje[aktPodtyp] || zdroje.dum;
+    zdroj.placeholder = zdrojPh[aktPodtyp] || zdrojPh.dum;
   }
   // Dynamické placeholdery dle podtypu
   var ph = {
@@ -1218,7 +1219,9 @@ function novaZprava(typ) {
     var el = document.getElementById(id);
     if (el) el.placeholder = podtypPh[id];
   });
-  var och = document.getElementById('f_ochrana'); if (och) och.value = 'automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3';
+  // f_ochrana: jen placeholder (hint), ne hodnota — nebránit datalistu
+  var och = document.getElementById('f_ochrana');
+  if (och) och.placeholder = 'např. automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3';
   // Přepnout tab-bary dle typu
   var tabBarEl = document.getElementById('tab-bar-el');
   var tabBarLps = document.getElementById('tab-bar-lps');
@@ -1831,8 +1834,8 @@ function addRcdRow(el) {
   var tdNum = mkTd('');
   tdNum.querySelector('input').value = '' + num;
   trMain.appendChild(tdNum);
-  // Název — RCD popis
-  trMain.appendChild(mkTd('RCD', ';text-align:left', 'dl_nazev_obvodu'));
+  // Název — RCD popis (bez datalistu — RCD není obvod, popisuje se slovně)
+  trMain.appendChild(mkTd('RCD pro světelné / zásuvkové obvody', ';text-align:left'));
   // Typ-pol — výrobce
   trMain.appendChild(mkTd('Hager'));
   // Ch. — rozbalovací pole s typem chrániče
