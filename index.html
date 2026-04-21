@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.8 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.9 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -1011,9 +1011,9 @@ function novaZprava(typ) {
   var bcTyp = document.getElementById('bc-typ');
   if (bcTyp) bcTyp.textContent = typ === 'elektro' ? 'Nová zpráva — Elektro' : 'Nová zpráva — LPS';
   document.querySelectorAll('#screen-form input, #screen-form textarea, #screen-form select').forEach(function(el) {
-    if (el.type === 'checkbox') el.checked = false;
+    if (el.type === 'checkbox') el.checked = el.defaultChecked;
     else if (el.tagName === 'SELECT') el.selectedIndex = 0;
-    else el.value = '';
+    else el.value = el.defaultValue;
   });
   var rc = document.getElementById('rozvadece-container'); if (rc) rc.innerHTML = '';
   rozvadecCounter = 0;
