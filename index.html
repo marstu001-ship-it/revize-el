@@ -1389,6 +1389,9 @@ function copyRow(el) {
   if (!tr) return;
   var tbody = tr.parentNode;
   var clone = tr.cloneNode(true);
+  // Vymaž první sloupec (číslo okruhu / svorky) — ať se nekopíruje číslo
+  var firstInput = clone.querySelector('input');
+  if (firstInput) firstInput.value = '';
   if (tr.nextSibling) {
     tbody.insertBefore(clone, tr.nextSibling);
   } else {
@@ -1432,6 +1435,9 @@ function copyRcdGroup(el) {
     cpBtns.forEach(function(b) { b.dataset.group = newGroupId; });
     // Aktualizuj onChange na selectu v RCD header
     if (clone.dataset.rowtype === 'rcd-header') {
+      // Vymaž číslo okruhu (první vstup) — ať se nekopíruje z původní skupiny
+      var firstInput = clone.querySelector('input');
+      if (firstInput) firstInput.value = '';
       var sel = clone.querySelector('select');
       if (sel) {
         sel.addEventListener('change', function() {
