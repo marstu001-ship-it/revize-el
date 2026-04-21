@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.2 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.3 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -561,12 +561,26 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
   <div class="scard">
     <div class="scard-title">Provozovatel <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
+    <div style="display:flex;gap:.5rem;align-items:flex-end;margin-bottom:.5rem">
+      <div class="f" style="flex:0 0 180px;margin:0">
+        <label>IČO (pro ARES)</label>
+        <input type="text" id="f_provozovatel_ico" placeholder="12345678" maxlength="8" inputmode="numeric" autocomplete="off">
+      </div>
+      <button class="magic-btn" data-action="lookupProvozovatelIco" style="margin:0">🔍 Načíst z ARES</button>
+    </div>
     <div class="g2">
       <div class="f span2"><label>Název a adresa provozovatele <span class="req">*</span></label><textarea id="f_provozovatel" placeholder="Firma s.r.o.&#10;Ulice 1&#10;686 01 Město&#10;IČ: 12345678"></textarea></div>
     </div>
   </div>
   <div class="scard">
     <div class="scard-title">Objednatel revize <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
+    <div style="display:flex;gap:.5rem;align-items:flex-end;margin-bottom:.5rem">
+      <div class="f" style="flex:0 0 180px;margin:0">
+        <label>IČO (pro ARES)</label>
+        <input type="text" id="f_objednatel_ico" placeholder="12345678" maxlength="8" inputmode="numeric" autocomplete="off">
+      </div>
+      <button class="magic-btn" data-action="lookupObjednatelIco" style="margin:0">🔍 Načíst z ARES</button>
+    </div>
     <div class="g2">
       <div class="f span2">
         <label>Objednatel revize <span style="font-size:.7rem;color:var(--muted)">(pokud je stejný jako provozovatel, nechte prázdné)</span></label>
@@ -2188,6 +2202,62 @@ function magicZaver() {
   el.value = (vysledek === 'neschopno') ? zaverNeschopno : zaverSchopno;
 }
 
+// Načte firmu z ARES (veřejné CZ API) a vyplní cílové pole.
+// ico: 8číslice (mezery a nečíslice se ořežou)
+// targetFieldId: ID textarea/input, do kterého se vyplní formátovaná adresa
+// btn: tlačítko, kde se po dobu fetche zobrazí loading stav
+// opts.multiline: true = použij \n (textarea), false = použij ', ' (input)
+function lookupIcoFromAres(ico, targetFieldId, btn, opts) {
+  opts = opts || {};
+  var cleaned = (ico || '').replace(/\D/g, '');
+  if (cleaned.length !== 8) {
+    alert('IČO musí mít přesně 8 číslic. Zadali jste: "' + (ico || '') + '"');
+    return;
+  }
+  var target = document.getElementById(targetFieldId);
+  if (!target) return;
+  var origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '⏳ Načítám z ARES…'; btn.disabled = true; }
+  var url = 'https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/' + cleaned;
+  fetch(url)
+    .then(function(res) {
+      if (res.status === 404) throw new Error('IČO ' + cleaned + ' nebylo v ARES nalezeno');
+      if (!res.ok) throw new Error('ARES vrátil status ' + res.status);
+      return res.json();
+    })
+    .then(function(data) {
+      var lines = [];
+      if (data.obchodniJmeno) lines.push(data.obchodniJmeno);
+      var s = data.sidlo || {};
+      // Preferuj textovaAdresa (už naformátované), jinak sestav z částí
+      if (s.textovaAdresa) {
+        s.textovaAdresa.split(',').forEach(function(p) {
+          var t = p.trim();
+          if (t) lines.push(t);
+        });
+      } else {
+        var street = [
+          s.nazevUlice || s.nazevObce,
+          s.cisloDomovni ? (s.cisloDomovni + (s.cisloOrientacni ? '/' + s.cisloOrientacni : '')) : ''
+        ].filter(Boolean).join(' ').trim();
+        if (street) lines.push(street);
+        var psc = s.psc ? String(s.psc).replace(/(\d{3})(\d{2})/, '$1 $2') : '';
+        var cityLine = [psc, s.nazevObce].filter(Boolean).join(' ').trim();
+        if (cityLine) lines.push(cityLine);
+      }
+      lines.push('IČ: ' + cleaned);
+      if (data.dic) lines.push('DIČ: ' + data.dic);
+      target.value = lines.join(opts.multiline ? '\n' : ', ');
+    })
+    .catch(function(err) {
+      alert('Nepodařilo se načíst z ARES.\n\n' + (err.message || err) +
+            '\n\nZkontrolujte, že jste online a IČO je správné.');
+    })
+    .then(function() {
+      if (btn) { btn.textContent = origText; btn.disabled = false; }
+    });
+}
+
 function openModalRevize() {
   var m = document.getElementById('modal-revize');
   if (!m) return;
@@ -3317,6 +3387,20 @@ document.addEventListener('click', function(e) {
     case 'openModalRevize': openModalRevize(); break;
     case 'magicPopis': magicPopis(); break;
     case 'magicZaver': magicZaver(); break;
+    case 'lookupProvozovatelIco':
+      lookupIcoFromAres(
+        (document.getElementById('f_provozovatel_ico') || {}).value,
+        'f_provozovatel',
+        el, { multiline: true }
+      );
+      break;
+    case 'lookupObjednatelIco':
+      lookupIcoFromAres(
+        (document.getElementById('f_objednatel_ico') || {}).value,
+        'f_objednatel',
+        el, { multiline: false }
+      );
+      break;
     case 'addDokumentace': addDokumentace(); break;
     case 'addPristroj': addPristroj(); break;
     case 'addMereniRow': addMereniRow(el); break;
