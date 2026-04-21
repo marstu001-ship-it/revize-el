@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.4 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.5 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -512,12 +512,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
   <div class="scard">
-    <div class="scard-title">VTEZ a výsledek</div>
+    <div class="scard-title">VTEZ</div>
     <div class="g2">
-      <div class="f"><label>Třída VTEZ dle §4 NV 190/2022 Sb.</label>
+      <div class="f span2"><label>Třída VTEZ dle §4 NV 190/2022 Sb.</label>
         <select id="f_trida"><option value="Třída I">Třída I – vyšší riziko (výbuch, shromažďování nad 200 osob, zdravotnictví)</option><option value="Třída II" selected>Třída II – ostatní vyhrazená elektrická zařízení</option></select></div>
-      <div class="f"><label>Celkový posudek / výsledek revize <span class="req">*</span></label>
-        <select id="f_vysledek"><option value="schopno">✅ Schopno provozu</option><option value="neschopno">❌ Neschopno provozu</option></select></div>
     </div>
     <div class="sep"></div>
     <div class="g2" style="margin-top:.75rem">
@@ -2114,7 +2112,7 @@ function getData() {
     rt_opravneni: gv('f_rt_opravneni') || t.opravneni || '',
     rt_adresa: gv('f_rt_adresa') || adr,
     rt_ico: gv('f_rt_ico') || t.ico || '',
-    trida: gv('f_trida'), vysledek: gv('f_vysledek'),
+    trida: gv('f_trida'),
     zdroj: gv('f_zdroj'), ochrana: gv('f_ochrana'),
     predano_misto: gv('f_predano_misto'), predano_datum: gv('f_predano_datum'),
     predchozi: gv('f_predchozi'),
@@ -2210,7 +2208,7 @@ function generujPDF() {
     '<div class="ptitle"><h1>' + nadpis + '</h1><p>' + podnadpis + '</p></div>' +
     '<div class="r2" style="margin-bottom:2.5mm">' +
     '<div><div class="pbox-label">Zdroj el. proudu:</div>' +
-    '<div class="pbox" style="min-height:12mm;font-size:9pt">cizí: ' + esc(D.zdroj) + '</div></div>' +
+    '<div class="pbox" style="min-height:12mm;font-size:9pt">' + esc(D.zdroj || '') + '</div></div>' +
     '<div><div class="pbox-label">Ochrana před úrazem:</div>' +
     '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
     '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
@@ -2238,12 +2236,16 @@ function generujPDF() {
     '</div></div>' +
     '<div><div class="pbox-label">Počet stran, kopií:</div>' +
     '<div class="pbox" style="min-height:20mm;font-size:8.5pt">' +
-    'Počet listů: <span data-pocet-listu>' + total + '</span><br>Výtisk č.: ' + esc(D.vytisk) + '<br>Počet příloh: —<br>Vyhotovení: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
+    'Počet listů: <span data-pocet-listu>' + total + '</span><br>Výtisk č.: ' + esc(D.vytisk) + '<br>Počet příloh: ' + (D.prilohy ? D.prilohy.split('\n').filter(function(l){ return l.trim(); }).length : 0) + '<br>Vyhotovení: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
     '</div></div></div>' +
     (D.objednatel ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '</div>' : '') +
     (D.pritomen2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '</div>' : '') +
     (D.firma_zmena2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. oprávnění: ' + esc(D.firma_opravneni2) : '') + '</div>' : '') +
-    '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje převzetí zprávy dne: ___________</div>' +
+    '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje převzetí zprávy' +
+    (D.predano_misto ? ' v ' + esc(D.predano_misto) : '') +
+    ' dne: ' + (D.predano_datum ? esc(fmtDate(D.predano_datum)) : '___________') +
+    (D.prebira ? '<br>Zprávu přebírá: ' + esc(D.prebira) : '') +
+    '</div>' +
     '<div class="podp-grid">' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
@@ -2266,8 +2268,10 @@ function generujPDF() {
     '<div data-p2sec="2">' +
     '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zařízení</div></div>' +
     '<div style="font-size:9pt;padding:0 2mm;margin-bottom:3mm">' +
+    (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '') +
     (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '') +
     '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>' +
+    (D.preruseni_od || D.preruseni_do ? '<strong>Přerušení revize:</strong> ' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '<br>' : '') +
     (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
     (D.pritomen2 ? '<strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
     (D.firma_zmena2 ? '<strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. opr.: ' + esc(D.firma_opravneni2) : '') + '<br>' : '') +
@@ -2846,7 +2850,7 @@ function nacistData(D) {
     'f_firma_zmena2': D.firma_zmena2, 'f_firma_opravneni2': D.firma_opravneni2,
     'f_rt_jmeno': D.rt_jmeno, 'f_rt_osvedceni': D.rt_osvedceni, 'f_rt_opravneni': D.rt_opravneni,
     'f_rt_adresa': D.rt_adresa, 'f_rt_ico': D.rt_ico,
-    'f_trida': D.trida, 'f_vysledek': D.vysledek,
+    'f_trida': D.trida,
     'f_zdroj': D.zdroj, 'f_ochrana': D.ochrana,
     'f_predchozi': D.predchozi,
     'f_predano_misto': D.predano_misto, 'f_predano_datum': D.predano_datum,
