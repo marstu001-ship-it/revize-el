@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.6 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.7 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -519,7 +519,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     </div>
     <div class="sep"></div>
     <div class="g2" style="margin-top:.75rem">
-      <div class="f"><label>Zdroj elektrického proudu</label><input type="text" id="f_zdroj" placeholder="Distribuce ČEZ a.s. / vlastní / jiné"></div>
+      <div class="f">
+        <label>Zdroj elektrického proudu</label>
+        <input type="text" id="f_zdroj" list="f_zdroj_options" placeholder="vyberte ze seznamu nebo napište vlastní">
+        <datalist id="f_zdroj_options">
+          <option value="ČEZ Distribuce, a.s.">
+          <option value="EG.D, a.s.">
+          <option value="PREdistribuce, a.s.">
+          <option value="Vlastní trafostanice 22/0,4 kV">
+          <option value="Vlastní zdroj (fotovoltaika, diesel-agregát)">
+        </datalist>
+      </div>
       <div class="f"><label>Ochrana před úrazem el. proudem</label><input type="text" id="f_ochrana" placeholder="automatickým odpojením od zdroje dle 4-41 ed.2"></div>
     </div>
   </div>
@@ -1046,13 +1056,13 @@ function novaZprava(typ) {
     };
     f_neni.value = neníTexty[aktPodtyp] || '';
   }
-  // Zdroj el. proudu dle podtypu
+  // Zdroj el. proudu dle podtypu — předvyplní se jednou z hodnot datalistu
   var zdroj = document.getElementById('f_zdroj');
   if (zdroj && !zdroj.value) {
     var zdroje = {
-      dum: 'Distribuční síť ČEZ / E.ON / PRE — cizí zdroj',
-      byt: 'Distribuční síť ČEZ / E.ON / PRE — cizí zdroj',
-      prumysl: 'Vlastní trafostanice / distribuční síť — cizí zdroj'
+      dum: 'ČEZ Distribuce, a.s.',
+      byt: 'ČEZ Distribuce, a.s.',
+      prumysl: 'Vlastní trafostanice 22/0,4 kV'
     };
     zdroj.value = zdroje[aktPodtyp] || zdroje.dum;
   }
