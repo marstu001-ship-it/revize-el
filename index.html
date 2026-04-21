@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.5 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.6 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -2304,6 +2304,7 @@ function generujPDF() {
       : '') +
     '<div data-p2sec="4">' +
     '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
+    (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
     '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
     '<strong>Prohlídka část A</strong> — prohlídka předchází zkoušce. Prohlídkou se zkontroluje zejména:<br>' +
     'a) způsob, popřípadě stav ochrany před úrazem elektrickým proudem včetně měření vzdáleností,<br>' +
@@ -2430,6 +2431,7 @@ function generujPDF() {
   p4.innerHTML = hdr(4) +
     '<div class="a4-content">' +
     '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Zkoušení (dle čl. 6.4.3)</div></div>' +
+    (D.zkouseni ? '<div style="font-size:9pt;padding:0 2mm;margin:2mm 0"><strong>Výsledek zkoušení:</strong> ' + esc(D.zkouseni) + '</div>' : '') +
     '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:3mm">' +
     '<thead><tr><th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;width:5%"></th>' +
     '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;text-align:left">Zkouška</th>' +
