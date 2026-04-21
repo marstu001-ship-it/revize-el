@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.2 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.3 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -3144,9 +3144,18 @@ document.getElementById('json-input').addEventListener('change', nacistJSON);
 
 window.addEventListener('DOMContentLoaded', init);
 
-// Service Worker — offline podpora (PWA)
+// Service Worker — offline podpora (PWA) + auto-reload po aktualizaci
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function() {});
+  // Když nový SW převezme kontrolu (po bumpu CACHE_NAME v sw.js),
+  // automaticky stránku reloadni — uživatel tím hned uvidí novou verzi,
+  // aniž by musel ručně dávat hard-reload.
+  var swRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (swRefreshing) return;
+    swRefreshing = true;
+    window.location.reload();
+  });
 }
 
 </script>
