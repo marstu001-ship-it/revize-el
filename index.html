@@ -135,6 +135,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   color:var(--text);border-radius:2px;transition:border-color .15s;width:100%}
 .f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--accent2);background:#fff}
 .f textarea{resize:vertical;min-height:72px}
+/* Placeholder — šedě, kurzívou, aby šel odlišit od reálné hodnoty */
+input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity:.75}
 .f .prefilled{background:#f0f6ff;border-color:#b8d0f0;color:var(--accent2)}
 .sep{height:1px;background:var(--border);margin:1rem 0}
 
@@ -313,7 +315,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.1 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.2 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -603,7 +605,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="g2" style="margin-top:.75rem">
       <div class="f">
         <label>Zdroj elektrického proudu</label>
-        <input type="text" id="f_zdroj" list="f_zdroj_options" placeholder="vyberte ze seznamu nebo napište vlastní">
+        <input type="text" id="f_zdroj" list="f_zdroj_options" autocomplete="off" placeholder="vyberte ze seznamu nebo napište vlastní">
         <datalist id="f_zdroj_options">
           <option value="ČEZ Distribuce, a.s.">
           <option value="EG.D, a.s.">
@@ -614,7 +616,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div class="f">
         <label>Ochrana před úrazem el. proudem</label>
-        <input type="text" id="f_ochrana" list="f_ochrana_options" placeholder="vyberte nebo napište vlastní">
+        <input type="text" id="f_ochrana" list="f_ochrana_options" autocomplete="off" placeholder="vyberte nebo napište vlastní">
         <datalist id="f_ochrana_options">
           <option value="automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3">
           <option value="dvojitou nebo zesílenou izolací">
@@ -660,7 +662,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="f span2"><label>Popis revidované elektroinstalace</label><textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea></div>
       <div class="f">
         <label>Typ a popis zemniče</label>
-        <input type="text" id="f_zemnič" list="f_zemnič_options" placeholder="vyberte nebo napište vlastní">
+        <input type="text" id="f_zemnič" list="f_zemnič_options" autocomplete="off" placeholder="vyberte nebo napište vlastní">
         <datalist id="f_zemnič_options">
           <option value="Zemnič typu B — základový, uzavřená smyčka v betonu">
           <option value="Zemnič typu B — spojený se základy budovy">
@@ -1129,6 +1131,11 @@ function novaZprava(typ) {
     }
     else el.value = el.defaultValue;
   });
+  // Obranné: jakékoli pole s datalistem začíná prázdné. Kdyby někde výše
+  // byla hodnota, filtrovala by dropdown a uživatel by ji musel ručně mazat.
+  document.querySelectorAll('#screen-form input[list]').forEach(function(el) {
+    el.value = '';
+  });
   var rc = document.getElementById('rozvadece-container'); if (rc) rc.innerHTML = '';
   rozvadecCounter = 0;
   var zl = document.getElementById('zavady-list'); if (zl) zl.innerHTML = '';
@@ -1483,7 +1490,11 @@ function mkTd(ph, style, list) {
   var inp = document.createElement('input');
   inp.type = 'text';
   inp.placeholder = ph || '';
-  if (list) inp.setAttribute('list', list);
+  if (list) {
+    inp.setAttribute('list', list);
+    // Zabrání návrhům historie prohlížeče, aby se překrývaly s datalistem
+    inp.setAttribute('autocomplete', 'off');
+  }
   inp.style.cssText = 'width:100%;border:none;background:transparent;font-size:.78rem;text-align:center' + (style || '');
   td.appendChild(inp);
   return td;
@@ -1624,7 +1635,7 @@ function addRozvadec() {
     (n > 1 ? '<button class="del-btn" style="font-size:.75rem" data-action="delRozvadec" data-rozvadec="rozv-' + n + '">✕ Odebrat rozváděč</button>' : '') +
     '</div>' +
     '<div class="g2" style="margin-bottom:1rem">' +
-    '<div class="f"><label>Rozváděč (označení)</label><input type="text" class="rozv-nazev" list="dl_nazev_rozvadec" placeholder="' + (phNazev[aktPodtyp] || phNazev.dum) + '"></div>' +
+    '<div class="f"><label>Rozváděč (označení)</label><input type="text" class="rozv-nazev" list="dl_nazev_rozvadec" autocomplete="off" placeholder="' + (phNazev[aktPodtyp] || phNazev.dum) + '"></div>' +
     '<div class="f"><label>Umístění / popis</label><input type="text" class="rozv-umisteni" placeholder="' + (phUmist[aktPodtyp] || phUmist.dum) + '"></div>' +
     '</div>' +
     '<div class="meas-table-wrap">' + getMeasTableHtml() + '</div>' +
