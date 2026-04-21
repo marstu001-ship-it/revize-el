@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.3 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.4 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -520,9 +520,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
         <select id="f_vysledek"><option value="schopno">✅ Schopno provozu</option><option value="neschopno">❌ Neschopno provozu</option></select></div>
     </div>
     <div class="sep"></div>
-    <div class="f"><label>Zdroj elektrického proudu</label><input type="text" id="f_zdroj" placeholder="Distribuce ČEZ a.s. / vlastní / jiné"></div>
     <div class="g2" style="margin-top:.75rem">
-      <div class="f"><label>Typ sítě</label><input type="text" id="f_sit" placeholder="TN-C-S 230V/50Hz AC"></div>
+      <div class="f"><label>Zdroj elektrického proudu</label><input type="text" id="f_zdroj" placeholder="Distribuce ČEZ a.s. / vlastní / jiné"></div>
       <div class="f"><label>Ochrana před úrazem el. proudem</label><input type="text" id="f_ochrana" placeholder="automatickým odpojením od zdroje dle 4-41 ed.2"></div>
     </div>
   </div>
@@ -557,7 +556,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="f span2"><label>Předmětem této revize je</label><textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea></div>
       <div class="f span2"><label>Předmětem této revize není</label><textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea></div>
       <div class="f span2"><label>Popis revidované elektroinstalace</label><textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea></div>
-      <div class="f"><label>Zdroje napájení</label><input type="text" id="f_zdroj_napajeni" placeholder="firemní rozvod nn: 3+PE+N, 400/230V, 50Hz, síť TN-C-S"></div>
       <div class="f"><label>Typ a popis zemniče</label><input type="text" id="f_zemnič" placeholder="Zemnič typu A, okružní uzemňovací vedení..."></div>
       <div class="f"><label>Naměřený zemní odpor (Ω)</label><input type="text" id="f_zemni_odpor" placeholder="12,5"></div>
     </div>
@@ -1028,9 +1026,6 @@ function novaZprava(typ) {
   });
   var evCislo = document.getElementById('f_ev_cislo');
   if (evCislo) evCislo.value = 'RE-' + rok + '-0001';
-  var sit = document.getElementById('f_sit');
-  var sits = { dum: 'TN-C-S 230/400V 50Hz AC', byt: 'TN-C-S 230/400V 50Hz AC', prumysl: 'TN-C-S 400V 50Hz AC' };
-  if (sit) sit.value = sits[aktPodtyp] || sits.dum;
   renderNapetoveCheckboxy(aktPodtyp);
   renderOchranaCheckboxy();
   // Předmět revize dle podtypu
@@ -1073,7 +1068,6 @@ function novaZprava(typ) {
       f_rozvadec_umisteni: 'Technická místnost rodinného domu',
       f_zemnič: 'Zemnič typu B — základový, uzavřená smyčka v betonu',
       f_zemni_odpor: '9,5',
-      f_zdroj_napajeni: 'Distribuční síť nn: 1NPE+3PEN, 230/400V, 50Hz, TN-C-S',
       f_predmet_neni: ''
     },
     byt: {
@@ -1084,7 +1078,6 @@ function novaZprava(typ) {
       f_rozvadec_umisteni: 'Vstupní chodba bytové jednotky',
       f_zemnič: 'Společný zemnič bytového domu',
       f_zemni_odpor: '4,2',
-      f_zdroj_napajeni: 'Distribuční síť nn: 1NPE+3PEN, 230/400V, 50Hz, TN-C-S',
       f_predmet_neni: 'Elektroměrový rozváděč, společné prostory bytového domu'
     },
     prumysl: {
@@ -1095,7 +1088,6 @@ function novaZprava(typ) {
       f_rozvadec_umisteni: 'Rozvodna VN/NN, trafostanice',
       f_zemnič: 'Uzemňovací soustava rozsáhlého objektu — typ B',
       f_zemni_odpor: '2,8',
-      f_zdroj_napajeni: 'Vlastní trafostanice 22/0,4kV: 3PEN, 400V, 50Hz, TN-C-S',
       f_predmet_neni: ''
     }
   };
@@ -2123,13 +2115,12 @@ function getData() {
     rt_adresa: gv('f_rt_adresa') || adr,
     rt_ico: gv('f_rt_ico') || t.ico || '',
     trida: gv('f_trida'), vysledek: gv('f_vysledek'),
-    zdroj: gv('f_zdroj'), sit: gv('f_sit'), ochrana: gv('f_ochrana'),
+    zdroj: gv('f_zdroj'), ochrana: gv('f_ochrana'),
     predano_misto: gv('f_predano_misto'), predano_datum: gv('f_predano_datum'),
     predchozi: gv('f_predchozi'),
     prebira: gv('f_prebira'), vyhotoveni: gv('f_vyhotoveni'), rozdelovnik: gv('f_rozdelovnik'),
     prilohy: gv('f_prilohy'),
     predmet_je: gv('f_predmet_je'), predmet_neni: gv('f_predmet_neni'), popis: gv('f_popis'),
-    zdroj_napajeni: gv('f_zdroj_napajeni'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
     prohlídka: gv('f_prohlídka'), zkouseni: gv('f_zkouseni'),
     zkousky: {
@@ -2223,7 +2214,7 @@ function generujPDF() {
     '<div><div class="pbox-label">Ochrana před úrazem:</div>' +
     '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
     '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
-    '<div class="pbox" style="font-size:9pt">' + esc(D.sit) + '</div></div></div>' +
+    '<div class="pbox" style="font-size:9pt">' + esc(D.napetova_soustava || '') + '</div></div></div>' +
     '</div>' +
     '<div class="r2" style="margin-bottom:2.5mm">' +
     '<div><div class="pbox-label">Použité normy:</div>' +
@@ -2856,13 +2847,12 @@ function nacistData(D) {
     'f_rt_jmeno': D.rt_jmeno, 'f_rt_osvedceni': D.rt_osvedceni, 'f_rt_opravneni': D.rt_opravneni,
     'f_rt_adresa': D.rt_adresa, 'f_rt_ico': D.rt_ico,
     'f_trida': D.trida, 'f_vysledek': D.vysledek,
-    'f_zdroj': D.zdroj, 'f_sit': D.sit, 'f_ochrana': D.ochrana,
+    'f_zdroj': D.zdroj, 'f_ochrana': D.ochrana,
     'f_predchozi': D.predchozi,
     'f_predano_misto': D.predano_misto, 'f_predano_datum': D.predano_datum,
     'f_prilohy': D.prilohy,
     'f_prebira': D.prebira, 'f_vyhotoveni': D.vyhotoveni, 'f_rozdelovnik': D.rozdelovnik,
     'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni, 'f_popis': D.popis,
-    'f_zdroj_napajeni': D.zdroj_napajeni,
     'f_zemnič': D.zemnič, 'f_zemni_odpor': D.zemni_odpor,
     'f_prohlídka': D.prohlídka, 'f_zkouseni': D.zkouseni,
     'f_zhodnoceni': D.zhodnoceni, 'f_celkovy_vysledek': D.celkovy_vysledek, 'f_lhuta': D.lhuta,
