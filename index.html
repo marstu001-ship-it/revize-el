@@ -2069,7 +2069,12 @@ function getData() {
   var dokumentace = [];
   document.querySelectorAll('#dokumentace-body tr').forEach(function(tr) {
     var inp = tr.querySelectorAll('input');
-    if (inp.length >= 3) dokumentace.push({ cislo: inp[0].value, datum: inp[1].value, nazev: inp[2].value });
+    if (inp.length < 3) return;
+    var cislo = (inp[0].value || '').trim();
+    var datum = (inp[1].value || '').trim();
+    var nazev = (inp[2].value || '').trim();
+    if (!cislo && !datum && !nazev) return;
+    dokumentace.push({ cislo: cislo, datum: datum, nazev: nazev });
   });
   var psc = t.psc || '';
   var mesto = t.mesto || '';
@@ -2256,6 +2261,25 @@ function generujPDF() {
     '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technický popis vyhrazeného elektrického zařízení</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || 'Doplňte v záložce A.') + '</div>' +
     '</div>' +
+    (D.dokumentace && D.dokumentace.length > 0
+      ? '<div data-p2sec="3b">' +
+        '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">B.</div><div class="sec-name">Předložená dokumentace</div></div>' +
+        '<table class="data-table" style="font-size:9pt;margin:2mm 2mm 4mm;width:calc(100% - 4mm);border-collapse:collapse">' +
+        '<thead><tr>' +
+        '<th style="width:22%;border:1px solid #000;padding:1mm 2mm;text-align:left;background:#eee">č. dokumentace</th>' +
+        '<th style="width:18%;border:1px solid #000;padding:1mm 2mm;text-align:left;background:#eee">Datum</th>' +
+        '<th style="border:1px solid #000;padding:1mm 2mm;text-align:left;background:#eee">Název dokumentace</th>' +
+        '</tr></thead><tbody>' +
+        D.dokumentace.map(function(d) {
+          return '<tr>' +
+            '<td style="border:1px solid #000;padding:1mm 2mm">' + esc(d.cislo) + '</td>' +
+            '<td style="border:1px solid #000;padding:1mm 2mm">' + (d.datum ? fmtDate(d.datum) : '') + '</td>' +
+            '<td style="border:1px solid #000;padding:1mm 2mm">' + esc(d.nazev) + '</td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>' +
+        '</div>'
+      : '') +
     '<div data-p2sec="4">' +
     '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
     '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
@@ -2457,14 +2481,22 @@ function generujPDF() {
     var content = p2.querySelector('.a4-content');
     if (content) {
       // Pokud se sekce 3 (dlouhý Technický popis) nevejde na str. 2,
-      // přesuneme sekci 4 (Prohlídky) na novou očíslovanou stránku.
+      // přesuneme sekci 4 (Prohlídky) — a pokud existuje, i sekci 3b
+      // (Předložená dokumentace) — na novou očíslovanou stránku.
       if (overflows(p2)) {
         var sec4 = content.querySelector('[data-p2sec="4"]');
+        var sec3b = content.querySelector('[data-p2sec="3b"]');
         if (sec4) {
           var pe = newA4('a4');
+          var peContent = pe.querySelector('.a4-content');
+          if (sec3b) {
+            var sh3b = sec3b.querySelector('.sec-head');
+            if (sh3b) sh3b.style.marginTop = '0';
+            peContent.appendChild(sec3b);
+          }
           var sh = sec4.querySelector('.sec-head');
           if (sh) sh.style.marginTop = '0';
-          pe.querySelector('.a4-content').appendChild(sec4);
+          peContent.appendChild(sec4);
           pages.insertBefore(pe, p2.nextSibling);
         }
       }
