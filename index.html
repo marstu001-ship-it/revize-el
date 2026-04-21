@@ -313,7 +313,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v1.9 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.0 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -425,6 +425,88 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 ═══════════════════════════════════════════════ -->
 <div class="screen" id="screen-form">
 <div class="breadcrumb"><a data-action="home">Hlavní</a> › <span id="bc-typ">Nová zpráva</span></div>
+
+<!-- Sdílené datalisty pro dynamické tabulky měření a rozváděče -->
+<datalist id="dl_nazev_rozvadec">
+  <option value="RD — rodinný dům (OEZ 18M35, IP 30/20)">
+  <option value="RB — bytový (OEZ 18M35, IP 30/20)">
+  <option value="RH — hlavní rozváděč">
+  <option value="RE — elektroměrový rozváděč">
+  <option value="RC — rozváděč kompenzace">
+  <option value="R1 — podružný">
+  <option value="R2 — podružný">
+  <option value="R3 — podružný">
+</datalist>
+<datalist id="dl_nazev_obvodu">
+  <option value="Zásuvky">
+  <option value="Zásuvkový obvod kuchyň">
+  <option value="Zásuvkový obvod obývací pokoj">
+  <option value="Zásuvkový obvod ložnice">
+  <option value="Zásuvkový obvod koupelna">
+  <option value="Zásuvkový obvod chodba">
+  <option value="Zásuvkový obvod venkovní">
+  <option value="Zásuvková skříň garáž">
+  <option value="Kuchyňská linka">
+  <option value="Sporák">
+  <option value="Varná deska">
+  <option value="Trouba">
+  <option value="Myčka">
+  <option value="Pračka">
+  <option value="Lednice">
+  <option value="Osvětlení">
+  <option value="Světelný obvod ložnice">
+  <option value="Světelný obvod kuchyň">
+  <option value="Světelný obvod koupelna">
+  <option value="Světelný obvod obývací pokoj">
+  <option value="Světelný obvod chodba, WC">
+  <option value="Světelný obvod balkon, lodžie">
+  <option value="Světelný obvod LED SELV 12V DC">
+  <option value="Tepelné čerpadlo">
+  <option value="Klimatizace">
+  <option value="VZT — vzduchotechnika">
+  <option value="Řídicí jednotka">
+  <option value="Cirkulace TUV">
+  <option value="Vjezdová brána">
+  <option value="Garáž">
+  <option value="Kotelna">
+  <option value="FVE — střídač">
+</datalist>
+<datalist id="dl_kabel">
+  <option value="CYKY-J 3×1,5">
+  <option value="CYKY-J 3×2,5">
+  <option value="CYKY-J 5×1,5">
+  <option value="CYKY-J 5×2,5">
+  <option value="CYKY-J 5×4">
+  <option value="CYKY-J 5×6">
+  <option value="CYKY-J 4×10">
+  <option value="CYKY-J 4×16">
+  <option value="CYKY-J 5×16">
+  <option value="CYA 1×10 (zemnič)">
+</datalist>
+<datalist id="dl_proud_A">
+  <option value="6">
+  <option value="10">
+  <option value="13">
+  <option value="16">
+  <option value="20">
+  <option value="25">
+  <option value="32">
+  <option value="40">
+  <option value="50">
+  <option value="63">
+</datalist>
+<datalist id="dl_idn">
+  <option value="0,03">
+  <option value="0,1">
+  <option value="0,3">
+  <option value="0,5">
+</datalist>
+<datalist id="dl_charakteristika">
+  <option value="B">
+  <option value="C">
+  <option value="D">
+</datalist>
+
 <div class="tab-bar" id="tab-bar-el">
   <button class="tab-btn active" data-tab="titulni">1. Titulní strana</button>
   <button class="tab-btn" data-tab="popis">A. Popis instalace</button>
@@ -530,7 +612,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
           <option value="Vlastní zdroj (fotovoltaika, diesel-agregát)">
         </datalist>
       </div>
-      <div class="f"><label>Ochrana před úrazem el. proudem</label><input type="text" id="f_ochrana" placeholder="automatickým odpojením od zdroje dle 4-41 ed.2"></div>
+      <div class="f">
+        <label>Ochrana před úrazem el. proudem</label>
+        <input type="text" id="f_ochrana" list="f_ochrana_options" placeholder="vyberte nebo napište vlastní">
+        <datalist id="f_ochrana_options">
+          <option value="automatickým odpojením od zdroje dle ČSN 33 2000-4-41 ed.3">
+          <option value="dvojitou nebo zesílenou izolací">
+          <option value="SELV — malým bezpečným napětím">
+          <option value="PELV — malým ochranným napětím">
+          <option value="elektrickým oddělením">
+          <option value="ochranným pospojováním">
+        </datalist>
+      </div>
     </div>
   </div>
   <div class="scard">
@@ -546,7 +639,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     </div>
     <div class="f" style="margin-top:.75rem">
       <label>Seznam příloh</label>
-      <textarea id="f_prilohy" style="min-height:50px" placeholder="1. Protokol o určení vnějších vlivů&#10;2. Prohlášení o shodě jednotlivých zařízení"></textarea>
+      <textarea id="f_prilohy" style="min-height:50px" placeholder="1. Protokol o určení vnějších vlivů&#10;2. Prohlášení o shodě jednotlivých zařízení">1. Protokol o určení vnějších vlivů
+2. Prohlášení o shodě jednotlivých zařízení</textarea>
     </div>
   </div>
 </div>
@@ -564,7 +658,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="f span2"><label>Předmětem této revize je</label><textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea></div>
       <div class="f span2"><label>Předmětem této revize není</label><textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea></div>
       <div class="f span2"><label>Popis revidované elektroinstalace</label><textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea></div>
-      <div class="f"><label>Typ a popis zemniče</label><input type="text" id="f_zemnič" placeholder="Zemnič typu A, okružní uzemňovací vedení..."></div>
+      <div class="f">
+        <label>Typ a popis zemniče</label>
+        <input type="text" id="f_zemnič" list="f_zemnič_options" placeholder="vyberte nebo napište vlastní">
+        <datalist id="f_zemnič_options">
+          <option value="Zemnič typu B — základový, uzavřená smyčka v betonu">
+          <option value="Zemnič typu B — spojený se základy budovy">
+          <option value="Zemnič typu A — tyčový zemnič">
+          <option value="Zemnič typu A — páskový zemnič">
+          <option value="Zemnič typu A — okružní uzemňovací vedení">
+          <option value="Společný zemnič bytového domu">
+          <option value="Přípojnice MET — hlavní uzemňovací sběrnice objektu">
+        </datalist>
+      </div>
       <div class="f"><label>Naměřený zemní odpor (Ω)</label><input type="text" id="f_zemni_odpor" placeholder="12,5"></div>
     </div>
   </div>
@@ -1012,7 +1118,15 @@ function novaZprava(typ) {
   if (bcTyp) bcTyp.textContent = typ === 'elektro' ? 'Nová zpráva — Elektro' : 'Nová zpráva — LPS';
   document.querySelectorAll('#screen-form input, #screen-form textarea, #screen-form select').forEach(function(el) {
     if (el.type === 'checkbox') el.checked = el.defaultChecked;
-    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else if (el.tagName === 'SELECT') {
+      // Respektuj HTML atribut selected na <option> (defaultSelected)
+      var opts = el.options;
+      var defaultIdx = 0;
+      for (var i = 0; i < opts.length; i++) {
+        if (opts[i].defaultSelected) { defaultIdx = i; break; }
+      }
+      el.selectedIndex = defaultIdx;
+    }
     else el.value = el.defaultValue;
   });
   var rc = document.getElementById('rozvadece-container'); if (rc) rc.innerHTML = '';
@@ -1157,6 +1271,11 @@ function propsatTechnika() {
   set('f_rt_opravneni', t.opravneni);
   set('f_rt_adresa', adr);
   set('f_rt_ico', t.ico);
+  // Předvyplnit město předání z profilu technika (pokud je dosud prázdné).
+  // Forma "Uherském Hradišti" vyžaduje skloňování, které neumíme — dáme
+  // město v 1. pádě; revizak si případně upraví.
+  var predMisto = document.getElementById('f_predano_misto');
+  if (predMisto && !predMisto.value && mesto) predMisto.value = mesto;
   var badge = document.getElementById('rt-badge');
   if (!badge) return;
   if (t.jmeno) {
@@ -1355,12 +1474,13 @@ function addPristrojRow(d, num) {
   tbody.appendChild(tr);
 }
 
-function mkTd(ph, style) {
+function mkTd(ph, style, list) {
   var td = document.createElement('td');
   td.style.border = '1px solid #ccc';
   var inp = document.createElement('input');
   inp.type = 'text';
   inp.placeholder = ph || '';
+  if (list) inp.setAttribute('list', list);
   inp.style.cssText = 'width:100%;border:none;background:transparent;font-size:.78rem;text-align:center' + (style || '');
   td.appendChild(inp);
   return td;
@@ -1501,7 +1621,7 @@ function addRozvadec() {
     (n > 1 ? '<button class="del-btn" style="font-size:.75rem" data-action="delRozvadec" data-rozvadec="rozv-' + n + '">✕ Odebrat rozváděč</button>' : '') +
     '</div>' +
     '<div class="g2" style="margin-bottom:1rem">' +
-    '<div class="f"><label>Rozváděč (označení)</label><input type="text" class="rozv-nazev" placeholder="' + (phNazev[aktPodtyp] || phNazev.dum) + '"></div>' +
+    '<div class="f"><label>Rozváděč (označení)</label><input type="text" class="rozv-nazev" list="dl_nazev_rozvadec" placeholder="' + (phNazev[aktPodtyp] || phNazev.dum) + '"></div>' +
     '<div class="f"><label>Umístění / popis</label><input type="text" class="rozv-umisteni" placeholder="' + (phUmist[aktPodtyp] || phUmist.dum) + '"></div>' +
     '</div>' +
     '<div class="meas-table-wrap">' + getMeasTableHtml() + '</div>' +
@@ -1568,11 +1688,17 @@ function addMereniRowTo(tbody) {
   tr.style.background = '#fafaf8';
   // Č., Název obvodu, Typ-pol, Ch., A, IΔn, Zsm, Riso
   var hlavni = [
-    { ph: '' + num, v: '' + num }, { ph: 'Zásuvky', s: ';text-align:left' }, { ph: 'EATON' }, { ph: 'B' },
-    { ph: '16' }, { ph: '0,03' }, { ph: '0,23' }, { ph: '>20' }
+    { ph: '' + num, v: '' + num },
+    { ph: 'Zásuvky', s: ';text-align:left', list: 'dl_nazev_obvodu' },
+    { ph: 'EATON' },
+    { ph: 'B', list: 'dl_charakteristika' },
+    { ph: '16', list: 'dl_proud_A' },
+    { ph: '0,03', list: 'dl_idn' },
+    { ph: '0,23' },
+    { ph: '>20' }
   ];
   hlavni.forEach(function(col) {
-    var td = mkTd(col.ph, col.s);
+    var td = mkTd(col.ph, col.s, col.list);
     if (col.v) td.querySelector('input').value = col.v;
     tr.appendChild(td);
   });
@@ -1584,7 +1710,7 @@ function addMereniRowTo(tbody) {
   tr.appendChild(mkTd(''));
   tr.appendChild(mkTd(''));
   // Kabel
-  tr.appendChild(mkTd('CYKY 3×2,5', ';text-align:left'));
+  tr.appendChild(mkTd('CYKY 3×2,5', ';text-align:left', 'dl_kabel'));
   // Delete
   tr.appendChild(mkDelTd());
   tbody.appendChild(tr);
@@ -1706,7 +1832,7 @@ function addRcdRow(el) {
   tdNum.querySelector('input').value = '' + num;
   trMain.appendChild(tdNum);
   // Název — RCD popis
-  trMain.appendChild(mkTd('RCD', ';text-align:left'));
+  trMain.appendChild(mkTd('RCD', ';text-align:left', 'dl_nazev_obvodu'));
   // Typ-pol — výrobce
   trMain.appendChild(mkTd('Hager'));
   // Ch. — rozbalovací pole s typem chrániče
@@ -1715,15 +1841,15 @@ function addRcdRow(el) {
   });
   trMain.appendChild(chTd);
   // A, IΔn
-  trMain.appendChild(mkTd('25'));
-  trMain.appendChild(mkTd('0,03'));
+  trMain.appendChild(mkTd('25', null, 'dl_proud_A'));
+  trMain.appendChild(mkTd('0,03', null, 'dl_idn'));
   // Zsm, Riso
   trMain.appendChild(mkTd('0,65'));
   trMain.appendChild(mkTd('>20'));
   // Fáze, Vyp, čas, 5×, Ut — prázdné na hlavním
   for (var i = 0; i < 5; i++) trMain.appendChild(mkTd(''));
   // Kabel
-  trMain.appendChild(mkTd('CYKY 3×2,5', ';text-align:left'));
+  trMain.appendChild(mkTd('CYKY 3×2,5', ';text-align:left', 'dl_kabel'));
   // Prázdná buňka — akce jsou na posledním podřádku
   var emptyActionTd = document.createElement('td');
   emptyActionTd.style.cssText = 'border:1px solid #ccc';
@@ -1733,6 +1859,36 @@ function addRcdRow(el) {
   addRcdSubRows(tbody, trMain, 'A', groupId);
   renumberRows(tbody);
 }
+
+// Typické závady + odkaz na normu (zdroje: ČSN 33 2000-4-41 ed.3,
+// ČSN 33 2000-6 ed.2, ČSN 33 2000-5-xx ed.3, NV 190/2022 Sb.).
+// Rozdělení do kategorií C1 (nebezpečí), C2 (potenciálně nebezpečné),
+// C3 (doporučení) dle ČSN 33 2000-6 ed.2 Z2 příloha č. 6.
+var TYPICKE_ZAVADY = [
+  // C1 - Nebezpečí
+  { kod: 'C1', popis: 'Izolační odpor je nižší než minimální hodnota stanovená normou', norma: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.3, tab. 6.1' },
+  { kod: 'C1', popis: 'Impedance poruchové smyčky Zsm přesahuje (2/3) × U0/Ia', norma: 'ČSN 33 2000-4-41 ed.3, čl. 411.3.2' },
+  { kod: 'C1', popis: 'Chybí ochranný vodič v obvodu', norma: 'ČSN 33 2000-5-54 ed.3, čl. 543' },
+  { kod: 'C1', popis: 'Vybavovací čas proudového chrániče přesahuje 0,3 s', norma: 'ČSN 33 2000-4-41 ed.3, čl. 415.1' },
+  { kod: 'C1', popis: 'Neživé části nejsou spojeny s ochranným pospojováním', norma: 'ČSN 33 2000-4-41 ed.3, čl. 411.3.1.2' },
+  { kod: 'C1', popis: 'Propojení vodičů N a PE za proudovým chráničem', norma: 'ČSN 33 2000-4-41 ed.3, čl. 411.4' },
+  { kod: 'C1', popis: 'Zásuvka v prostoru zón 0–1 koupelny bez RCD 30 mA', norma: 'ČSN 33 2000-7-701 ed.3, čl. 701.415' },
+  // C2 - Potenciálně nebezpečné
+  { kod: 'C2', popis: 'Chybí nebo je nefunkční označení obvodů v rozváděči', norma: 'ČSN 33 2000-5-51 ed.3, čl. 514' },
+  { kod: 'C2', popis: 'Chybí předložená projektová dokumentace skutečného provedení', norma: 'NV č. 190/2022 Sb., § 10 písm. c)' },
+  { kod: 'C2', popis: 'Viditelné poškození izolace kabelů', norma: 'ČSN 33 2000-5-52 ed.2, čl. 521, 522' },
+  { kod: 'C2', popis: 'Chybí protipožární přepážky v místech prostupu vedení', norma: 'ČSN 33 2000-4-42 ed.3, čl. 422.3' },
+  { kod: 'C2', popis: 'Chybí nebo je nefunkční svodič přepětí (SPD)', norma: 'ČSN 33 2000-4-44 ed.3, čl. 443' },
+  { kod: 'C2', popis: 'Nesprávné značení pracovních a ochranných vodičů (N, PE)', norma: 'ČSN EN IEC 60445 ed.6, čl. 6' },
+  { kod: 'C2', popis: 'Chybí schéma zapojení rozváděče', norma: 'ČSN 33 2000-5-51 ed.3, čl. 514.5' },
+  { kod: 'C2', popis: 'Nedostatečné krytí IP v daném prostředí', norma: 'ČSN EN 60529, ČSN 33 2000-5-51 ed.3' },
+  // C3 - Doporučení
+  { kod: 'C3', popis: 'Doporučujeme doplnit štítek s identifikačními údaji proudového chrániče', norma: 'ČSN EN 61008-1 ed.3' },
+  { kod: 'C3', popis: 'Doporučujeme pravidelnou kontrolu funkce tlačítka TEST na RCD (1× měsíčně)', norma: 'ČSN 33 2000-6 ed.2, čl. 6.4.3.8' },
+  { kod: 'C3', popis: 'Doporučujeme výměnu opotřebeného krytí zásuvek', norma: 'ČSN 33 2000-5-51 ed.3, čl. 512' },
+  { kod: 'C3', popis: 'Doporučujeme doplnit svodič přepětí T2 na vstupu rozváděče', norma: 'ČSN 33 2000-4-44 ed.3, čl. 443' },
+  { kod: 'C3', popis: 'Doporučujeme kontrolu kapacity jističů s ohledem na aktuální odběr', norma: 'ČSN 33 2000-5-52 ed.2, čl. 523, 525' }
+];
 
 function addZavada() {
   zavadyN++;
@@ -1760,6 +1916,30 @@ function addZavada() {
     sel.appendChild(o);
   });
   header.appendChild(sel);
+
+  // Typická závada — rozbalovací nabídka, vyplní popis + normu + kategorii
+  var typSel = document.createElement('select');
+  typSel.style.cssText = 'font-size:.72rem;padding:.2rem .4rem;border:1px solid #ccc;border-radius:2px;max-width:22rem;flex:1 1 auto';
+  typSel.title = 'Vybrat typickou závadu — automaticky vyplní popis a normu';
+  var placeholderOpt = document.createElement('option');
+  placeholderOpt.value = '';
+  placeholderOpt.textContent = '— Typická závada (vyberte) —';
+  typSel.appendChild(placeholderOpt);
+  // Seskupit podle kódu
+  ['C1', 'C2', 'C3'].forEach(function(kod) {
+    var grp = document.createElement('optgroup');
+    grp.label = kod + (kod === 'C1' ? ' – Nebezpečí' : kod === 'C2' ? ' – Potenciálně nebezpečné' : ' – Doporučení');
+    TYPICKE_ZAVADY.filter(function(z) { return z.kod === kod; }).forEach(function(z, i) {
+      var o = document.createElement('option');
+      // Value = unikátní klíč kod:index do TYPICKE_ZAVADY
+      var globalIdx = TYPICKE_ZAVADY.indexOf(z);
+      o.value = String(globalIdx);
+      o.textContent = z.popis;
+      grp.appendChild(o);
+    });
+    typSel.appendChild(grp);
+  });
+  header.appendChild(typSel);
 
   var delBtn = document.createElement('button');
   delBtn.className = 'del-btn';
@@ -1807,6 +1987,20 @@ function addZavada() {
 
   div.appendChild(body);
   list.appendChild(div);
+
+  // Na change v typSel: předvyplň popis, normu a kategorii (kod)
+  typSel.addEventListener('change', function() {
+    var idx = parseInt(this.value, 10);
+    if (isNaN(idx) || idx < 0 || idx >= TYPICKE_ZAVADY.length) return;
+    var z = TYPICKE_ZAVADY[idx];
+    ta.value = z.popis;
+    inp3.value = z.norma;
+    sel.value = z.kod;
+    // Aktualizuj barevný rámeček podle kategorie (třídy c1/c2/c3)
+    div.classList.remove('c1', 'c2', 'c3');
+    div.classList.add(z.kod.toLowerCase());
+    // Nechej dropdown viditelný pro případ další změny
+  });
 }
 
 function updZavadaKod(sel) {
@@ -1973,8 +2167,11 @@ function magicPopis() {
 function magicZaver() {
   var el = document.getElementById('f_zhodnoceni');
   if (!el) return;
-  var zaverText = 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledy měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).';
-  el.value = zaverText;
+  var vysledekEl = document.getElementById('f_celkovy_vysledek');
+  var vysledek = vysledekEl ? vysledekEl.value : 'schopno';
+  var zaverSchopno = 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledky měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).';
+  var zaverNeschopno = 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole 9 této zprávy. Zjištěné závady kategorie C1 (nebezpečné) musí být neprodleně odstraněny; revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.\n\nU závad kategorie C2 (potenciálně nebezpečné) je nutné zajistit jejich odstranění v přiměřené lhůtě. U závad kategorie C3 (doporučení) je odstranění ponecháno na zvážení provozovatele.\n\nPo odstranění všech závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že zjištěné nedostatky byly odstraněny a el. zařízení je bezpečné pro provoz.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.';
+  el.value = (vysledek === 'neschopno') ? zaverNeschopno : zaverSchopno;
 }
 
 function openModalRevize() {
