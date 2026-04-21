@@ -1389,14 +1389,13 @@ function copyRow(el) {
   if (!tr) return;
   var tbody = tr.parentNode;
   var clone = tr.cloneNode(true);
-  // Vymaž první sloupec (číslo okruhu / svorky) — ať se nekopíruje číslo
-  var firstInput = clone.querySelector('input');
-  if (firstInput) firstInput.value = '';
   if (tr.nextSibling) {
     tbody.insertBefore(clone, tr.nextSibling);
   } else {
     tbody.appendChild(clone);
   }
+  // Přečísluj celou tabulku, aby čísla šla 1,2,3,... i po kopii uprostřed
+  renumberRows(tbody);
 }
 
 function delRcdGroup(el) {
@@ -1409,6 +1408,7 @@ function delRcdGroup(el) {
   // Smaž i hlavičku
   var header = tbody.querySelector('tr[data-rowtype="rcd-header"][data-rcd-group="' + groupId + '"]');
   if (header) header.remove();
+  renumberRows(tbody);
 }
 
 function copyRcdGroup(el) {
@@ -1435,9 +1435,6 @@ function copyRcdGroup(el) {
     cpBtns.forEach(function(b) { b.dataset.group = newGroupId; });
     // Aktualizuj onChange na selectu v RCD header
     if (clone.dataset.rowtype === 'rcd-header') {
-      // Vymaž číslo okruhu (první vstup) — ať se nekopíruje z původní skupiny
-      var firstInput = clone.querySelector('input');
-      if (firstInput) firstInput.value = '';
       var sel = clone.querySelector('select');
       if (sel) {
         sel.addEventListener('change', function() {
@@ -1465,6 +1462,8 @@ function copyRcdGroup(el) {
     }
     insertAfter = clone;
   });
+  // Přečísluj celou tabulku; číslo se tiskne jen na rcd-header, podřádky nemají
+  renumberRows(tbody);
 }
 
 var rozvadecCounter = 0;
@@ -1543,6 +1542,24 @@ function getNextRowNum(tbody) {
   return n + 1;
 }
 
+// Přečísluje celou tabulku postupně 1, 2, 3, ... Číslují se jen řádky
+// s `data-rowtype` "obvod", "rcd-header" nebo "lps-row" (tj. ne RCD
+// podřádky s data-rowtype="rcd-mereni", které mají sloučenou buňku).
+// Bezpečně se volá i na tbody, které žádné takové řádky nemají
+// (dokumentace, přístroje, závady) — nic se nestane.
+function renumberRows(tbody) {
+  if (!tbody) return;
+  var n = 0;
+  tbody.querySelectorAll('tr').forEach(function(tr) {
+    var rt = tr.dataset.rowtype;
+    if (rt === 'obvod' || rt === 'rcd-header' || rt === 'lps-row') {
+      n++;
+      var firstInput = tr.querySelector('input');
+      if (firstInput) firstInput.value = '' + n;
+    }
+  });
+}
+
 function addMereniRowTo(tbody) {
   if (!tbody) return;
   var num = getNextRowNum(tbody);
@@ -1571,6 +1588,7 @@ function addMereniRowTo(tbody) {
   // Delete
   tr.appendChild(mkDelTd());
   tbody.appendChild(tr);
+  renumberRows(tbody);
 }
 
 function mkSelectTd(options, selected, onChange) {
@@ -1713,6 +1731,7 @@ function addRcdRow(el) {
   tbody.appendChild(trMain);
   // Vygeneruj podřádky dle výchozího typu (A)
   addRcdSubRows(tbody, trMain, 'A', groupId);
+  renumberRows(tbody);
 }
 
 function addZavada() {
@@ -1895,8 +1914,9 @@ function renderLpsProhlidka() {
 function addLpsMereni() {
   var tbody = document.getElementById('lps-mereni-body');
   if (!tbody) return;
-  var n = tbody.rows.length + 1;
+  var n = tbody.querySelectorAll('tr[data-rowtype="lps-row"]').length + 1;
   var tr = document.createElement('tr');
+  tr.dataset.rowtype = 'lps-row';
   [n.toString(), '', '', '', ''].forEach(function(v, i) {
     var td = document.createElement('td');
     var inp = document.createElement('input');
@@ -1909,6 +1929,7 @@ function addLpsMereni() {
   });
   tr.appendChild(mkDelTd());
   tbody.appendChild(tr);
+  renumberRows(tbody);
 }
 
 function addDokumentace() {
@@ -3023,8 +3044,22 @@ function smazatZpravu(i) {
   renderArchiv();
 }
 
-function delRow(btn) { if (btn) btn.closest('tr').remove(); }
-function delRowEl(el) { if (el) el.closest('tr').remove(); }
+function delRow(btn) {
+  if (!btn) return;
+  var tr = btn.closest('tr');
+  if (!tr) return;
+  var tbody = tr.parentNode;
+  tr.remove();
+  renumberRows(tbody);
+}
+function delRowEl(el) {
+  if (!el) return;
+  var tr = el.closest('tr');
+  if (!tr) return;
+  var tbody = tr.parentNode;
+  tr.remove();
+  renumberRows(tbody);
+}
 
 function init() {
   loadStore();
