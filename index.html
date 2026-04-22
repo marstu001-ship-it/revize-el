@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.3 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.4 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -2197,9 +2197,27 @@ function magicZaver() {
   if (!el) return;
   var vysledekEl = document.getElementById('f_celkovy_vysledek');
   var vysledek = vysledekEl ? vysledekEl.value : 'schopno';
+  var isLps = (aktTyp === 'lps');
+
+  // Elektro — schopno
   var zaverSchopno = 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledky měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).';
+
+  // Elektro — neschopno
   var zaverNeschopno = 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole 9 této zprávy. Zjištěné závady kategorie C1 (nebezpečné) musí být neprodleně odstraněny; revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.\n\nU závad kategorie C2 (potenciálně nebezpečné) je nutné zajistit jejich odstranění v přiměřené lhůtě. U závad kategorie C3 (doporučení) je odstranění ponecháno na zvážení provozovatele.\n\nPo odstranění všech závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že zjištěné nedostatky byly odstraněny a el. zařízení je bezpečné pro provoz.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.';
-  el.value = (vysledek === 'neschopno') ? zaverNeschopno : zaverSchopno;
+
+  // LPS — schopno (dle vzoru Macháček/Dolenský IMG_2525)
+  var lpsSchopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací a odpovídají třídě LPS stanovené pro objekt. Naměřené hodnoty zemního odporu vyhovují požadavkům ČSN EN 62305-3 ed.2.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
+
+  // LPS — neschopno
+  var lpsNeschopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN EN 62305 a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
+
+  var text;
+  if (isLps) {
+    text = (vysledek === 'neschopno') ? lpsNeschopno : lpsSchopno;
+  } else {
+    text = (vysledek === 'neschopno') ? zaverNeschopno : zaverSchopno;
+  }
+  el.value = text;
 }
 
 // Načte firmu z ARES (veřejné CZ API) a vyplní cílové pole.
