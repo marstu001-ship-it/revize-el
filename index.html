@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.3 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.4 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -911,7 +911,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="scard">
     <div class="scard-title">Parametry LPS</div>
     <div class="g2">
-      <div class="f"><label>Třída LPS (hladina ochrany LPL)</label>
+      <div class="f"><label>Třída LPS <span style="font-size:.6rem;color:var(--muted)">(I–IV dle výpočtu rizika ČSN EN 62305-2)</span></label>
         <select id="lps_trida"><option value="I">I</option><option value="II">II</option><option value="III" selected>III</option><option value="IV">IV</option></select></div>
       <div class="f"><label>Typ jímací soustavy</label>
         <select id="lps_jimaci"><option value="tyče">tyče</option><option value="závěsná lana">závěsná lana</option><option value="vodiče mřížové soustavy" selected>vodiče mřížové soustavy</option><option value="kombinace">kombinace</option></select></div>
@@ -2873,7 +2873,7 @@ function generujPDF() {
     '<div class="ptitle"><h1>' + nadpis + '</h1><p>' + podnadpis + '</p></div>' +
     (isLpsPdf
       ? ('<div class="r2" style="margin-bottom:2.5mm">' +
-         '<div><div class="pbox-label">Třída LPS (LPL):</div>' +
+         '<div><div class="pbox-label">Třída LPS:</div>' +
          '<div class="pbox" style="min-height:12mm;font-size:9pt">' + esc((D.lps && D.lps.trida) ? ('Třída ' + D.lps.trida) : '—') +
          (D.lps && D.lps.typ_objektu ? '<br><strong>Typ objektu:</strong> ' + esc(D.lps.typ_objektu) : '') +
          '</div></div>' +
@@ -3197,7 +3197,7 @@ function generujPDF() {
       '<div class="a4-content">' +
       '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Parametry LPS a zóny LPZ</div></div>' +
       '<div style="font-size:9pt;padding:0 2mm;margin-bottom:4mm;line-height:1.7">' +
-      (L.trida ? '<strong>Třída LPS (LPL):</strong> ' + esc(L.trida) + '<br>' : '') +
+      (L.trida ? '<strong>Třída LPS:</strong> ' + esc(L.trida) + '<br>' : '') +
       (L.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(L.jimaci) + '<br>' : '') +
       (L.mrizka ? '<strong>Velikost ok mřížové soustavy:</strong> ' + esc(L.mrizka) + '<br>' : '') +
       (L.vyska_jimace ? '<strong>Výška tyčového jímače:</strong> ' + esc(L.vyska_jimace) + ' m<br>' : '') +
