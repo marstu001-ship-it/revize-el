@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.9 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.0 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -944,6 +944,13 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <div class="tab-panel" id="tab-lps-prohlidka">
   <div class="scard">
     <div class="scard-title">Prohlídka — vnější ochrana před bleskem</div>
+    <div class="f" style="margin-bottom:1rem">
+      <label>Revize prováděna podle normy <span style="font-size:.6rem;color:var(--muted)">(přepne kontrolní body i text v PDF)</span></label>
+      <select id="lps_prohlidka_norma">
+        <option value="62305" selected>ČSN EN 62305 ed.2 — LPS zřízené po r. 2004</option>
+        <option value="1390">ČSN 34 1390 — starší LPS (před r. 2004)</option>
+      </select>
+    </div>
     <div id="lps-prohlidka-container"></div>
   </div>
 </div>
@@ -2167,7 +2174,9 @@ function renderChecklist() {
 
 // ═══ LPS FUNKCE ═══
 var LPS_LPZ = ['LPZ 0', 'LPZ 0A', 'LPZ 0B', 'LPZ 1', 'LPZ 2'];
-var LPS_PROHLIDKA = [
+// Kontrolní body prohlídky LPS — dvě sady podle normy, podle které byla
+// LPS postavena. Volba se přepíná přes dropdown lps_prohlidka_norma.
+var LPS_PROHLIDKA_62305 = [
   { s: 'Jímací soustava', items: [
     { t: 'Parametry náhodných jímačů', csn: 'ČSN EN 62305-3 ed.2, čl. 5.2.5, tabulka 3' },
     { t: 'Zvolené jímací zařízení', csn: 'ČSN EN 62305-3 ed.2, čl. 5.2.1' },
@@ -2203,6 +2212,46 @@ var LPS_PROHLIDKA = [
   ]}
 ];
 
+// Kontrolní body dle ČSN 34 1390 — pro LPS zřízené před rokem 2004.
+// Norma neznala třídy LPS I–IV (LPL), používala kategorie ochrany (I–IV
+// dle charakteru objektu) a jednodušší geometrické požadavky.
+var LPS_PROHLIDKA_1390 = [
+  { s: 'Jímací zařízení', items: [
+    { t: 'Provedení jímacího zařízení (hřebenové vedení, jímací tyče, náhodné jímače)', csn: 'ČSN 34 1390, čl. 35–41' },
+    { t: 'Uspořádání jímacího vedení po obvodu střechy a ochrana vyčnívajících částí', csn: 'ČSN 34 1390, čl. 36' },
+    { t: 'Vzdálenosti jímačů od hořlavých stavebních hmot', csn: 'ČSN 34 1390, čl. 42' },
+    { t: 'Stav a koroze jímacích vodičů a spojů', csn: 'ČSN 34 1390, čl. 124' }
+  ]},
+  { s: 'Svody', items: [
+    { t: 'Počet svodů (obvykle min. 2, v rozích objektu)', csn: 'ČSN 34 1390, čl. 46' },
+    { t: 'Vzdálenost svodů od hořlavých částí budovy', csn: 'ČSN 34 1390, čl. 51' },
+    { t: 'Zkušební svorky — umístění ≈ 1,5 m nad zemí, označení', csn: 'ČSN 34 1390, čl. 50' },
+    { t: 'Mechanická ochrana svodu v dosahu osob', csn: 'ČSN 34 1390, čl. 52' },
+    { t: 'Celistvost a stav spojů svodů', csn: 'ČSN 34 1390, čl. 124' }
+  ]},
+  { s: 'Uzemňovací soustava', items: [
+    { t: 'Uzemnění jednotlivých svodů (doporučeno ≤ 15 Ω)', csn: 'ČSN 34 1390, čl. 55' },
+    { t: 'Celkový zemní odpor soustavy', csn: 'ČSN 34 1390, čl. 55' },
+    { t: 'Materiál a průřez zemničů (FeZn, Cu)', csn: 'ČSN 34 1390, čl. 56' },
+    { t: 'Hloubka uložení zemničů', csn: 'ČSN 34 1390, čl. 57' },
+    { t: 'Antikorozní ošetření nadzemních částí', csn: 'ČSN 33 2000-5-54 ed.3 (doporučeno)' }
+  ]},
+  { s: 'Ekvipotenciální pospojování a další požadavky', items: [
+    { t: 'Pospojování kovových částí vstupujících do objektu', csn: 'ČSN 34 1390, čl. 62' },
+    { t: 'Provedení svorkových spojů a jejich přístupnost', csn: 'ČSN 34 1390, čl. 123' },
+    { t: 'Celistvost LPS, přechodové odpory (≤ 0,2 Ω)', csn: 'ČSN 34 1390, čl. 124' },
+    { t: 'Dokumentace LPS a zápisy z předchozích revizí', csn: 'ČSN 34 1390, čl. 129' }
+  ]}
+];
+
+// Vrátí aktuální sadu kontrolních bodů podle volby normy.
+function getLpsProhlidkaData() {
+  var sel = document.getElementById('lps_prohlidka_norma');
+  var norma = sel ? sel.value : '62305';
+  return norma === '1390' ? LPS_PROHLIDKA_1390 : LPS_PROHLIDKA_62305;
+}
+var LPS_PROHLIDKA = LPS_PROHLIDKA_62305;
+
 function renderLpsLpz() {
   var c = document.getElementById('lps-lpz-checkboxy');
   if (!c) return;
@@ -2218,8 +2267,9 @@ function renderLpsLpz() {
 function renderLpsProhlidka() {
   var c = document.getElementById('lps-prohlidka-container');
   if (!c) return;
+  var sada = getLpsProhlidkaData();
   var html = '';
-  LPS_PROHLIDKA.forEach(function(sec, si) {
+  sada.forEach(function(sec, si) {
     html += '<div style="margin-bottom:1rem">';
     html += '<div style="font-family:var(--mono);font-size:.62rem;font-weight:500;text-transform:uppercase;color:var(--accent2);padding:.35rem 0;margin-bottom:.4rem;border-bottom:1px solid var(--border)">' + sec.s + '</div>';
     sec.items.forEach(function(item, ii) {
@@ -2233,6 +2283,13 @@ function renderLpsProhlidka() {
     html += '</div>';
   });
   c.innerHTML = html;
+  // Po prvním renderu naváže listener na dropdown, aby se checklist
+  // automaticky překreslil při změně volby normy.
+  var sel = document.getElementById('lps_prohlidka_norma');
+  if (sel && !sel.dataset.wired) {
+    sel.dataset.wired = '1';
+    sel.addEventListener('change', renderLpsProhlidka);
+  }
 }
 
 function addLpsMereni() {
@@ -2593,6 +2650,7 @@ function collectLpsData() {
     lpz: lpz.join(', '),
     potencial: gv('lps_potencial'),
     spd: gv('lps_spd'),
+    prohlidka_norma: gv('lps_prohlidka_norma') || '62305',
     celkovy_odpor: gv('lps_celkovy_odpor'),
     mereni: mereniRows
   };
@@ -2607,12 +2665,15 @@ function restoreLpsData(lps) {
     lps_vyska_jimace: lps.vyska_jimace, lps_material_strechy: lps.material_strechy,
     lps_zemneni_typ: lps.zemneni_typ, lps_zemina: lps.zemina, lps_stav_zeminy: lps.stav_zeminy,
     lps_potencial: lps.potencial, lps_spd: lps.spd,
-    lps_celkovy_odpor: lps.celkovy_odpor
+    lps_celkovy_odpor: lps.celkovy_odpor,
+    lps_prohlidka_norma: lps.prohlidka_norma || '62305'
   };
   Object.keys(map).forEach(function(id) {
     var el = document.getElementById(id);
     if (el && map[id]) el.value = map[id];
   });
+  // Překreslit prohlídkový checklist podle zvolené normy
+  renderLpsProhlidka();
   // LPZ checkboxy — podle textu
   if (lps.lpz) {
     var want = lps.lpz.split(',').map(function(s) { return s.trim(); });
@@ -2835,21 +2896,37 @@ function generujPDF() {
       : '') +
     '<div data-p2sec="4">' +
     (isLpsPdf
-      ? '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky LPS (dle ČSN EN 62305-3 ed.2)</div></div>' +
-        (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
-        '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
-        '<strong>Prohlídka systému ochrany před bleskem</strong> — vizuální kontrolou bylo ověřeno zejména:<br>' +
-        'a) celistvost a stav jímací soustavy (jímací tyče, vedení) — bez známek poškození a koroze,<br>' +
-        'b) rozmístění jímačů odpovídá projektové dokumentaci a třídě LPS,<br>' +
-        'c) celistvost a uchycení svodů, vč. neporušenosti svorek,<br>' +
-        'd) stav a přístupnost zkušebních (měřicích) svorek na svodech,<br>' +
-        'e) celistvost a stav uzemňovací soustavy v dostupných místech,<br>' +
-        'f) ekvipotenciální pospojování — propojení všech kovových částí vstupujících do objektu (vodovod, plyn, technologie),<br>' +
-        'g) instalace a stav přepěťových ochran (SPD) na vstupu inženýrských sítí,<br>' +
-        'h) dodržení izolačních (bezpečných) vzdáleností „s" mezi LPS a vodivými částmi uvnitř objektu,<br>' +
-        'i) ochrana svodů proti mechanickému poškození v dosahu osob,<br>' +
-        'j) označení a dokumentace systému LPS.' +
-        '</div>'
+      ? (function() {
+          var is1390 = (D.lps && D.lps.prohlidka_norma === '1390');
+          var head = is1390
+            ? 'Prohlídky LPS (dle ČSN 34 1390)'
+            : 'Prohlídky LPS (dle ČSN EN 62305-3 ed.2)';
+          var body62305 = '<strong>Prohlídka systému ochrany před bleskem</strong> — vizuální kontrolou bylo ověřeno zejména:<br>' +
+            'a) celistvost a stav jímací soustavy (jímací tyče, vedení) — bez známek poškození a koroze,<br>' +
+            'b) rozmístění jímačů odpovídá projektové dokumentaci a třídě LPS,<br>' +
+            'c) celistvost a uchycení svodů, vč. neporušenosti svorek,<br>' +
+            'd) stav a přístupnost zkušebních (měřicích) svorek na svodech,<br>' +
+            'e) celistvost a stav uzemňovací soustavy v dostupných místech,<br>' +
+            'f) ekvipotenciální pospojování — propojení všech kovových částí vstupujících do objektu (vodovod, plyn, technologie),<br>' +
+            'g) instalace a stav přepěťových ochran (SPD) na vstupu inženýrských sítí,<br>' +
+            'h) dodržení izolačních (bezpečných) vzdáleností „s" mezi LPS a vodivými částmi uvnitř objektu,<br>' +
+            'i) ochrana svodů proti mechanickému poškození v dosahu osob,<br>' +
+            'j) označení a dokumentace systému LPS.';
+          var body1390 = '<strong>Prohlídka systému ochrany před bleskem</strong> — vizuální kontrolou a měřením bylo ověřeno zejména:<br>' +
+            'a) provedení jímacího zařízení (hřebenové vedení, jímací tyče, náhodné jímače) a vzdálenosti od hořlavých částí budovy,<br>' +
+            'b) počet a rozmístění svodů (min. 2, rovnoměrně po obvodu objektu),<br>' +
+            'c) stav a přístupnost zkušebních svorek (cca 1,5 m nad zemí, označené),<br>' +
+            'd) mechanická ochrana svodů v dosahu osob (do 1,8 m),<br>' +
+            'e) celistvost spojů jímacího zařízení, svodů a zemničů; přechodové odpory ≤ 0,2 Ω,<br>' +
+            'f) stav koroze jímačů, svodů a svorek,<br>' +
+            'g) uzemnění jednotlivých svodů (doporučeno ≤ 15 Ω) a celkový zemní odpor soustavy,<br>' +
+            'h) pospojování kovových částí vstupujících do objektu,<br>' +
+            'i) materiál a hloubka uložení zemničů,<br>' +
+            'j) dokumentace LPS a zápisy z předchozích revizí.';
+          return '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">' + head + '</div></div>' +
+            (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
+            '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' + (is1390 ? body1390 : body62305) + '</div>';
+        })()
       : '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
         (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
         '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
