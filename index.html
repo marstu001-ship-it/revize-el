@@ -103,7 +103,21 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
   border:1px solid var(--border);border-radius:2px;background:var(--surface)}
 
 /* ═══ ARCHIV ═══ */
+#archiv-container,#odberatel-container{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .archiv-table{width:100%;border-collapse:collapse;font-size:.84rem}
+/* Na mobilu skryj první sloupec (#) v archivu + odběratelích,
+   aby zbylé sloupce měly víc místa na úzké obrazovce */
+@media (max-width:640px){
+  .archiv-table th:first-child,.archiv-table td:first-child{display:none}
+  .archiv-table th,.archiv-table td{padding:.5rem .4rem;font-size:.78rem}
+  .archiv-table th{font-size:.55rem;letter-spacing:.05em;padding:.4rem .3rem}
+  .scard{padding:1rem 1rem}
+  .home-wrap{padding:0 .75rem}
+}
+html.view-mobile .archiv-table th:first-child,
+html.view-mobile .archiv-table td:first-child{display:none}
+html.view-mobile .scard{padding:1rem 1rem}
+html.view-mobile .home-wrap{padding:0 .75rem}
 .archiv-table th{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;
   text-transform:uppercase;background:var(--accent2);color:#fff;padding:.6rem .75rem;text-align:left}
 .archiv-table td{border-bottom:1px solid var(--border);padding:.6rem .75rem}
@@ -335,7 +349,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v4.3 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v4.4 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
