@@ -15,6 +15,14 @@
 <style>
 /* ═══ RESET ═══ */
 *{box-sizing:border-box;margin:0;padding:0}
+/* Zobrazení: 'pc' (default, kompaktní) vs 'mobile' (větší písmo + tap targety).
+   Přepínač je v topbaru; volba se ukládá do localStorage. Mobile mode
+   zvětší root font o 15 % — díky rem jednotkám vše proporčně naroste. */
+html.view-mobile{font-size:115%}
+html.view-mobile .btn,html.view-mobile button{min-height:40px}
+html.view-mobile .f input,html.view-mobile .f select,html.view-mobile .f textarea{min-height:38px;font-size:1rem}
+html.view-mobile .tab-btn{padding:.8rem 1.1rem}
+html.view-mobile .data-table td input{min-height:30px;font-size:.92rem}
 :root{
   --bg:#edeae4;--surface:#fafaf8;--border:#ccc9c0;--border-dark:#9a9488;
   --text:#1c1a16;--muted:#6e6a60;--accent:#b5291c;--accent2:#2B579A;
@@ -315,8 +323,9 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v4.1 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v4.2 · 2026-04-21</span></div>
   <div class="topbar-right">
+    <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
     <button class="btn btn-ghost" data-action="ulozit">💾 Uložit</button>
@@ -4254,7 +4263,40 @@ function delRowEl(el) {
   renumberRows(tbody);
 }
 
+// Přepíná mezi kompaktním PC a větším mobilním zobrazením.
+// Volba se ukládá do localStorage pod klíčem 'revize_el_view'.
+function applyView(mode) {
+  var root = document.documentElement;
+  var btn = document.getElementById('view-toggle');
+  if (mode === 'mobile') {
+    root.classList.add('view-mobile');
+    if (btn) btn.innerHTML = '📱 Mobil';
+  } else {
+    root.classList.remove('view-mobile');
+    if (btn) btn.innerHTML = '💻 PC';
+  }
+  try { localStorage.setItem('revize_el_view', mode); } catch(e) {}
+}
+
+function toggleView() {
+  var current = document.documentElement.classList.contains('view-mobile') ? 'mobile' : 'pc';
+  applyView(current === 'mobile' ? 'pc' : 'mobile');
+}
+
+function initView() {
+  // Načti uloženou volbu; pokud žádná není, auto-detekce podle šířky:
+  // šířka < 768 px → mobil (default), jinak PC.
+  var saved;
+  try { saved = localStorage.getItem('revize_el_view'); } catch(e) {}
+  if (saved === 'mobile' || saved === 'pc') {
+    applyView(saved);
+  } else {
+    applyView(window.innerWidth < 768 ? 'mobile' : 'pc');
+  }
+}
+
 function init() {
+  initView();
   loadStore();
   archiv = STORE.archiv || [];
   odberatele = STORE.odberatele || [];
@@ -4286,6 +4328,7 @@ document.addEventListener('click', function(e) {
   var tab = el.getAttribute('data-tab');
   if (tab) { switchTab(tab, el); return; }
   switch (action) {
+    case 'toggleView': toggleView(); break;
     case 'home': showScreen('home'); break;
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'ulozit': ulozit(); break;
