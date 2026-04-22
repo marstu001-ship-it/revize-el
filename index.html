@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.7 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.8 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -4161,11 +4161,72 @@ function renderArchiv() {
     html += '<td style="font-size:.85rem">' + (z.misto || '—') + '</td>';
     html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + '</td>';
     html += '<td>' + (z.vysledek === 'schopno' ? '✅' : (z.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
-    html += '<td style="white-space:nowrap"><button class="del-btn" data-action="smazatZpravu" data-idx="' + i + '" style="margin-left:4px" title="Smazat">✕</button></td>';
+    html += '<td style="white-space:nowrap">' +
+      (hasData ? '<button class="del-btn" data-action="navazatZpravu" data-idx="' + i + '" style="color:#1c3a5e;margin-right:2px" title="Navázat — vytvořit novou zprávu jako kopii">🔗</button>' : '') +
+      '<button class="del-btn" data-action="smazatZpravu" data-idx="' + i + '" style="margin-left:4px" title="Smazat">✕</button>' +
+      '</td>';
     html += '</tr>';
   });
   html += '</tbody></table>';
   c.innerHTML = html;
+}
+
+// Vytvoří novou zprávu jako kopii existující (nová navázaná).
+// Vezme všechna data staré zprávy, vygeneruje nové ev. číslo (další
+// v řadě pro aktuální rok), přepíše data (zahájení/ukončení/vypracování
+// /předání) na dnešek a otevře formulář k úpravě. NEUKLÁDÁ hned do
+// archivu — uživatel musí explicitně vygenerovat PDF nebo uložit,
+// čímž se nová verze uloží jako samostatný záznam.
+function navazatZpravu(i) {
+  var old = archiv[i];
+  if (!old || !old.data) { alert('Tato zpráva nemá uložená data ke kopírování.'); return; }
+  // Deep copy dat
+  var D = JSON.parse(JSON.stringify(old.data));
+  // Najdi nejvyšší pořadové číslo v archivu pro aktuální rok a zvedni o 1
+  var rok = new Date().getFullYear().toString().slice(-2);
+  var pattern = new RegExp('^RE-' + rok + '-(\\d{4})$');
+  var maxN = 0;
+  archiv.forEach(function(z) {
+    var m = (z.ev_cislo || '').match(pattern);
+    if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+  });
+  var nextStr = String(maxN + 1);
+  while (nextStr.length < 4) nextStr = '0' + nextStr;
+  D.ev_cislo = 'RE-' + rok + '-' + nextStr;
+  // Přepsat data na dnešek
+  var d = new Date().toISOString().split('T')[0];
+  D.zahajeni = d;
+  D.ukonceni = d;
+  D.vypracovani = d;
+  D.predano_datum = d;
+  // Datum předchozí revize = ukončení staré zprávy (navázání)
+  if (old.data.ukonceni) D.predchozi = old.data.ukonceni;
+  // Timestamp = nyní
+  D.timestamp = new Date().toISOString();
+  // Vyčistit závady (ty budou nové při této revizi)
+  D.zavady = [];
+  // Vyčistit naměřené hodnoty v měření rozváděčů — parametry obvodů
+  // (název, jistič, kabel) zůstávají, ale naměřené Zs/Riso/Ut/časy
+  // se vynulují, protože to jsou nová měření.
+  if (D.rozvadece) {
+    D.rozvadece.forEach(function(rozv) {
+      (rozv.mereni || []).forEach(function(m) {
+        m.zsm = ''; m.riso = ''; m.vyp = ''; m.cas = ''; m.t5idn = ''; m.ut = '';
+      });
+    });
+  }
+  // Vyčistit LPS měření zemničů
+  if (D.lps && D.lps.mereni) {
+    D.lps.mereni.forEach(function(m) {
+      m.rZem = ''; m.rZemnic = ''; m.rPrechod = '';
+    });
+    D.lps.celkovy_odpor = '';
+  }
+  // Druh revize: pokud byl 'Výchozí' a máme předchozí, přepíšu na 'Pravidelná'
+  if (D.druh === 'Výchozí' && D.predchozi) D.druh = 'Pravidelná';
+  // Načíst do formuláře a přepnout na form obrazovku
+  nacistData(D);
+  showScreen('form');
 }
 
 function smazatZpravu(i) {
@@ -4280,6 +4341,7 @@ document.addEventListener('click', function(e) {
     case 'delRcdGroup': delRcdGroup(el); break;
     case 'delPreset': delPreset(parseInt(el.getAttribute('data-idx'))); break;
     case 'smazatZpravu': e.stopPropagation(); smazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
+    case 'navazatZpravu': e.stopPropagation(); navazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'otevritZpravu': otevritZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'removeZavada': var zi = el.closest('.zavada-item'); if (zi) zi.remove(); break;
     case 'pdf': showScreen('pdf'); break;
