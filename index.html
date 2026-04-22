@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.0 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.1 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -1452,6 +1452,13 @@ function renderNormy(typ) {
     html += '</div>';
   });
   c.innerHTML = html;
+  // Napojit listener na 1390 checkbox (u LPS) hned při renderu —
+  // uživatel ho může kliknout ještě před otevřením Prohlídky LPS.
+  var chk1390 = document.getElementById('n-csn341390');
+  if (chk1390 && !chk1390.dataset.wiredLps) {
+    chk1390.dataset.wiredLps = '1';
+    chk1390.addEventListener('change', function() { syncLps1390('checkbox'); });
+  }
 }
 
 function getVybrane() {
@@ -2252,6 +2259,23 @@ function getLpsProhlidkaData() {
 }
 var LPS_PROHLIDKA = LPS_PROHLIDKA_62305;
 
+// Obousměrná synchronizace mezi checkboxem 'ČSN 34 1390' na titulní
+// straně a dropdownem 'lps_prohlidka_norma' na tab Prohlídka LPS.
+// Čeho docílí: když uživatel na titulce zatrhne/odtrhne ČSN 34 1390,
+// dropdown i checklist se přepnou. A naopak.
+function syncLps1390(source) {
+  // Checkbox v seznamu norem má ID s prefixem 'n-' (viz renderNormy)
+  var chk = document.getElementById('n-csn341390');
+  var sel = document.getElementById('lps_prohlidka_norma');
+  if (!chk || !sel) return;
+  if (source === 'checkbox') {
+    sel.value = chk.checked ? '1390' : '62305';
+    renderLpsProhlidka();
+  } else if (source === 'dropdown') {
+    chk.checked = (sel.value === '1390');
+  }
+}
+
 function renderLpsLpz() {
   var c = document.getElementById('lps-lpz-checkboxy');
   if (!c) return;
@@ -2283,12 +2307,21 @@ function renderLpsProhlidka() {
     html += '</div>';
   });
   c.innerHTML = html;
-  // Po prvním renderu naváže listener na dropdown, aby se checklist
-  // automaticky překreslil při změně volby normy.
+  // Po prvním renderu naváže listenery na dropdown (překreslit
+  // checklist + synchronizovat titulní checkbox) a na titulní
+  // checkbox csn341390 (přepnout dropdown).
   var sel = document.getElementById('lps_prohlidka_norma');
   if (sel && !sel.dataset.wired) {
     sel.dataset.wired = '1';
-    sel.addEventListener('change', renderLpsProhlidka);
+    sel.addEventListener('change', function() {
+      renderLpsProhlidka();
+      syncLps1390('dropdown');
+    });
+  }
+  var chk = document.getElementById('n-csn341390');
+  if (chk && !chk.dataset.wiredLps) {
+    chk.dataset.wiredLps = '1';
+    chk.addEventListener('change', function() { syncLps1390('checkbox'); });
   }
 }
 
@@ -2348,9 +2381,18 @@ function magicPopis() {
 
     prumysl: 'Jedná se o rozsáhlý průmyslový objekt s vlastní trafostanicí, která je mimo výrobní objekt u příjezdové komunikace. V trafostanici je nainstalován hlavní rozváděč RH, ze kterého jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy, šaten a technického zázemí.\n\nKabelové rozvody jsou uloženy v zemi — v případě pravidelné revize je vhodné uvést, že stav kabelů a uzemňovací soustavy uložených v zemi nebylo možné zkontrolovat, protože jsou nepřístupné. Kabely jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách.\n\n— V rozvodně VN/NN je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— neživé části zařízení — nádoba transformátoru;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nV rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů. V podružných rozváděčích osazeny SPD.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.',
 
-    lps: 'Jedná se o vnější systém ochrany před bleskem (LPS) na střeše objektu rodinného domu. Třída LPS odpovídá výpočtu rizika dle ČSN EN 62305-2 ed.2.\n\nJÍMACÍ SOUSTAVA — je provedena pomocí jímacích tyčí a propojovacího vedení AlMgSi ⌀ 8 mm na střeše. Jímače jsou rozmístěny tak, aby celá střecha objektu spadala do jejich ochranného prostoru (metoda valící se koule / ochranného úhlu / mřížové soustavy dle ČSN EN 62305-3 ed.2 čl. 5.2).\n\nSVODY — napojeny na jímací soustavu a vyvedeny po fasádě objektu k zemi. Materiál: AlMgSi ⌀ 8 mm. V dosahu osob (do výšky 1,8 m nad zemí) jsou svody chráněny ochranným úhelníkem proti mechanickému poškození. Měřicí (zkušební) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené.\n\nUZEMŇOVACÍ SOUSTAVA — typu B (základový zemnič — uzavřená smyčka v betonu základů, FeZn pásek 30×4 mm). Souží i jako společný zemnič pro elektroinstalaci. Spojení na svody je provedeno přes měřicí svorky.\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — všechny kovové části vstupující do objektu (vodovodní přípojka, plynovod, technologie) jsou propojeny na hlavní uzemňovací svornici (MET) v objektu.\n\nVNITŘNÍ OCHRANA PŘED PŘEPĚTÍM — instalována kombinovaná přepěťová ochrana SPD typu T1+T2 v hlavním rozváděči objektu pro koordinovanou ochranu dle ČSN EN 62305-4 ed.2.\n\nIzolační (bezpečné) vzdálenosti „s" mezi LPS a vodivými částmi uvnitř objektu byly ověřeny vizuálně a vyhovují požadavkům ČSN EN 62305-3 ed.2 čl. 6.3.'
+    lps: 'Jedná se o vnější systém ochrany před bleskem (LPS) na střeše objektu rodinného domu. Třída LPS odpovídá výpočtu rizika dle ČSN EN 62305-2 ed.2.\n\nJÍMACÍ SOUSTAVA — je provedena pomocí jímacích tyčí a propojovacího vedení AlMgSi ⌀ 8 mm na střeše. Jímače jsou rozmístěny tak, aby celá střecha objektu spadala do jejich ochranného prostoru (metoda valící se koule / ochranného úhlu / mřížové soustavy dle ČSN EN 62305-3 ed.2 čl. 5.2).\n\nSVODY — napojeny na jímací soustavu a vyvedeny po fasádě objektu k zemi. Materiál: AlMgSi ⌀ 8 mm. V dosahu osob (do výšky 1,8 m nad zemí) jsou svody chráněny ochranným úhelníkem proti mechanickému poškození. Měřicí (zkušební) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené.\n\nUZEMŇOVACÍ SOUSTAVA — typu B (základový zemnič — uzavřená smyčka v betonu základů, FeZn pásek 30×4 mm). Souží i jako společný zemnič pro elektroinstalaci. Spojení na svody je provedeno přes měřicí svorky.\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — všechny kovové části vstupující do objektu (vodovodní přípojka, plynovod, technologie) jsou propojeny na hlavní uzemňovací svornici (MET) v objektu.\n\nVNITŘNÍ OCHRANA PŘED PŘEPĚTÍM — instalována kombinovaná přepěťová ochrana SPD typu T1+T2 v hlavním rozváděči objektu pro koordinovanou ochranu dle ČSN EN 62305-4 ed.2.\n\nIzolační (bezpečné) vzdálenosti „s" mezi LPS a vodivými částmi uvnitř objektu byly ověřeny vizuálně a vyhovují požadavkům ČSN EN 62305-3 ed.2 čl. 6.3.',
+
+    lps1390: 'Jedná se o vnější systém ochrany před bleskem (hromosvod), který byl zřízen před rokem 2004 a je posuzován dle ČSN 34 1390 (Předpisy pro ochranu před bleskem).\n\nJÍMACÍ ZAŘÍZENÍ — provedeno jako hřebenové vedení po obvodu střechy, doplněné jímacími tyčemi na vyčnívajících částech objektu (komín, STA). Materiál FeZn ⌀ 8 mm. Vzdálenost jímacího vedení od hořlavých částí střechy vyhovuje požadavkům ČSN 34 1390 čl. 42.\n\nSVODY — celkem osazeny v rozích a po obvodu objektu, rovnoměrně rozmístěné. Materiál FeZn. V dosahu osob (do výšky 1,8 m) jsou svody opatřeny ochranným úhelníkem proti mechanickému poškození. Zkušební (měřicí) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené dle ČSN 34 1390 čl. 50.\n\nUZEMŇOVACÍ SOUSTAVA — jednotlivé zemniče připojené ke svodům. Materiál FeZn pásek, uložení v hloubce cca 0,8 m. Měření zemního odporu u jednotlivých svodů se doporučuje ≤ 15 Ω (ČSN 34 1390 čl. 55).\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — kovové části vstupující do objektu (vodovod, plyn) jsou propojeny s uzemňovací soustavou dle ČSN 34 1390 čl. 62.\n\nCelistvost spojů byla ověřena měřením přechodových odporů — požadavek ≤ 0,2 Ω dle ČSN 34 1390 čl. 124.'
   };
-  el.value = texty[aktTyp === 'lps' ? 'lps' : (aktPodtyp || 'dum')] || texty.dum;
+  var klic;
+  if (aktTyp === 'lps') {
+    var lpsNorma = (document.getElementById('lps_prohlidka_norma') || {}).value || '62305';
+    klic = (lpsNorma === '1390') ? 'lps1390' : 'lps';
+  } else {
+    klic = aktPodtyp || 'dum';
+  }
+  el.value = texty[klic] || texty.dum;
 }
 
 function magicZaver() {
@@ -2366,11 +2408,23 @@ function magicZaver() {
   // Elektro — neschopno
   var zaverNeschopno = 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole 9 této zprávy. Zjištěné závady kategorie C1 (nebezpečné) musí být neprodleně odstraněny; revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.\n\nU závad kategorie C2 (potenciálně nebezpečné) je nutné zajistit jejich odstranění v přiměřené lhůtě. U závad kategorie C3 (doporučení) je odstranění ponecháno na zvážení provozovatele.\n\nPo odstranění všech závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že zjištěné nedostatky byly odstraněny a el. zařízení je bezpečné pro provoz.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.';
 
+  // LPS — zvolená norma (62305 nebo 1390) určuje, které normy se citují
+  var lpsProhlNorma = (document.getElementById('lps_prohlidka_norma') || {}).value || '62305';
+  var normyRef, refNorma;
+  if (lpsProhlNorma === '1390') {
+    normyRef = 'ČSN 34 1390, ČSN 33 2000-5-54 ed.3';
+    refNorma = 'ČSN 34 1390';
+  } else {
+    normyRef = 'ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3';
+    refNorma = 'ČSN EN 62305-3 ed.2';
+  }
   // LPS — schopno (dle vzoru Macháček/Dolenský IMG_2525)
-  var lpsSchopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací a odpovídají třídě LPS stanovené pro objekt. Naměřené hodnoty zemního odporu vyhovují požadavkům ČSN EN 62305-3 ed.2.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
+  var lpsSchopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ' + normyRef + '.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací' +
+    (lpsProhlNorma === '1390' ? '' : ' a odpovídají třídě LPS stanovené pro objekt') +
+    '. Naměřené hodnoty zemního odporu vyhovují požadavkům ' + refNorma + '.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
 
   // LPS — neschopno
-  var lpsNeschopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN EN 62305 a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
+  var lpsNeschopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ' + normyRef + '.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ' + refNorma + ' a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
 
   var text;
   if (isLps) {
@@ -2753,15 +2807,18 @@ function generujPDF() {
   }
 
   var isLpsPdf = (D.typ === 'lps');
+  var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
   var nadpis = isLpsPdf
     ? 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)'
     : 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ';
   var podnadpis = isLpsPdf
-    ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 62305-1 ed.2 až ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3'
+    ? (lpsNorma1390
+        ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 34 1390 (starší LPS zřízené před r. 2004), ČSN 33 2000-5-54 ed.3'
+        : 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 62305-1 ed.2 až ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3')
     : 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 33 1500 (Z1–Z4), ČSN 33 2000-6 ed.2';
   var posudek = isLpsPdf
     ? (D.celkovy_vysledek === 'schopno'
-        ? 'Provedenou prohlídkou a měřením bylo zjištěno, že LPS je ve stavu způsobilém plnit požadovanou funkci a je v souladu s ČSN EN 62305-3 ed.2.'
+        ? ('Provedenou prohlídkou a měřením bylo zjištěno, že LPS je ve stavu způsobilém plnit požadovanou funkci a je v souladu s ' + (lpsNorma1390 ? 'ČSN 34 1390' : 'ČSN EN 62305-3 ed.2') + '.')
         : 'LPS NENÍ ve stavu způsobilém plnit požadovanou funkci. Zjištěné závady musí být odstraněny.')
     : (D.celkovy_vysledek === 'schopno'
         ? 'Provedenou prohlídkou a měřením bylo zjištěno, že revidovaná elektrická instalace je z hlediska bezpečnosti schopna provozu.'
@@ -3117,7 +3174,7 @@ function generujPDF() {
       (L.potencial ? '<strong>Potenciálové vyrovnání:</strong> ' + esc(L.potencial) + '<br>' : '') +
       (L.spd ? '<strong>Osazené SPD:</strong> ' + esc(L.spd) : '') +
       '</div>' +
-      '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Měření zemních odporů (dle ČSN EN 62305-3 ed.2, čl. 5.4.1)</div></div>' +
+      '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Měření zemních odporů (dle ' + (lpsNorma1390 ? 'ČSN 34 1390, čl. 55' : 'ČSN EN 62305-3 ed.2, čl. 5.4.1') + ')</div></div>' +
       (L.celkovy_odpor
         ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0;"><strong>Celkový zemní odpor soustavy:</strong> ' + esc(L.celkovy_odpor) + ' Ω</div>'
         : '') +
@@ -3132,8 +3189,9 @@ function generujPDF() {
           '</tr></thead><tbody>' + lpsMereniRows + '</tbody></table>'
         : '<div style="font-size:9pt;padding:0 2mm;color:#666">Měření zemních odporů nebylo zadáno.</div>') +
       '<div style="font-size:8pt;padding:0 2mm;margin-top:3mm;color:#444">' +
-      'Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω dle ČSN EN 62305-3 ed.2, čl. 5.4.1.<br>' +
-      'Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN EN 62305-3 ed.2, čl. 5.3.5.' +
+      (lpsNorma1390
+        ? 'Doporučená hodnota zemního odporu jednotlivých svodů ≤ 15 Ω dle ČSN 34 1390, čl. 55.<br>Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN 34 1390, čl. 124.'
+        : 'Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω dle ČSN EN 62305-3 ed.2, čl. 5.4.1.<br>Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN EN 62305-3 ed.2, čl. 5.3.5.') +
       '</div>' +
       '</div>' + ftr();
     pages.appendChild(pLps);
