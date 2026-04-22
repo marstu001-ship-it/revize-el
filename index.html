@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.5 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.6 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -2483,11 +2483,96 @@ function getData() {
     zhodnoceni: gv('f_zhodnoceni'), celkovy_vysledek: gv('f_celkovy_vysledek'), lhuta: gv('f_lhuta'),
     poznamka_zavady: gv('f_poznamka_zavady'),
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
+    lps: collectLpsData(),
     // Zpětná kompatibilita — první rozváděč
     rozvadec: rozvadece[0] ? rozvadece[0].nazev : '', rozvadec_umisteni: rozvadece[0] ? rozvadece[0].umisteni : '',
     mereni: rozvadece[0] ? rozvadece[0].mereni : [],
     timestamp: new Date().toISOString()
   };
+}
+
+// Posbírá všechna LPS-specifická data z tabu 2. Objekt & LPS,
+// 4. Prohlídka LPS a 5. Měření zemničů. Pro elektro bude většinou
+// prázdné (pole LPS ani neexistují v DOM).
+function collectLpsData() {
+  var lpz = [];
+  document.querySelectorAll('#lps-lpz-checkboxy input[type=checkbox]').forEach(function(chk) {
+    if (chk.checked) {
+      var lbl = document.querySelector('label[for="' + chk.id + '"]');
+      if (lbl) lpz.push(lbl.textContent);
+    }
+  });
+  var mereniRows = [];
+  document.querySelectorAll('#lps-mereni-body tr[data-rowtype="lps-row"]').forEach(function(tr) {
+    var inp = tr.querySelectorAll('input');
+    if (inp.length < 5) return;
+    var cislo = (inp[0].value || '').trim();
+    var svorka = (inp[1].value || '').trim();
+    var rZem = (inp[2].value || '').trim();
+    var rZemnic = (inp[3].value || '').trim();
+    var rPrechod = (inp[4].value || '').trim();
+    if (!cislo && !svorka && !rZem && !rZemnic && !rPrechod) return;
+    mereniRows.push({ cislo: cislo, svorka: svorka, rZem: rZem, rZemnic: rZemnic, rPrechod: rPrechod });
+  });
+  return {
+    typ_objektu: gv('lps_typ_objektu'),
+    strecha_zarizeni: gv('lps_strecha_zarizeni'),
+    trida: gv('lps_trida'),
+    jimaci: gv('lps_jimaci'),
+    mrizka: gv('lps_mrizka'),
+    vyska_jimace: gv('lps_vyska_jimace'),
+    material_strechy: gv('lps_material_strechy'),
+    zemneni_typ: gv('lps_zemneni_typ'),
+    zemina: gv('lps_zemina'),
+    stav_zeminy: gv('lps_stav_zeminy'),
+    lpz: lpz.join(', '),
+    potencial: gv('lps_potencial'),
+    spd: gv('lps_spd'),
+    celkovy_odpor: gv('lps_celkovy_odpor'),
+    mereni: mereniRows
+  };
+}
+
+// Obnoví LPS data z archivu zpět do formuláře.
+function restoreLpsData(lps) {
+  if (!lps) return;
+  var map = {
+    lps_typ_objektu: lps.typ_objektu, lps_strecha_zarizeni: lps.strecha_zarizeni,
+    lps_trida: lps.trida, lps_jimaci: lps.jimaci, lps_mrizka: lps.mrizka,
+    lps_vyska_jimace: lps.vyska_jimace, lps_material_strechy: lps.material_strechy,
+    lps_zemneni_typ: lps.zemneni_typ, lps_zemina: lps.zemina, lps_stav_zeminy: lps.stav_zeminy,
+    lps_potencial: lps.potencial, lps_spd: lps.spd,
+    lps_celkovy_odpor: lps.celkovy_odpor
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && map[id]) el.value = map[id];
+  });
+  // LPZ checkboxy — podle textu
+  if (lps.lpz) {
+    var want = lps.lpz.split(',').map(function(s) { return s.trim(); });
+    document.querySelectorAll('#lps-lpz-checkboxy input[type=checkbox]').forEach(function(chk) {
+      var lbl = document.querySelector('label[for="' + chk.id + '"]');
+      if (lbl && want.indexOf(lbl.textContent) !== -1) chk.checked = true;
+    });
+  }
+  // Měření zemničů — přebudovat řádky z dat
+  var body = document.getElementById('lps-mereni-body');
+  if (body && lps.mereni && lps.mereni.length > 0) {
+    body.innerHTML = '';
+    lps.mereni.forEach(function(m) {
+      addLpsMereni();
+      var rows = body.querySelectorAll('tr[data-rowtype="lps-row"]');
+      var tr = rows[rows.length - 1];
+      if (!tr) return;
+      var inp = tr.querySelectorAll('input');
+      if (inp[0]) inp[0].value = m.cislo || '';
+      if (inp[1]) inp[1].value = m.svorka || '';
+      if (inp[2]) inp[2].value = m.rZem || '';
+      if (inp[3]) inp[3].value = m.rZemnic || '';
+      if (inp[4]) inp[4].value = m.rPrechod || '';
+    });
+  }
 }
 
 function fmtDate(iso) {
@@ -2568,14 +2653,33 @@ function generujPDF() {
     '<div class="pbox" style="min-height:24mm;font-size:9.5pt;line-height:1.5">' + esc(D.provozovatel) + '</div></div>' +
     '</div>' +
     '<div class="ptitle"><h1>' + nadpis + '</h1><p>' + podnadpis + '</p></div>' +
-    '<div class="r2" style="margin-bottom:2.5mm">' +
-    '<div><div class="pbox-label">Zdroj el. proudu:</div>' +
-    '<div class="pbox" style="min-height:12mm;font-size:9pt">' + esc(D.zdroj || '') + '</div></div>' +
-    '<div><div class="pbox-label">Ochrana před úrazem:</div>' +
-    '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
-    '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
-    '<div class="pbox" style="font-size:9pt">' + esc(D.napetova_soustava || '') + '</div></div></div>' +
-    '</div>' +
+    (isLpsPdf
+      ? ('<div class="r2" style="margin-bottom:2.5mm">' +
+         '<div><div class="pbox-label">Třída LPS (LPL):</div>' +
+         '<div class="pbox" style="min-height:12mm;font-size:9pt">' + esc((D.lps && D.lps.trida) ? ('Třída ' + D.lps.trida) : '—') +
+         (D.lps && D.lps.typ_objektu ? '<br><strong>Typ objektu:</strong> ' + esc(D.lps.typ_objektu) : '') +
+         '</div></div>' +
+         '<div><div class="pbox-label">Jímací soustava a střecha:</div>' +
+         '<div class="pbox" style="min-height:8mm;font-size:9pt">' +
+         (D.lps && D.lps.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) : '—') +
+         (D.lps && D.lps.mrizka ? '<br><strong>Mřížka:</strong> ' + esc(D.lps.mrizka) : '') +
+         (D.lps && D.lps.material_strechy ? '<br><strong>Materiál střechy:</strong> ' + esc(D.lps.material_strechy) : '') +
+         '</div>' +
+         '<div style="margin-top:1mm"><div class="pbox-label">Uzemňovací soustava:</div>' +
+         '<div class="pbox" style="font-size:9pt">' +
+         (D.lps && D.lps.zemneni_typ ? '<strong>Typ:</strong> ' + esc(D.lps.zemneni_typ) : '—') +
+         (D.lps && D.lps.zemina ? ', <strong>zemina:</strong> ' + esc(D.lps.zemina) : '') +
+         (D.lps && D.lps.stav_zeminy ? ' (' + esc(D.lps.stav_zeminy) + ')' : '') +
+         '</div></div></div>' +
+         '</div>')
+      : ('<div class="r2" style="margin-bottom:2.5mm">' +
+         '<div><div class="pbox-label">Zdroj el. proudu:</div>' +
+         '<div class="pbox" style="min-height:12mm;font-size:9pt">' + esc(D.zdroj || '') + '</div></div>' +
+         '<div><div class="pbox-label">Ochrana před úrazem:</div>' +
+         '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
+         '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
+         '<div class="pbox" style="font-size:9pt">' + esc(D.napetova_soustava || '') + '</div></div></div>' +
+         '</div>')) +
     '<div class="r2" style="margin-bottom:2.5mm">' +
     '<div><div class="pbox-label">Použité normy:</div>' +
     '<div class="pbox" style="font-size:8pt;min-height:18mm;line-height:1.5">' + esc(D.normy) + '</div></div>' +
@@ -2632,7 +2736,7 @@ function generujPDF() {
     '<div style="font-size:9pt;padding:0 2mm;margin-bottom:3mm">' +
     (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '') +
     (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '') +
-    '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>' +
+    (isLpsPdf ? '' : '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>') +
     (D.preruseni_od || D.preruseni_do ? '<strong>Přerušení revize:</strong> ' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '<br>' : '') +
     (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
     (D.pritomen2 ? '<strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
@@ -2839,6 +2943,59 @@ function generujPDF() {
     '</div>' +
     '</div>' + ftr();
   if (!isLpsPdf) pages.appendChild(p4);
+
+  // LPS-specifická stránka s měřením zemničů + parametry LPS.
+  // Nahrazuje skipnuté elektro p3/p4.
+  if (isLpsPdf) {
+    var L = D.lps || {};
+    var lpsMereniRows = (L.mereni || []).map(function(m, i) {
+      return '<tr>' +
+        '<td style="border:.5pt solid #000;padding:1mm 2mm;text-align:center">' + esc(m.cislo || (i + 1)) + '</td>' +
+        '<td style="border:.5pt solid #000;padding:1mm 2mm">' + esc(m.svorka || '') + '</td>' +
+        '<td style="border:.5pt solid #000;padding:1mm 2mm;text-align:center">' + esc(m.rZem || '') + '</td>' +
+        '<td style="border:.5pt solid #000;padding:1mm 2mm;text-align:center">' + esc(m.rZemnic || '') + '</td>' +
+        '<td style="border:.5pt solid #000;padding:1mm 2mm;text-align:center">' + esc(m.rPrechod || '') + '</td>' +
+        '</tr>';
+    }).join('');
+    var pLps = document.createElement('div');
+    pLps.className = 'a4';
+    pLps.innerHTML = hdr(3) +
+      '<div class="a4-content">' +
+      '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Parametry LPS a zóny LPZ</div></div>' +
+      '<div style="font-size:9pt;padding:0 2mm;margin-bottom:4mm;line-height:1.7">' +
+      (L.trida ? '<strong>Třída LPS (LPL):</strong> ' + esc(L.trida) + '<br>' : '') +
+      (L.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(L.jimaci) + '<br>' : '') +
+      (L.mrizka ? '<strong>Velikost ok mřížové soustavy:</strong> ' + esc(L.mrizka) + '<br>' : '') +
+      (L.vyska_jimace ? '<strong>Výška tyčového jímače:</strong> ' + esc(L.vyska_jimace) + ' m<br>' : '') +
+      (L.material_strechy ? '<strong>Materiál střechy:</strong> ' + esc(L.material_strechy) + '<br>' : '') +
+      (L.strecha_zarizeni ? '<strong>Zařízení na střeše:</strong> ' + esc(L.strecha_zarizeni) + '<br>' : '') +
+      (L.zemneni_typ ? '<strong>Uspořádání zemnící soustavy:</strong> ' + esc(L.zemneni_typ) + '<br>' : '') +
+      (L.zemina ? '<strong>Druh zeminy:</strong> ' + esc(L.zemina) + (L.stav_zeminy ? ' (' + esc(L.stav_zeminy) + ')' : '') + '<br>' : '') +
+      (L.lpz ? '<strong>Zóny LPZ:</strong> ' + esc(L.lpz) + '<br>' : '') +
+      (L.potencial ? '<strong>Potenciálové vyrovnání:</strong> ' + esc(L.potencial) + '<br>' : '') +
+      (L.spd ? '<strong>Osazené SPD:</strong> ' + esc(L.spd) : '') +
+      '</div>' +
+      '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Měření zemních odporů (dle ČSN EN 62305-3 ed.2, čl. 5.4.1)</div></div>' +
+      (L.celkovy_odpor
+        ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0;"><strong>Celkový zemní odpor soustavy:</strong> ' + esc(L.celkovy_odpor) + ' Ω</div>'
+        : '') +
+      (lpsMereniRows
+        ? '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin:2mm 2mm">' +
+          '<thead><tr>' +
+          '<th style="border:.5pt solid #000;padding:1mm 2mm;background:#eee;width:6%">P.č.</th>' +
+          '<th style="border:.5pt solid #000;padding:1mm 2mm;background:#eee">Označení zkušební svorky</th>' +
+          '<th style="border:.5pt solid #000;padding:1mm 2mm;background:#eee;width:18%">R zemní smyčky (Ω)</th>' +
+          '<th style="border:.5pt solid #000;padding:1mm 2mm;background:#eee;width:18%">R zemniče (Ω)</th>' +
+          '<th style="border:.5pt solid #000;padding:1mm 2mm;background:#eee;width:18%">Přechodový R ZS (Ω)</th>' +
+          '</tr></thead><tbody>' + lpsMereniRows + '</tbody></table>'
+        : '<div style="font-size:9pt;padding:0 2mm;color:#666">Měření zemních odporů nebylo zadáno.</div>') +
+      '<div style="font-size:8pt;padding:0 2mm;margin-top:3mm;color:#444">' +
+      'Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω dle ČSN EN 62305-3 ed.2, čl. 5.4.1.<br>' +
+      'Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN EN 62305-3 ed.2, čl. 5.3.5.' +
+      '</div>' +
+      '</div>' + ftr();
+    pages.appendChild(pLps);
+  }
 
   var zavadyHtml = D.zavady.length > 0
     ? D.zavady.map(function(z, i) {
@@ -3259,6 +3416,8 @@ function nacistData(D) {
       if (el) el.value = D.zkousky[k];
     });
   }
+  // Restore LPS data (pokud jsou)
+  if (D.lps) restoreLpsData(D.lps);
   // Restore pristroje
   var pb = document.getElementById('pristroje-body');
   if (pb) pb.innerHTML = '';
