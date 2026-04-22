@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.4 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.5 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -911,7 +911,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="scard">
     <div class="scard-title">Parametry LPS</div>
     <div class="g2">
-      <div class="f"><label>Třída LPS <span style="font-size:.6rem;color:var(--muted)">(I–IV dle výpočtu rizika ČSN EN 62305-2)</span></label>
+      <div class="f"><label>Třída LPS <span id="lps-trida-hint" style="font-size:.6rem;color:var(--muted)">(I–IV dle výpočtu rizika ČSN EN 62305-2)</span></label>
         <select id="lps_trida"><option value="I">I</option><option value="II">II</option><option value="III" selected>III</option><option value="IV">IV</option></select></div>
       <div class="f"><label>Typ jímací soustavy</label>
         <select id="lps_jimaci"><option value="tyče">tyče</option><option value="závěsná lana">závěsná lana</option><option value="vodiče mřížové soustavy" selected>vodiče mřížové soustavy</option><option value="kombinace">kombinace</option></select></div>
@@ -2288,11 +2288,17 @@ function syncLps1390(source) {
   updateLpsMereniTexts();
 }
 
-// Přepíše statické odkazy na normu v tabu '5. Měření zemničů'
-// podle aktuální volby ('62305' vs '1390').
+// Přepíše statické odkazy na normu v LPS tabech '2. Objekt & LPS'
+// a '5. Měření zemničů' podle aktuální volby ('62305' vs '1390').
 function updateLpsMereniTexts() {
   var sel = document.getElementById('lps_prohlidka_norma');
   var is1390 = sel && sel.value === '1390';
+  // Tab 2. Objekt & LPS — label Třída LPS
+  var tridaHint = document.getElementById('lps-trida-hint');
+  if (tridaHint) tridaHint.textContent = is1390
+    ? '(I–IV dle ČSN 34 1390)'
+    : '(I–IV dle výpočtu rizika ČSN EN 62305-2)';
+  // Tab 5. Měření zemničů — nadpis, info, metoda přechod, metoda zemní
   var head = document.getElementById('lps-mereni-head-norma');
   var info = document.getElementById('lps-mereni-info');
   var metPrechod = document.getElementById('lps-metoda-prechod');
@@ -2307,6 +2313,18 @@ function updateLpsMereniTexts() {
   if (metZemni) metZemni.innerHTML = is1390
     ? 'Doporučená hodnota zemního odporu jednoho svodu ≤ 15 Ω.<br>ODPOVÍDÁ ČSN 34 1390, čl. 55'
     : 'Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.4.1';
+  // Seznam příloh — výchozí text se liší podle zvolené normy
+  // (platí jen pokud uživatel ještě nic ručně nenapsal)
+  var pril = document.getElementById('f_prilohy');
+  if (pril) {
+    var default62305 = '1. Projektová dokumentace LPS\n2. Výpočet rizika dle ČSN EN 62305-2 ed.2\n3. Protokol o měření zemního odporu\n4. Prohlášení o shodě jednotlivých částí';
+    var default1390 = '1. Projektová dokumentace hromosvodu (popř. provozní dokumentace)\n2. Protokol o měření zemního odporu\n3. Záznamy z předchozích revizí dle ČSN 34 1390';
+    var cur = pril.value.trim();
+    // Přepiš jen pokud je pole prázdné nebo obsahuje původní druhý default
+    if (!cur || cur === default62305.trim() || cur === default1390.trim()) {
+      pril.value = is1390 ? default1390 : default62305;
+    }
+  }
 }
 
 function renderLpsLpz() {
