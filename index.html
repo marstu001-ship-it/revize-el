@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.6 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.7 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -3224,21 +3224,39 @@ function stahnoutMereniPDF() {
   var pages = document.getElementById('pdf-pages');
   if (!pages) return;
   var D = getData();
+  var isLps = (D.typ === 'lps');
   var filename = 'RZ_' + (D.ev_cislo || 'zprava') + '_mereni.pdf';
-  var pp = pages.querySelectorAll('.a4:not(.a4-landscape)');
-  pp.forEach(function(p) { p.style.display = 'none'; });
+  // Pro elektro: tiskneme jen landscape stránku (tabulka rozváděčů).
+  // Pro LPS: tiskneme LPS portrét stránku se sekcí 6 Měření zemních odporů.
+  var pp, hidden;
+  if (isLps) {
+    // Skryj všechny stránky kromě LPS stránky (je portrét, má sekci
+    // "Měření zemních odporů" — identifikujeme ji podle textu v sec-name).
+    hidden = [];
+    pages.querySelectorAll('.a4').forEach(function(p) {
+      var isLpsPage = !!(p.textContent && p.textContent.indexOf('Měření zemních odporů') !== -1);
+      if (!isLpsPage) {
+        p.style.display = 'none';
+        hidden.push(p);
+      }
+    });
+  } else {
+    pp = pages.querySelectorAll('.a4:not(.a4-landscape)');
+    pp.forEach(function(p) { p.style.display = 'none'; });
+    hidden = pp;
+  }
   var opt = {
     margin: 0,
     image: { type: 'png', quality: 1 },
     html2canvas: { scale: 3, useCORS: true, letterRendering: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: isLps ? 'portrait' : 'landscape' },
     pagebreak: { mode: ['css', 'legacy'], before: '.a4' }
   };
   html2pdf().set(opt).from(pages).outputPdf('blob').then(function(blob) {
-    pp.forEach(function(p) { p.style.display = ''; });
+    hidden.forEach(function(p) { p.style.display = ''; });
     ulozitSoubor(blob, filename);
   }).catch(function(err) {
-    pp.forEach(function(p) { p.style.display = ''; });
+    hidden.forEach(function(p) { p.style.display = ''; });
     alert('Chyba při generování PDF: ' + err.message);
   });
 }
