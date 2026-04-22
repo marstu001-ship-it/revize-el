@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.2 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.3 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -739,7 +739,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </table>
     <button class="add-row" data-action="addPristroj">+ Přidat přístroj</button>
   </div>
-  <div class="scard">
+  <div class="scard" id="scard-d1-prohlidka">
     <div class="scard-title">D.1 – Prohlídka el. zařízení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 čl. 6.4.2</span></div>
     <div class="f" style="margin-bottom:.75rem"><label>Výsledek prohlídky</label>
       <select id="f_prohlídka"><option value="Vyhovuje">✅ Vyhovuje</option><option value="Nevyhovuje">❌ Nevyhovuje</option></select></div>
@@ -756,7 +756,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       j) kontrola uložení vodičů a kabelů; ověření přístupnosti el. zařízení z hlediska obsluhy
     </div>
   </div>
-  <div class="scard">
+  <div class="scard" id="scard-d2-zkouseni">
     <div class="scard-title">D.2 – Zkoušení el. zařízení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 čl. 6.4.3</span></div>
     <div class="f" style="margin-bottom:.75rem"><label>Výsledek zkoušení</label>
       <select id="f_zkouseni"><option value="Vyhovuje">✅ Vyhovuje</option><option value="Nevyhovuje">❌ Nevyhovuje</option></select></div>
@@ -771,7 +771,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       h) úbytek napětí
     </div>
   </div>
-  <div class="scard">
+  <div class="scard" id="scard-d3-zkouseni-tab">
     <div class="scard-title">D.3 – Tabulka zkoušení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 čl. 6.4.3</span></div>
     <table class="data-table" style="font-size:.8rem">
       <thead>
@@ -1320,6 +1320,17 @@ function novaZprava(typ) {
   if (sNap) sNap.style.display = (typ === 'lps') ? 'none' : '';
   var sOch = document.getElementById('scard-ochrana-char');
   if (sOch) sOch.style.display = (typ === 'lps') ? 'none' : '';
+  // Tab 3. Přístroje: pro LPS skryj D.1/D.2/D.3 (prohlídka, zkoušení,
+  // tabulka zkoušení jsou elektro-only, duplikuje se s tabem LPS
+  // Prohlídka + Měření zemničů). Zůstává C. Měřicí přístroje.
+  ['scard-d1-prohlidka', 'scard-d2-zkouseni', 'scard-d3-zkouseni-tab'].forEach(function(id) {
+    var sc = document.getElementById(id);
+    if (sc) sc.style.display = (typ === 'lps') ? 'none' : '';
+  });
+  // Přejmenovat tab 3 'Přístroje' / 'C+D. Přístroje & Úkony' — v LPS
+  // baru to jen "3. Přístroje", v elektro baru je "C+D. Přístroje & Úkony"
+  // (nemusíme měnit, jen pro LPS nadpis 'C. Použité měřicí přístroje'
+  // zůstává v první scard).
   // Seznam příloh — typově specifický default (přepíše HTML defaultValue)
   var pril = document.getElementById('f_prilohy');
   if (pril) {
