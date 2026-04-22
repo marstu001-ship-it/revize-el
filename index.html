@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.4 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.5 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -1248,6 +1248,20 @@ function novaZprava(typ) {
   var tabBarLps = document.getElementById('tab-bar-lps');
   if (tabBarEl) tabBarEl.style.display = (typ === 'lps') ? 'none' : 'flex';
   if (tabBarLps) tabBarLps.style.display = (typ === 'lps') ? 'flex' : 'none';
+  // Pro LPS skryj elektro-only sekce na titulní straně (Napěťová soustava
+  // 1NPE/3PEN TN-C-S a Ochrana před úrazem el. proudem) — nedávají
+  // u hromosvodu smysl.
+  var sNap = document.getElementById('scard-napetova');
+  if (sNap) sNap.style.display = (typ === 'lps') ? 'none' : '';
+  var sOch = document.getElementById('scard-ochrana-char');
+  if (sOch) sOch.style.display = (typ === 'lps') ? 'none' : '';
+  // Seznam příloh — typově specifický default (přepíše HTML defaultValue)
+  var pril = document.getElementById('f_prilohy');
+  if (pril) {
+    pril.value = (typ === 'lps')
+      ? '1. Projektová dokumentace LPS\n2. Výpočet rizika dle ČSN EN 62305-2 ed.2\n3. Protokol o měření zemního odporu\n4. Prohlášení o shodě jednotlivých částí'
+      : '1. Protokol o určení vnějších vlivů\n2. Prohlášení o shodě jednotlivých zařízení';
+  }
   // LPS specifické inicializace
   if (typ === 'lps') {
     renderLpsLpz();
@@ -1918,6 +1932,34 @@ var TYPICKE_ZAVADY = [
   { kod: 'C3', popis: 'Doporučujeme kontrolu kapacity jističů s ohledem na aktuální odběr', norma: 'ČSN 33 2000-5-52 ed.2, čl. 523, 525' }
 ];
 
+// Typické závady pro LPS (hromosvod) — dle ČSN EN 62305-3 ed.2 a ČSN 33 1500.
+var TYPICKE_ZAVADY_LPS = [
+  // C1 - Nebezpečí
+  { kod: 'C1', popis: 'Přerušený svod hromosvodu — bez vodivého spojení s uzemněním', norma: 'ČSN EN 62305-3 ed.2, čl. 5.3' },
+  { kod: 'C1', popis: 'Naměřený zemní odpor zemniče přesahuje povolenou hodnotu (>10 Ω)', norma: 'ČSN EN 62305-3 ed.2, čl. 5.4.1' },
+  { kod: 'C1', popis: 'Chybí jímací soustava nebo její podstatná část', norma: 'ČSN EN 62305-3 ed.2, čl. 5.2' },
+  { kod: 'C1', popis: 'Nedodržená izolační (bezpečná) vzdálenost „s" mezi LPS a vodivými částmi v objektu', norma: 'ČSN EN 62305-3 ed.2, čl. 6.3' },
+  { kod: 'C1', popis: 'Chybí ekvipotenciální pospojování kovových rozvodů vstupujících do objektu', norma: 'ČSN EN 62305-3 ed.2, čl. 6.2' },
+  { kod: 'C1', popis: 'Chybí přepěťová ochrana SPD typu T1 na vstupu napájení', norma: 'ČSN EN 62305-4 ed.2, čl. 5.6' },
+  // C2 - Potenciálně nebezpečné
+  { kod: 'C2', popis: 'Pokročilá koroze jímačů, svodů nebo spojů', norma: 'ČSN EN 62305-3 ed.2, čl. E.7' },
+  { kod: 'C2', popis: 'Uvolněné nebo poškozené měřicí (zkušební) svorky na svodech', norma: 'ČSN EN 62305-3 ed.2, čl. 5.3.5' },
+  { kod: 'C2', popis: 'Chybí dokumentace LPS (projekt, výpočet rizika dle ČSN EN 62305-2)', norma: 'NV č. 190/2022 Sb., § 10 písm. c)' },
+  { kod: 'C2', popis: 'Chybí ochrana svodu proti mechanickému poškození v dosahu osob (do 1,8 m)', norma: 'ČSN EN 62305-3 ed.2, čl. 5.3.4' },
+  { kod: 'C2', popis: 'Nedostatečný počet svodů vzhledem k třídě LPS', norma: 'ČSN EN 62305-3 ed.2, tab. 4' },
+  { kod: 'C2', popis: 'Nesprávně provedený přechod mezi materiály (Al × FeZn × Cu) bez antikorozní úpravy', norma: 'ČSN EN 62305-3 ed.2, čl. E.4.3' },
+  // C3 - Doporučení
+  { kod: 'C3', popis: 'Doporučujeme provést výpočet rizika dle ČSN EN 62305-2 ed.2 a ověřit třídu LPS', norma: 'ČSN EN 62305-2 ed.2' },
+  { kod: 'C3', popis: 'Doporučujeme doplnit svodiče přepětí SPD typu T2 v podružných rozváděčích', norma: 'ČSN EN 62305-4 ed.2' },
+  { kod: 'C3', popis: 'Doporučujeme antikorozní ošetření spojů ve venkovním prostředí', norma: 'ČSN EN 62305-3 ed.2, čl. E.4' },
+  { kod: 'C3', popis: 'Doporučujeme vést revizní knihu LPS s evidencí prohlídek a měření', norma: 'ČSN 33 1500' }
+];
+
+// Vrátí aktuální seznam typických závad podle typu revize.
+function getTypickeZavady() {
+  return (aktTyp === 'lps') ? TYPICKE_ZAVADY_LPS : TYPICKE_ZAVADY;
+}
+
 function addZavada() {
   zavadyN++;
   var list = document.getElementById('zavady-list');
@@ -1957,10 +1999,11 @@ function addZavada() {
   ['C1', 'C2', 'C3'].forEach(function(kod) {
     var grp = document.createElement('optgroup');
     grp.label = kod + (kod === 'C1' ? ' – Nebezpečí' : kod === 'C2' ? ' – Potenciálně nebezpečné' : ' – Doporučení');
-    TYPICKE_ZAVADY.filter(function(z) { return z.kod === kod; }).forEach(function(z, i) {
+    var zavadySource = getTypickeZavady();
+    zavadySource.filter(function(z) { return z.kod === kod; }).forEach(function(z, i) {
       var o = document.createElement('option');
-      // Value = unikátní klíč kod:index do TYPICKE_ZAVADY
-      var globalIdx = TYPICKE_ZAVADY.indexOf(z);
+      // Value = index do aktuálního zdroje typických závad
+      var globalIdx = zavadySource.indexOf(z);
       o.value = String(globalIdx);
       o.textContent = z.popis;
       grp.appendChild(o);
@@ -2019,8 +2062,9 @@ function addZavada() {
   // Na change v typSel: předvyplň popis, normu a kategorii (kod)
   typSel.addEventListener('change', function() {
     var idx = parseInt(this.value, 10);
-    if (isNaN(idx) || idx < 0 || idx >= TYPICKE_ZAVADY.length) return;
-    var z = TYPICKE_ZAVADY[idx];
+    var src = getTypickeZavady();
+    if (isNaN(idx) || idx < 0 || idx >= src.length) return;
+    var z = src[idx];
     ta.value = z.popis;
     inp3.value = z.norma;
     sel.value = z.kod;
@@ -2187,9 +2231,11 @@ function magicPopis() {
 
     byt: 'Jedná se o bytovou jednotku v bytovém domě. Bytová jednotka je ve druhém nadzemním podlaží vlevo. Bytový dům je postaven z cihel. Hlavní přívod z elektroměrového rozváděče, který je nainstalovaný na společné chodbě bytového domu je proveden kabelem CYKY-J 4x10, společně s hlavním přívodem je uložen vodič pospojování v barevné kombinaci žel/žlutá průřezu 10 mm².\n\nBytový rozváděč RB je nainstalován ve vstupní chodbě bytové jednotky. Kabelové rozvody jsou uloženy pod omítkou a v podlahách. Přípojnice pospojování pro BJ je nainstalována v šachtě přístupné z WC.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nRp doplňujícího ochranného pospojování v koupelně vyhověly ČSN 33 2000-4-41 ed.3, čl. 415.2. Odpor R mezi neživými částmi současně přístupnými dotyku a cizími vodivými částmi splnil podmínku: R ≤ 50V/Ia.\n\nV rozváděči BD vedle hlavního jističe je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C typ OEZ SVC-350—3PEN - MZ pro výbojový proud 20 kA (8/20 μs) pro předpokládané nízké účinky bleskového proudu. Délka vodičů přívodu a vývodu z přepěťové ochrany je 45 cm. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.',
 
-    prumysl: 'Jedná se o rozsáhlý průmyslový objekt s vlastní trafostanicí, která je mimo výrobní objekt u příjezdové komunikace. V trafostanici je nainstalován hlavní rozváděč RH, ze kterého jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy, šaten a technického zázemí.\n\nKabelové rozvody jsou uloženy v zemi — v případě pravidelné revize je vhodné uvést, že stav kabelů a uzemňovací soustavy uložených v zemi nebylo možné zkontrolovat, protože jsou nepřístupné. Kabely jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách.\n\n— V rozvodně VN/NN je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— neživé části zařízení — nádoba transformátoru;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nV rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů. V podružných rozváděčích osazeny SPD.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.'
+    prumysl: 'Jedná se o rozsáhlý průmyslový objekt s vlastní trafostanicí, která je mimo výrobní objekt u příjezdové komunikace. V trafostanici je nainstalován hlavní rozváděč RH, ze kterého jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy, šaten a technického zázemí.\n\nKabelové rozvody jsou uloženy v zemi — v případě pravidelné revize je vhodné uvést, že stav kabelů a uzemňovací soustavy uložených v zemi nebylo možné zkontrolovat, protože jsou nepřístupné. Kabely jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách.\n\n— V rozvodně VN/NN je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— neživé části zařízení — nádoba transformátoru;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nV rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů. V podružných rozváděčích osazeny SPD.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.',
+
+    lps: 'Jedná se o vnější systém ochrany před bleskem (LPS) na střeše objektu rodinného domu. Třída LPS odpovídá výpočtu rizika dle ČSN EN 62305-2 ed.2.\n\nJÍMACÍ SOUSTAVA — je provedena pomocí jímacích tyčí a propojovacího vedení AlMgSi ⌀ 8 mm na střeše. Jímače jsou rozmístěny tak, aby celá střecha objektu spadala do jejich ochranného prostoru (metoda valící se koule / ochranného úhlu / mřížové soustavy dle ČSN EN 62305-3 ed.2 čl. 5.2).\n\nSVODY — napojeny na jímací soustavu a vyvedeny po fasádě objektu k zemi. Materiál: AlMgSi ⌀ 8 mm. V dosahu osob (do výšky 1,8 m nad zemí) jsou svody chráněny ochranným úhelníkem proti mechanickému poškození. Měřicí (zkušební) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené.\n\nUZEMŇOVACÍ SOUSTAVA — typu B (základový zemnič — uzavřená smyčka v betonu základů, FeZn pásek 30×4 mm). Souží i jako společný zemnič pro elektroinstalaci. Spojení na svody je provedeno přes měřicí svorky.\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — všechny kovové části vstupující do objektu (vodovodní přípojka, plynovod, technologie) jsou propojeny na hlavní uzemňovací svornici (MET) v objektu.\n\nVNITŘNÍ OCHRANA PŘED PŘEPĚTÍM — instalována kombinovaná přepěťová ochrana SPD typu T1+T2 v hlavním rozváděči objektu pro koordinovanou ochranu dle ČSN EN 62305-4 ed.2.\n\nIzolační (bezpečné) vzdálenosti „s" mezi LPS a vodivými částmi uvnitř objektu byly ověřeny vizuálně a vyhovují požadavkům ČSN EN 62305-3 ed.2 čl. 6.3.'
   };
-  el.value = texty[aktPodtyp] || texty.dum;
+  el.value = texty[aktTyp === 'lps' ? 'lps' : (aktPodtyp || 'dum')] || texty.dum;
 }
 
 function magicZaver() {
@@ -2495,13 +2541,20 @@ function generujPDF() {
       '</div>';
   }
 
-  var nadpis = D.typ === 'lps'
-    ? 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'
+  var isLpsPdf = (D.typ === 'lps');
+  var nadpis = isLpsPdf
+    ? 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)'
     : 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ';
-  var podnadpis = 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 33 1500 (Z1–Z4), ČSN 33 2000-6 ed.2';
-  var posudek = D.celkovy_vysledek === 'schopno'
-    ? 'Provedenou prohlídkou a měřením bylo zjištěno, že revidovaná elektrická instalace je z hlediska bezpečnosti schopna provozu.'
-    : 'Revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.';
+  var podnadpis = isLpsPdf
+    ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 62305-1 ed.2 až ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3'
+    : 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 33 1500 (Z1–Z4), ČSN 33 2000-6 ed.2';
+  var posudek = isLpsPdf
+    ? (D.celkovy_vysledek === 'schopno'
+        ? 'Provedenou prohlídkou a měřením bylo zjištěno, že LPS je ve stavu způsobilém plnit požadovanou funkci a je v souladu s ČSN EN 62305-3 ed.2.'
+        : 'LPS NENÍ ve stavu způsobilém plnit požadovanou funkci. Zjištěné závady musí být odstraněny.')
+    : (D.celkovy_vysledek === 'schopno'
+        ? 'Provedenou prohlídkou a měřením bylo zjištěno, že revidovaná elektrická instalace je z hlediska bezpečnosti schopna provozu.'
+        : 'Revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.');
 
   var p1 = document.createElement('div');
   p1.className = 'a4';
@@ -2612,22 +2665,38 @@ function generujPDF() {
         '</div>'
       : '') +
     '<div data-p2sec="4">' +
-    '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
-    (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
-    '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
-    '<strong>Prohlídka část A</strong> — prohlídka předchází zkoušce. Prohlídkou se zkontroluje zejména:<br>' +
-    'a) způsob, popřípadě stav ochrany před úrazem elektrickým proudem včetně měření vzdáleností,<br>' +
-    'b) použití protipožárních přepážek nebo jiných bezpečnostních opatření proti šíření ohně a ochrana před tepelnými účinky,<br>' +
-    'c) volba vodičů s ohledem na proudovou zatížitelnost a úbytek napětí,<br>' +
-    'd) volba, seřízení a stav ukazatelů ochranných a kontrolních prvků,<br>' +
-    'e) použití odpovídajících, vhodně umístěných a dostatečně oddělujících spínacích prvků,<br>' +
-    'f) volba elektrických zařízení a ochranných opatření s ohledem na vnější vlivy, oprávněnost zatřídění a označení prostorů z hlediska vnějších vlivů,<br>' +
-    'g) označení středních a ochranných vodičů,<br>' +
-    'h) vybavení schématy, varovnými nápisy a jinými podobnými informacemi požadovanými jinými právními předpisy nebo technickými normami,<br>' +
-    'i) označení obvodů, pojistek, spínačů, svorek,<br>' +
-    'j) odpovídající způsob spojení vodičů,<br>' +
-    'k) přístupnost z hlediska provozu a údržby.' +
-    '</div>' +
+    (isLpsPdf
+      ? '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky LPS (dle ČSN EN 62305-3 ed.2)</div></div>' +
+        (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
+        '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
+        '<strong>Prohlídka systému ochrany před bleskem</strong> — vizuální kontrolou bylo ověřeno zejména:<br>' +
+        'a) celistvost a stav jímací soustavy (jímací tyče, vedení) — bez známek poškození a koroze,<br>' +
+        'b) rozmístění jímačů odpovídá projektové dokumentaci a třídě LPS,<br>' +
+        'c) celistvost a uchycení svodů, vč. neporušenosti svorek,<br>' +
+        'd) stav a přístupnost zkušebních (měřicích) svorek na svodech,<br>' +
+        'e) celistvost a stav uzemňovací soustavy v dostupných místech,<br>' +
+        'f) ekvipotenciální pospojování — propojení všech kovových částí vstupujících do objektu (vodovod, plyn, technologie),<br>' +
+        'g) instalace a stav přepěťových ochran (SPD) na vstupu inženýrských sítí,<br>' +
+        'h) dodržení izolačních (bezpečných) vzdáleností „s" mezi LPS a vodivými částmi uvnitř objektu,<br>' +
+        'i) ochrana svodů proti mechanickému poškození v dosahu osob,<br>' +
+        'j) označení a dokumentace systému LPS.' +
+        '</div>'
+      : '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
+        (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
+        '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
+        '<strong>Prohlídka část A</strong> — prohlídka předchází zkoušce. Prohlídkou se zkontroluje zejména:<br>' +
+        'a) způsob, popřípadě stav ochrany před úrazem elektrickým proudem včetně měření vzdáleností,<br>' +
+        'b) použití protipožárních přepážek nebo jiných bezpečnostních opatření proti šíření ohně a ochrana před tepelnými účinky,<br>' +
+        'c) volba vodičů s ohledem na proudovou zatížitelnost a úbytek napětí,<br>' +
+        'd) volba, seřízení a stav ukazatelů ochranných a kontrolních prvků,<br>' +
+        'e) použití odpovídajících, vhodně umístěných a dostatečně oddělujících spínacích prvků,<br>' +
+        'f) volba elektrických zařízení a ochranných opatření s ohledem na vnější vlivy, oprávněnost zatřídění a označení prostorů z hlediska vnějších vlivů,<br>' +
+        'g) označení středních a ochranných vodičů,<br>' +
+        'h) vybavení schématy, varovnými nápisy a jinými podobnými informacemi požadovanými jinými právními předpisy nebo technickými normami,<br>' +
+        'i) označení obvodů, pojistek, spínačů, svorek,<br>' +
+        'j) odpovídající způsob spojení vodičů,<br>' +
+        'k) přístupnost z hlediska provozu a údržby.' +
+        '</div>') +
     '</div>' +
     '</div>' + ftr();
   pages.appendChild(p2);
@@ -2691,6 +2760,9 @@ function generujPDF() {
     rozvadeceHtml += '</div>';
   });
 
+  // Stránka rozváděčů a stránka 5/6/7 (Zkoušení/Impedance/Chrániče) jsou
+  // čistě elektro. Pro LPS se neapplendují — LPS má jiné měření (zemní
+  // odpor svodů), které se renderuje samostatně níže.
   var p3 = document.createElement('div');
   p3.className = 'a4 a4-landscape';
   p3.innerHTML = hdr(3) +
@@ -2698,7 +2770,7 @@ function generujPDF() {
     rozvadeceHtml +
     '<div style="font-size:7.5pt;margin-top:2mm;padding:0 2mm;color:#444">U RCD je součástí měření ověření funkce testovacího tlačítka.</div>' +
     '</div>' + ftr();
-  pages.appendChild(p3);
+  if (!isLpsPdf) pages.appendChild(p3);
 
   // STRÁNKA 4 — Zkoušení, impedance, RCD
   var zk = D.zkousky || {};
@@ -2766,7 +2838,7 @@ function generujPDF() {
     '<br><br>Výsledky vyhověly požadavkům norem a jsou uvedeny v tabulce měření této zprávy o revizi.' +
     '</div>' +
     '</div>' + ftr();
-  pages.appendChild(p4);
+  if (!isLpsPdf) pages.appendChild(p4);
 
   var zavadyHtml = D.zavady.length > 0
     ? D.zavady.map(function(z, i) {
