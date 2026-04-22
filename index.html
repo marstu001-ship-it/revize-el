@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.7 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v2.8 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -347,8 +347,27 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </button>
   </div>
   <div class="scard">
+    <div class="scard-title">👥 Odběratelé <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">knihovna zákazníků pro rychlé vyplnění zpráv</span></div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;align-items:center;flex-wrap:wrap">
+      <input type="text" id="odberatel-search" placeholder="🔍 Hledat podle jména, IČO…" style="flex:1;min-width:200px;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem" autocomplete="off">
+      <button class="btn btn-gold" data-action="openOdberatelModal">+ Přidat odběratele</button>
+    </div>
+    <div id="odberatel-container"><div class="archiv-empty">Zatím žádní odběratelé. Přidejte prvního. 👆</div></div>
+  </div>
+  <div class="scard">
     <div class="scard-title">📋 Archiv zpráv</div>
     <div id="archiv-container"><div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše. 👆</div></div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">💾 Záloha a obnovení <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">export/import celé databáze</span></div>
+    <div style="font-size:.82rem;line-height:1.5;color:var(--muted);margin-bottom:.75rem">
+      Data se ukládají jen v tomto prohlížeči. Při změně zařízení nebo vymazání cache by se ztratila. Zálohu si uložte do souboru a kdykoli obnovte.
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-gold" data-action="exportDatabaze">⬇️ Stáhnout zálohu (.json)</button>
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="importDatabaze">⬆️ Obnovit ze zálohy</button>
+    </div>
+    <input type="file" id="import-input" accept=".json,application/json" style="display:none">
   </div>
 </div>
 </div>
@@ -561,7 +580,14 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
   <div class="scard">
     <div class="scard-title">Provozovatel <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
-    <div style="display:flex;gap:.5rem;align-items:flex-end;margin-bottom:.5rem">
+    <div style="display:flex;gap:.5rem;align-items:flex-end;margin-bottom:.5rem;flex-wrap:wrap">
+      <div class="f" style="flex:1 1 240px;margin:0">
+        <label>Vybrat z knihovny odběratelů</label>
+        <select id="f_odberatel_select" data-action="pouzitOdberatele"></select>
+      </div>
+      <button class="magic-btn" data-action="ulozitJakoOdberatele" style="margin:0" title="Uložit aktuální obsah Provozovatele jako nového odběratele do knihovny">💾 Uložit jako odběratele</button>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:flex-end;margin-bottom:.5rem;flex-wrap:wrap">
       <div class="f" style="flex:0 0 180px;margin:0">
         <label>IČO (pro ARES)</label>
         <input type="text" id="f_provozovatel_ico" placeholder="12345678" maxlength="8" inputmode="numeric" autocomplete="off">
@@ -969,6 +995,34 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 </div>
 
 <!-- MODAL VÝPOČET REVIZE -->
+<div class="modal-overlay" id="modal-odberatel">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title" id="modal-odberatel-title">👥 Přidat odběratele</div>
+    <input type="hidden" id="od_id">
+    <div style="display:flex;gap:.5rem;align-items:flex-end;margin-bottom:.75rem">
+      <div class="f" style="flex:0 0 160px;margin:0">
+        <label>IČO (pro ARES)</label>
+        <input type="text" id="od_ico_lookup" placeholder="12345678" maxlength="8" inputmode="numeric" autocomplete="off">
+      </div>
+      <button class="magic-btn" data-action="odberatelLookupAres" style="margin:0">🔍 Načíst z ARES</button>
+    </div>
+    <div class="g2">
+      <div class="f span2"><label>Název / jméno <span class="req">*</span></label><input type="text" id="od_nazev" placeholder="Firma s.r.o. nebo Jan Novák"></div>
+      <div class="f span2"><label>Adresa</label><textarea id="od_adresa" style="min-height:60px" placeholder="Ulice 123&#10;602 00 Brno"></textarea></div>
+      <div class="f"><label>IČO</label><input type="text" id="od_ico" placeholder="12345678"></div>
+      <div class="f"><label>DIČ</label><input type="text" id="od_dic" placeholder="CZ12345678"></div>
+      <div class="f"><label>Telefon</label><input type="text" id="od_telefon" placeholder="+420 777 123 456"></div>
+      <div class="f"><label>E-mail</label><input type="text" id="od_email" placeholder="info@firma.cz"></div>
+      <div class="f span2"><label>IBAN (pro faktury)</label><input type="text" id="od_iban" placeholder="CZ00 0000 0000 0000 0000 0000"></div>
+      <div class="f span2"><label>Poznámka</label><textarea id="od_poznamka" style="min-height:40px" placeholder="Libovolná interní poznámka"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeOdberatel">Zrušit</button>
+      <button class="btn btn-gold" data-action="ulozitOdberatele">✓ Uložit</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-revize">
   <div class="modal">
     <div class="modal-title">🔮 Výpočet termínu příští revize</div>
@@ -996,10 +1050,11 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 
 
 <script>
-var STORE = { technik: {}, pristroje: [], archiv: [] };
+var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [] };
 var aktTyp = 'elektro';
 var zavadyN = 0;
 var archiv = [];
+var odberatele = [];
 
 function saveStore() {
   try { localStorage.setItem('revize_el_store', JSON.stringify(STORE)); } catch(e) {}
@@ -1012,6 +1067,7 @@ function loadStore() {
       STORE.technik = d.technik || {};
       STORE.pristroje = d.pristroje || [];
       STORE.archiv = d.archiv || [];
+      STORE.odberatele = d.odberatele || [];
     }
   } catch(e) {}
 }
@@ -1130,8 +1186,10 @@ function renderOchranaCheckboxy() {
 
 function novaZprava(typ) {
   aktTyp = typ;
+  window.__aktualniOdberatelId = '';
   var bcTyp = document.getElementById('bc-typ');
   if (bcTyp) bcTyp.textContent = typ === 'elektro' ? 'Nová zpráva — Elektro' : 'Nová zpráva — LPS';
+  renderOdberatelSelect();
   document.querySelectorAll('#screen-form input, #screen-form textarea, #screen-form select').forEach(function(el) {
     if (el.type === 'checkbox') el.checked = el.defaultChecked;
     else if (el.tagName === 'SELECT') {
@@ -2278,8 +2336,10 @@ function lookupIcoFromAres(ico, targetFieldId, btn, opts) {
     alert('IČO musí mít přesně 8 číslic. Zadali jste: "' + (ico || '') + '"');
     return;
   }
-  var target = document.getElementById(targetFieldId);
-  if (!target) return;
+  // Pro cílové pole __odberatel_inline (modal) nevyžadujeme DOM target —
+  // callback opts.targetCallback sám rozhazuje hodnoty do jednotlivých polí.
+  var target = (targetFieldId === '__odberatel_inline') ? null : document.getElementById(targetFieldId);
+  if (targetFieldId !== '__odberatel_inline' && !target) return;
   var origText = btn ? btn.textContent : '';
   if (btn) { btn.textContent = '⏳ Načítám z ARES…'; btn.disabled = true; }
   var url = 'https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/' + cleaned;
@@ -2311,7 +2371,11 @@ function lookupIcoFromAres(ico, targetFieldId, btn, opts) {
       }
       lines.push('IČ: ' + cleaned);
       if (data.dic) lines.push('DIČ: ' + data.dic);
-      target.value = lines.join(opts.multiline ? '\n' : ', ');
+      if (opts.targetCallback) {
+        opts.targetCallback(data, cleaned, lines);
+      } else if (target) {
+        target.value = lines.join(opts.multiline ? '\n' : ', ');
+      }
     })
     .catch(function(err) {
       alert('Nepodařilo se načíst z ARES.\n\n' + (err.message || err) +
@@ -2484,6 +2548,7 @@ function getData() {
     poznamka_zavady: gv('f_poznamka_zavady'),
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
     lps: collectLpsData(),
+    odberatel_id: window.__aktualniOdberatelId || '',
     // Zpětná kompatibilita — první rozváděč
     rozvadec: rozvadece[0] ? rozvadece[0].nazev : '', rozvadec_umisteni: rozvadece[0] ? rozvadece[0].umisteni : '',
     mereni: rozvadece[0] ? rozvadece[0].mereni : [],
@@ -3372,6 +3437,7 @@ function saveToArchiv() {
   var entry = {
     typ: D.typ, podtyp: D.podtyp, ev_cislo: D.ev_cislo, misto: D.misto,
     datum: D.zahajeni, vysledek: D.celkovy_vysledek,
+    odberatel_id: D.odberatel_id || '',
     data: D, timestamp: new Date().toISOString()
   };
   if (found >= 0) {
@@ -3397,6 +3463,10 @@ function nacistData(D) {
   aktTyp = D.typ || 'elektro';
   aktPodtyp = D.podtyp || 'dum';
   novaZprava(aktTyp);
+  // Obnovit vazbu na odběratele a vybrat ho v dropdownu
+  window.__aktualniOdberatelId = D.odberatel_id || '';
+  var selOd = document.getElementById('f_odberatel_select');
+  if (selOd && D.odberatel_id) selOd.value = D.odberatel_id;
   // Fill form fields
   var fields = {
     'f_ev_cislo': D.ev_cislo, 'f_vytisk': D.vytisk, 'f_druh': D.druh,
@@ -3566,6 +3636,256 @@ function nacistJSON(e) {
   reader.readAsText(file);
 }
 
+// ═══ ODBĚRATELÉ (zákaznická knihovna) ═══════════════════════════════════
+function odberateleByIdMap() {
+  var m = {};
+  odberatele.forEach(function(o) { m[o.id] = o; });
+  return m;
+}
+
+// Spočte počet zpráv v archivu pro každého odběratele (přes odberatel_id).
+function pocetZpravOdberatele(id) {
+  var n = 0;
+  archiv.forEach(function(z) {
+    if (z.odberatel_id === id || (z.data && z.data.odberatel_id === id)) n++;
+  });
+  return n;
+}
+
+function renderOdberatele() {
+  var c = document.getElementById('odberatel-container');
+  if (!c) return;
+  var q = ((document.getElementById('odberatel-search') || {}).value || '').trim().toLowerCase();
+  var list = odberatele;
+  if (q) {
+    list = odberatele.filter(function(o) {
+      return (o.nazev || '').toLowerCase().indexOf(q) !== -1 ||
+             (o.ico || '').toLowerCase().indexOf(q) !== -1 ||
+             (o.adresa || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  if (!list || list.length === 0) {
+    c.innerHTML = '<div class="archiv-empty">' +
+      (q ? 'Žádný odběratel neodpovídá dotazu „' + esc(q) + '".' : 'Zatím žádní odběratelé. Přidejte prvního. 👆') +
+      '</div>';
+    return;
+  }
+  var html = '<table class="archiv-table"><thead><tr>' +
+    '<th style="width:5%">#</th>' +
+    '<th>Název / firma</th>' +
+    '<th>IČO</th>' +
+    '<th>Kontakt</th>' +
+    '<th style="width:10%;text-align:center">Zpráv</th>' +
+    '<th style="width:95px"></th>' +
+    '</tr></thead><tbody>';
+  list.forEach(function(o, i) {
+    var pocet = pocetZpravOdberatele(o.id);
+    var kontakt = [o.telefon, o.email].filter(Boolean).join(' · ');
+    html += '<tr>';
+    html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
+    html += '<td style="font-size:.88rem"><strong>' + esc(o.nazev || '—') + '</strong>' +
+      (o.adresa ? '<br><span style="font-size:.75rem;color:#6e6a60">' + esc(o.adresa.split('\n').join(', ')) + '</span>' : '') + '</td>';
+    html += '<td style="font-family:monospace;font-size:.8rem">' + esc(o.ico || '—') + '</td>';
+    html += '<td style="font-size:.78rem;color:#444">' + esc(kontakt || '—') + '</td>';
+    html += '<td style="text-align:center;font-weight:600;font-family:monospace">' + pocet + '</td>';
+    html += '<td style="white-space:nowrap">' +
+      '<button class="del-btn" data-action="editOdberatele" data-id="' + esc(o.id) + '" title="Upravit" style="color:#1c3a5e;margin-right:2px">✎</button>' +
+      '<button class="del-btn" data-action="smazatOdberatele" data-id="' + esc(o.id) + '" title="Smazat">✕</button>' +
+      '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  c.innerHTML = html;
+}
+
+function openOdberatelModal(existingId) {
+  var m = document.getElementById('modal-odberatel');
+  if (!m) return;
+  var o = existingId ? odberateleByIdMap()[existingId] : null;
+  document.getElementById('modal-odberatel-title').textContent = o ? '👥 Upravit odběratele' : '👥 Přidat odběratele';
+  var fields = { od_id: o ? o.id : '', od_nazev: o ? o.nazev : '', od_adresa: o ? o.adresa : '',
+    od_ico: o ? o.ico : '', od_dic: o ? o.dic : '', od_telefon: o ? o.telefon : '',
+    od_email: o ? o.email : '', od_iban: o ? o.iban : '', od_poznamka: o ? o.poznamka : '',
+    od_ico_lookup: '' };
+  Object.keys(fields).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = fields[id] || '';
+  });
+  m.classList.add('open');
+}
+
+function closeOdberatelModal() {
+  var m = document.getElementById('modal-odberatel');
+  if (m) m.classList.remove('open');
+}
+
+function ulozitOdberatele() {
+  var gvm = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var nazev = gvm('od_nazev');
+  if (!nazev) { alert('Název / jméno je povinné.'); return; }
+  var id = gvm('od_id') || ('od-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+  var entry = {
+    id: id, nazev: nazev, adresa: gvm('od_adresa'),
+    ico: gvm('od_ico'), dic: gvm('od_dic'),
+    telefon: gvm('od_telefon'), email: gvm('od_email'), iban: gvm('od_iban'),
+    poznamka: gvm('od_poznamka')
+  };
+  var foundIdx = -1;
+  odberatele.forEach(function(o, i) { if (o.id === id) foundIdx = i; });
+  if (foundIdx >= 0) odberatele[foundIdx] = entry;
+  else odberatele.unshift(entry);
+  STORE.odberatele = odberatele;
+  saveStore();
+  renderOdberatele();
+  renderOdberatelSelect();
+  closeOdberatelModal();
+}
+
+function smazatOdberatele(id) {
+  var o = odberateleByIdMap()[id];
+  if (!o) return;
+  var pocet = pocetZpravOdberatele(id);
+  var msg = 'Smazat odběratele „' + (o.nazev || '') + '"?';
+  if (pocet > 0) msg += '\n\nPozn.: má v archivu ' + pocet + ' zpráv — ty zůstanou, jen se odpojí.';
+  if (!confirm(msg)) return;
+  odberatele = odberatele.filter(function(x) { return x.id !== id; });
+  STORE.odberatele = odberatele;
+  saveStore();
+  renderOdberatele();
+  renderOdberatelSelect();
+}
+
+// Načtení odběratele z ARES do modálu (opakovaně využívá existující funkci)
+function odberatelLookupAres(btn) {
+  var ico = (document.getElementById('od_ico_lookup') || {}).value;
+  lookupIcoFromAres(ico, '__odberatel_inline', btn, {
+    multiline: true, targetCallback: function(data, cleaned, lines) {
+      // Rozlišíme jméno (1. řádek) od adresy (další řádky)
+      var nazevEl = document.getElementById('od_nazev');
+      var adresaEl = document.getElementById('od_adresa');
+      var icoEl = document.getElementById('od_ico');
+      var dicEl = document.getElementById('od_dic');
+      if (nazevEl && data.obchodniJmeno) nazevEl.value = data.obchodniJmeno;
+      if (adresaEl) {
+        var addrLines = lines.filter(function(l) {
+          return l.indexOf('IČ:') !== 0 && l.indexOf('DIČ:') !== 0 && l !== data.obchodniJmeno;
+        });
+        adresaEl.value = addrLines.join('\n');
+      }
+      if (icoEl) icoEl.value = cleaned;
+      if (dicEl && data.dic) dicEl.value = data.dic;
+    }
+  });
+}
+
+// Aktualizuje dropdown "Vybrat z odběratelů" ve formuláři zprávy
+function renderOdberatelSelect() {
+  var sel = document.getElementById('f_odberatel_select');
+  if (!sel) return;
+  var current = sel.value;
+  sel.innerHTML = '<option value="">— vyberte z knihovny —</option>';
+  odberatele.forEach(function(o) {
+    var opt = document.createElement('option');
+    opt.value = o.id;
+    opt.textContent = o.nazev + (o.ico ? ' (IČO ' + o.ico + ')' : '');
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+// Kliknutí na dropdown: vyplnit Provozovatel textarea z odběratele
+function pouzitOdberatele() {
+  var sel = document.getElementById('f_odberatel_select');
+  if (!sel || !sel.value) return;
+  var o = odberateleByIdMap()[sel.value];
+  if (!o) return;
+  var lines = [];
+  if (o.nazev) lines.push(o.nazev);
+  if (o.adresa) o.adresa.split('\n').forEach(function(l) { if (l.trim()) lines.push(l); });
+  if (o.ico) lines.push('IČ: ' + o.ico);
+  if (o.dic) lines.push('DIČ: ' + o.dic);
+  var prov = document.getElementById('f_provozovatel');
+  if (prov) prov.value = lines.join('\n');
+  // Uložit ID vazby — použije se ve getData
+  window.__aktualniOdberatelId = o.id;
+}
+
+// Uloží aktuální obsah Provozovatel jako nového odběratele
+function ulozitJakoOdberatele() {
+  var nazev = (document.getElementById('f_provozovatel') || {}).value || '';
+  if (!nazev.trim()) { alert('Vyplňte nejdřív Provozovatele.'); return; }
+  var lines = nazev.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+  var firstLine = lines[0] || '';
+  var ico = '', dic = '';
+  var adresaLines = [];
+  lines.slice(1).forEach(function(l) {
+    if (/^I[ČC]:?\s*(\d{6,10})/.test(l)) { ico = l.replace(/^I[ČC]:?\s*/, '').trim(); }
+    else if (/^DI[ČC]:?\s*/.test(l)) { dic = l.replace(/^DI[ČC]:?\s*/, '').trim(); }
+    else adresaLines.push(l);
+  });
+  openOdberatelModal();
+  document.getElementById('od_nazev').value = firstLine;
+  document.getElementById('od_adresa').value = adresaLines.join('\n');
+  if (ico) document.getElementById('od_ico').value = ico;
+  if (dic) document.getElementById('od_dic').value = dic;
+}
+
+// ═══ ZÁLOHA / OBNOVENÍ CELÉ DATABÁZE ═══════════════════════════════════
+function exportDatabaze() {
+  var data = {
+    _format: 'revize-el-backup',
+    _version: 1,
+    _timestamp: new Date().toISOString(),
+    technik: STORE.technik || {},
+    pristroje: STORE.pristroje || [],
+    archiv: STORE.archiv || [],
+    odberatele: STORE.odberatele || []
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var d = new Date().toISOString().slice(0, 10);
+  ulozitSoubor(blob, 'revize-el-zaloha-' + d + '.json');
+}
+
+function importDatabaze() {
+  var inp = document.getElementById('import-input');
+  if (!inp) return;
+  inp.value = '';
+  inp.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var data = JSON.parse(ev.target.result);
+        if (data._format !== 'revize-el-backup') {
+          if (!confirm('Soubor nevypadá jako záloha Revize EL. Pokračovat?')) return;
+        }
+        var msg = 'Obnovit ze zálohy?\n\n' +
+          '• Odběratelé: ' + ((data.odberatele || []).length) + '\n' +
+          '• Zprávy v archivu: ' + ((data.archiv || []).length) + '\n' +
+          '• Přístroje: ' + ((data.pristroje || []).length) + '\n' +
+          '• Profil technika: ' + (data.technik && data.technik.jmeno ? 'ano' : 'ne') + '\n\n' +
+          'Tyto údaje nahradí aktuální data v prohlížeči.';
+        if (!confirm(msg)) return;
+        STORE.technik = data.technik || {};
+        STORE.pristroje = data.pristroje || [];
+        STORE.archiv = data.archiv || [];
+        STORE.odberatele = data.odberatele || [];
+        archiv = STORE.archiv;
+        odberatele = STORE.odberatele;
+        saveStore();
+        renderArchiv();
+        renderOdberatele();
+        alert('Záloha úspěšně obnovena. ✓');
+      } catch (err) {
+        alert('Chyba při čtení zálohy: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
 function renderArchiv() {
   var c = document.getElementById('archiv-container');
   if (!c) return;
@@ -3618,8 +3938,12 @@ function delRowEl(el) {
 function init() {
   loadStore();
   archiv = STORE.archiv || [];
+  odberatele = STORE.odberatele || [];
   renderArchiv();
+  renderOdberatele();
   renderPristrojePreset();
+  var search = document.getElementById('odberatel-search');
+  if (search) search.addEventListener('input', renderOdberatele);
   var bEl = document.getElementById('btn-nova-elektro');
   if (bEl) bEl.addEventListener('click', function() {
     aktTyp = 'elektro';
@@ -3661,6 +3985,16 @@ document.addEventListener('click', function(e) {
         el, { multiline: true }
       );
       break;
+    case 'openOdberatelModal': openOdberatelModal(); break;
+    case 'closeOdberatel': closeOdberatelModal(); break;
+    case 'ulozitOdberatele': ulozitOdberatele(); break;
+    case 'editOdberatele': openOdberatelModal(el.getAttribute('data-id')); break;
+    case 'smazatOdberatele': smazatOdberatele(el.getAttribute('data-id')); break;
+    case 'odberatelLookupAres': odberatelLookupAres(el); break;
+    case 'pouzitOdberatele': pouzitOdberatele(); break;
+    case 'ulozitJakoOdberatele': ulozitJakoOdberatele(); break;
+    case 'exportDatabaze': exportDatabaze(); break;
+    case 'importDatabaze': importDatabaze(); break;
     case 'lookupObjednatelIco':
       lookupIcoFromAres(
         (document.getElementById('f_objednatel_ico') || {}).value,
