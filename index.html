@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#1c3a5e">
+<meta name="theme-color" content="#2B579A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Revize EL">
@@ -17,7 +17,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#edeae4;--surface:#fafaf8;--border:#ccc9c0;--border-dark:#9a9488;
-  --text:#1c1a16;--muted:#6e6a60;--accent:#b5291c;--accent2:#1c3a5e;
+  --text:#1c1a16;--muted:#6e6a60;--accent:#b5291c;--accent2:#2B579A;
   --gold:#c8962a;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
 }
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh}
@@ -89,7 +89,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .archiv-table td{border-bottom:1px solid var(--border);padding:.6rem .75rem}
 .archiv-table tr:hover td{background:#f0f4ff;cursor:pointer}
 .archiv-empty{text-align:center;padding:3rem;color:var(--muted);font-size:.88rem}
-.badge-el{background:#e3f0ff;color:#1c3a5e;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
+.badge-el{background:#e3f0ff;color:#2B579A;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
 .badge-lps{background:#fff3e0;color:#8a5200;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
 
 /* ═══ NASTAVENÍ ═══ */
@@ -185,7 +185,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 
 /* ═══ MAGIC / INFO ═══ */
 .magic-btn{font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;
-  text-transform:uppercase;background:linear-gradient(135deg,#1c3a5e,#2a5298);
+  text-transform:uppercase;background:linear-gradient(135deg,#2B579A,#2a5298);
   color:#fff;border:none;padding:.4rem .9rem;cursor:pointer;
   border-radius:2px;margin-bottom:.5rem;transition:all .15s}
 .magic-btn:hover{background:linear-gradient(135deg,#0f2540,#1a3a70)}
@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.8 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.9 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -1395,7 +1395,7 @@ function propsatTechnika() {
   if (t.jmeno) {
     badge.innerHTML = '<div style="background:#f0f6ff;border:1px solid #b8d0f0;padding:.6rem 1rem;border-radius:2px;margin-bottom:.75rem"><strong>' + t.jmeno + '</strong> | Ev.c.: ' + (t.osvedceni || '—') + ' | IČO: ' + (t.ico || '—') + '</div>';
   } else {
-    badge.innerHTML = '<div class="warn-box">Profil RT neni nastaven. <a href="#" data-action="nastaveni" style="color:#1c3a5e;font-weight:600">Nastavit</a></div>';
+    badge.innerHTML = '<div class="warn-box">Profil RT neni nastaven. <a href="#" data-action="nastaveni" style="color:#2B579A;font-weight:600">Nastavit</a></div>';
   }
 }
 
@@ -1617,7 +1617,7 @@ function mkDelTd() {
   cpBtn.className = 'del-btn';
   cpBtn.textContent = '⧉';
   cpBtn.title = 'Kopírovat řádek';
-  cpBtn.style.cssText = 'color:#1c3a5e;font-size:.72rem;margin-right:2px';
+  cpBtn.style.cssText = 'color:#2B579A;font-size:.72rem;margin-right:2px';
   cpBtn.dataset.action = 'copyRow';
   td.appendChild(cpBtn);
   var btn = document.createElement('button');
@@ -1846,7 +1846,7 @@ function mkSelectTd(options, selected, onChange) {
   var td = document.createElement('td');
   td.style.cssText = 'border:1px solid #ccc;background:#f0f6ff';
   var sel = document.createElement('select');
-  sel.style.cssText = 'width:100%;border:1px solid #b8d0f0;background:#fff;font-size:.8rem;text-align:center;cursor:pointer;padding:2px 4px;border-radius:2px;font-weight:600;color:#1c3a5e';
+  sel.style.cssText = 'width:100%;border:1px solid #b8d0f0;background:#fff;font-size:.8rem;text-align:center;cursor:pointer;padding:2px 4px;border-radius:2px;font-weight:600;color:#2B579A';
   options.forEach(function(o) {
     var opt = document.createElement('option');
     opt.value = o;
@@ -1877,7 +1877,7 @@ function mkRcdActionTd(rcdGroupId, isLast) {
     cpBtn.className = 'del-btn';
     cpBtn.textContent = '⧉';
     cpBtn.title = 'Kopírovat celý chránič';
-    cpBtn.style.cssText = 'color:#1c3a5e;font-size:.72rem;margin-right:2px';
+    cpBtn.style.cssText = 'color:#2B579A;font-size:.72rem;margin-right:2px';
     cpBtn.dataset.action = 'copyRcdGroup';
     cpBtn.dataset.group = rcdGroupId;
     td.appendChild(cpBtn);
@@ -1917,7 +1917,7 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
     // Fáze — předvyplněná, tučná
     var tdF = mkTd(f);
     tdF.querySelector('input').value = f;
-    tdF.querySelector('input').style.cssText += ';font-weight:bold;color:#1c3a5e';
+    tdF.querySelector('input').style.cssText += ';font-weight:bold;color:#2B579A';
     tdF.querySelector('input').readOnly = true;
     tr.appendChild(tdF);
     // Vyp. mA, čas ms, 5×IΔn ms, Ut V — editovatelné
@@ -2204,7 +2204,7 @@ function renderChecklist() {
   var html = '';
   CL.forEach(function(sec, si) {
     html += '<div style="margin-bottom:1rem">';
-    html += '<div style="font-family:monospace;font-size:.62rem;font-weight:500;text-transform:uppercase;color:#1c3a5e;padding:.35rem 0;margin-bottom:.4rem;border-bottom:1px solid #ccc">' + sec.s + '</div>';
+    html += '<div style="font-family:monospace;font-size:.62rem;font-weight:500;text-transform:uppercase;color:#2B579A;padding:.35rem 0;margin-bottom:.4rem;border-bottom:1px solid #ccc">' + sec.s + '</div>';
     sec.items.forEach(function(item, ii) {
       html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
       html += '<input type="checkbox" id="chk-' + si + '-' + ii + '" style="width:14px;height:14px;margin-top:2px;flex-shrink:0">';
@@ -3947,7 +3947,7 @@ function renderOdberatele() {
     html += '<td style="font-size:.78rem;color:#444">' + esc(kontakt || '—') + '</td>';
     html += '<td style="text-align:center;font-weight:600;font-family:monospace">' + pocet + '</td>';
     html += '<td style="white-space:nowrap">' +
-      '<button class="del-btn" data-action="editOdberatele" data-id="' + esc(o.id) + '" title="Upravit" style="color:#1c3a5e;margin-right:2px">✎</button>' +
+      '<button class="del-btn" data-action="editOdberatele" data-id="' + esc(o.id) + '" title="Upravit" style="color:#2B579A;margin-right:2px">✎</button>' +
       '<button class="del-btn" data-action="smazatOdberatele" data-id="' + esc(o.id) + '" title="Smazat">✕</button>' +
       '</td>';
     html += '</tr>';
@@ -4161,8 +4161,8 @@ function renderArchiv() {
     html += '<td style="font-size:.85rem">' + (z.misto || '—') + '</td>';
     html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + '</td>';
     html += '<td>' + (z.vysledek === 'schopno' ? '✅' : (z.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
-    html += '<td style="white-space:nowrap">' +
-      (hasData ? '<button class="del-btn" data-action="navazatZpravu" data-idx="' + i + '" style="color:#1c3a5e;margin-right:2px" title="Navázat — vytvořit novou zprávu jako kopii">🔗</button>' : '') +
+    html += '<td style="white-space:nowrap;text-align:right">' +
+      (hasData ? '<button data-action="navazatZpravu" data-idx="' + i + '" title="Vytvořit novou zprávu jako kopii této" style="background:#fff;border:1px solid var(--accent2);color:var(--accent2);font-family:var(--mono);font-size:.65rem;letter-spacing:.04em;padding:.28rem .55rem;border-radius:3px;cursor:pointer;margin-right:4px;text-transform:uppercase;font-weight:500">🔗 Navázat</button>' : '') +
       '<button class="del-btn" data-action="smazatZpravu" data-idx="' + i + '" style="margin-left:4px" title="Smazat">✕</button>' +
       '</td>';
     html += '</tr>';
