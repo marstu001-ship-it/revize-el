@@ -315,7 +315,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.5 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v3.6 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
@@ -2293,11 +2293,47 @@ function syncLps1390(source) {
 function updateLpsMereniTexts() {
   var sel = document.getElementById('lps_prohlidka_norma');
   var is1390 = sel && sel.value === '1390';
-  // Tab 2. Objekt & LPS — label Třída LPS
+  // Tab 2. Objekt & LPS — label Třída LPS + přepnutí možností dropdownu
+  // ČSN 34 1390 neznala třídy I–IV; objekty se dělily na hromosvody
+  // obyčejný / zesílený / zvláštní. ČSN EN 62305 má Třídu LPS I–IV.
   var tridaHint = document.getElementById('lps-trida-hint');
   if (tridaHint) tridaHint.textContent = is1390
-    ? '(I–IV dle ČSN 34 1390)'
+    ? '(kategorie dle ČSN 34 1390)'
     : '(I–IV dle výpočtu rizika ČSN EN 62305-2)';
+  var tridaSel = document.getElementById('lps_trida');
+  if (tridaSel) {
+    var wantMode = is1390 ? '1390' : '62305';
+    if (tridaSel.dataset.mode !== wantMode) {
+      var prev = tridaSel.value;
+      tridaSel.innerHTML = '';
+      var options = is1390
+        ? [
+            { v: 'Hromosvod obyčejný', sel: true },
+            { v: 'Hromosvod zesílený', sel: false },
+            { v: 'Hromosvod zvláštní', sel: false }
+          ]
+        : [
+            { v: 'I', sel: false },
+            { v: 'II', sel: false },
+            { v: 'III', sel: true },
+            { v: 'IV', sel: false }
+          ];
+      options.forEach(function(o) {
+        var opt = document.createElement('option');
+        opt.value = o.v;
+        opt.textContent = o.v;
+        if (o.sel) opt.selected = true;
+        tridaSel.appendChild(opt);
+      });
+      // Pokud byla dříve vyplněna hodnota, která existuje i v nové
+      // sadě (např. uživatel přepíná zpět), vyber ji; jinak default.
+      var matching = Array.prototype.slice.call(tridaSel.options).some(function(o) {
+        if (o.value === prev) { tridaSel.value = prev; return true; }
+        return false;
+      });
+      tridaSel.dataset.mode = wantMode;
+    }
+  }
   // Tab 5. Měření zemničů — nadpis, info, metoda přechod, metoda zemní
   var head = document.getElementById('lps-mereni-head-norma');
   var info = document.getElementById('lps-mereni-info');
