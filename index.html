@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.9<span class="ver-date"> · 2026-04-21</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.0<span class="ver-date"> · 2026-04-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -480,6 +480,23 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <li>Pro pokračování klepněte na 🎤 znovu</li>
       </ol>
       <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Tip: na mobilu má klávesnice taky vlastní mikrofon — to je systémový diktát, funguje paralelně s naším.</div>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🤖 AI rozpoznávání závad z fotky</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyfotíte závadu, AI ji popíše, zařadí do kategorie C1/C2/C3 a navrhne konkrétní článek ČSN. Vy jen potvrdíte nebo upravíte.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Jednorázově: <strong>⚙ Nastavení → AI rozpoznávání závad</strong> → vyberte poskytovatele a vložte API klíč</li>
+        <li>Doporučeno: <strong>Google Gemini Flash</strong> — zdarma do 1500 dotazů/den, klíč zdarma na <em>aistudio.google.com/apikey</em></li>
+        <li>Alternativy: <strong>Anthropic Claude</strong> nebo <strong>OpenAI GPT-4o</strong> (placené, vlastní klíč)</li>
+        <li>U závady: klepněte <strong>🤖 Popsat fotkou (AI)</strong> → vyberte/vyfoťte závadu</li>
+        <li>AI vrátí návrh za 2–5 sekund — popis, kategorii, normu</li>
+        <li>Můžete upravit a kliknete <strong>✓ Použít</strong> → vyplní se do polí závady, fotka se přidá</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Bez nastavení tlačítko nesvítí, aplikace funguje jako dřív. API klíč je uložen pouze v tomto prohlížeči.</div>
     </div>
   </div>
 
@@ -714,6 +731,36 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div style="margin-top:1rem;display:flex;gap:.75rem">
       <button class="btn btn-gold" data-action="ulozitTechnika">💾 Uložit profil</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="home">Zpět</button>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">🤖 AI rozpoznávání závad <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">vyfotíte závadu, AI navrhne popis + kategorii + normu</span></div>
+    <p style="font-size:.85rem;line-height:1.6;margin-bottom:.8rem;color:var(--muted)">
+      Vyberte poskytovatele a vložte vlastní API klíč. Bez klíče funkce <em>nesvítí</em> — aplikace se chová jako dřív.
+    </p>
+    <div class="g2">
+      <div class="f">
+        <label>Poskytovatel AI</label>
+        <select id="ai_provider">
+          <option value="">— Žádný (vypnuto) —</option>
+          <option value="gemini">Google Gemini Flash ⭐ doporučeno (zdarma)</option>
+          <option value="claude">Anthropic Claude (placené, nejvyšší kvalita)</option>
+          <option value="openai">OpenAI GPT-4o (placené)</option>
+        </select>
+      </div>
+      <div class="f">
+        <label>API klíč <span id="ai_key_link" style="font-size:.6rem;color:var(--muted)"></span></label>
+        <input type="password" id="ai_api_key" placeholder="vložte klíč zde" autocomplete="off">
+      </div>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);margin-top:.5rem;line-height:1.6">
+      <strong>Jak získat klíč:</strong>
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Gemini</strong> (zdarma do 1500/den): <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent2)">aistudio.google.com/apikey</a> → přihlásit Google účtem → „Create API key"</li>
+        <li><strong>Claude</strong> (placené): <a href="https://console.anthropic.com" target="_blank" rel="noopener" style="color:var(--accent2)">console.anthropic.com</a> → API Keys → Create</li>
+        <li><strong>OpenAI</strong> (placené): <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--accent2)">platform.openai.com/api-keys</a></li>
+      </ul>
+      <div style="margin-top:.5rem">Klíč je uložen jen v tomto prohlížeči (localStorage), nikam neodchází. Fotky se posílají na servery zvoleného poskytovatele jen v okamžiku analýzy.</div>
     </div>
   </div>
   <div class="scard">
@@ -1340,6 +1387,17 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-ai">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">🤖 AI rozpoznávání závady</div>
+    <div id="ai-modal-body" style="min-height:200px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeAiModal">Zrušit</button>
+      <button class="btn btn-gold" id="ai-pouzit-btn" data-action="pouzitAiVysledek" disabled>✓ Použít</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-snippety">
   <div class="modal" style="max-width:680px">
     <div class="modal-title">📋 Knihovna textů</div>
@@ -1409,7 +1467,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 
 
 <script>
-var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [], snippety: [] };
+var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [], snippety: [], aiConfig: {} };
 var aktTyp = 'elektro';
 var zavadyN = 0;
 var archiv = [];
@@ -1427,7 +1485,7 @@ var IDB_VERSION = 1;
 var IDB_STORE = 'kv';
 var idb = null;
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
-                  'snippety',
+                  'snippety', 'aiConfig',
                   'last_backup_at', 'archiv_count_at_last_backup'];
 
 // iOS Safari (tab i PWA) má historicky bugy v IndexedDB v WebKit content
@@ -1533,6 +1591,7 @@ async function loadStore() {
         STORE.archiv = d.archiv || [];
         STORE.odberatele = d.odberatele || [];
         STORE.snippety = d.snippety || [];
+        STORE.aiConfig = d.aiConfig || {};
         STORE.last_backup_at = d.last_backup_at || null;
         STORE.archiv_count_at_last_backup = d.archiv_count_at_last_backup || 0;
         // Zapsat do IDB (jednorázová migrace)
@@ -1950,6 +2009,12 @@ function nacistTechnika() {
   // Napojit listenery na file inputy (pouze jednou)
   wireImageUpload('rt_razitko_input', 'razitko', renderRazitkoPreview);
   wireImageUpload('rt_podpis_input', 'podpis', renderPodpisPreview);
+  // AI config
+  var aiCfg = STORE.aiConfig || {};
+  var providerEl = document.getElementById('ai_provider');
+  var keyEl = document.getElementById('ai_api_key');
+  if (providerEl) providerEl.value = aiCfg.provider || '';
+  if (keyEl) keyEl.value = aiCfg.apiKey || '';
 }
 
 // Společný helper pro nahrání obrázku do STORE.technik[key].
@@ -2022,6 +2087,13 @@ function ulozitTechnika() {
     var el = document.getElementById('rt_' + k); if (el) t[k] = el.value;
   });
   STORE.technik = t; // razítko zůstává, bylo uloženo dříve při výběru souboru
+  // AI config
+  var providerEl = document.getElementById('ai_provider');
+  var keyEl = document.getElementById('ai_api_key');
+  STORE.aiConfig = {
+    provider: providerEl ? providerEl.value : '',
+    apiKey: keyEl ? keyEl.value.trim() : ''
+  };
   alert('Profil uložen');
   saveStore();
 }
@@ -2820,10 +2892,12 @@ function addZavada() {
   // Sekce „Fotky závady" — span2 (přes celou šířku)
   var fFoto = document.createElement('div');
   fFoto.className = 'f span2';
+  var aiActive = !!(STORE.aiConfig && STORE.aiConfig.provider && STORE.aiConfig.apiKey);
   fFoto.innerHTML =
     '<label>Fotky závady <span style="font-size:.6rem;color:var(--muted)">(max 6, automaticky zkomprimováno)</span></label>' +
     '<div style="display:flex;gap:.5rem;align-items:center;margin-top:.3rem;flex-wrap:wrap">' +
     '  <input type="file" class="zavada-foto-input" accept="image/*" multiple capture="environment" style="flex:1;min-width:180px;font-size:.78rem">' +
+    (aiActive ? '  <button type="button" class="btn btn-gold zavada-ai-btn" style="font-size:.7rem;padding:.4rem .7rem;white-space:nowrap" title="AI rozpozná závadu z fotky a vyplní popis + normu + kategorii">🤖 Popsat fotkou (AI)</button>' : '') +
     '</div>' +
     '<div class="zavada-fotky" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem"></div>';
   body.appendChild(fFoto);
@@ -2843,6 +2917,27 @@ function addZavada() {
     });
     ev.target.value = '';
   });
+  // AI tlačítko — když uživatel klikne, otevře skrytý file input;
+  // po výběru fotky spustí analýzu a otevře modál s výsledkem.
+  var aiBtn = fFoto.querySelector('.zavada-ai-btn');
+  if (aiBtn) {
+    aiBtn.addEventListener('click', function() {
+      // Skrytý input volíme pokaždé znovu, ať můžeme vybrat stejnou fotku
+      var hidden = document.createElement('input');
+      hidden.type = 'file';
+      hidden.accept = 'image/*';
+      hidden.capture = 'environment';
+      hidden.style.display = 'none';
+      hidden.addEventListener('change', function(ev) {
+        var file = ev.target.files && ev.target.files[0];
+        if (!file) return;
+        startAiAnalysis(div, galerie, file);
+      });
+      document.body.appendChild(hidden);
+      hidden.click();
+      setTimeout(function() { hidden.remove(); }, 60000);
+    });
+  }
 
   div.appendChild(body);
   list.appendChild(div);
@@ -3415,6 +3510,264 @@ function compressImage(file, maxDim, quality) {
     reader.onerror = function() { reject(new Error('Nelze přečíst soubor')); };
     reader.readAsDataURL(file);
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// AI rozpoznávání závad (Gemini Flash / Claude / OpenAI)
+// Vstup: dataURL fotky. Výstup: { kod: 'C1|C2|C3', popis, norma }.
+// Volá se z modálu rozpoznávání u jednotlivých závad.
+// ═══════════════════════════════════════════════════════════════════════
+function buildAIPrompt() {
+  var ctx;
+  if (aktTyp === 'lps') {
+    ctx = 'Toto je revize LPS (hromosvod / ochrana před bleskem). Normy: ČSN EN 62305-1 až -4 ed.2, případně ČSN 34 1390 pro starší instalace (před 2004), ČSN 33 2000-5-54 ed.3.';
+  } else {
+    ctx = 'Toto je revize elektrické instalace. Normy: ČSN 33 2000 řada (zejména 4-41 ed.3, 6 ed.2, 5-54 ed.3, 5-51 ed.3, 5-52 ed.2, 7-701 ed.3), ČSN EN 61140 ed.3, NV 190/2022 Sb.';
+  }
+  return 'Jsi expert na české elektroinstalace a normy ČSN. Analyzuj přiloženou fotografii a identifikuj závadu na elektrickém zařízení.\n\n' +
+    'Kontext: ' + ctx + '\n\n' +
+    'Odpověz POUZE čistým JSON objektem (žádný markdown, žádné okolní texty), ve formátu:\n' +
+    '{\n' +
+    '  "kod": "C1" nebo "C2" nebo "C3",\n' +
+    '  "popis": "konkrétní popis závady jednou až dvěma větami v češtině",\n' +
+    '  "norma": "konkrétní článek ČSN, kterou závada porušuje (např. ČSN 33 2000-4-41 ed.3, čl. 411.3.2)"\n' +
+    '}\n\n' +
+    'Klasifikace:\n' +
+    '- C1 = nebezpečí (přímé ohrožení života/zdraví, odhalené živé části, chybějící ochr. vodič, propojení N+PE za RCD)\n' +
+    '- C2 = potenciálně nebezpečné (poškozená izolace, chybějící krytí IP, nesprávné značení, chybějící SPD)\n' +
+    '- C3 = doporučení (estetické vady, modernizace, doporučené úpravy bez bezprostředního rizika)\n\n' +
+    'Pokud na fotografii žádná závada není viditelná, vrať C3 a popiš, co vidíš.';
+}
+
+function aiAnalyzeImage(dataUrl) {
+  var cfg = STORE.aiConfig || {};
+  if (!cfg.provider || !cfg.apiKey) {
+    return Promise.reject(new Error('AI není nakonfigurováno. Otevřete Nastavení → AI rozpoznávání závad a zadejte API klíč.'));
+  }
+  var prompt = buildAIPrompt();
+  var base64 = (dataUrl || '').replace(/^data:image\/\w+;base64,/, '');
+  if (!base64) return Promise.reject(new Error('Neplatná fotka'));
+  if (cfg.provider === 'gemini') return aiAnalyzeGemini(prompt, base64, cfg.apiKey);
+  if (cfg.provider === 'claude') return aiAnalyzeClaude(prompt, base64, cfg.apiKey);
+  if (cfg.provider === 'openai') return aiAnalyzeOpenAI(prompt, base64, cfg.apiKey);
+  return Promise.reject(new Error('Neznámý poskytovatel: ' + cfg.provider));
+}
+
+function aiAnalyzeGemini(prompt, base64, apiKey) {
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(apiKey);
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [
+        { text: prompt },
+        { inline_data: { mime_type: 'image/jpeg', data: base64 } }
+      ]}],
+      generationConfig: { responseMimeType: 'application/json' }
+    })
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error('Gemini ' + r.status + ': ' + t.slice(0, 250)); });
+    return r.json();
+  }).then(function(data) {
+    var text = (((data.candidates || [])[0] || {}).content || {}).parts;
+    text = text && text[0] && text[0].text;
+    if (!text) throw new Error('Prázdná odpověď od Gemini');
+    return parseAIResponse(text);
+  });
+}
+
+function aiAnalyzeClaude(prompt, base64, apiKey) {
+  return fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+        { type: 'text', text: prompt }
+      ]}]
+    })
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error('Claude ' + r.status + ': ' + t.slice(0, 250)); });
+    return r.json();
+  }).then(function(data) {
+    var text = (data.content || [])[0] && data.content[0].text;
+    if (!text) throw new Error('Prázdná odpověď od Claude');
+    return parseAIResponse(text);
+  });
+}
+
+function aiAnalyzeOpenAI(prompt, base64, apiKey) {
+  return fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 1024,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64 } }
+      ]}]
+    })
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error('OpenAI ' + r.status + ': ' + t.slice(0, 250)); });
+    return r.json();
+  }).then(function(data) {
+    var text = ((data.choices || [])[0] || {}).message && data.choices[0].message.content;
+    if (!text) throw new Error('Prázdná odpověď od OpenAI');
+    return parseAIResponse(text);
+  });
+}
+
+function parseAIResponse(text) {
+  var clean = (text || '').trim();
+  // Občas modely vrací JSON v markdown bloku — odstranit
+  clean = clean.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+  // Najít první { a poslední } pokud je kolem text
+  var start = clean.indexOf('{');
+  var end = clean.lastIndexOf('}');
+  if (start >= 0 && end > start) clean = clean.slice(start, end + 1);
+  var obj;
+  try { obj = JSON.parse(clean); }
+  catch(e) { throw new Error('Nepodařilo se parsovat odpověď AI: ' + clean.slice(0, 150)); }
+  var kod = (obj.kod || 'C3').toString().trim().toUpperCase();
+  if (kod !== 'C1' && kod !== 'C2' && kod !== 'C3') kod = 'C3';
+  return {
+    kod: kod,
+    popis: (obj.popis || '').toString().trim(),
+    norma: (obj.norma || '').toString().trim()
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// AI rozpoznávání — UI flow (modal s loadingem, výsledkem, použít)
+// ═══════════════════════════════════════════════════════════════════════
+window.__aiCtx = null;
+
+function startAiAnalysis(zavadaDiv, galerieEl, file) {
+  // Komprese → otevři modal s loadingem → volej AI → ukaž výsledek
+  compressImage(file, 1200, 0.8).then(function(dataUrl) {
+    window.__aiCtx = { zavadaDiv: zavadaDiv, galerieEl: galerieEl, fotoDataUrl: dataUrl, result: null };
+    renderAiModalLoading();
+    var m = document.getElementById('modal-ai');
+    if (m) m.classList.add('open');
+    return aiAnalyzeImage(dataUrl);
+  }).then(function(result) {
+    if (!window.__aiCtx) return;
+    window.__aiCtx.result = result;
+    renderAiModalResult();
+  }).catch(function(err) {
+    console.error('AI chyba:', err);
+    renderAiModalError(err && err.message ? err.message : String(err));
+  });
+}
+
+function renderAiModalLoading() {
+  var body = document.getElementById('ai-modal-body');
+  var btn = document.getElementById('ai-pouzit-btn');
+  if (btn) btn.disabled = true;
+  if (!body) return;
+  body.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1.5rem 0">' +
+    (window.__aiCtx && window.__aiCtx.fotoDataUrl
+      ? '<img src="' + window.__aiCtx.fotoDataUrl + '" style="max-width:240px;max-height:160px;border-radius:4px;border:1px solid var(--border)">'
+      : '') +
+    '<div style="font-family:var(--mono);font-size:.85rem;color:var(--accent2)">⏳ Analyzuji fotku…</div>' +
+    '<div style="font-size:.75rem;color:var(--muted)">Trvá to obvykle 2–5 sekund</div>' +
+    '</div>';
+}
+
+function renderAiModalError(msg) {
+  var body = document.getElementById('ai-modal-body');
+  var btn = document.getElementById('ai-pouzit-btn');
+  if (btn) btn.disabled = true;
+  if (!body) return;
+  body.innerHTML =
+    '<div class="warn-box" style="margin-bottom:1rem">' +
+    '<strong>⚠️ Analýza selhala</strong><br>' +
+    '<span style="font-size:.82rem">' + esc(msg) + '</span>' +
+    '</div>' +
+    '<div style="font-size:.78rem;color:var(--muted)">' +
+    'Možné příčiny: neplatný API klíč, vyčerpaný limit, ztracené spojení nebo poskytovatel je dočasně mimo provoz. ' +
+    'Zkontrolujte nastavení v <strong>⚙ Nastavení → AI rozpoznávání závad</strong>.' +
+    '</div>';
+}
+
+function renderAiModalResult() {
+  var body = document.getElementById('ai-modal-body');
+  var btn = document.getElementById('ai-pouzit-btn');
+  if (!body || !window.__aiCtx || !window.__aiCtx.result) return;
+  var r = window.__aiCtx.result;
+  body.innerHTML =
+    '<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">' +
+    '<img src="' + window.__aiCtx.fotoDataUrl + '" style="width:180px;height:135px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0">' +
+    '<div style="flex:1;min-width:200px;font-size:.78rem;color:var(--muted);align-self:flex-start">AI navrhuje níže uvedené hodnoty. Můžete je upravit, než kliknete <strong>Použít</strong>.</div>' +
+    '</div>' +
+    '<div class="g2">' +
+    '<div class="f"><label>Kategorie</label>' +
+    '<select id="ai_kod">' +
+    '<option value="C1"' + (r.kod === 'C1' ? ' selected' : '') + '>C1 – Nebezpečí</option>' +
+    '<option value="C2"' + (r.kod === 'C2' ? ' selected' : '') + '>C2 – Potenciálně nebezpečné</option>' +
+    '<option value="C3"' + (r.kod === 'C3' ? ' selected' : '') + '>C3 – Doporučení</option>' +
+    '</select></div>' +
+    '<div class="f"><label>Norma</label><input type="text" id="ai_norma" value="' + esc(r.norma) + '"></div>' +
+    '<div class="f span2"><label>Popis závady</label><textarea id="ai_popis" style="min-height:80px">' + esc(r.popis) + '</textarea></div>' +
+    '</div>';
+  if (btn) btn.disabled = false;
+}
+
+function closeAiModal() {
+  var m = document.getElementById('modal-ai');
+  if (m) m.classList.remove('open');
+  window.__aiCtx = null;
+}
+
+function pouzitAiVysledek() {
+  if (!window.__aiCtx || !window.__aiCtx.zavadaDiv) { closeAiModal(); return; }
+  // Načíst aktuální (možná upravené) hodnoty z modálu
+  var kodEl = document.getElementById('ai_kod');
+  var popisEl = document.getElementById('ai_popis');
+  var normaEl = document.getElementById('ai_norma');
+  var kod = kodEl ? kodEl.value : 'C3';
+  var popis = popisEl ? popisEl.value : '';
+  var norma = normaEl ? normaEl.value : '';
+  var div = window.__aiCtx.zavadaDiv;
+  // Vyplnit kód (select s hlavními kódy)
+  var sel = div.querySelector('select');
+  if (sel) {
+    sel.value = kod;
+    if (typeof updZavadaKod === 'function') updZavadaKod(sel);
+  }
+  // Popis = první textarea
+  var ta = div.querySelectorAll('textarea');
+  if (ta[0]) {
+    ta[0].value = popis;
+    try { ta[0].dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+  }
+  // Norma = druhý text input (první je 'Po odstranění', druhý 'Norma')
+  var inps = div.querySelectorAll('input[type=text]');
+  if (inps[1]) {
+    inps[1].value = norma;
+    try { inps[1].dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+  }
+  // Přidat fotku do galerie závady (pokud se vejde)
+  if (window.__aiCtx.galerieEl) {
+    var existCount = window.__aiCtx.galerieEl.querySelectorAll('img.zavada-thumb').length;
+    if (existCount < 6) {
+      addZavadaThumb(window.__aiCtx.galerieEl, window.__aiCtx.fotoDataUrl);
+    }
+  }
+  closeAiModal();
 }
 
 function flashElement(el) {
@@ -5356,6 +5709,8 @@ document.addEventListener('click', function(e) {
     case 'zavritKnihovnu': zavritKnihovnu(); break;
     case 'generujPDFPotvrzeno': generujPDFPotvrzeno(); break;
     case 'closePdfOptions': closePdfOptions(); break;
+    case 'closeAiModal': closeAiModal(); break;
+    case 'pouzitAiVysledek': pouzitAiVysledek(); break;
     case 'ulozitTechnika': ulozitTechnika(); break;
     case 'smazatRazitko': smazatRazitko(); break;
     case 'smazatPodpis': smazatPodpis(); break;
