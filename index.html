@@ -356,7 +356,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.4<span class="ver-date"> · 2026-04-21</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.5<span class="ver-date"> · 2026-04-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -1089,6 +1089,27 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeOdberatel">Zrušit</button>
       <button class="btn btn-gold" data-action="ulozitOdberatele">✓ Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-pdf-options">
+  <div class="modal">
+    <div class="modal-title">📄 Generovat PDF</div>
+    <div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">U podpisu revizního technika v PDF můžete vložit uložené razítko a/nebo podpis. Vyberte, co se má použít:</div>
+    <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.25rem">
+      <div class="char-row" id="pdf-razitko-row" style="display:none">
+        <input type="checkbox" id="pdf_use_razitko" checked>
+        <label for="pdf_use_razitko">Vložit <strong>razítko</strong> technika</label>
+      </div>
+      <div class="char-row" id="pdf-podpis-row" style="display:none">
+        <input type="checkbox" id="pdf_use_podpis" checked>
+        <label for="pdf_use_podpis">Vložit <strong>podpis</strong> technika</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closePdfOptions">Zrušit</button>
+      <button class="btn btn-gold" data-action="generujPDFPotvrzeno">📄 Generovat PDF</button>
     </div>
   </div>
 </div>
@@ -3159,8 +3180,51 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
+// Wrapper přes generujPDF — pokud má technik uložené razítko nebo
+// podpis, otevře modal s volbou, co do PDF vložit. Jinak rovnou generuje.
+function generujPDFAsk() {
+  var t = STORE.technik || {};
+  var hasRaz = !!t.razitko;
+  var hasPod = !!t.podpis;
+  if (!hasRaz && !hasPod) {
+    // Nic není nahráno → rovnou generovat
+    window.__pdfOpts = { razitko: false, podpis: false };
+    generujPDF();
+    return;
+  }
+  // Ukázat modal s checkboxy podle toho, co je k dispozici
+  var rowR = document.getElementById('pdf-razitko-row');
+  var rowP = document.getElementById('pdf-podpis-row');
+  if (rowR) rowR.style.display = hasRaz ? '' : 'none';
+  if (rowP) rowP.style.display = hasPod ? '' : 'none';
+  // Default check obou (uživatel typicky chce vše vložit)
+  var chR = document.getElementById('pdf_use_razitko');
+  var chP = document.getElementById('pdf_use_podpis');
+  if (chR) chR.checked = hasRaz;
+  if (chP) chP.checked = hasPod;
+  var m = document.getElementById('modal-pdf-options');
+  if (m) m.classList.add('open');
+}
+
+function closePdfOptions() {
+  var m = document.getElementById('modal-pdf-options');
+  if (m) m.classList.remove('open');
+}
+
+function generujPDFPotvrzeno() {
+  var chR = document.getElementById('pdf_use_razitko');
+  var chP = document.getElementById('pdf_use_podpis');
+  window.__pdfOpts = {
+    razitko: !!(chR && chR.checked),
+    podpis: !!(chP && chP.checked)
+  };
+  closePdfOptions();
+  generujPDF();
+}
+
 function generujPDF() {
   var D = getData();
+  var pdfOpts = window.__pdfOpts || { razitko: true, podpis: true };
   var pages = document.getElementById('pdf-pages');
   if (!pages) return;
   pages.innerHTML = '';
@@ -3281,8 +3345,8 @@ function generujPDF() {
     '<div class="podp-grid">' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center">' +
-      ((STORE.technik && STORE.technik.razitko) ? '<img src="' + STORE.technik.razitko + '" style="max-height:16mm;max-width:48mm;display:block;margin:0 auto" alt="razítko">' : '') +
-      ((STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:10mm;max-width:48mm;display:block;margin:0 auto" alt="podpis">' : '') +
+      ((pdfOpts.razitko && STORE.technik && STORE.technik.razitko) ? '<img src="' + STORE.technik.razitko + '" style="max-height:16mm;max-width:48mm;display:block;margin:0 auto" alt="razítko">' : '') +
+      ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:10mm;max-width:48mm;display:block;margin:0 auto" alt="podpis">' : '') +
       '<div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
     '</div></div>' + ftr();
   pages.appendChild(p1);
@@ -4666,7 +4730,9 @@ document.addEventListener('click', function(e) {
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'ulozit': ulozit(); break;
     case 'nacist': nacist(); break;
-    case 'generujPDF': generujPDF(); break;
+    case 'generujPDF': generujPDFAsk(); break;
+    case 'generujPDFPotvrzeno': generujPDFPotvrzeno(); break;
+    case 'closePdfOptions': closePdfOptions(); break;
     case 'ulozitTechnika': ulozitTechnika(); break;
     case 'smazatRazitko': smazatRazitko(); break;
     case 'smazatPodpis': smazatPodpis(); break;
