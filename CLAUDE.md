@@ -187,6 +187,133 @@ dohledání v předchozích diskuzích), nepřerovnávám je.
     výkon + třída ochrany) pro rychlé vložení do tabulky
     spotřebičů.
 
+## 🚀 22. století — futuristické nápady
+
+Odlišné od roadmapy DM Revize — nápady, jak aplikaci posunout
+nad rámec konkurence. Většinou vyžadují víc práce nebo externí
+služby (API klíče, hardware), ale značně by zvedly „wow" faktor.
+Berte jako **inspirační seznam**, ne plán k automatické realizaci.
+
+### 🤖 AI / chytrá automatizace
+
+35. **Foto závady → AI popis + kategorie** *(nejvyšší wow/práce)*
+    Vyfotí se závada, obrázek se pošle na Claude API
+    (anthropic.com), AI vrátí: popis závady, kategorii C1/C2/C3,
+    odkaz na ČSN. Klik „Použít" vloží do závad. Vyžaduje uživatel
+    vlastní API klíč (Anthropic Console). Cena ~5 Kč / zpráva.
+    Realizace: file input + fetch na API + parser response.
+
+36. **Hlasový diktát do textových polí** *(rychlé, zdarma)*
+    Web Speech API (built-in v Chrome/Safari). Tlačítko 🎤 vedle
+    každého textarea → uživatel nadiktuje, přepíše se do pole.
+    Zlatý důl pro práci na střeše s rukavicemi nebo ve špíně.
+
+37. **OCR z fotky displeje měřidla**
+    Tesseract.js (~2 MB, offline OCR). Foto multimetru →
+    extrahované číslo se vloží do správné buňky tabulky měření.
+    Konec přepisování čísel z displeje.
+
+38. **Anomaly detection v měřeních** — strojové učení nenutné,
+    stačí porovnat naměřené hodnoty proti limitům normy a flagnout
+    out-of-range (např. RCD vybavovací čas > 0,3 s u typu A).
+
+### 📡 Hardware integrace
+
+39. **Bluetooth import z měřicích přístrojů**
+    Web Bluetooth API. Moderní Metrel / Chauvin Arnoux přístroje
+    umí přenášet měření přes BT. Pickup hodnoty live → automatický
+    zápis do tabulky. Vyžaduje znalost protokolu konkrétního přístroje.
+
+40. **NFC štítky na rozvaděčích** *(2 Kč za štítek)*
+    Web NFC API (Android Chrome). Uživatel přiloží telefon
+    k NFC tagu na rozvaděči → aplikace načte ID → otevře poslední
+    revizi pro tento rozvaděč. Použitelné jen na Androidu, iOS Safari
+    Web NFC API neumí.
+
+41. **AR overlay na rozvaděči** *(experimentální)*
+    Camera API + WebXR. Telefon ukáže rozvaděč přes kameru, na
+    jednotlivých jističích jsou „přilepené" minulé naměřené
+    hodnoty. Náročné, ale efektní.
+
+42. **Drone foto hromosvodů** — pro LPS revize mít možnost nahrát
+    fotografie z dronu, přidat anotace.
+
+### 📊 Data & vhled
+
+43. **Dashboard s grafy a statistikami**
+    Hlavní strana místo seznamu archivu má grafy: počet revizí
+    /měsíc, podíl elektro vs LPS, % „neschopno provozu", průměrná
+    částka, kategorie závad. Chart.js (~200 kB) zdarma.
+
+44. **Mapa zákazníků**
+    Pin za každého odběratele, klik → historie. Plánování trasy,
+    geografická diverzifikace zakázek. Leaflet.js + OpenStreetMap
+    (zdarma) nebo Mapy.cz API (zdarma do limitu).
+
+45. **Dashboard zákazníka** — public link s heslem, kde si zákazník
+    sám stáhne PDF jeho zprávy, vidí historii revizí.
+
+### 🔔 Notifikace
+
+46. **Push notifikace na termín revize**
+    PWA Push API (Service Worker + Notification API). 30 dní před
+    plánovaným termínem revize push: „Za měsíc končí revize
+    u Nováka". Klik → otevře profil zákazníka. iOS Safari
+    nepodporuje push v PWA stejně dobře jako Android.
+
+47. **Email reminder pro klienta** — 30 dní před koncem revize
+    se odešle (přes vlastní mail klient) e-mail upozornění
+    s link na novou objednávku. Wallet pass / kalendář invite.
+
+### ☁️ Cloud sync
+
+48. **Reálná synchronizace mezi zařízeními** *(potřebuje backend)*
+    Firebase Firestore nebo Supabase free tier zvládne 1000+ revizí.
+    Real-time sync mezi PC, telefonem, tabletem. Konec ručního
+    exportu/importu. Náklad: cca 0–500 Kč/měsíc dle objemu.
+
+49. **End-to-end encryption** — data zašifrovat klientskou stranou
+    klíčem odvozeným z hesla, server vidí jen šifrované. Pro citlivé
+    revize (zdravotnictví, výroba).
+
+### 🔐 Bezpečnost a integrita
+
+50. **Kvalifikovaný el. podpis přes ID kartu (eIDAS)**
+    Občanka.cz API → PDF dostane právní platnost. Nutná
+    integrace s eIDAS poskytovateli (PostSignum, I.CA). Velký zásah,
+    ale plná digitalizace.
+
+51. **Blockchain timestamping** *(buzzword check)*
+    OpenTimestamps — hash PDF se zapíše do Bitcoin blockchain,
+    nezpochybnitelný důkaz, že existoval k danému datu. Užitečné
+    při soudních sporech. Zdarma.
+
+### 🎨 UI / UX
+
+52. **Dark mode** *(už v roadmapě jako #20)* + auto-přepínání
+    podle systému / času.
+
+53. **Gesta**: swipe mezi taby, dlouhý stisk → kontextové menu
+    na řádku tabulky.
+
+54. **Apple Watch / Wear OS companion** — start/stop měření,
+    rychlá fotka závady, push notifikace.
+
+55. **Kolaborace v reálném čase** — víc revizních techniků na
+    stejné zprávě (jako Google Docs). Vyžaduje cloud sync.
+
+### Pořadí implementace dle wow/cena
+
+| # | Wow | Cena |
+|---|---|---|
+| 36 Hlasový diktát | Vysoký | Velmi nízká |
+| 35 AI foto závady | Velmi vysoký | Střední |
+| 43 Dashboard | Střední | Nízká |
+| 40 NFC štítky | Vysoký (jen Android) | Nízká |
+| 46 Push notifikace | Střední | Vyšší |
+| 39 Bluetooth měřidla | Vysoký | Vysoká (per-device) |
+| 48 Cloud sync | Velmi vysoký | Střední (backend) |
+
 ## Technické principy pro další Claude session
 
 - **Je to PWA, nikoli web s backendem.** Vše ukládat do
