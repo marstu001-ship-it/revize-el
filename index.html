@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.5<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.6<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -3645,6 +3645,36 @@ function buildAIPromptPanel() {
     'Vrať obvody v pořadí, v jakém jsou na štítku/popiskách.';
 }
 
+// Záchrana useknutého JSONu z panel scanu — AI začne psát {"obvody":[…]}
+// a uprostřed posledního objektu mu dojdou tokeny. Najdeme poslední
+// kompletní objekt v obvody[] (řez na "},") a JSON dokončíme uměle.
+function salvageTruncatedPanelJson(s) {
+  var arrStart = s.indexOf('"obvody"');
+  if (arrStart < 0) return null;
+  var bracketStart = s.indexOf('[', arrStart);
+  if (bracketStart < 0) return null;
+  // Najít poslední kompletní '},' nebo '}]' v poli
+  var lastObjEnd = -1;
+  var depth = 0;
+  var inStr = false;
+  var escape = false;
+  for (var i = bracketStart + 1; i < s.length; i++) {
+    var ch = s[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\') { escape = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) lastObjEnd = i;
+    }
+  }
+  if (lastObjEnd < 0) return null;
+  var fixed = s.slice(0, lastObjEnd + 1) + ']}';
+  try { return JSON.parse(fixed); } catch(e) { return null; }
+}
+
 function parseAIResponsePanel(text) {
   var clean = (text || '').trim();
   clean = clean.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
@@ -3652,8 +3682,17 @@ function parseAIResponsePanel(text) {
   var end = clean.lastIndexOf('}');
   if (start >= 0 && end > start) clean = clean.slice(start, end + 1);
   var obj;
-  try { obj = JSON.parse(clean); }
-  catch(e) { throw new Error('Nepodařilo se parsovat odpověď AI: ' + clean.slice(0, 150)); }
+  try {
+    obj = JSON.parse(clean);
+  } catch(e) {
+    // Záchrana: AI obvykle vrátí useknutý JSON kvůli token limitu.
+    // Najdeme poslední kompletní `}` před selhanou pozicí v poli `obvody`
+    // a uměle dokončíme JSON. Tím získáme alespoň prvních N obvodů.
+    obj = salvageTruncatedPanelJson(clean);
+    if (!obj) {
+      throw new Error('AI vrátila neúplnou nebo poškozenou odpověď. Zkuste fotku s méně obvody (max ~15 najednou) nebo přepněte na jiného poskytovatele v Nastavení.');
+    }
+  }
   var obvody = Array.isArray(obj.obvody) ? obj.obvody : [];
   return obvody.map(function(o) {
     return {
@@ -3679,7 +3718,14 @@ function aiCallGemini(prompt, base64, apiKey) {
         { text: prompt },
         { inline_data: { mime_type: 'image/jpeg', data: base64 } }
       ]}],
-      generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 4096 }
+      generationConfig: {
+        responseMimeType: 'application/json',
+        maxOutputTokens: 8192,
+        // Vypnout thinking — naše úkoly (popis závady / extrakce obvodů ze
+        // štítku) thinking nepotřebují, navíc by spotřeboval velkou část
+        // token limitu před vlastním JSON výstupem a uřízl by ho.
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     })
   }).then(function(data) {
     var text = (((data.candidates || [])[0] || {}).content || {}).parts;
