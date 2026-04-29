@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v6.9 · 2026-04-29**
+**Aktuální verze: v7.4 · 2026-04-29**
 
 ## Povinné při každé změně kódu před commitem
 
