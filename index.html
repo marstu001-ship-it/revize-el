@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.9<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.0<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -436,7 +436,10 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div id="odberatel-container"><div class="archiv-empty">Zatím žádní odběratelé. Přidejte prvního. 👆</div></div>
   </div>
   <div class="scard">
-    <div class="scard-title">📋 Archiv zpráv</div>
+    <div class="scard-title">📋 Archiv zpráv <span id="archiv-count" style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem"></span></div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;align-items:center;flex-wrap:wrap">
+      <input type="text" id="archiv-search" placeholder="🔍 Hledat (ev. číslo, místo, objednatel, typ, rok…)" style="flex:1;min-width:200px;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem" autocomplete="off">
+    </div>
     <div id="archiv-container"><div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše. 👆</div></div>
   </div>
   <div class="scard">
@@ -5932,13 +5935,40 @@ function importDatabaze() {
 
 function renderArchiv() {
   var c = document.getElementById('archiv-container');
+  var countEl = document.getElementById('archiv-count');
   if (!c) return;
   if (!archiv || archiv.length === 0) {
     c.innerHTML = '<div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše.</div>';
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+  var q = ((document.getElementById('archiv-search') || {}).value || '').trim().toLowerCase();
+  var filtered = archiv.map(function(z, i) { return { z: z, i: i }; });
+  if (q) {
+    filtered = filtered.filter(function(it) {
+      var z = it.z;
+      var typLabel = z.typ === 'elektro' ? 'elektro' : 'lps';
+      var rok = z.datum ? String(z.datum).slice(0, 4) : '';
+      var d = z.data || {};
+      var hay = [
+        z.ev_cislo, z.misto, typLabel, rok,
+        d.objednatel, d.provozovatel, d.adresa, d.firma_zmena2, z.podtyp
+      ].filter(Boolean).join(' ').toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+  }
+  if (countEl) {
+    countEl.textContent = q
+      ? (filtered.length + ' z ' + archiv.length)
+      : (archiv.length + (archiv.length === 1 ? ' zpráva' : (archiv.length < 5 ? ' zprávy' : ' zpráv')));
+  }
+  if (filtered.length === 0) {
+    c.innerHTML = '<div class="archiv-empty">Žádné zprávy neodpovídají hledání „' + esc(q) + '".</div>';
     return;
   }
   var html = '<table class="archiv-table"><thead><tr><th>#</th><th>Typ</th><th>Ev. číslo</th><th>Místo</th><th>Datum</th><th>Stav</th><th></th></tr></thead><tbody>';
-  archiv.forEach(function(z, i) {
+  filtered.forEach(function(it) {
+    var z = it.z, i = it.i;
     var hasData = z.data ? true : false;
     html += '<tr style="cursor:' + (hasData ? 'pointer' : 'default') + '"' + (hasData ? ' data-action="otevritZpravu" data-idx="' + i + '"' : '') + '>';
     html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
@@ -6085,6 +6115,8 @@ async function init() {
   renderPristrojePreset();
   var search = document.getElementById('odberatel-search');
   if (search) search.addEventListener('input', renderOdberatele);
+  var arSearch = document.getElementById('archiv-search');
+  if (arSearch) arSearch.addEventListener('input', renderArchiv);
   var snippetSearch = document.getElementById('snippety-search');
   if (snippetSearch) snippetSearch.addEventListener('input', renderSnippetyList);
   var bEl = document.getElementById('btn-nova-elektro');
