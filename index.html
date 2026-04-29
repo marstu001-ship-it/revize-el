@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.6<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.7<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -4061,38 +4061,50 @@ function renderAiPanelResult() {
     '<img src="' + window.__aiPanelCtx.fotoDataUrl + '" style="width:140px;height:140px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0">' +
     '<div style="flex:1;min-width:200px;font-size:.82rem;color:var(--muted)">AI rozpoznala <strong>' + obvody.length + '</strong> obvodů. Zkontrolujte hodnoty a případně upravte před vložením do tabulky.</div>' +
     '</div>' +
-    '<div style="overflow-x:auto"><table class="data-table" style="font-size:.78rem;table-layout:fixed">' +
-    '<thead><tr>' +
-    '<th style="width:8%">Č.</th>' +
-    '<th style="width:24%">Název obvodu</th>' +
-    '<th style="width:14%">Typ-pol</th>' +
-    '<th style="width:7%">Ch.</th>' +
-    '<th style="width:9%">A</th>' +
-    '<th style="width:10%">IΔn</th>' +
-    '<th>Kabel</th>' +
-    '<th style="width:36px"></th>' +
-    '</tr></thead><tbody id="ai-panel-rows">' +
+    '<div id="ai-panel-rows" style="display:flex;flex-direction:column;gap:.5rem">' +
     obvody.map(function(o, i) {
-      return '<tr data-row-idx="' + i + '">' +
-        '<td><input type="text" value="' + esc(o.cislo) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
-        '<td><input type="text" value="' + esc(o.nazev) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
-        '<td><input type="text" value="' + esc(o.typ_pol) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
-        '<td><input type="text" value="' + esc(o.charakteristika) + '" style="width:100%;border:none;background:transparent;font-size:.78rem;text-align:center"></td>' +
-        '<td><input type="text" value="' + esc(o.proud) + '" style="width:100%;border:none;background:transparent;font-size:.78rem;text-align:center"></td>' +
-        '<td><input type="text" value="' + esc(o.idn) + '" style="width:100%;border:none;background:transparent;font-size:.78rem;text-align:center"></td>' +
-        '<td><input type="text" value="' + esc(o.kabel) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
-        '<td><button type="button" class="del-btn" data-action="aiPanelDeleteRow" data-row-idx="' + i + '" title="Vyřadit řádek">✕</button></td>' +
-        '</tr>';
+      return aiPanelRowCardHtml(o, i);
     }).join('') +
-    '</tbody></table></div>' +
-    '<div style="font-size:.74rem;color:var(--muted);margin-top:.5rem">Po kliknutí <strong>Vložit do tabulky</strong> se přidají všechny zbývající řádky na konec tabulky tohoto rozváděče.</div>';
+    '</div>' +
+    '<div style="font-size:.74rem;color:var(--muted);margin-top:.7rem">Po kliknutí <strong>Vložit do tabulky</strong> se přidají všechny zbývající karty na konec tabulky tohoto rozváděče. Karty s vyplněným <strong>IΔn</strong> se zařadí jako řádky RCD.</div>';
   body.innerHTML = html;
   if (btn) btn.disabled = false;
 }
 
+function aiPanelRowCardHtml(o, i) {
+  var fld = function(label, val, opts) {
+    opts = opts || {};
+    return '<div style="display:flex;flex-direction:column;gap:.15rem;flex:' + (opts.flex || '1 1 auto') + ';min-width:' + (opts.min || '0') + '">' +
+      '<label style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">' + label + '</label>' +
+      '<input type="text" data-field="' + opts.field + '" value="' + esc(val || '') + '" style="' +
+        'width:100%;font-size:.85rem;padding:.35rem .5rem;' +
+        'border:1px solid var(--border);border-radius:3px;background:#fff;' +
+        (opts.center ? 'text-align:center;' : '') +
+      '">' +
+    '</div>';
+  };
+  return '<div data-row-idx="' + i + '" style="border:1px solid var(--border);border-radius:5px;padding:.6rem;background:#fafaf7">' +
+    '<div style="display:flex;gap:.4rem;flex-wrap:wrap">' +
+      fld('Č.', o.cislo, { field: 'cislo', flex: '0 0 80px', min: '60px' }) +
+      fld('Ch.', o.charakteristika, { field: 'charakteristika', flex: '0 0 60px', min: '50px', center: true }) +
+      fld('Proud (A)', o.proud, { field: 'proud', flex: '0 0 80px', min: '60px', center: true }) +
+      fld('IΔn (A)', o.idn, { field: 'idn', flex: '0 0 80px', min: '60px', center: true }) +
+      '<button type="button" class="del-btn" data-action="aiPanelDeleteRow" title="Vyřadit" ' +
+        'style="margin-left:auto;align-self:flex-end;height:32px;padding:0 .6rem">✕</button>' +
+    '</div>' +
+    '<div style="margin-top:.4rem">' +
+      fld('Název obvodu', o.nazev, { field: 'nazev' }) +
+    '</div>' +
+    '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">' +
+      fld('Typ / výrobce', o.typ_pol, { field: 'typ_pol', flex: '1 1 140px' }) +
+      fld('Kabel', o.kabel, { field: 'kabel', flex: '2 1 180px' }) +
+    '</div>' +
+  '</div>';
+}
+
 function aiPanelDeleteRow(btnEl) {
-  var tr = btnEl.closest('tr');
-  if (tr) tr.remove();
+  var card = btnEl.closest('[data-row-idx]');
+  if (card) card.remove();
 }
 
 function closeAiPanelModal() {
@@ -4105,18 +4117,22 @@ function pouzitAiPanel() {
   if (!window.__aiPanelCtx || !window.__aiPanelCtx.rozvadecCard) { closeAiPanelModal(); return; }
   var tbody = window.__aiPanelCtx.rozvadecCard.querySelector('tbody');
   if (!tbody) { closeAiPanelModal(); return; }
-  // Načíst aktuální (případně upravené) hodnoty z modálu
-  var rows = document.querySelectorAll('#ai-panel-rows tr');
-  rows.forEach(function(tr) {
-    var inputs = tr.querySelectorAll('input');
-    if (inputs.length < 7) return;
-    var cislo = inputs[0].value.trim();
-    var nazev = inputs[1].value.trim();
-    var typ_pol = inputs[2].value.trim();
-    var ch = inputs[3].value.trim().toUpperCase();
-    var proud = inputs[4].value.trim();
-    var idn = inputs[5].value.trim();
-    var kabel = inputs[6].value.trim();
+  // Načíst aktuální (případně upravené) hodnoty z modálu (karty)
+  var cards = document.querySelectorAll('#ai-panel-rows > [data-row-idx]');
+  cards.forEach(function(card) {
+    var get = function(name) {
+      var el = card.querySelector('input[data-field="' + name + '"]');
+      return el ? el.value.trim() : '';
+    };
+    var cislo = get('cislo');
+    var nazev = get('nazev');
+    var typ_pol = get('typ_pol');
+    var ch = get('charakteristika').toUpperCase();
+    var proud = get('proud');
+    var idn = get('idn');
+    var kabel = get('kabel');
+    // Přeskočit prázdné karty (vše prázdné)
+    if (!cislo && !nazev && !typ_pol && !proud && !idn && !kabel) return;
     // Pokud má idn → je to RCD, jinak běžný obvod
     if (idn) {
       addRcdRowFromData(tbody, { cislo: cislo, nazev: nazev, typ_pol: typ_pol, ch: ch || 'A', proud: proud, idn: idn, kabel: kabel });
