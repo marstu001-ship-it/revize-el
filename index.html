@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.8<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.9<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -3746,7 +3746,7 @@ function aiCallClaude(prompt, base64, apiKey) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
+      max_tokens: 8192,
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
         { type: 'text', text: prompt }
@@ -3768,7 +3768,7 @@ function aiCallOpenAI(prompt, base64, apiKey) {
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
-      max_tokens: 4096,
+      max_tokens: 8192,
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: [
         { type: 'text', text: prompt },
