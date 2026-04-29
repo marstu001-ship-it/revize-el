@@ -325,6 +325,44 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 /* POČET STRAN PDF */
 .pocet-grid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:8.5pt}
 
+/* ═══ HLASOVÝ DIKTÁT (Web Speech API, cs-CZ) ═══════════════════════════ */
+.voice-fab{position:fixed;right:20px;bottom:20px;z-index:250;
+  width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--accent2);color:#fff;font-size:1.4rem;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,background .15s}
+.voice-fab:hover{transform:scale(1.05);background:#1F497D}
+.voice-fab:active{transform:scale(.95)}
+.voice-fab.listening{background:var(--accent);
+  animation:voicePulse 1.4s ease-in-out infinite}
+@keyframes voicePulse{
+  0%{box-shadow:0 4px 12px rgba(0,0,0,.25),0 0 0 0 rgba(181,41,28,.7)}
+  70%{box-shadow:0 4px 12px rgba(0,0,0,.25),0 0 0 16px rgba(181,41,28,0)}
+  100%{box-shadow:0 4px 12px rgba(0,0,0,.25),0 0 0 0 rgba(181,41,28,0)}
+}
+.voice-hint{position:fixed;right:88px;bottom:32px;z-index:250;
+  display:none;background:#222;color:#fff;padding:.55rem .85rem;
+  border-radius:24px;font-size:.78rem;font-family:var(--mono);
+  box-shadow:0 4px 12px rgba(0,0,0,.3);align-items:center;gap:.5rem;
+  white-space:nowrap}
+.voice-hint.show{display:flex}
+.voice-dot{width:10px;height:10px;border-radius:50%;background:#e53935;
+  animation:voicePulseDot 1s ease-in-out infinite;flex-shrink:0}
+@keyframes voicePulseDot{
+  0%,100%{opacity:1}
+  50%{opacity:.3}
+}
+@media (max-width:640px){
+  .voice-fab{right:14px;bottom:14px;width:52px;height:52px}
+  .voice-hint{right:74px;bottom:24px;font-size:.72rem;padding:.45rem .7rem}
+  .voice-hint-text{display:none}
+}
+
+@media print{
+  .voice-fab,.voice-hint{display:none!important}
+}
+
 @media print{
   body{background:white}
   #screen-pdf{background:white}
@@ -356,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.5<span class="ver-date"> · 2026-04-21</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.6<span class="ver-date"> · 2026-04-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -1139,6 +1177,13 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 
 <input type="file" id="json-input" accept=".json" style="display:none" data-action="nacistJSON">
 
+<!-- Hlasový diktát: plovoucí tlačítko + indikátor 'Poslouchám' -->
+<button id="voice-fab" class="voice-fab" data-action="toggleVoice" title="Hlasový diktát do aktivního pole (cs-CZ)" aria-label="Hlasový diktát">🎤</button>
+<div id="voice-hint" class="voice-hint">
+  <span class="voice-dot"></span>
+  <span class="voice-hint-text">Poslouchám… mluvte do aktivního pole</span>
+</div>
+
 
 <script>
 var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [] };
@@ -1280,6 +1325,107 @@ async function loadStore() {
 // automaticky), prohlížeč data **nikdy automaticky nesmaže**, dokud je
 // uživatel sám nesmaže. Volá se tiše při startu, výsledek se dál nikam
 // nehlásí (ne všechny prohlížeče to podporují).
+// ═══════════════════════════════════════════════════════════════════════
+// HLASOVÝ DIKTÁT — Web Speech API, cs-CZ
+// Sledujeme aktuálně zaměřené textarea/input a po klepnutí na FAB začneme
+// poslouchat. Výsledek se přilije za stávající obsah pole (nepřepisuje).
+// ═══════════════════════════════════════════════════════════════════════
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var voiceRec = null;
+var voiceListening = false;
+var voiceTarget = null; // poslední focused text-friendly element
+
+function setupVoice() {
+  // Sledování posledního zaměřeného textového pole — funguje globálně.
+  // Když uživatel klikne na FAB, použije se právě tohle pole.
+  document.addEventListener('focusin', function(e) {
+    var el = e.target;
+    if (!el) return;
+    if (el.tagName === 'TEXTAREA' ||
+        (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'search' || !el.type))) {
+      voiceTarget = el;
+    }
+  });
+  if (!SR) return; // prohlížeč nepodporuje
+  voiceRec = new SR();
+  voiceRec.lang = 'cs-CZ';
+  voiceRec.continuous = false;
+  voiceRec.interimResults = false;
+  voiceRec.maxAlternatives = 1;
+  voiceRec.onresult = function(event) {
+    if (!event.results || !event.results.length) return;
+    var text = event.results[0][0].transcript || '';
+    if (!text) return;
+    // První znak velkým písmenem (Web Speech občas vrací malé)
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+    if (!voiceTarget) return;
+    var current = voiceTarget.value || '';
+    var sep = '';
+    if (current) {
+      // Pokud končí písmenem, doplň mezeru. Pokud končí tečkou/čárkou, taky mezeru.
+      var lastChar = current.charAt(current.length - 1);
+      sep = (lastChar === ' ' || lastChar === '\n') ? '' : ' ';
+    }
+    voiceTarget.value = current + sep + text;
+    // Trigger input event (pro auto-save apod.)
+    try { voiceTarget.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+    voiceTarget.focus();
+    // Kurzor na konec
+    try {
+      var len = voiceTarget.value.length;
+      voiceTarget.setSelectionRange(len, len);
+    } catch(e) {}
+  };
+  voiceRec.onend = function() { setVoiceUI(false); };
+  voiceRec.onerror = function(e) {
+    setVoiceUI(false);
+    if (e && e.error === 'not-allowed') {
+      alert('Mikrofon je blokovaný. Povolte ho v nastavení prohlížeče.');
+    } else if (e && e.error === 'no-speech') {
+      // tichý fail — uživatel nic neřekl, nedělej alert
+    } else if (e && e.error) {
+      console.warn('Voice error:', e.error);
+    }
+  };
+}
+
+function setVoiceUI(listening) {
+  voiceListening = listening;
+  var fab = document.getElementById('voice-fab');
+  var hint = document.getElementById('voice-hint');
+  if (fab) {
+    if (listening) fab.classList.add('listening');
+    else fab.classList.remove('listening');
+  }
+  if (hint) {
+    if (listening) hint.classList.add('show');
+    else hint.classList.remove('show');
+  }
+}
+
+function toggleVoice() {
+  if (!SR) {
+    alert('Tento prohlížeč hlasový diktát nepodporuje.\n\nVyzkoušejte Chrome (PC/Android) nebo Safari (iOS).\n\nNa mobilu můžete použít mikrofon přímo na klávesnici telefonu.');
+    return;
+  }
+  if (voiceListening) {
+    try { voiceRec.stop(); } catch(e) {}
+    setVoiceUI(false);
+    return;
+  }
+  if (!voiceTarget || !document.body.contains(voiceTarget)) {
+    alert('Klikněte nejdřív do textového pole, do kterého chcete diktovat.');
+    return;
+  }
+  try {
+    voiceRec.start();
+    setVoiceUI(true);
+  } catch(e) {
+    setVoiceUI(false);
+    alert('Nepodařilo se spustit mikrofon: ' + (e.message || 'neznámá chyba'));
+  }
+}
+
 function requestPersistentStorage() {
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persisted().then(function(isPersisted) {
@@ -4699,6 +4845,7 @@ async function init() {
   renderOdberatele();
   renderZalohaStatus();
   requestPersistentStorage();
+  setupVoice();
   renderPristrojePreset();
   var search = document.getElementById('odberatel-search');
   if (search) search.addEventListener('input', renderOdberatele);
@@ -4731,6 +4878,7 @@ document.addEventListener('click', function(e) {
     case 'ulozit': ulozit(); break;
     case 'nacist': nacist(); break;
     case 'generujPDF': generujPDFAsk(); break;
+    case 'toggleVoice': toggleVoice(); break;
     case 'generujPDFPotvrzeno': generujPDFPotvrzeno(); break;
     case 'closePdfOptions': closePdfOptions(); break;
     case 'ulozitTechnika': ulozitTechnika(); break;
