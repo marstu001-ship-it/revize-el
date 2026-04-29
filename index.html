@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.2<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.3<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -2946,7 +2946,7 @@ function addZavada() {
   fFoto.innerHTML =
     '<label>Fotky závady <span style="font-size:.6rem;color:var(--muted)">(max 6, automaticky zkomprimováno)</span></label>' +
     '<div style="display:flex;gap:.5rem;align-items:center;margin-top:.3rem;flex-wrap:wrap">' +
-    '  <input type="file" class="zavada-foto-input" accept="image/*" multiple capture="environment" style="flex:1;min-width:180px;font-size:.78rem">' +
+    '  <input type="file" class="zavada-foto-input" accept="image/*" multiple style="flex:1;min-width:180px;font-size:.78rem">' +
     (aiActive ? '  <button type="button" class="btn btn-gold zavada-ai-btn" style="font-size:.7rem;padding:.4rem .7rem;white-space:nowrap" title="AI rozpozná závadu z fotky a vyplní popis + normu + kategorii">🤖 Popsat fotkou (AI)</button>' : '') +
     '</div>' +
     '<div class="zavada-fotky" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem"></div>';
@@ -2976,7 +2976,6 @@ function addZavada() {
       var hidden = document.createElement('input');
       hidden.type = 'file';
       hidden.accept = 'image/*';
-      hidden.capture = 'environment';
       hidden.style.display = 'none';
       hidden.addEventListener('change', function(ev) {
         var file = ev.target.files && ev.target.files[0];
@@ -3902,7 +3901,6 @@ function aiPanelScan(btn) {
   var hidden = document.createElement('input');
   hidden.type = 'file';
   hidden.accept = 'image/*';
-  hidden.capture = 'environment';
   hidden.style.display = 'none';
   hidden.addEventListener('change', function(ev) {
     var file = ev.target.files && ev.target.files[0];
