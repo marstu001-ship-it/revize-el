@@ -42,12 +42,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 /* Na mobilu: skrýt verzi v brandu (je v nastavení), zmenšit tlačítka
    topbaru ať se vejde víc na řádek */
 html.view-mobile .topbar{padding:.4rem .75rem;gap:.3rem}
-html.view-mobile .topbar .brand .ver{display:none}
+html.view-mobile .topbar .brand .ver-date{display:none}
 html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6rem}
 @media (max-width:640px){
   .topbar{padding:.4rem .6rem;gap:.3rem}
   .topbar .brand{font-size:.72rem}
-  .topbar .brand .ver{display:none}
+  .topbar .brand .ver-date{display:none}
   .topbar .btn{padding:.3rem .5rem;font-size:.58rem}
 }
 .btn{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.08em;
@@ -356,7 +356,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.0 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.1<span class="ver-date"> · 2026-04-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
