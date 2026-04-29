@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.0<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.1<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -438,7 +438,20 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="scard">
     <div class="scard-title">📋 Archiv zpráv <span id="archiv-count" style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem"></span></div>
     <div style="display:flex;gap:.5rem;margin-bottom:.75rem;align-items:center;flex-wrap:wrap">
-      <input type="text" id="archiv-search" placeholder="🔍 Hledat (ev. číslo, místo, objednatel, typ, rok…)" style="flex:1;min-width:200px;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem" autocomplete="off">
+      <input type="text" id="archiv-search" placeholder="🔍 Hledat (ev. číslo, místo, objednatel…)" style="flex:1;min-width:160px;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem" autocomplete="off">
+      <select id="archiv-rok" style="padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px;font-size:.85rem;background:#fff"><option value="">Všechny roky</option></select>
+      <select id="archiv-typ" style="padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px;font-size:.85rem;background:#fff">
+        <option value="">Všechny typy</option>
+        <option value="elektro">Elektro</option>
+        <option value="lps">LPS</option>
+      </select>
+      <select id="archiv-stav" style="padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px;font-size:.85rem;background:#fff">
+        <option value="">Všechny stavy</option>
+        <option value="schopno">✅ Schopno</option>
+        <option value="neschopno">❌ Neschopno</option>
+        <option value="neuvedeno">— Neuvedeno —</option>
+      </select>
+      <button id="archiv-clear" data-action="archivClearFilters" style="padding:.4rem .7rem;border:1px solid var(--border);border-radius:2px;background:#fff;font-size:.78rem;cursor:pointer;color:var(--muted)">Vymazat filtry</button>
     </div>
     <div id="archiv-container"><div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše. 👆</div></div>
   </div>
@@ -5937,13 +5950,32 @@ function renderArchiv() {
   var c = document.getElementById('archiv-container');
   var countEl = document.getElementById('archiv-count');
   if (!c) return;
+  refreshArchivYearOptions();
   if (!archiv || archiv.length === 0) {
     c.innerHTML = '<div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše.</div>';
     if (countEl) countEl.textContent = '';
     return;
   }
   var q = ((document.getElementById('archiv-search') || {}).value || '').trim().toLowerCase();
+  var fRok = ((document.getElementById('archiv-rok') || {}).value || '').trim();
+  var fTyp = ((document.getElementById('archiv-typ') || {}).value || '').trim();
+  var fStav = ((document.getElementById('archiv-stav') || {}).value || '').trim();
   var filtered = archiv.map(function(z, i) { return { z: z, i: i }; });
+  if (fRok) {
+    filtered = filtered.filter(function(it) {
+      return it.z.datum && String(it.z.datum).slice(0, 4) === fRok;
+    });
+  }
+  if (fTyp) {
+    filtered = filtered.filter(function(it) { return it.z.typ === fTyp; });
+  }
+  if (fStav) {
+    filtered = filtered.filter(function(it) {
+      var v = it.z.vysledek;
+      if (fStav === 'neuvedeno') return v !== 'schopno' && v !== 'neschopno';
+      return v === fStav;
+    });
+  }
   if (q) {
     filtered = filtered.filter(function(it) {
       var z = it.z;
@@ -5957,13 +5989,14 @@ function renderArchiv() {
       return hay.indexOf(q) !== -1;
     });
   }
+  var anyFilter = q || fRok || fTyp || fStav;
   if (countEl) {
-    countEl.textContent = q
+    countEl.textContent = anyFilter
       ? (filtered.length + ' z ' + archiv.length)
       : (archiv.length + (archiv.length === 1 ? ' zpráva' : (archiv.length < 5 ? ' zprávy' : ' zpráv')));
   }
   if (filtered.length === 0) {
-    c.innerHTML = '<div class="archiv-empty">Žádné zprávy neodpovídají hledání „' + esc(q) + '".</div>';
+    c.innerHTML = '<div class="archiv-empty">Žádné zprávy neodpovídají filtru.</div>';
     return;
   }
   var html = '<table class="archiv-table"><thead><tr><th>#</th><th>Typ</th><th>Ev. číslo</th><th>Místo</th><th>Datum</th><th>Stav</th><th></th></tr></thead><tbody>';
@@ -5985,6 +6018,33 @@ function renderArchiv() {
   });
   html += '</tbody></table>';
   c.innerHTML = html;
+}
+
+// Naplní dropdown let v archivu unikátními roky podle datumů zpráv.
+// Zachová aktuálně zvolený rok, pokud v seznamu pořád existuje.
+function refreshArchivYearOptions() {
+  var sel = document.getElementById('archiv-rok');
+  if (!sel) return;
+  var current = sel.value;
+  var roky = {};
+  (archiv || []).forEach(function(z) {
+    if (z.datum) roky[String(z.datum).slice(0, 4)] = true;
+  });
+  var arr = Object.keys(roky).filter(Boolean).sort().reverse();
+  var html = '<option value="">Všechny roky</option>';
+  arr.forEach(function(r) {
+    html += '<option value="' + r + '"' + (r === current ? ' selected' : '') + '>' + r + '</option>';
+  });
+  sel.innerHTML = html;
+}
+
+function archivClearFilters() {
+  var ids = ['archiv-search', 'archiv-rok', 'archiv-typ', 'archiv-stav'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderArchiv();
 }
 
 // Vytvoří novou zprávu jako kopii existující (nová navázaná).
@@ -6117,6 +6177,10 @@ async function init() {
   if (search) search.addEventListener('input', renderOdberatele);
   var arSearch = document.getElementById('archiv-search');
   if (arSearch) arSearch.addEventListener('input', renderArchiv);
+  ['archiv-rok', 'archiv-typ', 'archiv-stav'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', renderArchiv);
+  });
   var snippetSearch = document.getElementById('snippety-search');
   if (snippetSearch) snippetSearch.addEventListener('input', renderSnippetyList);
   var bEl = document.getElementById('btn-nova-elektro');
@@ -6194,6 +6258,7 @@ document.addEventListener('click', function(e) {
         el, { multiline: false }
       );
       break;
+    case 'archivClearFilters': archivClearFilters(); break;
     case 'addDokumentace': addDokumentace(); break;
     case 'addPristroj': addPristroj(); break;
     case 'addMereniRow': addMereniRow(el); break;
