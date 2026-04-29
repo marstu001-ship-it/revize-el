@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.2<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.3<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -2041,6 +2041,7 @@ function novaZprava(typ) {
   var firstTab = activeBar ? activeBar.querySelector('.tab-btn') : document.querySelector('.tab-btn');
   if (firstTab) firstTab.classList.add('active');
   var titPanel = document.getElementById('tab-titulni'); if (titPanel) titPanel.classList.add('active');
+  window.__formDirty = false;
   showScreen('form');
 }
 
@@ -5421,6 +5422,7 @@ function saveToArchiv() {
   saveStore();
   renderArchiv();
   renderZalohaStatus();
+  window.__formDirty = false; // právě uložené data
 }
 
 function otevritZpravu(i) {
@@ -5601,6 +5603,8 @@ function nacistData(D) {
       if (inp[2]) inp[2].value = d.nazev || '';
     });
   }
+  // Načtení z archivu = výchozí stav, žádné neuložené změny
+  window.__formDirty = false;
 }
 
 function ulozit() {
@@ -6054,6 +6058,28 @@ function refreshArchivYearOptions() {
   sel.innerHTML = html;
 }
 
+// Když uživatel chce opustit formulář s rozepsanou neuloženou zprávou,
+// zeptá se. Vrací volá callback po dokončení (nebo nic, pokud zůstává).
+// Mimo formulář (Hlavní → Hlavní) callback proběhne hned.
+function attemptLeaveForm(cb) {
+  var formScreen = document.getElementById('screen-form');
+  var onForm = formScreen && formScreen.classList.contains('active');
+  if (!onForm || !window.__formDirty) { cb(); return; }
+  // Zkusit, jestli jsou v zprávě smysluplná data — pokud ne (jen otevřeli
+  // a nic nevyplnili), nemá smysl ptát se na ukládání
+  var D;
+  try { D = getData(); } catch(e) { D = null; }
+  if (!D || (!D.ev_cislo && !D.misto && !D.adresa)) { cb(); return; }
+  var msg = 'Máte rozepsanou zprávu, která ještě nebyla uložena do archivu.\n\n' +
+            'OK = Uložit do archivu a opustit\n' +
+            'Storno = Zůstat ve formuláři';
+  if (window.confirm(msg)) {
+    try { saveToArchiv(); } catch(e) { console.error(e); }
+    cb();
+  }
+  // Cancel = nedělej nic, zůstat
+}
+
 function archivClearFilters() {
   var ids = ['archiv-search', 'archiv-rok', 'archiv-typ', 'archiv-stav'];
   ids.forEach(function(id) {
@@ -6280,7 +6306,7 @@ document.addEventListener('click', function(e) {
   if (tab) { switchTab(tab, el); return; }
   switch (action) {
     case 'toggleView': toggleView(); break;
-    case 'home': showScreen('home'); break;
+    case 'home': attemptLeaveForm(function() { showScreen('home'); }); break;
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'novinky': showScreen('novinky'); break;
     case 'ulozit': ulozit(); break;
@@ -6370,12 +6396,12 @@ document.addEventListener('change', function(e) {
   var action = el.getAttribute('data-action');
   if (action === 'updateLhuta') updateRevizeLhuta();
   if (action === 'updZavadaKod') updZavadaKod(el);
-  // Auto-save při změně
-  if (el.closest('#screen-form')) autoSave();
+  // Auto-save + dirty flag při změně
+  if (el.closest('#screen-form')) { autoSave(); window.__formDirty = true; }
 });
 
 document.addEventListener('input', function(e) {
-  if (e.target.closest('#screen-form')) autoSave();
+  if (e.target.closest('#screen-form')) { autoSave(); window.__formDirty = true; }
 });
 
 document.getElementById('json-input').addEventListener('change', nacistJSON);
