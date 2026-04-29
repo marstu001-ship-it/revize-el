@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v4.1 · 2026-04-21**
+**Aktuální verze: v6.9 · 2026-04-29**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -28,6 +28,46 @@ jste nic neudělali.
 
 - `sw.js` řádek 1: `var CACHE_NAME = '...';`
 - `index.html`: `<span class="ver">...</span>` v topbaru
+
+## Při změně AI modelu / providera ZKONTROLOVAT
+
+Aplikace volá 3 AI providery (Gemini / Claude / OpenAI) ze 2 míst
+(`buildAIPrompt` pro foto závady, `buildAIPromptPanel` pro štítek
+rozváděče). Každá změna AI kódu se musí ověřit pro **všechny tři**
+providery a **oba** use-casy. Časté pasti:
+
+1. **Deprecated model** — Google/Anthropic/OpenAI občas odpojí starý
+   model. Symptom: 404 NOT_FOUND. Aktuální modely (k 2026-04):
+   - Gemini: `gemini-2.5-flash` (2.0-flash byl odpojen pro nové uživatele)
+   - Claude: `claude-haiku-4-5-20251001`
+   - OpenAI: `gpt-4o-mini`
+
+2. **Token limit** — `max_tokens` musí být vysoký dost na dlouhé JSON
+   odpovědi (panel scan vrací ~30 obvodů = 3-4k tokenů). Aktuálně 8192
+   pro všechny tři. Symptom při nízkém limitu: useknutý JSON, chyba
+   parsování. Záchrana je `salvageTruncatedPanelJson()`, ale lepší
+   nedostat se tam vůbec.
+
+3. **Gemini thinking mode** — `gemini-2.5-flash` má default zapnuté
+   thinking, které sežere většinu token limitu před výstupem. **Vždy**
+   nastavit `thinkingConfig: { thinkingBudget: 0 }`.
+
+4. **Browser CORS** — Anthropic API vyžaduje header
+   `'anthropic-dangerous-direct-browser-access': 'true'`. Bez něj 403.
+   Klíč uživatele se NIKDY neposílá přes náš server (žádný server
+   nemáme), jde přímo z prohlížeče k API.
+
+5. **JSON ve markdown bloku** — všechny modely občas obalí výstup
+   ` ```json ... ``` `. `parseAIResponse[Panel]` to ostraňuje, ale
+   pokud model vrátí jiný formát (volný text, YAML, …), prompt
+   to musí zakázat („vrať POUZE čistý JSON").
+
+6. **Rate limiting / 503** — Gemini Flash často vrací 503 „high demand"
+   v exponovaných hodinách. `aiFetchWithRetry` to řeší, ale uživateli
+   doporučte přepnout na Claude nebo zapnout billing.
+
+**Při bumpu modelu vždy commit + push + nechat uživatele vyzkoušet
+panel scan + závada scan u všech 3 providerů, ke kterým má klíč.**
 
 ## Struktura projektu
 
