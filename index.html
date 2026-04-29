@@ -356,7 +356,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.1<span class="ver-date"> · 2026-04-21</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.2<span class="ver-date"> · 2026-04-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -1121,21 +1121,42 @@ var idb = null;
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
                   'last_backup_at', 'archiv_count_at_last_backup'];
 
+// iOS Safari (tab i PWA) má historicky bugy v IndexedDB v WebKit content
+// procesu — open() někdy nikdy nedovolá callback a stránka padne. Detekce
+// + úplné přeskočení IDB na iOS = pojistka. Na iOS PWA (home screen)
+// localStorage funguje stabilně.
+var IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+
 function openIdb() {
   return new Promise(function(resolve) {
-    if (!window.indexedDB) { resolve(null); return; }
+    if (!window.indexedDB || IS_IOS) { resolve(null); return; }
+    var done = false;
+    // Timeout — pokud IDB nereaguje do 3s, vzdej se a fallbackuj na localStorage
+    var timer = setTimeout(function() {
+      if (done) return;
+      done = true;
+      resolve(null);
+    }, 3000);
+    function finish(val) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(val);
+    }
     try {
       var req = indexedDB.open(IDB_NAME, IDB_VERSION);
       req.onupgradeneeded = function(e) {
-        var d = e.target.result;
-        if (!d.objectStoreNames.contains(IDB_STORE)) {
-          d.createObjectStore(IDB_STORE);
-        }
+        try {
+          var d = e.target.result;
+          if (!d.objectStoreNames.contains(IDB_STORE)) {
+            d.createObjectStore(IDB_STORE);
+          }
+        } catch(e) {}
       };
-      req.onsuccess = function() { idb = req.result; resolve(idb); };
-      req.onerror = function() { resolve(null); };
-      req.onblocked = function() { resolve(null); };
-    } catch(e) { resolve(null); }
+      req.onsuccess = function() { idb = req.result; finish(idb); };
+      req.onerror = function() { finish(null); };
+      req.onblocked = function() { finish(null); };
+    } catch(e) { finish(null); }
   });
 }
 
@@ -4628,7 +4649,29 @@ document.addEventListener('input', function(e) {
 
 document.getElementById('json-input').addEventListener('change', nacistJSON);
 
-window.addEventListener('DOMContentLoaded', init);
+// Init wrapnutý — kdyby v něm něco selhalo (např. IDB v Safari iOS PWA),
+// chyba se v console zalogue, ale stránka neumře. Bez catch by error
+// v async init mohl crashnout WebKit content proces na iOS.
+window.addEventListener('DOMContentLoaded', function() {
+  init().catch(function(err) {
+    try { console.error('Init error:', err); } catch(e) {}
+    // Nouzový fallback — synchronně přečíst localStorage a vykreslit
+    try {
+      var s = localStorage.getItem('revize_el_store');
+      if (s) {
+        var d = JSON.parse(s);
+        STORE.technik = d.technik || {};
+        STORE.pristroje = d.pristroje || [];
+        STORE.archiv = d.archiv || [];
+        STORE.odberatele = d.odberatele || [];
+        archiv = STORE.archiv;
+        odberatele = STORE.odberatele;
+        if (typeof renderArchiv === 'function') renderArchiv();
+        if (typeof renderOdberatele === 'function') renderOdberatele();
+      }
+    } catch(e) {}
+  });
+});
 
 // Service Worker — offline podpora (PWA) + auto-reload po aktualizaci
 if ('serviceWorker' in navigator) {
