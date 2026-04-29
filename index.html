@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.1<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.2<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -779,6 +779,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       </ul>
       <div style="margin-top:.5rem">Klíč je uložen jen v tomto prohlížeči (localStorage), nikam neodchází. Fotky se posílají na servery zvoleného poskytovatele jen v okamžiku analýzy.</div>
     </div>
+    <div style="margin-top:1rem"><button class="btn btn-gold" data-action="ulozitAi">💾 Uložit AI nastavení</button></div>
   </div>
   <div class="scard">
     <div class="scard-title">🔧 Měřicí přístroje (přednastavené)</div>
@@ -2115,15 +2116,33 @@ function ulozitTechnika() {
     var el = document.getElementById('rt_' + k); if (el) t[k] = el.value;
   });
   STORE.technik = t; // razítko zůstává, bylo uloženo dříve při výběru souboru
-  // AI config
+  // AI config se ukládá taky — pro případ že uživatel vyplnil i ji
+  ulozitAiConfigQuiet();
+  alert('Profil uložen');
+  saveStore();
+}
+
+function ulozitAiConfigQuiet() {
   var providerEl = document.getElementById('ai_provider');
   var keyEl = document.getElementById('ai_api_key');
+  if (!providerEl && !keyEl) return;
   STORE.aiConfig = {
     provider: providerEl ? providerEl.value : '',
     apiKey: keyEl ? keyEl.value.trim() : ''
   };
-  alert('Profil uložen');
+}
+
+function ulozitAi() {
+  ulozitAiConfigQuiet();
   saveStore();
+  var cfg = STORE.aiConfig || {};
+  if (cfg.provider && cfg.apiKey) {
+    alert('AI nastavení uloženo (' + cfg.provider + ').');
+  } else if (cfg.provider && !cfg.apiKey) {
+    alert('Vyberte poskytovatele a vyplňte API klíč.');
+  } else {
+    alert('AI nastavení uloženo (vypnuto).');
+  }
 }
 
 function propsatTechnika() {
@@ -6008,6 +6027,7 @@ document.addEventListener('click', function(e) {
     case 'closeAiModal': closeAiModal(); break;
     case 'pouzitAiVysledek': pouzitAiVysledek(); break;
     case 'ulozitTechnika': ulozitTechnika(); break;
+    case 'ulozitAi': ulozitAi(); break;
     case 'smazatRazitko': smazatRazitko(); break;
     case 'smazatPodpis': smazatPodpis(); break;
     case 'ulozitPristroje': ulozitPristroje(); break;
