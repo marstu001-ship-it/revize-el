@@ -356,7 +356,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v4.5 · 2026-04-21</span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v4.6 · 2026-04-21</span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -402,6 +402,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
   <div class="scard">
     <div class="scard-title">💾 Záloha a obnovení <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">export/import celé databáze</span></div>
+    <div id="zaloha-status" style="margin-bottom:.6rem"></div>
     <div style="font-size:.82rem;line-height:1.5;color:var(--muted);margin-bottom:.75rem">
       Data se ukládají jen v tomto prohlížeči. Při změně zařízení nebo vymazání cache by se ztratila. Zálohu si uložte do souboru a kdykoli obnovte.
     </div>
@@ -411,6 +412,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
     <input type="file" id="import-input" accept=".json,application/json" style="display:none">
   </div>
+  <div id="zaloha-banner" style="display:none"></div>
 </div>
 </div>
 
@@ -1117,8 +1119,24 @@ function loadStore() {
       STORE.pristroje = d.pristroje || [];
       STORE.archiv = d.archiv || [];
       STORE.odberatele = d.odberatele || [];
+      STORE.last_backup_at = d.last_backup_at || null;
+      STORE.archiv_count_at_last_backup = d.archiv_count_at_last_backup || 0;
     }
   } catch(e) {}
+}
+
+// Požádá prohlížeč o trvalé úložiště — pokud uživatel souhlasí (často
+// automaticky), prohlížeč data **nikdy automaticky nesmaže**, dokud je
+// uživatel sám nesmaže. Volá se tiše při startu, výsledek se dál nikam
+// nehlásí (ne všechny prohlížeče to podporují).
+function requestPersistentStorage() {
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persisted().then(function(isPersisted) {
+      if (!isPersisted) {
+        navigator.storage.persist().catch(function() {});
+      }
+    }).catch(function() {});
+  }
 }
 
 function showScreen(id) {
@@ -3748,6 +3766,7 @@ function saveToArchiv() {
   STORE.archiv = archiv;
   saveStore();
   renderArchiv();
+  renderZalohaStatus();
 }
 
 function otevritZpravu(i) {
@@ -4148,6 +4167,78 @@ function exportDatabaze() {
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   var d = new Date().toISOString().slice(0, 10);
   ulozitSoubor(blob, 'revize-el-zaloha-' + d + '.json');
+  // Zaznamenej, kdy byla zaloha naposledy stažena, ať můžeme
+  // upozornit, když je staré.
+  STORE.last_backup_at = new Date().toISOString();
+  STORE.archiv_count_at_last_backup = (STORE.archiv || []).length;
+  saveStore();
+  renderZalohaStatus();
+}
+
+// Vrátí čas v lidsky čitelném formátu od posledního exportu zálohy
+// + barvu badge dle stáří. Volá se z renderZalohaStatus a init().
+function getZalohaStatus() {
+  var lastIso = STORE.last_backup_at;
+  var pocetTed = (STORE.archiv || []).length;
+  var pocetTehdy = STORE.archiv_count_at_last_backup || 0;
+  var pribylo = Math.max(0, pocetTed - pocetTehdy);
+  if (!lastIso) {
+    return { color: '#c62828', text: 'Záloha nikdy', tooltip: 'Doporučujeme stáhnout zálohu — máte ' + pocetTed + ' zpráv', urgent: pocetTed >= 3 };
+  }
+  var last = new Date(lastIso);
+  var dnyOd = Math.floor((Date.now() - last.getTime()) / (1000 * 60 * 60 * 24));
+  var color = '#2e7d32';   // zelená
+  if (dnyOd >= 14 || pribylo >= 5) color = '#c62828'; // červená — naléhavé
+  else if (dnyOd >= 7 || pribylo >= 3) color = '#f57c00'; // oranžová — pozor
+  var text;
+  if (dnyOd === 0) text = 'Záloha dnes';
+  else if (dnyOd === 1) text = 'Záloha včera';
+  else text = 'Záloha před ' + dnyOd + ' dny';
+  if (pribylo > 0) text += ' · +' + pribylo + ' nových';
+  return { color: color, text: text, tooltip: 'Poslední záloha: ' + last.toLocaleDateString('cs-CZ'),
+           urgent: dnyOd >= 14 || pribylo >= 5 };
+}
+
+// Vykreslí barevný řádek s informací o záloze v scardu Záloha a obnovení.
+function renderZalohaStatus() {
+  var el = document.getElementById('zaloha-status');
+  if (el) {
+    var s = getZalohaStatus();
+    el.innerHTML = '<span style="display:inline-block;padding:.3rem .6rem;border-radius:3px;background:' + s.color +
+      ';color:#fff;font-family:var(--mono);font-size:.65rem;letter-spacing:.04em;font-weight:500" ' +
+      'title="' + esc(s.tooltip) + '">' + esc(s.text) + '</span>';
+  }
+  // Naléhavý banner nahoře — jen pokud je záloha > 14 dní nebo přibylo 5+ zpráv
+  // a neuživatel ho dnes nezavřel.
+  var banner = document.getElementById('zaloha-banner');
+  if (!banner) return;
+  var st = getZalohaStatus();
+  var dnesIso = new Date().toISOString().slice(0, 10);
+  var dismissed = (function() {
+    try { return localStorage.getItem('revize_el_banner_dismissed') === dnesIso; }
+    catch(e) { return false; }
+  })();
+  if (st.urgent && !dismissed && (STORE.archiv || []).length > 0) {
+    banner.style.display = 'block';
+    banner.innerHTML = '<div class="warn-box" style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">' +
+      '<span style="font-size:1.1rem">⚠️</span>' +
+      '<div style="flex:1 1 200px;font-size:.85rem">' +
+      '<strong>Doporučujeme stáhnout zálohu.</strong> ' + esc(st.text) + '. Ať o data nepřijdete.' +
+      '</div>' +
+      '<button class="btn btn-gold" data-action="exportDatabaze" style="font-size:.7rem">⬇️ Stáhnout teď</button>' +
+      '<button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.7rem" data-action="dismissBackupBanner">Připomenout zítra</button>' +
+      '</div>';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function dismissBackupBanner() {
+  try {
+    localStorage.setItem('revize_el_banner_dismissed', new Date().toISOString().slice(0, 10));
+  } catch(e) {}
+  var b = document.getElementById('zaloha-banner');
+  if (b) b.style.display = 'none';
 }
 
 function importDatabaze() {
@@ -4339,6 +4430,8 @@ function init() {
   odberatele = STORE.odberatele || [];
   renderArchiv();
   renderOdberatele();
+  renderZalohaStatus();
+  requestPersistentStorage();
   renderPristrojePreset();
   var search = document.getElementById('odberatel-search');
   if (search) search.addEventListener('input', renderOdberatele);
@@ -4393,6 +4486,7 @@ document.addEventListener('click', function(e) {
     case 'pouzitOdberatele': pouzitOdberatele(); break;
     case 'ulozitJakoOdberatele': ulozitJakoOdberatele(); break;
     case 'exportDatabaze': exportDatabaze(); break;
+    case 'dismissBackupBanner': dismissBackupBanner(); break;
     case 'importDatabaze': importDatabaze(); break;
     case 'lookupObjednatelIco':
       lookupIcoFromAres(
