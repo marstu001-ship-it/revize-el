@@ -394,10 +394,11 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.8<span class="ver-date"> · 2026-04-21</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.9<span class="ver-date"> · 2026-04-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
+    <button class="btn btn-ghost" data-action="novinky">📰 Novinky</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
     <button class="btn btn-ghost" data-action="ulozit">💾 Uložit</button>
     <button class="btn btn-ghost" data-action="nacist">📂 Načíst</button>
@@ -451,6 +452,189 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <input type="file" id="import-input" accept=".json,application/json" style="display:none">
   </div>
   <div id="zaloha-banner" style="display:none"></div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     VÝBĚR PODTYPU
+═══════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     NOVINKY V PROGRAMU
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-novinky">
+<div class="home-wrap">
+  <div class="home-header">
+    <h1>📰 Novinky v programu</h1>
+    <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🎤 Hlasový diktát</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Místo psaní můžete v terénu diktovat texty rovnou. Funguje v češtině přímo v prohlížeči, nepotřebuje žádnou aplikaci navíc.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Klepněte do textového pole, kam chcete diktovat</li>
+        <li>Klikněte na modré <strong>🎤</strong> tlačítko vpravo dole</li>
+        <li>Diktujte — text se přidá na konec pole</li>
+        <li>Pro pokračování klepněte na 🎤 znovu</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Tip: na mobilu má klávesnice taky vlastní mikrofon — to je systémový diktát, funguje paralelně s naším.</div>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📷 Fotky u závad</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Ke každé závadě lze přidat až 6 fotek. V PDF se zobrazí pod popisem závady.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>V tabu „F. Závěr & Závady" přidejte závadu</li>
+        <li>Pod „Odkaz na normu" je sekce „Fotky závady"</li>
+        <li>Klepněte na výběr souboru → na mobilu se otevře kamera</li>
+        <li>Vyfotíte / vyberete → automaticky se zkomprimuje</li>
+        <li>Klik na náhled = velký pohled, červené ✕ = smazat</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📋 Vlastní knihovna textů (snippety)</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Často píšete stejný odstavec? Uložte ho a jedním klikem ho příště vložíte zpět.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Pod velkým textovým polem (Popis instalace, Předmět revize, Závěr) jsou tlačítka <strong>💾 Uložit text</strong> a <strong>📋 Z knihovny</strong></li>
+        <li>Po napsání textu klepněte „💾 Uložit text" → pojmenujte ho</li>
+        <li>Příště klepněte „📋 Z knihovny" → najděte → „Vložit"</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Snippety jsou sdílené napříč všemi poli — uložíte z Popis, vložíte do Závěr.</div>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📝 Razítko a podpis technika</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Naskenujte své razítko a podpis. Při generování PDF se automaticky vykreslí u podpisu revizního technika.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>⚙ Nastavení</strong> v topbaru</li>
+        <li>Pod údaji o technikovi je sekce „Razítko" a „Podpis"</li>
+        <li>Vyberte obrázek (JPG/PNG, ideálně PNG s průhledným pozadím, max 2 MB)</li>
+        <li>Při generování PDF se program zeptá, zda razítko/podpis vložit — pro <em>draft verzi</em> bez razítka stačí odškrtnout</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">👥 Knihovna odběratelů (zákazníků)</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Uložte si zákazníky jednou — při nové zprávě je vyberete z rozbalovacího seznamu, vše se předvyplní.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Na hlavní straně sekce <strong>👥 Odběratelé</strong></li>
+        <li>„+ Přidat odběratele" → vyplňte název, adresu, IČO, telefon, e-mail, IBAN</li>
+        <li>Tip: zadejte jen IČO a klepněte <strong>🔍 Načíst z ARES</strong> — vyplní se automaticky</li>
+        <li>V nové zprávě → nad polem Provozovatel je <strong>Vybrat z knihovny odběratelů</strong></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🔗 Nová zpráva jako kopie (Navázat)</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Pravidelná revize stejného objektu? Nemusíte vyplňovat znovu — kopírujte starší zprávu jedním klikem.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Hlavní strana → sekce <strong>📋 Archiv zpráv</strong></li>
+        <li>Najděte starší zprávu → klepněte na <strong>🔗 NAVÁZAT</strong></li>
+        <li>Vytvoří se nová zpráva s novým ev. číslem, dnešním datem</li>
+        <li>Naměřené hodnoty a závady se vyčistí — parametry obvodů (názvy, jističe, kabely) zůstanou</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🔍 Načtení firmy z ARES</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Stačí znát IČO — program z veřejného registru ARES automaticky doplní jméno, adresu a DIČ.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>U <strong>Provozovatele</strong>, <strong>Objednatele</strong>, nebo v modálu <strong>Odběratele</strong></li>
+        <li>Zadejte IČO (8 číslic) → klepněte <strong>🔍 Načíst z ARES</strong></li>
+        <li>Pole se vyplní z registru</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">💾 Záloha a obnovení</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Data jsou uložena jen v prohlížeči — pravidelně si stáhněte zálohu, ať o ně nepřijdete.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Hlavní strana → dole sekce <strong>💾 Záloha a obnovení</strong></li>
+        <li>Klepněte <strong>⬇️ Stáhnout zálohu (.json)</strong> — soubor obsahuje všechny zprávy, odběratele, profil i razítko</li>
+        <li>Soubor uložte třeba do iCloudu / Google Drive / Dropboxu</li>
+        <li>Pro obnovu na jiném zařízení: <strong>⬆️ Obnovit ze zálohy</strong> → vyberete soubor</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Program si hlídá stáří poslední zálohy. Když je &gt; 14 dní stará, ukáže nahoře žluté upozornění.</div>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">⛈ LPS — obě normy (62305 i starší 1390)</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Pro revize starších hromosvodů (před 2004) podle ČSN 34 1390 program automaticky přepne všechny texty, kontrolní body i parametry.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Při LPS revizi na titulní straně zaškrtněte v seznamu norem <strong>ČSN 34 1390</strong></li>
+        <li>Nebo na tabu „4. Prohlídka LPS" v dropdownu „Revize prováděna podle normy"</li>
+        <li>Vše ostatní (Třída → kategorie obyčejný/zesílený/zvláštní, kontrolní body, doporučené odpory ≤ 15 Ω, normativní odkazy v PDF) se přepne samo</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📱 PC / Mobil zobrazení</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Tlačítko v topbaru přepíná mezi kompaktním zobrazením a větším mobilním (větší písmo, větší tlačítka pro prsty v rukavicích).</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>V topbaru je tlačítko <strong>💻 PC</strong> nebo <strong>📱 Mobil</strong></li>
+        <li>Kliknutím přepnete</li>
+        <li>Volba se zapamatuje — nemusíte přepínat při každém otevření</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📋 Datalisty — typické hodnoty na klik</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Spousta polí (název obvodu, typ kabelu, proud jističe, IΔn RCD, ochrana před úrazem, typ zemniče, distributor el. proudu…) má rozbalovací nabídku s typickými hodnotami z norem.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Klepněte do pole — nabídka se rozbalí</li>
+        <li>Vyberete kliknutím</li>
+        <li>Pokud potřebujete vlastní text, prostě napište — datalist je nápověda, ne restrikce</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🔢 Auto-číslování řádků měření</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Když přidáte, smažete nebo zkopírujete řádek uprostřed tabulky měření, čísla obvodů se automaticky přepočítají od 1. U RCD má číslo jen hlavička skupiny — podřádky čísla nemají.</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">⚖️ Typické závady s normou (dropdown)</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">U každé závady je dropdown s typickými formulacemi (20 elektro, 16 LPS dle 62305, 16 LPS dle 1390). Kliknutím se vyplní popis, kategorie C1/C2/C3 i odkaz na konkrétní článek normy najednou.</p>
+  </div>
+
+  <div style="display:flex;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap">
+    <button class="btn btn-gold" data-action="home">🏠 Zpět na hlavní</button>
+  </div>
+
 </div>
 </div>
 
@@ -5159,6 +5343,7 @@ document.addEventListener('click', function(e) {
     case 'toggleView': toggleView(); break;
     case 'home': showScreen('home'); break;
     case 'nastaveni': showScreen('nastaveni'); break;
+    case 'novinky': showScreen('novinky'); break;
     case 'ulozit': ulozit(); break;
     case 'nacist': nacist(); break;
     case 'generujPDF': generujPDFAsk(); break;
