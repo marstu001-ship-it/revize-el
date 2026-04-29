@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.0<span class="ver-date"> · 2026-04-21</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.1<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -497,6 +497,23 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <li>Můžete upravit a kliknete <strong>✓ Použít</strong> → vyplní se do polí závady, fotka se přidá</li>
       </ol>
       <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Bez nastavení tlačítko nesvítí, aplikace funguje jako dřív. API klíč je uložen pouze v tomto prohlížeči.</div>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🤖 AI naskenování štítku rozváděče</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyfotíte štítek (legendu jističů) v rozváděči, AI rozpozná všechny obvody včetně typu, jmenovitého proudu, charakteristiky a kabelu — a vyplní tabulku měření jedním klikem.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Nejdřív musí být nastaveno AI (viz výše „AI rozpoznávání závad")</li>
+        <li>V tabu „D. Měření" u rozváděče klepněte <strong>🤖 Naskenovat štítek (AI)</strong></li>
+        <li>Vyfotíte štítek nebo vyberete fotku z galerie</li>
+        <li>AI rozpozná obvody za 5–15 s a zobrazí tabulku k editaci</li>
+        <li>Můžete upravit hodnoty, vyřadit řádky tlačítkem ✕</li>
+        <li>Klepněte <strong>✓ Vložit do tabulky</strong> → všechny řádky se přidají do měření</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Tip: pokud má obvod vyplněné IΔn (proudový chránič), AI ho zařadí jako řádek RCD místo běžného obvodu.</div>
     </div>
   </div>
 
@@ -1394,6 +1411,17 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeAiModal">Zrušit</button>
       <button class="btn btn-gold" id="ai-pouzit-btn" data-action="pouzitAiVysledek" disabled>✓ Použít</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-ai-panel">
+  <div class="modal" style="max-width:920px">
+    <div class="modal-title">🤖 Naskenovat štítek rozváděče</div>
+    <div id="ai-panel-body" style="min-height:240px;max-height:70vh;overflow:auto"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeAiPanelModal">Zrušit</button>
+      <button class="btn btn-gold" id="ai-panel-pouzit-btn" data-action="pouzitAiPanel" disabled>✓ Vložit do tabulky</button>
     </div>
   </div>
 </div>
@@ -2474,9 +2502,12 @@ function addRozvadec() {
     '<div class="f"><label>Umístění / popis</label><input type="text" class="rozv-umisteni" placeholder="' + (phUmist[aktPodtyp] || phUmist.dum) + '"></div>' +
     '</div>' +
     '<div class="meas-table-wrap">' + getMeasTableHtml() + '</div>' +
-    '<div style="display:flex;gap:.75rem;margin-top:.6rem">' +
+    '<div style="display:flex;gap:.75rem;margin-top:.6rem;flex-wrap:wrap">' +
     '<button class="add-row" data-action="addMereniRow" data-rozvadec="rozv-' + n + '">+ Přidat obvod</button>' +
     '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD</button>' +
+    (STORE.aiConfig && STORE.aiConfig.provider && STORE.aiConfig.apiKey
+      ? '<button class="add-row" data-action="aiPanelScan" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2);font-weight:600">🤖 Naskenovat štítek (AI)</button>'
+      : '') +
     '</div>';
   container.appendChild(div);
   // Přidej 2 výchozí řádky
@@ -3539,21 +3570,88 @@ function buildAIPrompt() {
     'Pokud na fotografii žádná závada není viditelná, vrať C3 a popiš, co vidíš.';
 }
 
-function aiAnalyzeImage(dataUrl) {
+// Sdílený router AI volání — konkrétní funkce vrací surový text (JSON
+// string) z prompt + obrázku. Vyšší úrovně (analyze závada / panel)
+// pak text parsují do svých struktur.
+function aiCallProvider(prompt, base64) {
   var cfg = STORE.aiConfig || {};
   if (!cfg.provider || !cfg.apiKey) {
     return Promise.reject(new Error('AI není nakonfigurováno. Otevřete Nastavení → AI rozpoznávání závad a zadejte API klíč.'));
   }
-  var prompt = buildAIPrompt();
-  var base64 = (dataUrl || '').replace(/^data:image\/\w+;base64,/, '');
   if (!base64) return Promise.reject(new Error('Neplatná fotka'));
-  if (cfg.provider === 'gemini') return aiAnalyzeGemini(prompt, base64, cfg.apiKey);
-  if (cfg.provider === 'claude') return aiAnalyzeClaude(prompt, base64, cfg.apiKey);
-  if (cfg.provider === 'openai') return aiAnalyzeOpenAI(prompt, base64, cfg.apiKey);
+  if (cfg.provider === 'gemini') return aiCallGemini(prompt, base64, cfg.apiKey);
+  if (cfg.provider === 'claude') return aiCallClaude(prompt, base64, cfg.apiKey);
+  if (cfg.provider === 'openai') return aiCallOpenAI(prompt, base64, cfg.apiKey);
   return Promise.reject(new Error('Neznámý poskytovatel: ' + cfg.provider));
 }
 
-function aiAnalyzeGemini(prompt, base64, apiKey) {
+function aiAnalyzeImage(dataUrl) {
+  var prompt = buildAIPrompt();
+  var base64 = (dataUrl || '').replace(/^data:image\/\w+;base64,/, '');
+  return aiCallProvider(prompt, base64).then(parseAIResponse);
+}
+
+// Druhá AI funkce: rozpoznání obvodů ze štítku rozváděče.
+// Vrací { obvody: [{ cislo, nazev, typ_pol, charakteristika, proud, idn, kabel }, …] }
+function aiAnalyzePanel(dataUrl) {
+  var prompt = buildAIPromptPanel();
+  var base64 = (dataUrl || '').replace(/^data:image\/\w+;base64,/, '');
+  return aiCallProvider(prompt, base64).then(parseAIResponsePanel);
+}
+
+function buildAIPromptPanel() {
+  return 'Jsi expert na české elektroinstalace. Na fotografii vidíš seznam obvodů v elektrickém rozváděči (typicky štítek nebo legenda uvnitř dveří rozváděče, nebo přímo viditelné popisky u jističů).\n\n' +
+    'Vyextrahuj všechny obvody. Odpověz POUZE čistým JSON objektem (žádný markdown, žádné okolní texty), ve formátu:\n' +
+    '{\n' +
+    '  "obvody": [\n' +
+    '    {\n' +
+    '      "cislo": "1",\n' +
+    '      "nazev": "Zásuvky kuchyň",\n' +
+    '      "typ_pol": "EATON",\n' +
+    '      "charakteristika": "B",\n' +
+    '      "proud": "16",\n' +
+    '      "idn": "",\n' +
+    '      "kabel": "CYKY-J 3×2,5"\n' +
+    '    }\n' +
+    '  ]\n' +
+    '}\n\n' +
+    'Pravidla:\n' +
+    '- cislo: pořadové číslo nebo označení (1, 2, F1, FA1, 1.1…)\n' +
+    '- nazev: stručný popis obvodu (např. „Zásuvky kuchyň", „Osvětlení obývák", „Sporák")\n' +
+    '- typ_pol: výrobce nebo typ jističe (EATON, OEZ, Hager, ABB, Schneider, LTN…), pokud je rozpoznatelný\n' +
+    '- charakteristika: B / C / D — vypínací charakteristika jističe\n' +
+    '- proud: jmenovitý proud v A jako řetězec (např. „16", „10", „25"). Bez jednotky.\n' +
+    '- idn: u proudových chráničů (RCD) reziduální proud v A jako řetězec („0,03", „0,1", „0,3"). U běžných jističů prázdný řetězec.\n' +
+    '- kabel: typ a průřez kabelu (CYKY-J 3×1,5, CYKY-J 5×2,5…), pokud je vidět na štítku\n\n' +
+    'Pokud některá informace na fotografii není viditelná, vrať prázdný řetězec "" (NIKDY nevymýšlet). ' +
+    'Vrať obvody v pořadí, v jakém jsou na štítku/popiskách.';
+}
+
+function parseAIResponsePanel(text) {
+  var clean = (text || '').trim();
+  clean = clean.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+  var start = clean.indexOf('{');
+  var end = clean.lastIndexOf('}');
+  if (start >= 0 && end > start) clean = clean.slice(start, end + 1);
+  var obj;
+  try { obj = JSON.parse(clean); }
+  catch(e) { throw new Error('Nepodařilo se parsovat odpověď AI: ' + clean.slice(0, 150)); }
+  var obvody = Array.isArray(obj.obvody) ? obj.obvody : [];
+  return obvody.map(function(o) {
+    return {
+      cislo: (o.cislo || '').toString().trim(),
+      nazev: (o.nazev || '').toString().trim(),
+      typ_pol: (o.typ_pol || o.typPol || '').toString().trim(),
+      charakteristika: (o.charakteristika || o.char || '').toString().trim().toUpperCase(),
+      proud: (o.proud || '').toString().trim(),
+      idn: (o.idn || '').toString().trim(),
+      kabel: (o.kabel || '').toString().trim()
+    };
+  });
+}
+
+function aiCallGemini(prompt, base64, apiKey) {
+  // max_tokens (maxOutputTokens) zvýšeno pro panel scan, kde jde o víc obvodů
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(apiKey);
   return fetch(url, {
     method: 'POST',
@@ -3563,7 +3661,7 @@ function aiAnalyzeGemini(prompt, base64, apiKey) {
         { text: prompt },
         { inline_data: { mime_type: 'image/jpeg', data: base64 } }
       ]}],
-      generationConfig: { responseMimeType: 'application/json' }
+      generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 4096 }
     })
   }).then(function(r) {
     if (!r.ok) return r.text().then(function(t) { throw new Error('Gemini ' + r.status + ': ' + t.slice(0, 250)); });
@@ -3572,11 +3670,11 @@ function aiAnalyzeGemini(prompt, base64, apiKey) {
     var text = (((data.candidates || [])[0] || {}).content || {}).parts;
     text = text && text[0] && text[0].text;
     if (!text) throw new Error('Prázdná odpověď od Gemini');
-    return parseAIResponse(text);
+    return text;
   });
 }
 
-function aiAnalyzeClaude(prompt, base64, apiKey) {
+function aiCallClaude(prompt, base64, apiKey) {
   return fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -3587,7 +3685,7 @@ function aiAnalyzeClaude(prompt, base64, apiKey) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
         { type: 'text', text: prompt }
@@ -3599,11 +3697,11 @@ function aiAnalyzeClaude(prompt, base64, apiKey) {
   }).then(function(data) {
     var text = (data.content || [])[0] && data.content[0].text;
     if (!text) throw new Error('Prázdná odpověď od Claude');
-    return parseAIResponse(text);
+    return text;
   });
 }
 
-function aiAnalyzeOpenAI(prompt, base64, apiKey) {
+function aiCallOpenAI(prompt, base64, apiKey) {
   return fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -3612,7 +3710,7 @@ function aiAnalyzeOpenAI(prompt, base64, apiKey) {
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
-      max_tokens: 1024,
+      max_tokens: 4096,
       response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: [
         { type: 'text', text: prompt },
@@ -3625,7 +3723,7 @@ function aiAnalyzeOpenAI(prompt, base64, apiKey) {
   }).then(function(data) {
     var text = ((data.choices || [])[0] || {}).message && data.choices[0].message.content;
     if (!text) throw new Error('Prázdná odpověď od OpenAI');
-    return parseAIResponse(text);
+    return text;
   });
 }
 
@@ -3768,6 +3866,204 @@ function pouzitAiVysledek() {
     }
   }
   closeAiModal();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// AI naskenování štítku rozváděče — UI flow
+// ═══════════════════════════════════════════════════════════════════════
+window.__aiPanelCtx = null;
+
+function aiPanelScan(btn) {
+  // btn má data-rozvadec="rozv-N"
+  var rozId = btn ? btn.getAttribute('data-rozvadec') : null;
+  if (!rozId) return;
+  var card = document.querySelector('[data-rozvadec-id="' + rozId + '"]');
+  if (!card) return;
+  // Otevřít skrytý file input
+  var hidden = document.createElement('input');
+  hidden.type = 'file';
+  hidden.accept = 'image/*';
+  hidden.capture = 'environment';
+  hidden.style.display = 'none';
+  hidden.addEventListener('change', function(ev) {
+    var file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    startAiPanelAnalysis(card, file);
+  });
+  document.body.appendChild(hidden);
+  hidden.click();
+  setTimeout(function() { hidden.remove(); }, 60000);
+}
+
+function startAiPanelAnalysis(rozvadecCard, file) {
+  compressImage(file, 1600, 0.85).then(function(dataUrl) {
+    window.__aiPanelCtx = { rozvadecCard: rozvadecCard, fotoDataUrl: dataUrl, obvody: [] };
+    renderAiPanelLoading();
+    var m = document.getElementById('modal-ai-panel');
+    if (m) m.classList.add('open');
+    return aiAnalyzePanel(dataUrl);
+  }).then(function(obvody) {
+    if (!window.__aiPanelCtx) return;
+    window.__aiPanelCtx.obvody = Array.isArray(obvody) ? obvody : [];
+    renderAiPanelResult();
+  }).catch(function(err) {
+    console.error('AI panel chyba:', err);
+    renderAiPanelError(err && err.message ? err.message : String(err));
+  });
+}
+
+function renderAiPanelLoading() {
+  var body = document.getElementById('ai-panel-body');
+  var btn = document.getElementById('ai-panel-pouzit-btn');
+  if (btn) btn.disabled = true;
+  if (!body) return;
+  body.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:1rem;padding:2rem 0">' +
+    (window.__aiPanelCtx && window.__aiPanelCtx.fotoDataUrl
+      ? '<img src="' + window.__aiPanelCtx.fotoDataUrl + '" style="max-width:280px;max-height:200px;border-radius:4px;border:1px solid var(--border)">'
+      : '') +
+    '<div style="font-family:var(--mono);font-size:.85rem;color:var(--accent2)">⏳ Analyzuji štítek rozváděče…</div>' +
+    '<div style="font-size:.75rem;color:var(--muted)">Velký štítek může trvat 5–15 sekund</div>' +
+    '</div>';
+}
+
+function renderAiPanelError(msg) {
+  var body = document.getElementById('ai-panel-body');
+  var btn = document.getElementById('ai-panel-pouzit-btn');
+  if (btn) btn.disabled = true;
+  if (!body) return;
+  body.innerHTML =
+    '<div class="warn-box" style="margin-bottom:1rem">' +
+    '<strong>⚠️ Analýza selhala</strong><br><span style="font-size:.82rem">' + esc(msg) + '</span>' +
+    '</div>' +
+    '<div style="font-size:.78rem;color:var(--muted)">' +
+    'Zkontrolujte API klíč v Nastavení a kvalitu fotografie. Štítek by měl být ostře čitelný.' +
+    '</div>';
+}
+
+function renderAiPanelResult() {
+  var body = document.getElementById('ai-panel-body');
+  var btn = document.getElementById('ai-panel-pouzit-btn');
+  if (!body || !window.__aiPanelCtx) return;
+  var obvody = window.__aiPanelCtx.obvody;
+  if (!obvody.length) {
+    body.innerHTML = '<div class="warn-box">AI nerozpoznala na fotce žádné obvody. Zkuste fotku se zaměřením přímo na štítek nebo seznam jističů.</div>';
+    if (btn) btn.disabled = true;
+    return;
+  }
+  var html =
+    '<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-start">' +
+    '<img src="' + window.__aiPanelCtx.fotoDataUrl + '" style="width:140px;height:140px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0">' +
+    '<div style="flex:1;min-width:200px;font-size:.82rem;color:var(--muted)">AI rozpoznala <strong>' + obvody.length + '</strong> obvodů. Zkontrolujte hodnoty a případně upravte před vložením do tabulky.</div>' +
+    '</div>' +
+    '<div style="overflow-x:auto"><table class="data-table" style="font-size:.78rem;table-layout:fixed">' +
+    '<thead><tr>' +
+    '<th style="width:8%">Č.</th>' +
+    '<th style="width:24%">Název obvodu</th>' +
+    '<th style="width:14%">Typ-pol</th>' +
+    '<th style="width:7%">Ch.</th>' +
+    '<th style="width:9%">A</th>' +
+    '<th style="width:10%">IΔn</th>' +
+    '<th>Kabel</th>' +
+    '<th style="width:36px"></th>' +
+    '</tr></thead><tbody id="ai-panel-rows">' +
+    obvody.map(function(o, i) {
+      return '<tr data-row-idx="' + i + '">' +
+        '<td><input type="text" value="' + esc(o.cislo) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
+        '<td><input type="text" value="' + esc(o.nazev) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
+        '<td><input type="text" value="' + esc(o.typ_pol) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
+        '<td><input type="text" value="' + esc(o.charakteristika) + '" style="width:100%;border:none;background:transparent;font-size:.78rem;text-align:center"></td>' +
+        '<td><input type="text" value="' + esc(o.proud) + '" style="width:100%;border:none;background:transparent;font-size:.78rem;text-align:center"></td>' +
+        '<td><input type="text" value="' + esc(o.idn) + '" style="width:100%;border:none;background:transparent;font-size:.78rem;text-align:center"></td>' +
+        '<td><input type="text" value="' + esc(o.kabel) + '" style="width:100%;border:none;background:transparent;font-size:.78rem"></td>' +
+        '<td><button type="button" class="del-btn" data-action="aiPanelDeleteRow" data-row-idx="' + i + '" title="Vyřadit řádek">✕</button></td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table></div>' +
+    '<div style="font-size:.74rem;color:var(--muted);margin-top:.5rem">Po kliknutí <strong>Vložit do tabulky</strong> se přidají všechny zbývající řádky na konec tabulky tohoto rozváděče.</div>';
+  body.innerHTML = html;
+  if (btn) btn.disabled = false;
+}
+
+function aiPanelDeleteRow(btnEl) {
+  var tr = btnEl.closest('tr');
+  if (tr) tr.remove();
+}
+
+function closeAiPanelModal() {
+  var m = document.getElementById('modal-ai-panel');
+  if (m) m.classList.remove('open');
+  window.__aiPanelCtx = null;
+}
+
+function pouzitAiPanel() {
+  if (!window.__aiPanelCtx || !window.__aiPanelCtx.rozvadecCard) { closeAiPanelModal(); return; }
+  var tbody = window.__aiPanelCtx.rozvadecCard.querySelector('tbody');
+  if (!tbody) { closeAiPanelModal(); return; }
+  // Načíst aktuální (případně upravené) hodnoty z modálu
+  var rows = document.querySelectorAll('#ai-panel-rows tr');
+  rows.forEach(function(tr) {
+    var inputs = tr.querySelectorAll('input');
+    if (inputs.length < 7) return;
+    var cislo = inputs[0].value.trim();
+    var nazev = inputs[1].value.trim();
+    var typ_pol = inputs[2].value.trim();
+    var ch = inputs[3].value.trim().toUpperCase();
+    var proud = inputs[4].value.trim();
+    var idn = inputs[5].value.trim();
+    var kabel = inputs[6].value.trim();
+    // Pokud má idn → je to RCD, jinak běžný obvod
+    if (idn) {
+      addRcdRowFromData(tbody, { cislo: cislo, nazev: nazev, typ_pol: typ_pol, ch: ch || 'A', proud: proud, idn: idn, kabel: kabel });
+    } else {
+      addMereniRowFromData(tbody, { cislo: cislo, nazev: nazev, typ_pol: typ_pol, ch: ch, proud: proud, kabel: kabel });
+    }
+  });
+  closeAiPanelModal();
+}
+
+// Přidá běžný řádek měření s předvyplněnými hodnotami z AI
+function addMereniRowFromData(tbody, d) {
+  addMereniRowTo(tbody);
+  var rows = tbody.querySelectorAll('tr[data-rowtype="obvod"]');
+  var tr = rows[rows.length - 1];
+  if (!tr) return;
+  var inps = tr.querySelectorAll('input');
+  // Sloupce: Č, Název, Typ-pol, Ch, A, IΔn, Zsm, Riso, Fáze, Vyp, Čas, 5×, Ut, Kabel
+  if (d.cislo && inps[0]) inps[0].value = d.cislo;
+  if (d.nazev && inps[1]) inps[1].value = d.nazev;
+  if (d.typ_pol && inps[2]) inps[2].value = d.typ_pol;
+  if (d.ch && inps[3]) inps[3].value = d.ch;
+  if (d.proud && inps[4]) inps[4].value = d.proud;
+  if (d.kabel && inps[13]) inps[13].value = d.kabel;
+  if (typeof renumberRows === 'function') renumberRows(tbody);
+}
+
+// Přidá řádek RCD s předvyplněnými hodnotami z AI (jen hlavička skupiny)
+function addRcdRowFromData(tbody, d) {
+  // addRcdRow potřebuje 'el' s data-rozvadec — najdeme ho
+  var card = tbody.closest('[data-rozvadec-id]');
+  if (!card) return;
+  var rozId = card.getAttribute('data-rozvadec-id');
+  // Vytvoříme dummy element s data-rozvadec
+  var dummy = document.createElement('button');
+  dummy.dataset.rozvadec = rozId;
+  addRcdRow(dummy);
+  // Najdi posledně přidaný rcd-header a vyplň
+  var headers = tbody.querySelectorAll('tr[data-rowtype="rcd-header"]');
+  var tr = headers[headers.length - 1];
+  if (!tr) return;
+  var inps = tr.querySelectorAll('input');
+  if (d.cislo && inps[0]) inps[0].value = d.cislo;
+  if (d.nazev && inps[1]) inps[1].value = d.nazev;
+  if (d.typ_pol && inps[2]) inps[2].value = d.typ_pol;
+  // inps[3] je sklik (Ch type A/AC/B/F) — řešen samostatně přes select
+  var sel = tr.querySelector('select');
+  if (sel && d.ch && (d.ch === 'A' || d.ch === 'AC' || d.ch === 'B' || d.ch === 'F')) sel.value = d.ch;
+  if (d.proud && inps[3]) inps[3].value = d.proud;
+  if (d.idn && inps[4]) inps[4].value = d.idn;
+  if (d.kabel && inps[12]) inps[12].value = d.kabel;
+  if (typeof renumberRows === 'function') renumberRows(tbody);
 }
 
 function flashElement(el) {
@@ -5748,6 +6044,10 @@ document.addEventListener('click', function(e) {
     case 'addPristroj': addPristroj(); break;
     case 'addMereniRow': addMereniRow(el); break;
     case 'addRcdRow': addRcdRow(el); break;
+    case 'aiPanelScan': aiPanelScan(el); break;
+    case 'closeAiPanelModal': closeAiPanelModal(); break;
+    case 'pouzitAiPanel': pouzitAiPanel(); break;
+    case 'aiPanelDeleteRow': aiPanelDeleteRow(el); break;
     case 'addRozvadec': addRozvadec(); break;
     case 'addLpsMereni': addLpsMereni(); break;
     case 'delRozvadec': delRozvadec(el); break;

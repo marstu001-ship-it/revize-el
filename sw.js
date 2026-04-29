@@ -1,4 +1,4 @@
-var CACHE_NAME = 'revize-el-v6.0-20260421';
+var CACHE_NAME = 'revize-el-v6.1-20260429';
 var URLS_TO_CACHE = [
   './',
   './index.html',
