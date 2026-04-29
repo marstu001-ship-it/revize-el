@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.3<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.4<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -1440,6 +1440,20 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeAiPanelModal">Zrušit</button>
       <button class="btn btn-gold" id="ai-panel-pouzit-btn" data-action="pouzitAiPanel" disabled>✓ Vložit do tabulky</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-leave-form">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">⚠️ Rozepsaná zpráva</div>
+    <div style="font-size:.92rem;line-height:1.5;padding:.5rem 0 1rem">
+      Máte rozepsanou zprávu, která ještě nebyla uložena do archivu. Co chcete udělat?
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="leaveFormStay">← Zůstat</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="leaveFormDiscard">🗑 Zahodit</button>
+      <button class="btn btn-gold" data-action="leaveFormSave">💾 Uložit a odejít</button>
     </div>
   </div>
 </div>
@@ -6059,7 +6073,7 @@ function refreshArchivYearOptions() {
 }
 
 // Když uživatel chce opustit formulář s rozepsanou neuloženou zprávou,
-// zeptá se. Vrací volá callback po dokončení (nebo nic, pokud zůstává).
+// zeptá se přes 3-možnostní modal (Zůstat / Zahodit / Uložit a odejít).
 // Mimo formulář (Hlavní → Hlavní) callback proběhne hned.
 function attemptLeaveForm(cb) {
   var formScreen = document.getElementById('screen-form');
@@ -6070,14 +6084,34 @@ function attemptLeaveForm(cb) {
   var D;
   try { D = getData(); } catch(e) { D = null; }
   if (!D || (!D.ev_cislo && !D.misto && !D.adresa)) { cb(); return; }
-  var msg = 'Máte rozepsanou zprávu, která ještě nebyla uložena do archivu.\n\n' +
-            'OK = Uložit do archivu a opustit\n' +
-            'Storno = Zůstat ve formuláři';
-  if (window.confirm(msg)) {
-    try { saveToArchiv(); } catch(e) { console.error(e); }
-    cb();
-  }
-  // Cancel = nedělej nic, zůstat
+  // Otevřít modal a pamatovat si callback pro async rozhodnutí uživatele
+  window.__leaveFormCb = cb;
+  var m = document.getElementById('modal-leave-form');
+  if (m) m.classList.add('open');
+}
+
+function leaveFormStay() {
+  var m = document.getElementById('modal-leave-form');
+  if (m) m.classList.remove('open');
+  window.__leaveFormCb = null;
+}
+
+function leaveFormDiscard() {
+  var m = document.getElementById('modal-leave-form');
+  if (m) m.classList.remove('open');
+  window.__formDirty = false;
+  var cb = window.__leaveFormCb;
+  window.__leaveFormCb = null;
+  if (cb) cb();
+}
+
+function leaveFormSave() {
+  var m = document.getElementById('modal-leave-form');
+  if (m) m.classList.remove('open');
+  try { saveToArchiv(); } catch(e) { console.error(e); }
+  var cb = window.__leaveFormCb;
+  window.__leaveFormCb = null;
+  if (cb) cb();
 }
 
 function archivClearFilters() {
@@ -6358,6 +6392,9 @@ document.addEventListener('click', function(e) {
       );
       break;
     case 'archivClearFilters': archivClearFilters(); break;
+    case 'leaveFormStay': leaveFormStay(); break;
+    case 'leaveFormDiscard': leaveFormDiscard(); break;
+    case 'leaveFormSave': leaveFormSave(); break;
     case 'addDokumentace': addDokumentace(); break;
     case 'addPristroj': addPristroj(); break;
     case 'addMereniRow': addMereniRow(el); break;
