@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.7<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v6.8<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -4085,10 +4085,10 @@ function aiPanelRowCardHtml(o, i) {
   };
   return '<div data-row-idx="' + i + '" style="border:1px solid var(--border);border-radius:5px;padding:.6rem;background:#fafaf7">' +
     '<div style="display:flex;gap:.4rem;flex-wrap:wrap">' +
-      fld('Č.', o.cislo, { field: 'cislo', flex: '0 0 80px', min: '60px' }) +
+      fld('Č.', o.cislo, { field: 'cislo', flex: '1 1 100px', min: '90px' }) +
       fld('Ch.', o.charakteristika, { field: 'charakteristika', flex: '0 0 60px', min: '50px', center: true }) +
-      fld('Proud (A)', o.proud, { field: 'proud', flex: '0 0 80px', min: '60px', center: true }) +
-      fld('IΔn (A)', o.idn, { field: 'idn', flex: '0 0 80px', min: '60px', center: true }) +
+      fld('Proud (A)', o.proud, { field: 'proud', flex: '0 0 80px', min: '70px', center: true }) +
+      fld('IΔn (A)', o.idn, { field: 'idn', flex: '0 0 80px', min: '70px', center: true }) +
       '<button type="button" class="del-btn" data-action="aiPanelDeleteRow" title="Vyřadit" ' +
         'style="margin-left:auto;align-self:flex-end;height:32px;padding:0 .6rem">✕</button>' +
     '</div>' +
