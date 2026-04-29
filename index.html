@@ -394,7 +394,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.6<span class="ver-date"> · 2026-04-21</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v5.7<span class="ver-date"> · 2026-04-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
@@ -798,9 +798,30 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="scard-title">A. Rozsah a popis elektrické instalace</div>
     <button class="magic-btn" data-action="magicPopis">🔮 Magic – vložit typický text</button>
     <div class="g2">
-      <div class="f span2"><label>Předmětem této revize je</label><textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea></div>
-      <div class="f span2"><label>Předmětem této revize není</label><textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea></div>
-      <div class="f span2"><label>Popis revidované elektroinstalace</label><textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea></div>
+      <div class="f span2">
+        <label>Předmětem této revize je</label>
+        <textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_predmet_je">💾 Uložit text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_predmet_je">📋 Z knihovny</button>
+        </div>
+      </div>
+      <div class="f span2">
+        <label>Předmětem této revize není</label>
+        <textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_predmet_neni">💾 Uložit text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_predmet_neni">📋 Z knihovny</button>
+        </div>
+      </div>
+      <div class="f span2">
+        <label>Popis revidované elektroinstalace</label>
+        <textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_popis">💾 Uložit text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_popis">📋 Z knihovny</button>
+        </div>
+      </div>
       <div class="f">
         <label>Typ a popis zemniče</label>
         <input type="text" id="f_zemnič" list="f_zemnič_options" autocomplete="off" placeholder="vyberte nebo napište vlastní">
@@ -967,6 +988,10 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="f" style="margin-top:.75rem">
       <label>Slovní zhodnocení</label>
       <textarea id="f_zhodnoceni" style="min-height:180px" placeholder="Způsob a provedení elektroinstalace je v souladu s platnými ČSN..."></textarea>
+      <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_zhodnoceni">💾 Uložit text</button>
+        <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_zhodnoceni">📋 Z knihovny</button>
+      </div>
     </div>
     <div class="sep"></div>
     <div class="g2">
@@ -1131,6 +1156,20 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-snippety">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title">📋 Knihovna textů</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">
+      Vaše uložené texty. <strong>Vložit</strong> přidá text na konec aktuálního pole; <strong>Nahradit</strong> přepíše jeho obsah.
+    </div>
+    <input type="text" id="snippety-search" placeholder="🔍 Hledat podle názvu nebo obsahu…" style="width:100%;padding:.5rem .7rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem;margin-bottom:.75rem" autocomplete="off">
+    <div id="snippety-list" style="max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritKnihovnu">Zavřít</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-pdf-options">
   <div class="modal">
     <div class="modal-title">📄 Generovat PDF</div>
@@ -1186,7 +1225,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 
 
 <script>
-var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [] };
+var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [], snippety: [] };
 var aktTyp = 'elektro';
 var zavadyN = 0;
 var archiv = [];
@@ -1204,6 +1243,7 @@ var IDB_VERSION = 1;
 var IDB_STORE = 'kv';
 var idb = null;
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
+                  'snippety',
                   'last_backup_at', 'archiv_count_at_last_backup'];
 
 // iOS Safari (tab i PWA) má historicky bugy v IndexedDB v WebKit content
@@ -1308,6 +1348,7 @@ async function loadStore() {
         STORE.pristroje = d.pristroje || [];
         STORE.archiv = d.archiv || [];
         STORE.odberatele = d.odberatele || [];
+        STORE.snippety = d.snippety || [];
         STORE.last_backup_at = d.last_backup_at || null;
         STORE.archiv_count_at_last_backup = d.archiv_count_at_last_backup || 0;
         // Zapsat do IDB (jednorázová migrace)
@@ -2990,6 +3031,117 @@ function magicZaver() {
 // targetFieldId: ID textarea/input, do kterého se vyplní formátovaná adresa
 // btn: tlačítko, kde se po dobu fetche zobrazí loading stav
 // opts.multiline: true = použij \n (textarea), false = použij ', ' (input)
+// ═══════════════════════════════════════════════════════════════════════
+// SNIPPETY (vlastní textová knihovna). Umožňuje uživateli ukládat
+// libovolné texty z velkých textareí a později je vkládat zpět. Ukládá
+// se do STORE.snippety; sdíleno mezi všemi poli (Popis, Předmět, Závěr…).
+// ═══════════════════════════════════════════════════════════════════════
+var __snipTargetId = null; // pole, do kterého má vkládat picker
+
+function ulozitDoKnihovny(targetId) {
+  var el = document.getElementById(targetId);
+  if (!el) return;
+  var text = (el.value || '').trim();
+  if (!text) { alert('Pole je prázdné — není co uložit.'); return; }
+  var nazev = prompt('Pojmenuj tento text (např. „Popis – RD novostavba"):',
+                     text.slice(0, 40).replace(/\n/g, ' ') + (text.length > 40 ? '…' : ''));
+  if (nazev === null) return; // zrušeno
+  nazev = nazev.trim();
+  if (!nazev) { alert('Název nemůže být prázdný.'); return; }
+  if (!STORE.snippety) STORE.snippety = [];
+  STORE.snippety.unshift({
+    id: 'sn-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    nazev: nazev,
+    text: el.value,
+    kdy: new Date().toISOString()
+  });
+  saveStore();
+  // Mírná vizuální zpětná vazba — flash pole
+  flashElement(el);
+}
+
+function otevritKnihovnuTextu(targetId) {
+  __snipTargetId = targetId;
+  var m = document.getElementById('modal-snippety');
+  if (m) m.classList.add('open');
+  renderSnippetyList();
+}
+
+function zavritKnihovnu() {
+  var m = document.getElementById('modal-snippety');
+  if (m) m.classList.remove('open');
+  __snipTargetId = null;
+}
+
+function vlozitSnippet(id, mode) {
+  if (!__snipTargetId) return;
+  var sn = (STORE.snippety || []).filter(function(s) { return s.id === id; })[0];
+  if (!sn) return;
+  var el = document.getElementById(__snipTargetId);
+  if (!el) return;
+  if (mode === 'replace') {
+    el.value = sn.text;
+  } else {
+    var current = el.value || '';
+    var sep = current && !current.endsWith('\n') ? '\n\n' : '';
+    el.value = current + sep + sn.text;
+  }
+  try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+  el.focus();
+  zavritKnihovnu();
+}
+
+function smazatSnippet(id) {
+  var sn = (STORE.snippety || []).filter(function(s) { return s.id === id; })[0];
+  if (!sn) return;
+  if (!confirm('Smazat snippet „' + sn.nazev + '"?')) return;
+  STORE.snippety = (STORE.snippety || []).filter(function(s) { return s.id !== id; });
+  saveStore();
+  renderSnippetyList();
+}
+
+function renderSnippetyList() {
+  var c = document.getElementById('snippety-list');
+  if (!c) return;
+  var q = ((document.getElementById('snippety-search') || {}).value || '').trim().toLowerCase();
+  var arr = (STORE.snippety || []);
+  if (q) {
+    arr = arr.filter(function(s) {
+      return (s.nazev || '').toLowerCase().indexOf(q) !== -1 ||
+             (s.text || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  if (!arr.length) {
+    c.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.85rem">' +
+      (q ? 'Žádný text neodpovídá „' + esc(q) + '".' : 'Knihovna je zatím prázdná. Při psaní textu klepněte „💾 Uložit text".') +
+      '</div>';
+    return;
+  }
+  var html = '';
+  arr.forEach(function(s) {
+    var preview = (s.text || '').slice(0, 180).replace(/\n/g, ' ');
+    if ((s.text || '').length > 180) preview += '…';
+    html += '<div style="border:1px solid var(--border);border-radius:3px;padding:.65rem .85rem;margin-bottom:.6rem;background:var(--surface)">' +
+      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;flex-wrap:wrap">' +
+      '<strong style="font-size:.88rem;color:var(--accent2);flex:1 1 200px">' + esc(s.nazev) + '</strong>' +
+      '<button class="btn btn-gold" style="font-size:.65rem;padding:.3rem .6rem" data-action="vlozitSnippetAppend" data-id="' + esc(s.id) + '" title="Přidat na konec">📋 Vložit</button>' +
+      '<button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippetReplace" data-id="' + esc(s.id) + '" title="Nahradit obsah pole">↺ Nahradit</button>' +
+      '<button class="del-btn" style="font-size:.7rem" data-action="smazatSnippet" data-id="' + esc(s.id) + '" title="Smazat">✕</button>' +
+      '</div>' +
+      '<div style="font-size:.78rem;color:#444;line-height:1.5;white-space:pre-wrap">' + esc(preview) + '</div>' +
+      '</div>';
+  });
+  c.innerHTML = html;
+}
+
+function flashElement(el) {
+  if (!el) return;
+  var oldBg = el.style.background;
+  el.style.transition = 'background .2s';
+  el.style.background = '#dff5d8';
+  setTimeout(function() { el.style.background = oldBg; }, 600);
+}
+
 function lookupIcoFromAres(ico, targetFieldId, btn, opts) {
   opts = opts || {};
   var cleaned = (ico || '').replace(/\D/g, '');
@@ -4575,7 +4727,8 @@ function exportDatabaze() {
     technik: STORE.technik || {},
     pristroje: STORE.pristroje || [],
     archiv: STORE.archiv || [],
-    odberatele: STORE.odberatele || []
+    odberatele: STORE.odberatele || [],
+    snippety: STORE.snippety || []
   };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   var d = new Date().toISOString().slice(0, 10);
@@ -4672,6 +4825,7 @@ function importDatabaze() {
           '• Odběratelé: ' + ((data.odberatele || []).length) + '\n' +
           '• Zprávy v archivu: ' + ((data.archiv || []).length) + '\n' +
           '• Přístroje: ' + ((data.pristroje || []).length) + '\n' +
+          '• Vlastní texty: ' + ((data.snippety || []).length) + '\n' +
           '• Profil technika: ' + (data.technik && data.technik.jmeno ? 'ano' : 'ne') + '\n\n' +
           'Tyto údaje nahradí aktuální data v prohlížeči.';
         if (!confirm(msg)) return;
@@ -4679,6 +4833,7 @@ function importDatabaze() {
         STORE.pristroje = data.pristroje || [];
         STORE.archiv = data.archiv || [];
         STORE.odberatele = data.odberatele || [];
+        STORE.snippety = data.snippety || [];
         archiv = STORE.archiv;
         odberatele = STORE.odberatele;
         saveStore();
@@ -4849,6 +5004,8 @@ async function init() {
   renderPristrojePreset();
   var search = document.getElementById('odberatel-search');
   if (search) search.addEventListener('input', renderOdberatele);
+  var snippetSearch = document.getElementById('snippety-search');
+  if (snippetSearch) snippetSearch.addEventListener('input', renderSnippetyList);
   var bEl = document.getElementById('btn-nova-elektro');
   if (bEl) bEl.addEventListener('click', function() {
     aktTyp = 'elektro';
@@ -4879,6 +5036,12 @@ document.addEventListener('click', function(e) {
     case 'nacist': nacist(); break;
     case 'generujPDF': generujPDFAsk(); break;
     case 'toggleVoice': toggleVoice(); break;
+    case 'ulozitSnippet': ulozitDoKnihovny(el.getAttribute('data-target')); break;
+    case 'vlozitSnippet': otevritKnihovnuTextu(el.getAttribute('data-target')); break;
+    case 'vlozitSnippetAppend': vlozitSnippet(el.getAttribute('data-id'), 'append'); break;
+    case 'vlozitSnippetReplace': vlozitSnippet(el.getAttribute('data-id'), 'replace'); break;
+    case 'smazatSnippet': smazatSnippet(el.getAttribute('data-id')); break;
+    case 'zavritKnihovnu': zavritKnihovnu(); break;
     case 'generujPDFPotvrzeno': generujPDFPotvrzeno(); break;
     case 'closePdfOptions': closePdfOptions(); break;
     case 'ulozitTechnika': ulozitTechnika(); break;
@@ -4972,6 +5135,7 @@ window.addEventListener('DOMContentLoaded', function() {
         STORE.pristroje = d.pristroje || [];
         STORE.archiv = d.archiv || [];
         STORE.odberatele = d.odberatele || [];
+        STORE.snippety = d.snippety || [];
         archiv = STORE.archiv;
         odberatele = STORE.odberatele;
         if (typeof renderArchiv === 'function') renderArchiv();
