@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.8<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.9<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -540,7 +540,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       <strong>Jak na to:</strong>
       <ol style="margin:.3rem 0 0 1.4rem;padding:0">
         <li>Jednorázově: <strong>⚙ Nastavení → AI rozpoznávání závad</strong> → vyberte poskytovatele a vložte API klíč</li>
-        <li>Doporučeno: <strong>🇪🇺 Mistral Pixtral</strong> — evropský (FR), GDPR, zdarma 1 mld. tokenů/měsíc, klíč na <em>console.mistral.ai</em></li>
+        <li><strong>Doporučujeme 🇪🇺 Mistral Pixtral</strong> — je <strong>evropský</strong> (Francie), <strong>GDPR friendly</strong> (data zůstávají v EU) a <strong>nejlevnější</strong> (~0,03 Kč/scan vs. ~0,40 Kč u Geminu). Klíč zdarma na <em>console.mistral.ai</em></li>
         <li>Alternativy: <strong>Google Gemini Flash</strong> (zdarma do limitu), <strong>Anthropic Claude</strong> nebo <strong>OpenAI GPT-4o</strong> (placené)</li>
         <li>U závady: klepněte <strong>🤖 Popsat fotkou (AI)</strong> → vyberte/vyfoťte závadu</li>
         <li>AI vrátí návrh za 2–5 sekund — popis, kategorii, normu</li>
@@ -848,13 +848,14 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="scard-title">🤖 AI rozpoznávání závad <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">vyfotíte závadu, AI navrhne popis + kategorii + normu</span></div>
     <p style="font-size:.85rem;line-height:1.6;margin-bottom:.8rem;color:var(--muted)">
       Vyberte poskytovatele a vložte vlastní API klíč. Bez klíče funkce <em>nesvítí</em> — aplikace se chová jako dřív.
+      <br><strong style="color:var(--text)">Doporučujeme 🇪🇺 Mistral Pixtral</strong> — je <strong>evropský (Francie)</strong>, <strong>GDPR friendly</strong> (data nejdou mimo EU) a <strong>nejlevnější ze všech</strong> (~0,03 Kč za naskenovaný rozváděč, zatímco Gemini stojí ~0,40 Kč).
     </p>
     <div class="g2">
       <div class="f">
         <label>Poskytovatel AI</label>
         <select id="ai_provider">
           <option value="">— Žádný (vypnuto) —</option>
-          <option value="mistral">🇪🇺 Mistral Pixtral ⭐ doporučeno (EU, zdarma, levné)</option>
+          <option value="mistral">🇪🇺 Mistral Pixtral ⭐ doporučeno (evropský, GDPR friendly, nejlevnější)</option>
           <option value="gemini">Google Gemini Flash (zdarma do limitu)</option>
           <option value="claude">Anthropic Claude (placené, nejvyšší kvalita)</option>
           <option value="openai">OpenAI GPT-4o (placené)</option>
