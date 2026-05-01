@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.7<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v7.8<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -540,8 +540,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       <strong>Jak na to:</strong>
       <ol style="margin:.3rem 0 0 1.4rem;padding:0">
         <li>Jednorázově: <strong>⚙ Nastavení → AI rozpoznávání závad</strong> → vyberte poskytovatele a vložte API klíč</li>
-        <li>Doporučeno: <strong>Google Gemini Flash</strong> — zdarma do 1500 dotazů/den, klíč zdarma na <em>aistudio.google.com/apikey</em></li>
-        <li>Alternativy: <strong>Anthropic Claude</strong> nebo <strong>OpenAI GPT-4o</strong> (placené, vlastní klíč)</li>
+        <li>Doporučeno: <strong>🇪🇺 Mistral Pixtral</strong> — evropský (FR), GDPR, zdarma 1 mld. tokenů/měsíc, klíč na <em>console.mistral.ai</em></li>
+        <li>Alternativy: <strong>Google Gemini Flash</strong> (zdarma do limitu), <strong>Anthropic Claude</strong> nebo <strong>OpenAI GPT-4o</strong> (placené)</li>
         <li>U závady: klepněte <strong>🤖 Popsat fotkou (AI)</strong> → vyberte/vyfoťte závadu</li>
         <li>AI vrátí návrh za 2–5 sekund — popis, kategorii, normu</li>
         <li>Můžete upravit a kliknete <strong>✓ Použít</strong> → vyplní se do polí závady, fotka se přidá</li>
@@ -854,7 +854,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <label>Poskytovatel AI</label>
         <select id="ai_provider">
           <option value="">— Žádný (vypnuto) —</option>
-          <option value="gemini">Google Gemini Flash ⭐ doporučeno (zdarma)</option>
+          <option value="mistral">🇪🇺 Mistral Pixtral ⭐ doporučeno (EU, zdarma, levné)</option>
+          <option value="gemini">Google Gemini Flash (zdarma do limitu)</option>
           <option value="claude">Anthropic Claude (placené, nejvyšší kvalita)</option>
           <option value="openai">OpenAI GPT-4o (placené)</option>
         </select>
@@ -867,6 +868,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div style="font-size:.78rem;color:var(--muted);margin-top:.5rem;line-height:1.6">
       <strong>Jak získat klíč:</strong>
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>🇪🇺 Mistral</strong> (FR, GDPR, zdarma 1 mld. tokenů/měsíc): <a href="https://console.mistral.ai" target="_blank" rel="noopener" style="color:var(--accent2)">console.mistral.ai</a> → API Keys → Create new key</li>
         <li><strong>Gemini</strong> (zdarma do 1500/den): <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent2)">aistudio.google.com/apikey</a> → přihlásit Google účtem → „Create API key"</li>
         <li><strong>Claude</strong> (placené): <a href="https://console.anthropic.com" target="_blank" rel="noopener" style="color:var(--accent2)">console.anthropic.com</a> → API Keys → Create</li>
         <li><strong>OpenAI</strong> (placené): <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--accent2)">platform.openai.com/api-keys</a></li>
@@ -3710,6 +3712,7 @@ function aiCallProvider(prompt, base64) {
   if (cfg.provider === 'gemini') return aiCallGemini(prompt, base64, cfg.apiKey);
   if (cfg.provider === 'claude') return aiCallClaude(prompt, base64, cfg.apiKey);
   if (cfg.provider === 'openai') return aiCallOpenAI(prompt, base64, cfg.apiKey);
+  if (cfg.provider === 'mistral') return aiCallMistral(prompt, base64, cfg.apiKey);
   return Promise.reject(new Error('Neznámý poskytovatel: ' + cfg.provider));
 }
 
@@ -3888,6 +3891,33 @@ function aiCallOpenAI(prompt, base64, apiKey) {
   }).then(function(data) {
     var text = ((data.choices || [])[0] || {}).message && data.choices[0].message.content;
     if (!text) throw new Error('Prázdná odpověď od OpenAI');
+    return text;
+  });
+}
+
+// Mistral AI (FR, EU, GDPR-friendly) — Pixtral je jejich vision model.
+// API je OpenAI-kompatibilní. Free tier 1 RPS / 1B tokenů měsíčně,
+// pixtral-12b je ~10× levnější než Gemini 2.5 Flash.
+function aiCallMistral(prompt, base64, apiKey) {
+  return aiFetchWithRetry('Mistral', 'https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey,
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'pixtral-12b-2409',
+      max_tokens: 8192,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: 'data:image/jpeg;base64,' + base64 }
+      ]}]
+    })
+  }).then(function(data) {
+    var text = ((data.choices || [])[0] || {}).message && data.choices[0].message.content;
+    if (!text) throw new Error('Prázdná odpověď od Mistralu');
     return text;
   });
 }
