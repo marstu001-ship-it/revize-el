@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.1<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.2<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2179,6 +2179,7 @@ function wireImageUpload(inputId, storeKey, renderFn) {
     reader.onload = function(ev) {
       if (!STORE.technik) STORE.technik = {};
       STORE.technik[storeKey] = ev.target.result; // dataURL
+      saveStore(); // bez tohohle se obrázek ztratí při reloadu
       if (renderFn) renderFn();
     };
     reader.readAsDataURL(file);
