@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.4<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.5<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -839,9 +839,9 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <div id="rt_podpis_preview" style="margin-top:.5rem"></div>
       </div>
     </div>
-    <div style="margin-top:1rem;display:flex;gap:.75rem">
-      <button class="btn btn-gold" data-action="ulozitTechnika">💾 Uložit profil</button>
+    <div style="margin-top:1rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="home">Zpět</button>
+      <span style="font-size:.72rem;color:var(--muted)">Změny v profilu se ukládají automaticky.</span>
     </div>
   </div>
   <div class="scard">
@@ -2143,8 +2143,21 @@ function novaZprava(typ) {
 
 function nacistTechnika() {
   var t = STORE.technik || {};
-  ['jmeno','osvedceni','opravneni','ulice','mesto','psc','ico','dic','mobil','email','firma'].forEach(function(k) {
-    var el = document.getElementById('rt_' + k); if (el) el.value = t[k] || '';
+  var TECHNIK_FIELDS = ['jmeno','osvedceni','opravneni','ulice','mesto','psc','ico','dic','mobil','email','firma'];
+  TECHNIK_FIELDS.forEach(function(k) {
+    var el = document.getElementById('rt_' + k);
+    if (!el) return;
+    el.value = t[k] || '';
+    // Wire auto-save listener (jen jednou na pole). Bez tohohle se text
+    // neuložil dokud uživatel neklikl "💾 Uložit profil" — což matení.
+    if (!el.dataset.autosaveWired) {
+      el.dataset.autosaveWired = '1';
+      el.addEventListener('input', function() {
+        if (!STORE.technik) STORE.technik = {};
+        STORE.technik[k] = el.value;
+        saveStore();
+      });
+    }
   });
   // Razítko + podpis — pokud uloženy, zobrazit náhled
   renderRazitkoPreview();
