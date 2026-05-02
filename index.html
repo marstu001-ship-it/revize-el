@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.3<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.4<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4478,7 +4478,11 @@ function potvrditRevize() {
   var roky = typ.value === 'custom' ? (parseInt((document.getElementById('m_custom_roky') || {}).value) || 3) : parseInt(typ.value);
   var d = new Date(datum.value);
   d.setFullYear(d.getFullYear() + roky);
-  var fp = document.getElementById('f_pristi'); if (fp) fp.value = d.toISOString().split('T')[0];
+  var fp = document.getElementById('f_pristi');
+  if (fp) {
+    fp.value = d.toISOString().split('T')[0];
+    fp.dispatchEvent(new Event('input', { bubbles: true }));
+  }
   var fl = document.getElementById('f_lhuta');
   var mm = String(d.getMonth() + 1).padStart(2, '0');
   var lhutaText = '';
@@ -4488,7 +4492,10 @@ function potvrditRevize() {
     var letText = roky === 1 ? '1 rok' : (roky < 5 ? roky + ' roky' : roky + ' let');
     lhutaText = letText + ' — do ' + mm + '/' + d.getFullYear() + ' (dle NV č. 190/2022 Sb. §10 písm. n), ČSN 33 1500 č. 3.9)';
   }
-  if (fl) fl.value = lhutaText;
+  if (fl) {
+    fl.value = lhutaText;
+    fl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
   closeModal('modal-revize');
 }
 
@@ -6390,6 +6397,10 @@ function navazatZpravu(i) {
   if (D.druh === 'Výchozí' && D.predchozi) D.druh = 'Pravidelná';
   // Načíst do formuláře a přepnout na form obrazovku
   nacistData(D);
+  // Rovnou uložit do archivu, aby kopie nezmizela při návratu na hlavní.
+  // saveToArchiv() je idempotentní podle ev_cislo — nová zpráva má jiné
+  // číslo, takže původní zůstane vedle nové.
+  try { saveToArchiv(); } catch(err) { console.error(err); }
   showScreen('form');
 }
 
