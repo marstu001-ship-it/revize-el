@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.2<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.3<span class="ver-date"> · 2026-04-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5793,7 +5793,11 @@ function nacistJSON(e) {
     try {
       var D = JSON.parse(ev.target.result);
       nacistData(D);
-      alert('Zpráva načtena: ' + (D.ev_cislo || 'bez čísla'));
+      // Po načtení rovnou uložit do archivu, aby zpráva nezmizela při
+      // návratu na hlavní. Pokud zpráva se stejným ev. číslem už v archivu
+      // existuje, saveToArchiv() ji aktualizuje místo přidání duplicitu.
+      try { saveToArchiv(); } catch(err2) { console.error(err2); }
+      alert('Zpráva načtena a uložena do archivu: ' + (D.ev_cislo || 'bez čísla'));
     } catch(err) {
       alert('Chyba při načítání souboru: ' + err.message);
     }
