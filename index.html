@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.8<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.9<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4725,9 +4725,13 @@ function getData() {
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
     lps: collectLpsData(),
     odberatel_id: window.__aktualniOdberatelId || '',
-    // Checklist checkboxy — Popis instalace (och-) a Prohlídka (chk-)
+    // Checklist checkboxy — Popis instalace (och-), Prohlídka (chk-),
+    // Napěťová soustava (ns-), Normy (n-csnXXXX). Bez nich se po načtení
+    // zprávy ztrácí stav zaškrtnutí.
     ochrana_checks: collectCheckboxIds('och-'),
     prohlidka_checks: collectCheckboxIds('chk-'),
+    napetova_checks: collectCheckboxIds('ns-'),
+    normy_checks: collectCheckboxIds('n-'),
     // Zpětná kompatibilita — první rozváděč
     rozvadec: rozvadece[0] ? rozvadece[0].nazev : '', rozvadec_umisteni: rozvadece[0] ? rozvadece[0].umisteni : '',
     mereni: rozvadece[0] ? rozvadece[0].mereni : [],
@@ -4750,6 +4754,18 @@ function collectCheckboxIds(prefix) {
 
 function restoreCheckboxIds(ids) {
   if (!Array.isArray(ids)) return;
+  ids.forEach(function(id) {
+    var c = document.getElementById(id);
+    if (c) c.checked = true;
+  });
+}
+
+// Reset celé skupiny checkboxů (podle prefixu) na false a pak zaškrtni
+// jen ty z uložených ID. Pokud `ids` není pole (stará zpráva bez tohoto
+// pole), neudělá nic — necháme defaultní stavy z novaZprava.
+function restoreChecklistGroup(prefix, ids) {
+  if (!Array.isArray(ids)) return;
+  document.querySelectorAll('input[type="checkbox"][id^="' + prefix + '"]').forEach(function(c) { c.checked = false; });
   ids.forEach(function(id) {
     var c = document.getElementById(id);
     if (c) c.checked = true;
@@ -5990,10 +6006,12 @@ function nacistData(D) {
       if (inp[2]) inp[2].value = d.nazev || '';
     });
   }
-  // Restore checklist checkboxy (Popis instalace + Prohlídka). Checklisty
-  // už jsou vykreslené z novaZprava() na začátku, jen vrátíme zaškrtnutí.
-  restoreCheckboxIds(D.ochrana_checks);
-  restoreCheckboxIds(D.prohlidka_checks);
+  // Restore všech checklist checkboxů. Jen pokud zpráva data má — staré
+  // archivní zprávy je neměly a tak se nechají defaultní stavy z novaZprava.
+  restoreChecklistGroup('och-', D.ochrana_checks);
+  restoreChecklistGroup('chk-', D.prohlidka_checks);
+  restoreChecklistGroup('ns-', D.napetova_checks);
+  restoreChecklistGroup('n-', D.normy_checks);
   // Načtení z archivu = výchozí stav, žádné neuložené změny
   window.__formDirty = false;
 }
