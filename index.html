@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.7<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.8<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4725,11 +4725,35 @@ function getData() {
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
     lps: collectLpsData(),
     odberatel_id: window.__aktualniOdberatelId || '',
+    // Checklist checkboxy — Popis instalace (och-) a Prohlídka (chk-)
+    ochrana_checks: collectCheckboxIds('och-'),
+    prohlidka_checks: collectCheckboxIds('chk-'),
     // Zpětná kompatibilita — první rozváděč
     rozvadec: rozvadece[0] ? rozvadece[0].nazev : '', rozvadec_umisteni: rozvadece[0] ? rozvadece[0].umisteni : '',
     mereni: rozvadece[0] ? rozvadece[0].mereni : [],
     timestamp: new Date().toISOString()
   };
+}
+
+// Vrátí seznam ID checkboxů začínajících daným prefixem, které jsou
+// zaškrtnuté. Použito pro Prohlídka (chk-X-Y) a Popis instalace (och-X-Y),
+// kde IDs jsou párované sekce-položka. Při nacistData se z těchto IDs
+// znovu zaškrtnou checkboxy. Bez tohoto se zaklikávací políčka po
+// načtení zprávy z archivu vymažou.
+function collectCheckboxIds(prefix) {
+  var arr = [];
+  document.querySelectorAll('input[type="checkbox"][id^="' + prefix + '"]').forEach(function(c) {
+    if (c.checked) arr.push(c.id);
+  });
+  return arr;
+}
+
+function restoreCheckboxIds(ids) {
+  if (!Array.isArray(ids)) return;
+  ids.forEach(function(id) {
+    var c = document.getElementById(id);
+    if (c) c.checked = true;
+  });
 }
 
 // Posbírá všechna LPS-specifická data z tabu 2. Objekt & LPS,
@@ -5966,6 +5990,10 @@ function nacistData(D) {
       if (inp[2]) inp[2].value = d.nazev || '';
     });
   }
+  // Restore checklist checkboxy (Popis instalace + Prohlídka). Checklisty
+  // už jsou vykreslené z novaZprava() na začátku, jen vrátíme zaškrtnutí.
+  restoreCheckboxIds(D.ochrana_checks);
+  restoreCheckboxIds(D.prohlidka_checks);
   // Načtení z archivu = výchozí stav, žádné neuložené změny
   window.__formDirty = false;
 }
