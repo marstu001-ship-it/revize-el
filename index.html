@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.4<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.5<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6834,16 +6834,31 @@ document.addEventListener('input', function(e) {
 // HTML datalist filtruje nabídku podle aktuální hodnoty — když pole obsahuje
 // "B", při znovu-otevření vidíš jen položky začínající B (tj. často nic).
 // Trik: při focusu si pamatovat hodnotu a pole vyprázdnit, aby dropdown
-// ukázal všechny volby. Při opuštění:
+// ukázal všechny volby. JEN ALE u polí, kde aktuální hodnota odpovídá
+// některé z položek datalistu — typicky charakteristika (B/C/D), proud, IΔn.
+// U volnotextových polí (např. název obvodu „Zásuvky kuchyň") se nemaže,
+// jinak by uživatel přišel o rozepsaný text. Při opuštění:
 //  - pokud uživatel cokoli udělal (input event fired) → nechat tak
-//    (i kdyby smazal, je to jeho vůle)
 //  - pokud nic neudělal a pole zůstalo prázdné → vrátit původní hodnotu
+function dlValueMatchesOption(el) {
+  var listId = el.getAttribute('list');
+  if (!listId) return false;
+  var dl = document.getElementById(listId);
+  if (!dl) return false;
+  var v = el.value;
+  if (!v) return false;
+  for (var i = 0; i < dl.options.length; i++) {
+    if (dl.options[i].value === v) return true;
+  }
+  return false;
+}
 document.addEventListener('focusin', function(e) {
   var el = e.target;
   if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
   el.dataset.dlPrev = el.value;
   el.dataset.dlTouched = '0';
-  if (el.value) el.value = '';
+  // Vyprázdnit jen pokud je hodnota přesně z datalistu (uživatel ji „vybral")
+  if (dlValueMatchesOption(el)) el.value = '';
 });
 document.addEventListener('input', function(e) {
   var el = e.target;
