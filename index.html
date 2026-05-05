@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.9<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.0<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2712,6 +2712,7 @@ function addRozvadec() {
     '<div style="display:flex;gap:.75rem;margin-top:.6rem;flex-wrap:wrap">' +
     '<button class="add-row" data-action="addMereniRow" data-rozvadec="rozv-' + n + '">+ Přidat obvod</button>' +
     '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD</button>' +
+    '<button class="add-row" data-action="addInfoRow" data-rozvadec="rozv-' + n + '" style="border-color:#a87d00;color:#a87d00" title="Volný řádek pro elektroměr, stykač, pojistku, spotřebič…">+ Přidat info řádek</button>' +
     (STORE.aiConfig && STORE.aiConfig.provider && STORE.aiConfig.apiKey
       ? '<button class="add-row" data-action="aiPanelScan" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2);font-weight:600">🤖 Naskenovat štítek (AI)</button>'
       : '') +
@@ -2902,6 +2903,55 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
 }
 
 var rcdGroupCounter = 0;
+
+// Univerzální "info" řádek — pro elektroměry, stykače, pojistky, prvky,
+// které se v tabulce objeví občas a nemají strukturované sloupce. Dvě
+// volné textové buňky: Popis (široký) + Hodnota / poznámka (užší).
+function addInfoRow(el) {
+  var tbody = el ? getTbodyForRozvadec(el) : document.querySelector('#rozvadece-container tbody');
+  if (!tbody) return;
+  addInfoRowTo(tbody, {});
+}
+
+function addInfoRowTo(tbody, data) {
+  data = data || {};
+  var num = getNextRowNum(tbody);
+  var tr = document.createElement('tr');
+  tr.dataset.rowtype = 'info';
+  tr.style.background = '#fff8e6';
+  // Č.
+  var tdNum = mkTd('');
+  tdNum.querySelector('input').value = data.cislo || ('' + num);
+  tr.appendChild(tdNum);
+  // Popis (colspan 9) — pojme název + parametry
+  var tdPopis = document.createElement('td');
+  tdPopis.colSpan = 9;
+  tdPopis.style.cssText = 'border:1px solid #ccc;padding:0';
+  var inpPopis = document.createElement('input');
+  inpPopis.type = 'text';
+  inpPopis.className = 'info-popis';
+  inpPopis.placeholder = 'např. Elektroměr KWZ-3PH-D 63 /úřed.cejchovaný/, výr. č. 0132226';
+  inpPopis.style.cssText = 'width:100%;border:none;background:transparent;padding:.3rem .4rem;font-size:.78rem';
+  inpPopis.value = data.popis || '';
+  tdPopis.appendChild(inpPopis);
+  tr.appendChild(tdPopis);
+  // Hodnota / poznámka (colspan 4)
+  var tdHod = document.createElement('td');
+  tdHod.colSpan = 4;
+  tdHod.style.cssText = 'border:1px solid #ccc;padding:0';
+  var inpHod = document.createElement('input');
+  inpHod.type = 'text';
+  inpHod.className = 'info-hodnota';
+  inpHod.placeholder = 'doplňující údaj (typ, vývod kabelem, č. podružné…)';
+  inpHod.style.cssText = 'width:100%;border:none;background:transparent;padding:.3rem .4rem;font-size:.78rem';
+  inpHod.value = data.hodnota || '';
+  tdHod.appendChild(inpHod);
+  tr.appendChild(tdHod);
+  // Delete button
+  tr.appendChild(mkDelTd());
+  tbody.appendChild(tr);
+  renumberRows(tbody);
+}
 
 function addRcdRow(el) {
   var tbody = el ? getTbodyForRozvadec(el) : document.querySelector('#rozvadece-container tbody');
@@ -4588,6 +4638,15 @@ function getData() {
           c: '', n: '', typ: '', ch: '', a: '', idn: '', zsm: '', riso: '',
           faze: inp[0].value, vyp: inp[1].value, cas: inp[2].value, t5idn: inp[3].value, ut: inp[4].value, kabel: ''
         });
+      } else if (rowtype === 'info') {
+        var popisInp = tr.querySelector('.info-popis');
+        var hodInp = tr.querySelector('.info-hodnota');
+        rozv.mereni.push({
+          rowtype: 'info',
+          c: inp[0] ? inp[0].value : '',
+          popis: popisInp ? popisInp.value : '',
+          hodnota: hodInp ? hodInp.value : ''
+        });
       } else {
         if (inp.length >= 14) rozv.mereni.push({
           rowtype: rowtype, rcdGroup: rcdGroup,
@@ -5062,7 +5121,16 @@ function generujPDF() {
     return data.map(function(m) {
       var isRcd = m.rowtype === 'rcd-mereni';
       var isRcdH = m.rowtype === 'rcd-header';
-      var bg = isRcd ? ' style="background:#f8f8f0"' : (isRcdH ? ' style="background:#f0f4ff"' : '');
+      var isInfo = m.rowtype === 'info';
+      var bg = isRcd ? ' style="background:#f8f8f0"' : (isRcdH ? ' style="background:#f0f4ff"' : (isInfo ? ' style="background:#fff8e6"' : ''));
+      if (isInfo) {
+        prevGroup = '';
+        return '<tr' + bg + '>' +
+          '<td style="text-align:center">' + esc(m.c || '') + '</td>' +
+          '<td colspan="9" style="font-style:italic">' + esc(m.popis || '') + '</td>' +
+          '<td colspan="4" style="text-align:left">' + esc(m.hodnota || '') + '</td>' +
+          '</tr>';
+      }
       if (isRcd) {
         var isFirstSub = m.rcdGroup !== prevGroup;
         prevGroup = m.rcdGroup || '';
@@ -5549,8 +5617,17 @@ function renderTiskRows(data) {
   return data.map(function(m) {
     var isRcd = m.rowtype === 'rcd-mereni';
     var isRcdH = m.rowtype === 'rcd-header';
-    var bg = isRcd ? ' background:#f8f8f0;' : (isRcdH ? ' background:#f0f4ff;' : '');
+    var isInfo = m.rowtype === 'info';
+    var bg = isRcd ? ' background:#f8f8f0;' : (isRcdH ? ' background:#f0f4ff;' : (isInfo ? ' background:#fff8e6;' : ''));
     var s = 'text-align:center;padding:1mm 1.5mm;border:.75pt solid #000;' + bg;
+    if (isInfo) {
+      prevGroup = '';
+      return '<tr>' +
+        '<td style="' + s + '">' + esc(m.c || '') + '</td>' +
+        '<td colspan="9" style="text-align:left;padding:1mm 1.5mm;border:.75pt solid #000;' + bg + 'font-style:italic">' + esc(m.popis || '') + '</td>' +
+        '<td colspan="4" style="text-align:left;padding:1mm 1.5mm;border:.75pt solid #000;' + bg + '">' + esc(m.hodnota || '') + '</td>' +
+        '</tr>';
+    }
     if (isRcd) {
       var isFirstSub = m.rcdGroup !== prevGroup;
       prevGroup = m.rcdGroup || '';
@@ -5828,6 +5905,8 @@ function nacistData(D) {
           addRcdSubRows(tbody, trR, m.ch || 'A', gid);
         } else if (m.rowtype === 'rcd-mereni') {
           // podřádky se generují z addRcdSubRows, skip
+        } else if (m.rowtype === 'info') {
+          addInfoRowTo(tbody, { cislo: m.c, popis: m.popis, hodnota: m.hodnota });
         } else {
           addMereniRowTo(tbody);
           var lastTr = tbody.lastElementChild;
@@ -6709,6 +6788,7 @@ document.addEventListener('click', function(e) {
     case 'ulozitPristrojeJakoVychozi': ulozitPristrojeJakoVychozi(); break;
     case 'addMereniRow': addMereniRow(el); break;
     case 'addRcdRow': addRcdRow(el); break;
+    case 'addInfoRow': addInfoRow(el); break;
     case 'aiPanelScan': aiPanelScan(el); break;
     case 'closeAiPanelModal': closeAiPanelModal(); break;
     case 'pouzitAiPanel': pouzitAiPanel(); break;
