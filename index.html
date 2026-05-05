@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.9<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.10<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4698,8 +4698,9 @@ function getData() {
     zahajeni: gv('f_zahajeni'), preruseni_od: gv('f_preruseni_od'), preruseni_do: gv('f_preruseni_do'),
     ukonceni: gv('f_ukonceni'), vypracovani: gv('f_vypracovani'), pristi: gv('f_pristi'),
     normy: getVybrane(),
-    provozovatel: gv('f_provozovatel'),
-    objednatel: gv('f_objednatel'), pritomen2: gv('f_pritomen2'),
+    provozovatel: gv('f_provozovatel'), provozovatel_ico: gv('f_provozovatel_ico'),
+    objednatel: gv('f_objednatel'), objednatel_ico: gv('f_objednatel_ico'),
+    pritomen2: gv('f_pritomen2'),
     firma_zmena2: gv('f_firma_zmena2'), firma_opravneni2: gv('f_firma_opravneni2'),
     napetova_soustava: getNapetoveSoustavy(),
     rt_jmeno: gv('f_rt_jmeno') || t.jmeno || '',
@@ -5846,8 +5847,9 @@ function nacistData(D) {
     'f_misto': D.misto, 'f_adresa': D.adresa,
     'f_zahajeni': D.zahajeni, 'f_preruseni_od': D.preruseni_od, 'f_preruseni_do': D.preruseni_do,
     'f_ukonceni': D.ukonceni, 'f_vypracovani': D.vypracovani, 'f_pristi': D.pristi,
-    'f_provozovatel': D.provozovatel,
-    'f_objednatel': D.objednatel, 'f_pritomen2': D.pritomen2,
+    'f_provozovatel': D.provozovatel, 'f_provozovatel_ico': D.provozovatel_ico,
+    'f_objednatel': D.objednatel, 'f_objednatel_ico': D.objednatel_ico,
+    'f_pritomen2': D.pritomen2,
     'f_firma_zmena2': D.firma_zmena2, 'f_firma_opravneni2': D.firma_opravneni2,
     'f_rt_jmeno': D.rt_jmeno, 'f_rt_osvedceni': D.rt_osvedceni, 'f_rt_opravneni': D.rt_opravneni,
     'f_rt_adresa': D.rt_adresa, 'f_rt_ico': D.rt_ico,
