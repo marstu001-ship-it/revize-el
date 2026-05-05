@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.0<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.1<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2712,7 +2712,7 @@ function addRozvadec() {
     '<div style="display:flex;gap:.75rem;margin-top:.6rem;flex-wrap:wrap">' +
     '<button class="add-row" data-action="addMereniRow" data-rozvadec="rozv-' + n + '">+ Přidat obvod</button>' +
     '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD</button>' +
-    '<button class="add-row" data-action="addInfoRow" data-rozvadec="rozv-' + n + '" style="border-color:#a87d00;color:#a87d00" title="Volný řádek pro elektroměr, stykač, pojistku, spotřebič…">+ Přidat info řádek</button>' +
+    '<button class="add-row" data-action="addInfoRow" data-rozvadec="rozv-' + n + '" style="border-color:#a87d00;color:#a87d00" title="Volný řádek pro elektroměr, stykač, pojistku, spotřebič…">+ Přidat jiný řádek</button>' +
     (STORE.aiConfig && STORE.aiConfig.provider && STORE.aiConfig.apiKey
       ? '<button class="add-row" data-action="aiPanelScan" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2);font-weight:600">🤖 Naskenovat štítek (AI)</button>'
       : '') +
