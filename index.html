@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.6<span class="ver-date"> · 2026-04-29</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v8.7<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2689,6 +2689,20 @@ function addRozvadec() {
     '<div class="f"><label>Rozváděč (označení)</label><input type="text" class="rozv-nazev" list="dl_nazev_rozvadec" autocomplete="off" placeholder="' + (phNazev[aktPodtyp] || phNazev.dum) + '"></div>' +
     '<div class="f"><label>Umístění / popis</label><input type="text" class="rozv-umisteni" placeholder="' + (phUmist[aktPodtyp] || phUmist.dum) + '"></div>' +
     '</div>' +
+    '<div style="margin-bottom:1rem;padding:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:3px">' +
+    '<div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem">Přívod a naměřené hodnoty na svorkách rozváděče</div>' +
+    '<div class="f" style="margin-bottom:.5rem"><label style="font-size:.72rem">Přívod (kabel, ukončení)</label><input type="text" class="rozv-privod" placeholder="např. CYKY 4B×16 mm² ukončen v RMS 1 na svorkách hl. vypínače APN 63 A"></div>' +
+    '<div style="display:grid;grid-template-columns:32px 1fr 1fr 1fr;gap:.4rem .5rem;align-items:center;font-size:.78rem">' +
+    '<div></div><div style="font-size:.65rem;color:var(--muted);text-align:center">U (V)</div><div style="font-size:.65rem;color:var(--muted);text-align:center">f (Hz)</div><div style="font-size:.65rem;color:var(--muted);text-align:center">I<sub>k</sub> (kA)</div>' +
+    ['L1','L2','L3'].map(function(faze, idx) {
+      var defaultU = ['230','230','230'][idx];
+      return '<div style="font-family:var(--mono);font-size:.78rem;color:var(--muted)">' + faze + '</div>' +
+        '<input type="text" class="rozv-faze-u" data-faze="' + faze + '" placeholder="' + defaultU + '" style="text-align:center">' +
+        '<input type="text" class="rozv-faze-f" data-faze="' + faze + '" placeholder="50" style="text-align:center">' +
+        '<input type="text" class="rozv-faze-ik" data-faze="' + faze + '" placeholder="—" style="text-align:center">';
+    }).join('') +
+    '</div>' +
+    '</div>' +
     '<div class="meas-table-wrap">' + getMeasTableHtml() + '</div>' +
     '<div style="display:flex;gap:.75rem;margin-top:.6rem;flex-wrap:wrap">' +
     '<button class="add-row" data-action="addMereniRow" data-rozvadec="rozv-' + n + '">+ Přidat obvod</button>' +
@@ -4530,9 +4544,23 @@ function getData() {
   document.querySelectorAll('#rozvadece-container .scard').forEach(function(card) {
     var nazevEl = card.querySelector('.rozv-nazev');
     var umistEl = card.querySelector('.rozv-umisteni');
+    var privodEl = card.querySelector('.rozv-privod');
+    var faze = ['L1','L2','L3'].map(function(f) {
+      var u = card.querySelector('.rozv-faze-u[data-faze="' + f + '"]');
+      var fr = card.querySelector('.rozv-faze-f[data-faze="' + f + '"]');
+      var ik = card.querySelector('.rozv-faze-ik[data-faze="' + f + '"]');
+      return {
+        faze: f,
+        u: u ? u.value.trim() : '',
+        f: fr ? fr.value.trim() : '',
+        ik: ik ? ik.value.trim() : ''
+      };
+    });
     var rozv = {
       nazev: nazevEl ? nazevEl.value : '',
       umisteni: umistEl ? umistEl.value : '',
+      privod: privodEl ? privodEl.value : '',
+      faze: faze,
       mereni: []
     };
     card.querySelectorAll('tbody tr').forEach(function(tr) {
@@ -5074,6 +5102,29 @@ function generujPDF() {
     rozvadeceHtml += '<div data-rozv="' + ri + '">';
     rozvadeceHtml += '<div class="sec-head" style="' + (ri > 0 ? 'margin-top:5mm' : '') + '"><div class="sec-num">' + (ri + 1) + '</div><div class="sec-name">Měření: ' + esc(rozv.nazev || 'Rozváděč ' + (ri+1)) + '</div></div>';
     if (rozv.nazev) rozvadeceHtml += '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>' + esc(rozv.nazev) + '</strong> — ' + esc(rozv.umisteni || '') + '</div>';
+    // Přívod + naměřené hodnoty na svorkách (L1/L2/L3 napětí + Ik) — jen pokud něco vyplněné
+    var fazeArr = (rozv.faze || []);
+    var hasFaze = fazeArr.some(function(fz) { return fz && (fz.u || fz.ik); });
+    var hasPrivod = rozv.privod && rozv.privod.trim();
+    if (hasPrivod || hasFaze) {
+      rozvadeceHtml += '<div style="font-size:8.5pt;padding:0 2mm;margin-bottom:2mm;line-height:1.4">';
+      if (hasFaze) {
+        rozvadeceHtml += fazeArr.map(function(fz) {
+          if (!fz || (!fz.u && !fz.ik)) return '';
+          var freq = fz.f || '50';
+          return '<span style="font-family:var(--mono);margin-right:8mm">' +
+            esc(fz.faze) + ' – PEN ' +
+            (fz.u ? esc(fz.u) + ' V' : '— V') +
+            ' / ' + esc(freq) + ' Hz' +
+            (fz.ik ? '&nbsp;&nbsp;I<sub>k</sub> = ' + esc(fz.ik) + ' kA' : '') +
+            '</span>';
+        }).filter(Boolean).join('<br>');
+      }
+      if (hasPrivod) {
+        rozvadeceHtml += (hasFaze ? '<br>' : '') + '<em>Přívod:</em> ' + esc(rozv.privod);
+      }
+      rozvadeceHtml += '</div>';
+    }
     rozvadeceHtml += pdfMeasHeader + '<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>';
     rozvadeceHtml += '</div>';
   });
@@ -5560,6 +5611,24 @@ function tiskMereni() {
     var rows = renderTiskRows(rozv.mereni || []);
     win.document.write('<div class="sec"><div class="sec-num">' + (ri+1) + '</div><div class="sec-name">Měření: ' + esc(rozv.nazev||'') + '</div></div>');
     if (rozv.nazev) win.document.write('<div style="font-size:8.5pt;margin-bottom:2mm"><strong>' + esc(rozv.nazev) + '</strong> &mdash; ' + esc(rozv.umisteni||'') + '</div>');
+    // Přívod + napětí + Ik na svorkách
+    var tmFaze = (rozv.faze || []);
+    var tmHasFaze = tmFaze.some(function(fz) { return fz && (fz.u || fz.ik); });
+    var tmHasPrivod = rozv.privod && rozv.privod.trim();
+    if (tmHasPrivod || tmHasFaze) {
+      var tmHtml = '<div style="font-size:8pt;margin-bottom:2mm;line-height:1.4">';
+      if (tmHasFaze) {
+        tmHtml += tmFaze.map(function(fz) {
+          if (!fz || (!fz.u && !fz.ik)) return '';
+          return esc(fz.faze) + ' – PEN ' + (fz.u ? esc(fz.u) + ' V' : '— V') +
+            ' / ' + esc(fz.f || '50') + ' Hz' +
+            (fz.ik ? '&nbsp;&nbsp;Ik = ' + esc(fz.ik) + ' kA' : '');
+        }).filter(Boolean).join('<br>');
+      }
+      if (tmHasPrivod) tmHtml += (tmHasFaze ? '<br>' : '') + '<em>Přívod:</em> ' + esc(rozv.privod);
+      tmHtml += '</div>';
+      win.document.write(tmHtml);
+    }
     win.document.write('<table>' + thHtml + '<tbody>' + (rows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>');
   });
   win.document.write('<div class="note">U RCD je součástí měření ověření funkce testovacího tlačítka.</div>');
@@ -5702,6 +5771,17 @@ function nacistData(D) {
       var umistEl = lastCard.querySelector('.rozv-umisteni');
       if (nazevEl) nazevEl.value = rozv.nazev || '';
       if (umistEl) umistEl.value = rozv.umisteni || '';
+      var privodEl = lastCard.querySelector('.rozv-privod');
+      if (privodEl) privodEl.value = rozv.privod || '';
+      (rozv.faze || []).forEach(function(fz) {
+        if (!fz || !fz.faze) return;
+        var u = lastCard.querySelector('.rozv-faze-u[data-faze="' + fz.faze + '"]');
+        var fr = lastCard.querySelector('.rozv-faze-f[data-faze="' + fz.faze + '"]');
+        var ik = lastCard.querySelector('.rozv-faze-ik[data-faze="' + fz.faze + '"]');
+        if (u) u.value = fz.u || '';
+        if (fr) fr.value = fz.f || '';
+        if (ik) ik.value = fz.ik || '';
+      });
       var tbody = lastCard.querySelector('tbody');
       if (tbody) tbody.innerHTML = '';
       (rozv.mereni || []).forEach(function(m) {
