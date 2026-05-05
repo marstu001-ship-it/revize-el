@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.6<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.7<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5889,7 +5889,9 @@ function nacistData(D) {
             addRcdSubRows(tbody, trR, this.value, gid);
           });
           trR.appendChild(chTd);
-          [m.a, m.idn, m.zsm, m.riso].forEach(function(v, vi) {
+          // Migrace: prázdné Riso v RCD řádku (před v9.6) → ">20"
+          var rcdRisoVal = m.riso || '>20';
+          [m.a, m.idn, m.zsm, rcdRisoVal].forEach(function(v, vi) {
             trR.appendChild(mkTd('')); trR.querySelectorAll('input')[3 + vi].value = v || '';
           });
           for (var q = 0; q < 5; q++) trR.appendChild(mkTd(''));
@@ -5914,7 +5916,10 @@ function nacistData(D) {
           var lastTr = tbody.lastElementChild;
           if (lastTr) {
             var inps = lastTr.querySelectorAll('input');
-            var vals = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, m.riso, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
+            // Migrace: prázdné Riso v archivních datech (před v9.6) se
+            // automaticky doplní na typickou hodnotu ">20" MΩ.
+            var risoVal = m.riso || '>20';
+            var vals = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, risoVal, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
             vals.forEach(function(v, vi) { if (inps[vi]) inps[vi].value = v || ''; });
           }
         }
