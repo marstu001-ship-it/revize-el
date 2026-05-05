@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.5<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.6<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2783,7 +2783,7 @@ function addMereniRowTo(tbody) {
     { ph: '16', list: 'dl_proud_A' },
     { ph: '0,03', list: 'dl_idn' },
     { ph: '0,23' },
-    { ph: '>20' }
+    { ph: '>20', v: '>20' }
   ];
   hlavni.forEach(function(col) {
     var td = mkTd(col.ph, col.s, col.list);
@@ -2980,9 +2980,11 @@ function addRcdRow(el) {
   // A, IΔn
   trMain.appendChild(mkTd('25', null, 'dl_proud_A'));
   trMain.appendChild(mkTd('0,03', null, 'dl_idn'));
-  // Zsm, Riso
+  // Zsm, Riso (Riso předvyplněno na typickou hodnotu >20)
   trMain.appendChild(mkTd('0,65'));
-  trMain.appendChild(mkTd('>20'));
+  var risoTd = mkTd('>20');
+  risoTd.querySelector('input').value = '>20';
+  trMain.appendChild(risoTd);
   // Fáze, Vyp, čas, 5×, Ut — prázdné na hlavním
   for (var i = 0; i < 5; i++) trMain.appendChild(mkTd(''));
   // Kabel
