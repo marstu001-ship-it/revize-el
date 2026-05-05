@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.2<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.3<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6829,6 +6829,30 @@ document.addEventListener('change', function(e) {
 
 document.addEventListener('input', function(e) {
   if (e.target.closest('#screen-form')) { autoSave(); window.__formDirty = true; }
+});
+
+// HTML datalist filtruje nabídku podle aktuální hodnoty — když pole obsahuje
+// "B", při znovu-otevření vidíš jen položky začínající B (tj. často nic).
+// Trik: při získání focusu si pamatovat hodnotu a pole vyprázdnit, takže
+// dropdown ukáže všechny volby. Pokud uživatel nic nevybere a pole opustí
+// prázdné, vrátíme původní hodnotu zpět.
+document.addEventListener('focusin', function(e) {
+  var el = e.target;
+  if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
+  // Zachovej původní hodnotu pro případnou restauraci
+  el.dataset.dlPrev = el.value;
+  if (el.value) {
+    el.value = '';
+  }
+});
+document.addEventListener('focusout', function(e) {
+  var el = e.target;
+  if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
+  if (el.value === '' && el.dataset.dlPrev) {
+    // Uživatel nic nevybral — vrátit původní hodnotu (nemělo by triggerovat dirty)
+    el.value = el.dataset.dlPrev;
+  }
+  delete el.dataset.dlPrev;
 });
 
 document.getElementById('json-input').addEventListener('change', nacistJSON);
