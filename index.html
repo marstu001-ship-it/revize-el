@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.1<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.2<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2746,12 +2746,12 @@ function addMereniRow(el) {
 
 function getNextRowNum(tbody) {
   var n = 0;
-  tbody.querySelectorAll('tr[data-rowtype="obvod"], tr[data-rowtype="rcd-header"]').forEach(function() { n++; });
+  tbody.querySelectorAll('tr[data-rowtype="obvod"], tr[data-rowtype="rcd-header"], tr[data-rowtype="info"]').forEach(function() { n++; });
   return n + 1;
 }
 
 // Přečísluje celou tabulku postupně 1, 2, 3, ... Číslují se jen řádky
-// s `data-rowtype` "obvod", "rcd-header" nebo "lps-row" (tj. ne RCD
+// s `data-rowtype` "obvod", "rcd-header", "info" nebo "lps-row" (tj. ne RCD
 // podřádky s data-rowtype="rcd-mereni", které mají sloučenou buňku).
 // Bezpečně se volá i na tbody, které žádné takové řádky nemají
 // (dokumentace, přístroje, závady) — nic se nestane.
@@ -2760,7 +2760,7 @@ function renumberRows(tbody) {
   var n = 0;
   tbody.querySelectorAll('tr').forEach(function(tr) {
     var rt = tr.dataset.rowtype;
-    if (rt === 'obvod' || rt === 'rcd-header' || rt === 'lps-row') {
+    if (rt === 'obvod' || rt === 'rcd-header' || rt === 'lps-row' || rt === 'info') {
       n++;
       var firstInput = tr.querySelector('input');
       if (firstInput) firstInput.value = '' + n;
