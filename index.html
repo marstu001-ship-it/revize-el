@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.3<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.4<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6833,26 +6833,33 @@ document.addEventListener('input', function(e) {
 
 // HTML datalist filtruje nabídku podle aktuální hodnoty — když pole obsahuje
 // "B", při znovu-otevření vidíš jen položky začínající B (tj. často nic).
-// Trik: při získání focusu si pamatovat hodnotu a pole vyprázdnit, takže
-// dropdown ukáže všechny volby. Pokud uživatel nic nevybere a pole opustí
-// prázdné, vrátíme původní hodnotu zpět.
+// Trik: při focusu si pamatovat hodnotu a pole vyprázdnit, aby dropdown
+// ukázal všechny volby. Při opuštění:
+//  - pokud uživatel cokoli udělal (input event fired) → nechat tak
+//    (i kdyby smazal, je to jeho vůle)
+//  - pokud nic neudělal a pole zůstalo prázdné → vrátit původní hodnotu
 document.addEventListener('focusin', function(e) {
   var el = e.target;
   if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
-  // Zachovej původní hodnotu pro případnou restauraci
   el.dataset.dlPrev = el.value;
-  if (el.value) {
-    el.value = '';
-  }
+  el.dataset.dlTouched = '0';
+  if (el.value) el.value = '';
 });
+document.addEventListener('input', function(e) {
+  var el = e.target;
+  if (el && el.tagName === 'INPUT' && el.hasAttribute('list') && 'dlPrev' in el.dataset) {
+    el.dataset.dlTouched = '1';
+  }
+}, true);
 document.addEventListener('focusout', function(e) {
   var el = e.target;
   if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
-  if (el.value === '' && el.dataset.dlPrev) {
-    // Uživatel nic nevybral — vrátit původní hodnotu (nemělo by triggerovat dirty)
+  // Vrátit původní hodnotu jen když uživatel s polem nic neudělal
+  if (el.dataset.dlTouched === '0' && el.value === '' && el.dataset.dlPrev) {
     el.value = el.dataset.dlPrev;
   }
   delete el.dataset.dlPrev;
+  delete el.dataset.dlTouched;
 });
 
 document.getElementById('json-input').addEventListener('change', nacistJSON);
