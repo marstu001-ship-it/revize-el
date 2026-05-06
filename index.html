@@ -427,7 +427,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.16<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.17<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6084,6 +6084,31 @@ function nacistJSON(e) {
   reader.onload = function(ev) {
     try {
       var D = JSON.parse(ev.target.result);
+      // Detekce typu souboru: záloha celé DB má jiný tvar než jedna zpráva.
+      // Záloha (z 💾 Stáhnout zálohu) má top-level archiv/odberatele/technik
+      // a typicky postrádá vlastnosti jednotlivé zprávy (ev_cislo, misto…).
+      // Zpráva (z Uložit JSON) má naopak ploché vlastnosti zprávy.
+      var looksLikeBackup =
+        Array.isArray(D.archiv) ||
+        Array.isArray(D.odberatele) ||
+        Array.isArray(D.snippety) ||
+        Array.isArray(D.pristroje) ||
+        (D.technik && typeof D.technik === 'object' && (D.technik.jmeno || D.technik.osvedceni));
+      var looksLikeReport = !!(D.ev_cislo || D.misto || D.adresa || D.typ === 'elektro' || D.typ === 'lps');
+      if (looksLikeBackup && !looksLikeReport) {
+        alert('Tento soubor vypadá jako záloha celé databáze, ne jedna konkrétní zpráva.\n\n' +
+              'Pro obnovu zálohy použijte:\n' +
+              'Hlavní stránka → 💾 Záloha a obnovení → ⬆️ Obnovit ze zálohy\n\n' +
+              'Tlačítko 📂 Načíst v topbaru je pro načtení JEDNÉ zprávy.');
+        e.target.value = '';
+        return;
+      }
+      if (!looksLikeReport) {
+        if (!confirm('Soubor neobsahuje rozpoznatelná data zprávy (chybí ev. číslo, místo, adresa). Pokračovat i tak?')) {
+          e.target.value = '';
+          return;
+        }
+      }
       nacistData(D);
       // Po načtení rovnou uložit do archivu, aby zpráva nezmizela při
       // návratu na hlavní. Pokud zpráva se stejným ev. číslem už v archivu
