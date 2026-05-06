@@ -427,7 +427,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.17<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.18<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5618,13 +5618,28 @@ async function ulozitSoubor(blob, filename) {
 //   (pro mix portrait/landscape v jednom souboru zatím nepodporujeme,
 //   pro budoucí použití je hook připraven).
 // filename: cílový název PDF souboru.
-function renderPagesToPDF(pageEls, orientation, filename) {
+// Render seznamu .a4 elementů do jednoho PDF. Per-page render přes
+// přímý html2canvas + jsPDF (oba exposed z html2pdf.bundle.min.js).
+// Mixed orientace: každá .a4 dostane orientaci podle .a4-landscape třídy.
+//
+// Bez html2pdf wrapperu — ten dělal interní pagination, která produkovala
+// prázdné stránky. Tady je to deterministické: 1 .a4 = 1 PDF stránka.
+//
+// Velikost / kvalita: scale 2, JPEG q=0.85, jsPDF compress=true.
+// Cca 5-15 MB pro typickou 7-stránkovou zprávu.
+function renderPagesToPDF(pageEls, filename) {
   if (!pageEls || pageEls.length === 0) {
     alert('Žádné stránky k vygenerování.');
     return Promise.resolve();
   }
-  // Box-shadow je čistě screen-only ozdoba — v canvasu by udělala duhu po
-  // okraji. Dočasně schovat a po renderu vrátit.
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  var canvasFn = window.html2canvas;
+  if (!jsPDF || !canvasFn) {
+    alert('PDF knihovny se nenačetly. Zkuste obnovit stránku (Ctrl+F5).');
+    return Promise.resolve();
+  }
+  // Box-shadow je čistě screen-only ozdoba — v canvasu by udělala duhu
+  // po okraji. Dočasně schovat a po renderu vrátit.
   var prevShadow = [];
   pageEls.forEach(function(p) {
     prevShadow.push(p.style.boxShadow);
@@ -5633,30 +5648,40 @@ function renderPagesToPDF(pageEls, orientation, filename) {
   function restoreStyles() {
     pageEls.forEach(function(p, i) { p.style.boxShadow = prevShadow[i] || ''; });
   }
-  // Rozměry PDF stránky podle orientace
-  var pageW = orientation === 'landscape' ? 297 : 210;
-  var pageH = orientation === 'landscape' ? 210 : 297;
-  // První stránka přes .from(p).toPdf() — vytvoří jsPDF instanci a addImage,
-  // pak chain .get('pdf') pro přímý přístup k jsPDF objektu pro addPage().
-  var opt = {
-    margin: 0,
-    image: { type: 'jpeg', quality: 0.85 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
-    jsPDF: { unit: 'mm', format: [pageW, pageH], orientation: orientation, compress: true }
-  };
-  // Postavíme řetěz: pro každou další .a4 přidáme stránku a vložíme její canvas.
-  var worker = html2pdf().set(opt).from(pageEls[0]).toPdf();
-  for (var i = 1; i < pageEls.length; i++) {
-    (function(el) {
-      worker = worker.get('pdf').then(function(pdf) {
-        pdf.addPage([pageW, pageH], orientation);
-      }).from(el).toContainer().toCanvas().toPdf();
-    })(pageEls[i]);
-  }
-  return worker.get('pdf').then(function(pdf) {
+  var pdf = null;
+  var chain = Promise.resolve();
+  pageEls.forEach(function(p) {
+    chain = chain.then(function() {
+      var isLand = p.classList.contains('a4-landscape');
+      var w = isLand ? 297 : 210;
+      var h = isLand ? 210 : 297;
+      var orient = isLand ? 'landscape' : 'portrait';
+      return canvasFn(p, {
+        scale: 2, useCORS: true, letterRendering: true, logging: false
+      }).then(function(canvas) {
+        var imgData = canvas.toDataURL('image/jpeg', 0.85);
+        if (pdf === null) {
+          pdf = new jsPDF({
+            unit: 'mm',
+            format: [w, h],
+            orientation: orient,
+            compress: true
+          });
+        } else {
+          pdf.addPage([w, h], orient);
+        }
+        // Pevná velikost addImage = canvas se rovnoměrně zmenší/roztáhne
+        // na PDF stránku. Žádné oříznutí, žádný overflow:hidden potřebný.
+        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+      });
+    });
+  });
+  return chain.then(function() {
     restoreStyles();
-    var blob = pdf.output('blob');
-    ulozitSoubor(blob, filename);
+    if (pdf) {
+      var blob = pdf.output('blob');
+      ulozitSoubor(blob, filename);
+    }
   }).catch(function(err) {
     restoreStyles();
     console.error(err);
@@ -5670,12 +5695,10 @@ function stahnoutPDF() {
   var D = getData();
   var mistoSlug = (D.misto || '').replace(/[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/g, '_').replace(/^_|_$/g, '');
   var filename = 'RZ_' + (D.ev_cislo || 'zprava') + (mistoSlug ? '_' + mistoSlug : '') + '_' + (D.zahajeni || 'datum') + '.pdf';
-  // Tato funkce generuje PORTRÉTOVÉ PDF — landscape stránky (rozváděče)
-  // jdou do samostatného Uložit měření PDF.
-  var portraitPages = Array.prototype.slice.call(
-    container.querySelectorAll('.a4:not(.a4-landscape)')
-  );
-  return renderPagesToPDF(portraitPages, 'portrait', filename);
+  // Kompletní zpráva = VŠECHNY .a4 stránky v pořadí, jak jsou v DOM
+  // (portrait obsahové + landscape měřicí). Mixed orientation jsPDF zvládne.
+  var allPages = Array.prototype.slice.call(container.querySelectorAll('.a4'));
+  return renderPagesToPDF(allPages, filename);
 }
 
 function stahnoutMereniPDF() {
@@ -5687,18 +5710,15 @@ function stahnoutMereniPDF() {
   // Pro elektro: jen landscape stránky (rozváděče — měření).
   // Pro LPS: portrét stránky s textem "Měření zemních odporů".
   var pageList;
-  var orientation;
   if (isLps) {
     pageList = Array.prototype.slice.call(container.querySelectorAll('.a4'))
       .filter(function(p) {
         return p.textContent && p.textContent.indexOf('Měření zemních odporů') !== -1;
       });
-    orientation = 'portrait';
   } else {
     pageList = Array.prototype.slice.call(container.querySelectorAll('.a4.a4-landscape'));
-    orientation = 'landscape';
   }
-  return renderPagesToPDF(pageList, orientation, filename);
+  return renderPagesToPDF(pageList, filename);
 }
 
 function renderTiskRows(data) {
