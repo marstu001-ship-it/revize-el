@@ -427,7 +427,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.20<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.21<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5670,7 +5670,7 @@ function renderPagesToPDF(pageEls, filename) {
     html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
     jsPDF: {
       unit: 'mm',
-      format: [firstDim.w, firstDim.h],
+      format: 'a4',
       orientation: firstDim.orient,
       compress: true
     }
@@ -5686,7 +5686,9 @@ function renderPagesToPDF(pageEls, filename) {
         return html2pdf().set({
           html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false }
         }).from(el).toCanvas().get('canvas').then(function(canvas) {
-          pdf.addPage([dim.w, dim.h], dim.orient);
+          // 'a4' + explicit orientation = jsPDF si sám zvolí správné
+          // dimensions. Předávat [w,h] pole je nespolehlivé.
+          pdf.addPage('a4', dim.orient);
           var imgData = canvas.toDataURL('image/jpeg', 0.85);
           // Pevná velikost = canvas se zarovná na PDF stránku, žádné oříznutí
           pdf.addImage(imgData, 'JPEG', 0, 0, dim.w, dim.h);
