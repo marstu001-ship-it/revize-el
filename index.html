@@ -56,7 +56,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   justify-content:space-between;padding:.5rem 1.5rem;min-height:54px;
   flex-wrap:wrap;gap:.5rem;
   position:sticky;top:0;z-index:300;border-bottom:3px solid var(--accent)}
-.brand{font-family:var(--mono);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase}
+.brand{font-family:var(--mono);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;transition:opacity .15s}
+.brand[data-action]:hover{opacity:.75}
 .brand .ver{font-size:.55rem;letter-spacing:.08em;opacity:.6;margin-left:.6rem;font-weight:normal;text-transform:none}
 .brand em{color:#f0c040;font-style:normal}
 .topbar-right{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
@@ -426,7 +427,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.15<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.16<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
