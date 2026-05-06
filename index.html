@@ -427,7 +427,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.19<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.20<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5626,24 +5626,22 @@ async function ulozitSoubor(blob, filename) {
 //   (pro mix portrait/landscape v jednom souboru zatím nepodporujeme,
 //   pro budoucí použití je hook připraven).
 // filename: cílový název PDF souboru.
-// Render seznamu .a4 elementů do jednoho PDF. Per-page render přes
-// přímý html2canvas + jsPDF (oba exposed z html2pdf.bundle.min.js).
-// Mixed orientace: každá .a4 dostane orientaci podle .a4-landscape třídy.
+// Render seznamu .a4 elementů do jednoho PDF. Per-page render —
+// 1 .a4 = vždy 1 PDF stránka, mixed portrait/landscape orientace.
 //
-// Bez html2pdf wrapperu — ten dělal interní pagination, která produkovala
-// prázdné stránky. Tady je to deterministické: 1 .a4 = 1 PDF stránka.
+// Architektura:
+// 1. První .a4 → html2pdf().from(p).toPdf() → vytvoří jsPDF instanci
+//    (kterou jinak z bundle nezískáme — html2canvas/jspdf nejsou globální)
+// 2. Pro každou další .a4 → html2pdf().from(p).toCanvas().get('canvas')
+//    → ručně addPage + addImage do existující jsPDF instance
+// 3. Manuální addImage(canvas, JPEG, 0, 0, w, h) = canvas se zarovná
+//    na PDF stránku (žádné oříznutí, žádný overflow:hidden potřebný)
 //
-// Velikost / kvalita: scale 2, JPEG q=0.85, jsPDF compress=true.
-// Cca 5-15 MB pro typickou 7-stránkovou zprávu.
+// Žádné html2pdf interní pagination — všechny addPage voláme my,
+// takže žádné prázdné stránky.
 function renderPagesToPDF(pageEls, filename) {
   if (!pageEls || pageEls.length === 0) {
     alert('Žádné stránky k vygenerování.');
-    return Promise.resolve();
-  }
-  var jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-  var canvasFn = window.html2canvas;
-  if (!jsPDF || !canvasFn) {
-    alert('PDF knihovny se nenačetly. Zkuste obnovit stránku (Ctrl+F5).');
     return Promise.resolve();
   }
   // Box-shadow je čistě screen-only ozdoba — v canvasu by udělala duhu
@@ -5656,40 +5654,52 @@ function renderPagesToPDF(pageEls, filename) {
   function restoreStyles() {
     pageEls.forEach(function(p, i) { p.style.boxShadow = prevShadow[i] || ''; });
   }
-  var pdf = null;
-  var chain = Promise.resolve();
-  pageEls.forEach(function(p) {
-    chain = chain.then(function() {
-      var isLand = p.classList.contains('a4-landscape');
-      var w = isLand ? 297 : 210;
-      var h = isLand ? 210 : 297;
-      var orient = isLand ? 'landscape' : 'portrait';
-      return canvasFn(p, {
-        scale: 2, useCORS: true, letterRendering: true, logging: false
-      }).then(function(canvas) {
-        var imgData = canvas.toDataURL('image/jpeg', 0.85);
-        if (pdf === null) {
-          pdf = new jsPDF({
-            unit: 'mm',
-            format: [w, h],
-            orientation: orient,
-            compress: true
-          });
-        } else {
-          pdf.addPage([w, h], orient);
-        }
-        // Pevná velikost addImage = canvas se rovnoměrně zmenší/roztáhne
-        // na PDF stránku. Žádné oříznutí, žádný overflow:hidden potřebný.
-        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      });
-    });
-  });
-  return chain.then(function() {
-    restoreStyles();
-    if (pdf) {
-      var blob = pdf.output('blob');
-      ulozitSoubor(blob, filename);
+  function getDim(p) {
+    var isLand = p.classList.contains('a4-landscape');
+    return {
+      w: isLand ? 297 : 210,
+      h: isLand ? 210 : 297,
+      orient: isLand ? 'landscape' : 'portrait'
+    };
+  }
+  // První stránka — vytvoří jsPDF instanci přes html2pdf chain
+  var firstDim = getDim(pageEls[0]);
+  var firstOpt = {
+    margin: 0,
+    image: { type: 'jpeg', quality: 0.85 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+    jsPDF: {
+      unit: 'mm',
+      format: [firstDim.w, firstDim.h],
+      orientation: firstDim.orient,
+      compress: true
     }
+  };
+  var chain = html2pdf().set(firstOpt).from(pageEls[0]).toPdf();
+
+  // Pro každou další .a4 — získej canvas + ručně addPage + addImage
+  for (var i = 1; i < pageEls.length; i++) {
+    (function(el) {
+      var dim = getDim(el);
+      chain = chain.get('pdf').then(function(pdf) {
+        // Render canvas pro tuto .a4 přes čerstvou html2pdf instanci
+        return html2pdf().set({
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false }
+        }).from(el).toCanvas().get('canvas').then(function(canvas) {
+          pdf.addPage([dim.w, dim.h], dim.orient);
+          var imgData = canvas.toDataURL('image/jpeg', 0.85);
+          // Pevná velikost = canvas se zarovná na PDF stránku, žádné oříznutí
+          pdf.addImage(imgData, 'JPEG', 0, 0, dim.w, dim.h);
+          return pdf;
+        });
+      });
+    })(pageEls[i]);
+  }
+
+  return chain.get('pdf').then(function(pdf) {
+    restoreStyles();
+    var blob = pdf.output('blob');
+    ulozitSoubor(blob, filename);
   }).catch(function(err) {
     restoreStyles();
     console.error(err);
