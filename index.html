@@ -432,7 +432,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.23<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.24<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5650,15 +5650,30 @@ function renderPagesToPDF(pageEls, filename) {
     return Promise.resolve();
   }
   // Box-shadow je čistě screen-only ozdoba — v canvasu by udělala duhu.
-  // .a4-landscape má teď landscape rozměry už v CSS (width 297mm), takže
-  // tady JS sizing není potřeba.
-  var prevShadow = [];
+  // Plus force-fit .a4 na přesné PDF rozměry s overflow:hidden — bez tohoto
+  // může být canvas o 0.5mm vyšší než A4, html2pdf to interpretuje jako
+  // overflow a vytvoří navíc prázdnou stránku.
+  var prevStyles = [];
   pageEls.forEach(function(p) {
-    prevShadow.push(p.style.boxShadow);
+    var isLand = p.classList.contains('a4-landscape');
+    prevStyles.push({
+      shadow: p.style.boxShadow,
+      height: p.style.height,
+      maxHeight: p.style.maxHeight,
+      overflow: p.style.overflow
+    });
     p.style.boxShadow = 'none';
+    p.style.height = isLand ? '210mm' : '297mm';
+    p.style.maxHeight = isLand ? '210mm' : '297mm';
+    p.style.overflow = 'hidden';
   });
   function restoreStyles() {
-    pageEls.forEach(function(p, i) { p.style.boxShadow = prevShadow[i] || ''; });
+    pageEls.forEach(function(p, i) {
+      p.style.boxShadow = prevStyles[i].shadow || '';
+      p.style.height = prevStyles[i].height || '';
+      p.style.maxHeight = prevStyles[i].maxHeight || '';
+      p.style.overflow = prevStyles[i].overflow || '';
+    });
   }
   function getDim(p) {
     var isLand = p.classList.contains('a4-landscape');
@@ -5695,10 +5710,13 @@ function renderPagesToPDF(pageEls, filename) {
         return html2pdf().set({
           html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false }
         }).from(el).toCanvas().get('canvas').then(function(canvas) {
-          // 'a4' + explicit orientation = jsPDF si sám zvolí 210×297 / 297×210
           pdf.addPage('a4', dim.orient);
+          // Query AKTUÁLNÍ rozměry stránky po addPage — některé jsPDF verze
+          // neaplikují orientaci correctly při addPage, lépe zeptat než hádat.
+          var pageW = pdf.internal.pageSize.getWidth();
+          var pageH = pdf.internal.pageSize.getHeight();
           var imgData = canvas.toDataURL('image/jpeg', 0.85);
-          pdf.addImage(imgData, 'JPEG', 0, 0, dim.w, dim.h);
+          pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
           return pdf;
         });
       });
