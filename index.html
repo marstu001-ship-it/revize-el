@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.14<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.15<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5607,133 +5607,97 @@ async function ulozitSoubor(blob, filename) {
   return true;
 }
 
-function stahnoutPDF() {
-  var pages = document.getElementById('pdf-pages');
-  if (!pages) return;
-  var D = getData();
-  var mistoSlug = (D.misto || '').replace(/[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/g, '_').replace(/^_|_$/g, '');
-  var filename = 'RZ_' + (D.ev_cislo || 'zprava') + (mistoSlug ? '_' + mistoSlug : '') + '_' + (D.zahajeni || 'datum') + '.pdf';
-  // Skryj landscape stránky
-  var lp = pages.querySelectorAll('.a4-landscape');
-  lp.forEach(function(p) { p.style.display = 'none'; });
-  // Dočasně odstraň padding + gap z kontejneru a box-shadow ze stránek,
-  // jinak html2pdf vytváří mezi stránkami prázdné A4 listy (mezery se
-  // počítají do výšky kontejneru). Plus přibít každou .a4 na přesně
-  // 297mm s overflow:hidden — kdyby měla 297.1mm (rounding při scale 2),
-  // html2pdf ji rozsekne na dvě stránky.
-  var prevPagesPad = pages.style.padding;
-  var prevPagesGap = pages.style.gap;
-  pages.style.padding = '0';
-  pages.style.gap = '0';
-  var visiblePages = pages.querySelectorAll('.a4:not([style*="display: none"])');
-  var prevAll = [];
-  visiblePages.forEach(function(p) {
-    prevAll.push({
-      shadow: p.style.boxShadow, h: p.style.height, mh: p.style.maxHeight,
-      mn: p.style.minHeight, ov: p.style.overflow
-    });
-    p.style.boxShadow = 'none';
-    p.style.height = '297mm';
-    p.style.maxHeight = '297mm';
-    p.style.minHeight = '297mm';
-    p.style.overflow = 'hidden';
-  });
-  function restorePdfStyles() {
-    lp.forEach(function(p) { p.style.display = ''; });
-    pages.style.padding = prevPagesPad;
-    pages.style.gap = prevPagesGap;
-    visiblePages.forEach(function(p, i) {
-      p.style.boxShadow = prevAll[i].shadow || '';
-      p.style.height = prevAll[i].h || '';
-      p.style.maxHeight = prevAll[i].mh || '';
-      p.style.minHeight = prevAll[i].mn || '';
-      p.style.overflow = prevAll[i].ov || '';
-    });
+// Per-page render do PDF — každá .a4 zachycena samostatně do canvas
+// a vložena jako celá stránka 1:1. Tím se eliminují prázdné stránky,
+// které vznikaly při html2pdf().from(container) přes celý kontejner
+// (interní paginace + screen-only mezery → duplicitní lomy).
+//
+// Pages: pole HTMLElementů .a4 v pořadí, jak mají jít do PDF.
+// orientation: 'portrait' nebo 'landscape' nebo function(page) → string
+//   (pro mix portrait/landscape v jednom souboru zatím nepodporujeme,
+//   pro budoucí použití je hook připraven).
+// filename: cílový název PDF souboru.
+function renderPagesToPDF(pageEls, orientation, filename) {
+  if (!pageEls || pageEls.length === 0) {
+    alert('Žádné stránky k vygenerování.');
+    return Promise.resolve();
   }
+  // Box-shadow je čistě screen-only ozdoba — v canvasu by udělala duhu po
+  // okraji. Dočasně schovat a po renderu vrátit.
+  var prevShadow = [];
+  pageEls.forEach(function(p) {
+    prevShadow.push(p.style.boxShadow);
+    p.style.boxShadow = 'none';
+  });
+  function restoreStyles() {
+    pageEls.forEach(function(p, i) { p.style.boxShadow = prevShadow[i] || ''; });
+  }
+  // Rozměry PDF stránky podle orientace
+  var pageW = orientation === 'landscape' ? 297 : 210;
+  var pageH = orientation === 'landscape' ? 210 : 297;
+  // První stránka přes .from(p).toPdf() — vytvoří jsPDF instanci a addImage,
+  // pak chain .get('pdf') pro přímý přístup k jsPDF objektu pro addPage().
   var opt = {
     margin: 0,
     image: { type: 'jpeg', quality: 0.85 },
     html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-    pagebreak: { mode: 'avoid-all', before: '.a4:not(:first-child)', avoid: '.a4' }
+    jsPDF: { unit: 'mm', format: [pageW, pageH], orientation: orientation, compress: true }
   };
-  html2pdf().set(opt).from(pages).outputPdf('blob').then(function(blob) {
-    restorePdfStyles();
+  // Postavíme řetěz: pro každou další .a4 přidáme stránku a vložíme její canvas.
+  var worker = html2pdf().set(opt).from(pageEls[0]).toPdf();
+  for (var i = 1; i < pageEls.length; i++) {
+    (function(el) {
+      worker = worker.get('pdf').then(function(pdf) {
+        pdf.addPage([pageW, pageH], orientation);
+      }).from(el).toContainer().toCanvas().toPdf();
+    })(pageEls[i]);
+  }
+  return worker.get('pdf').then(function(pdf) {
+    restoreStyles();
+    var blob = pdf.output('blob');
     ulozitSoubor(blob, filename);
   }).catch(function(err) {
-    restorePdfStyles();
-    alert('Chyba při generování PDF: ' + err.message);
+    restoreStyles();
+    console.error(err);
+    alert('Chyba při generování PDF: ' + (err && err.message || err));
   });
 }
 
+function stahnoutPDF() {
+  var container = document.getElementById('pdf-pages');
+  if (!container) return;
+  var D = getData();
+  var mistoSlug = (D.misto || '').replace(/[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/g, '_').replace(/^_|_$/g, '');
+  var filename = 'RZ_' + (D.ev_cislo || 'zprava') + (mistoSlug ? '_' + mistoSlug : '') + '_' + (D.zahajeni || 'datum') + '.pdf';
+  // Tato funkce generuje PORTRÉTOVÉ PDF — landscape stránky (rozváděče)
+  // jdou do samostatného Uložit měření PDF.
+  var portraitPages = Array.prototype.slice.call(
+    container.querySelectorAll('.a4:not(.a4-landscape)')
+  );
+  return renderPagesToPDF(portraitPages, 'portrait', filename);
+}
+
 function stahnoutMereniPDF() {
-  var pages = document.getElementById('pdf-pages');
-  if (!pages) return;
+  var container = document.getElementById('pdf-pages');
+  if (!container) return;
   var D = getData();
   var isLps = (D.typ === 'lps');
   var filename = 'RZ_' + (D.ev_cislo || 'zprava') + '_mereni.pdf';
-  // Pro elektro: tiskneme jen landscape stránku (tabulka rozváděčů).
-  // Pro LPS: tiskneme LPS portrét stránku se sekcí 6 Měření zemních odporů.
-  var pp, hidden;
+  // Pro elektro: jen landscape stránky (rozváděče — měření).
+  // Pro LPS: portrét stránky s textem "Měření zemních odporů".
+  var pageList;
+  var orientation;
   if (isLps) {
-    // Skryj všechny stránky kromě LPS stránky (je portrét, má sekci
-    // "Měření zemních odporů" — identifikujeme ji podle textu v sec-name).
-    hidden = [];
-    pages.querySelectorAll('.a4').forEach(function(p) {
-      var isLpsPage = !!(p.textContent && p.textContent.indexOf('Měření zemních odporů') !== -1);
-      if (!isLpsPage) {
-        p.style.display = 'none';
-        hidden.push(p);
-      }
-    });
+    pageList = Array.prototype.slice.call(container.querySelectorAll('.a4'))
+      .filter(function(p) {
+        return p.textContent && p.textContent.indexOf('Měření zemních odporů') !== -1;
+      });
+    orientation = 'portrait';
   } else {
-    pp = pages.querySelectorAll('.a4:not(.a4-landscape)');
-    pp.forEach(function(p) { p.style.display = 'none'; });
-    hidden = pp;
+    pageList = Array.prototype.slice.call(container.querySelectorAll('.a4.a4-landscape'));
+    orientation = 'landscape';
   }
-  // Stejná dočasná styling úprava jako v stahnoutPDF — pin 297mm +
-  // overflow:hidden, padding/gap kontejneru = 0, box-shadow pryč.
-  var prevPad = pages.style.padding, prevGap = pages.style.gap;
-  pages.style.padding = '0'; pages.style.gap = '0';
-  var visiblePages = pages.querySelectorAll('.a4:not([style*="display: none"])');
-  var prevAll = [];
-  visiblePages.forEach(function(p) {
-    prevAll.push({
-      shadow: p.style.boxShadow, h: p.style.height, mh: p.style.maxHeight,
-      mn: p.style.minHeight, ov: p.style.overflow
-    });
-    p.style.boxShadow = 'none';
-    var pageHeight = p.classList.contains('a4-landscape') ? '210mm' : '297mm';
-    p.style.height = pageHeight;
-    p.style.maxHeight = pageHeight;
-    p.style.minHeight = pageHeight;
-    p.style.overflow = 'hidden';
-  });
-  function restoreMeasStyles() {
-    hidden.forEach(function(p) { p.style.display = ''; });
-    pages.style.padding = prevPad; pages.style.gap = prevGap;
-    visiblePages.forEach(function(p, i) {
-      p.style.boxShadow = prevAll[i].shadow || '';
-      p.style.height = prevAll[i].h || '';
-      p.style.maxHeight = prevAll[i].mh || '';
-      p.style.minHeight = prevAll[i].mn || '';
-      p.style.overflow = prevAll[i].ov || '';
-    });
-  }
-  var opt = {
-    margin: 0,
-    image: { type: 'jpeg', quality: 0.85 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: isLps ? 'portrait' : 'landscape', compress: true },
-    pagebreak: { mode: 'avoid-all', before: '.a4:not(:first-child)', avoid: '.a4' }
-  };
-  html2pdf().set(opt).from(pages).outputPdf('blob').then(function(blob) {
-    restoreMeasStyles();
-    ulozitSoubor(blob, filename);
-  }).catch(function(err) {
-    restoreMeasStyles();
-    alert('Chyba při generování PDF: ' + err.message);
-  });
+  return renderPagesToPDF(pageList, orientation, filename);
 }
 
 function renderTiskRows(data) {
