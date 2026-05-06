@@ -426,7 +426,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.11<span class="ver-date"> · 2026-05-05</span></span></div>
+  <div class="brand">⚡ Revize <em>EL</em> <span class="ver">v9.12<span class="ver-date"> · 2026-05-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -679,6 +679,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <li><strong>← Zůstat</strong> — zavře dialog, zůstanete ve formuláři</li>
         <li>Po vygenerování PDF se dialog neukáže, protože PDF už zprávu uložilo</li>
       </ol>
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📄 Menší PDF pro mailování (textové místo rastrového)</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Tlačítko <strong>📄 Uložit zprávu PDF</strong> generuje PDF jako rastrový snímek (~10 MB). Pokud chcete malé textové PDF (~1 MB) k mailování, použijte browser print.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Generovat PDF</li>
+        <li>V toolbaru klepněte <strong>🖨️ Tisk / PDF (menší)</strong></li>
+        <li>V dialogu prohlížeče zvolte cíl <strong>„Uložit jako PDF"</strong> (Chrome / Edge), <strong>„PDF → Save as PDF"</strong> (Safari) nebo <strong>„Microsoft Print to PDF"</strong> (Firefox)</li>
+        <li>Vznikne textové PDF — malé, s vyhledatelným textem, vypadá jak Word</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Důvod: PWA aplikace bez serveru neumí vygenerovat textové PDF přímo. Browser print to obejde — prohlížeč si vyrobí PDF sám ze své vykreslení stránky.</div>
     </div>
   </div>
 
@@ -1467,10 +1482,13 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="pdf-toolbar-title">📄 PDF náhled — připraveno k tisku</div>
     <div class="pdf-actions">
       <button class="pbtn" data-action="form">← Zpět do formuláře</button>
-      <button class="pbtn pbtn-print" data-action="print">🖨️ Tisk</button>
-      <button class="pbtn" data-action="stahnoutPDF" style="background:#2e7d32;border-color:#2e7d32">📄 Uložit zprávu PDF</button>
+      <button class="pbtn pbtn-print" data-action="print" title="Otevře tiskový dialog. V něm zvolte „Uložit jako PDF" → vznikne nejmenší PDF (textové, ~1 MB)">🖨️ Tisk / PDF (menší)</button>
+      <button class="pbtn" data-action="stahnoutPDF" style="background:#2e7d32;border-color:#2e7d32" title="Stáhne PDF přesně jako náhled (rastr, ~10 MB)">📄 Uložit zprávu PDF</button>
       <button class="pbtn" data-action="stahnoutMereniPDF" style="background:#c8962a;border-color:#c8962a">📐 Uložit měření PDF</button>
       <button class="pbtn" data-action="tiskMereni" style="background:#5a4b8a;border-color:#5a4b8a" title="Otevře měření v novém okně na šířku — pro tisk z prohlížeče když je tabulka moc široká">🖨️ Tisk měření samostatně</button>
+    </div>
+    <div style="font-size:.7rem;color:rgba(255,255,255,.85);padding:.4rem .75rem .2rem;line-height:1.4">
+      💡 <strong>Tip pro menší PDF k mailování:</strong> klikněte <strong>🖨️ Tisk / PDF (menší)</strong> → v dialogu prohlížeče zvolte cíl <em>„Uložit jako PDF"</em>. Vznikne textové PDF (~1 MB) místo rastrového (~10 MB), navíc s vyhledatelným textem.
     </div>
   </div>
   <div class="pdf-pages" id="pdf-pages"></div>
