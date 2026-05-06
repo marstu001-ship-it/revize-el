@@ -313,6 +313,11 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   display:flex;flex-direction:column;
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:10pt;color:#000;position:relative}
+/* Landscape A4 stránka — 297×210mm. Bez tohoto pravidla má dědičnou
+   width:210mm z .a4 (portrait) a html2canvas zachytí portrait canvas,
+   pak addImage rozpláclo měřicí tabulku. Wide stránka může na úzkém
+   monitoru horizontálně přetéct, .pdf-pages to zvládne. */
+.a4.a4-landscape{width:297mm;min-height:210mm}
 .a4-header{display:flex;justify-content:space-between;align-items:center;
   margin-bottom:4mm;border-bottom:.5pt solid #000;padding-bottom:2mm}
 .a4-hbox{border:1pt solid #000;padding:1mm 3mm;font-size:9pt;
@@ -427,7 +432,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.22<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.23<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5645,27 +5650,15 @@ function renderPagesToPDF(pageEls, filename) {
     return Promise.resolve();
   }
   // Box-shadow je čistě screen-only ozdoba — v canvasu by udělala duhu.
-  // Plus .a4-landscape: dočasně nastavit landscape rozměry, jinak by
-  // html2canvas captured portrait canvas a addImage by ho rozpláclo.
-  var prevStyles = [];
+  // .a4-landscape má teď landscape rozměry už v CSS (width 297mm), takže
+  // tady JS sizing není potřeba.
+  var prevShadow = [];
   pageEls.forEach(function(p) {
-    prevStyles.push({
-      shadow: p.style.boxShadow,
-      width: p.style.width,
-      minHeight: p.style.minHeight
-    });
+    prevShadow.push(p.style.boxShadow);
     p.style.boxShadow = 'none';
-    if (p.classList.contains('a4-landscape')) {
-      p.style.width = '297mm';
-      p.style.minHeight = '210mm';
-    }
   });
   function restoreStyles() {
-    pageEls.forEach(function(p, i) {
-      p.style.boxShadow = prevStyles[i].shadow || '';
-      p.style.width = prevStyles[i].width || '';
-      p.style.minHeight = prevStyles[i].minHeight || '';
-    });
+    pageEls.forEach(function(p, i) { p.style.boxShadow = prevShadow[i] || ''; });
   }
   function getDim(p) {
     var isLand = p.classList.contains('a4-landscape');
