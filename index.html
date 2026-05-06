@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%231c3a5e'/><text x='256' y='340' text-anchor='middle' font-size='280' fill='%23fff'>⚡</text></svg>">
 <title>Revize EL – Revizní zprávy</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 /* ═══ RESET ═══ */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -432,7 +433,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.24<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.25<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5634,25 +5635,25 @@ async function ulozitSoubor(blob, filename) {
 // Render seznamu .a4 elementů do jednoho PDF. Per-page render —
 // 1 .a4 = vždy 1 PDF stránka, mixed portrait/landscape orientace.
 //
-// Architektura:
-// 1. Před renderem .a4-landscape elementů dočasně nastavit width:297mm
-//    + min-height:210mm (na obrazovce nemají vlastní CSS, mají portrait
-//    rozměry 210×297). Bez toho html2canvas captures portrait canvas a
-//    addImage(0,0,297,210) ho stretchuje → rozpláclá tabulka měření.
-// 2. První .a4 → html2pdf().from(p).toPdf() s pagebreak avoid-all
-//    → vytvoří jsPDF instanci (kterou jinak z bundle nezískáme)
-// 3. Pro každou další .a4 → html2pdf().from(p).toCanvas().get('canvas')
-//    → manuálně pdf.addPage + pdf.addImage
-// 4. Žádná html2pdf interní pagination = žádné prázdné stránky
+// Implementace: PŘÍMÝ html2canvas + jsPDF (bez html2pdf wrapperu).
+// html2pdf má vnitřní pagination, která produkovala prázdné stránky a
+// nešla spolehlivě vypnout. S přímým API máme plnou kontrolu — addPage
+// voláme my, addImage cílíme na actual page dims.
 function renderPagesToPDF(pageEls, filename) {
   if (!pageEls || pageEls.length === 0) {
     alert('Žádné stránky k vygenerování.');
     return Promise.resolve();
   }
-  // Box-shadow je čistě screen-only ozdoba — v canvasu by udělala duhu.
-  // Plus force-fit .a4 na přesné PDF rozměry s overflow:hidden — bez tohoto
-  // může být canvas o 0.5mm vyšší než A4, html2pdf to interpretuje jako
-  // overflow a vytvoří navíc prázdnou stránku.
+  // Ověřit dostupnost knihoven (load přes script tags v hlavičce)
+  var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  var canvasFn = window.html2canvas;
+  if (!jsPDFCtor || !canvasFn) {
+    alert('PDF knihovny se nenačetly. Zkuste obnovit stránku (Ctrl+F5).');
+    return Promise.resolve();
+  }
+  // Force-fit .a4 na přesné rozměry — bez tohoto může html2canvas captures
+  // canvas o 0.5mm vyšší než A4 (kvůli rounding s padding), addImage
+  // pak roztáhne na celý a obsah vypadá zoomed.
   var prevStyles = [];
   pageEls.forEach(function(p) {
     var isLand = p.classList.contains('a4-landscape');
@@ -5675,55 +5676,40 @@ function renderPagesToPDF(pageEls, filename) {
       p.style.overflow = prevStyles[i].overflow || '';
     });
   }
-  function getDim(p) {
-    var isLand = p.classList.contains('a4-landscape');
-    return {
-      w: isLand ? 297 : 210,
-      h: isLand ? 210 : 297,
-      orient: isLand ? 'landscape' : 'portrait'
-    };
+  function getOrient(p) {
+    return p.classList.contains('a4-landscape') ? 'landscape' : 'portrait';
   }
-  // První stránka — vytvoří jsPDF instanci přes html2pdf chain.
-  // pagebreak: avoid-all blokuje vnitřní paginaci (bez toho html2pdf
-  // občas dělil .a4 na víc PDF stránek kvůli rounding overflow).
-  var firstDim = getDim(pageEls[0]);
-  var firstOpt = {
-    margin: 0,
-    image: { type: 'jpeg', quality: 0.85 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
-    jsPDF: {
-      unit: 'mm',
-      format: 'a4',
-      orientation: firstDim.orient,
-      compress: true
-    },
-    pagebreak: { mode: 'avoid-all' }
-  };
-  var chain = html2pdf().set(firstOpt).from(pageEls[0]).toPdf();
-
-  // Pro každou další .a4 — získej canvas + ručně addPage + addImage
-  for (var i = 1; i < pageEls.length; i++) {
-    (function(el) {
-      var dim = getDim(el);
-      chain = chain.get('pdf').then(function(pdf) {
-        // Render canvas pro tuto .a4 přes čerstvou html2pdf instanci
-        return html2pdf().set({
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false }
-        }).from(el).toCanvas().get('canvas').then(function(canvas) {
-          pdf.addPage('a4', dim.orient);
-          // Query AKTUÁLNÍ rozměry stránky po addPage — některé jsPDF verze
-          // neaplikují orientaci correctly při addPage, lépe zeptat než hádat.
-          var pageW = pdf.internal.pageSize.getWidth();
-          var pageH = pdf.internal.pageSize.getHeight();
-          var imgData = canvas.toDataURL('image/jpeg', 0.85);
-          pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
-          return pdf;
-        });
+  // Vytvoř jsPDF instanci s orientací první stránky
+  var firstOrient = getOrient(pageEls[0]);
+  var pdf = new jsPDFCtor({
+    unit: 'mm',
+    format: 'a4',
+    orientation: firstOrient,
+    compress: true
+  });
+  // Render serial — pro každou .a4 captures canvas a addImage do pdf
+  var chain = Promise.resolve();
+  pageEls.forEach(function(p, idx) {
+    chain = chain.then(function() {
+      return canvasFn(p, {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      }).then(function(canvas) {
+        if (idx > 0) {
+          pdf.addPage('a4', getOrient(p));
+        }
+        // Query actual page dims — spolehlivější než hádat z dim arrays
+        var pageW = pdf.internal.pageSize.getWidth();
+        var pageH = pdf.internal.pageSize.getHeight();
+        var imgData = canvas.toDataURL('image/jpeg', 0.85);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
       });
-    })(pageEls[i]);
-  }
-
-  return chain.get('pdf').then(function(pdf) {
+    });
+  });
+  return chain.then(function() {
     restoreStyles();
     var blob = pdf.output('blob');
     ulozitSoubor(blob, filename);

@@ -1,10 +1,11 @@
-var CACHE_NAME = 'revize-el-v9.24-20260506';
+var CACHE_NAME = 'revize-el-v9.25-20260506';
 var URLS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
 ];
 
 // Instalace — uložit vše do cache. {cache:'reload'} obchází HTTP cache
