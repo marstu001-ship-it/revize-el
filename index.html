@@ -427,7 +427,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.18<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.19<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4996,11 +4996,19 @@ function generujPDF() {
   p1.className = 'a4';
   p1.innerHTML = hdr(1) +
     '<div class="a4-content">' +
+    ((D.misto || D.adresa) ?
+      '<div style="margin-bottom:3mm">' +
+      '<div class="pbox-label">Místo provádění revize:</div>' +
+      '<div class="pbox" style="font-size:9.5pt;line-height:1.5;min-height:10mm">' +
+        (D.misto ? esc(D.misto) : '') +
+        (D.misto && D.adresa ? '<br>' : '') +
+        (D.adresa ? esc(D.adresa) : '') +
+      '</div></div>' : '') +
     '<div class="r2" style="margin-bottom:4mm">' +
     '<div><div class="pbox-label">Revizní technik:</div>' +
     '<div class="pbox" style="min-height:16mm;font-size:9.5pt;line-height:1.5">' + esc(D.rt_jmeno) + '<br>' + esc(D.rt_adresa) + '</div>' +
     '<div class="pbox" style="margin-top:1mm;font-size:9.5pt">Ev.č. ' + esc(D.rt_osvedceni) + '<br>Opr.č. ' + esc(D.rt_opravneni) + '</div></div>' +
-    '<div><div class="pbox-label">Předmět revize / Provozovatel:</div>' +
+    '<div><div class="pbox-label">Provozovatel:</div>' +
     '<div class="pbox" style="min-height:24mm;font-size:9.5pt;line-height:1.5">' + esc(D.provozovatel) + '</div></div>' +
     '</div>' +
     '<div class="ptitle"><h1>' + nadpis + '</h1><p>' + podnadpis + '</p></div>' +
