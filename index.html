@@ -433,7 +433,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.28<span class="ver-date"> · 2026-05-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.29<span class="ver-date"> · 2026-05-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -863,6 +863,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <label>Poskytovatel AI</label>
         <select id="ai_provider">
           <option value="">— Žádný (vypnuto) —</option>
+          <option value="local">🏠 Lokální AI (Ollama / LM Studio) — privátní, zdarma</option>
           <option value="mistral">🇪🇺 Mistral Pixtral ⭐ doporučeno (evropský, GDPR friendly, nejlevnější)</option>
           <option value="gemini">Google Gemini Flash (zdarma do limitu)</option>
           <option value="claude">Anthropic Claude (placené, nejvyšší kvalita)</option>
@@ -872,6 +873,16 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       <div class="f">
         <label>API klíč <span id="ai_key_link" style="font-size:.6rem;color:var(--muted)"></span></label>
         <input type="password" id="ai_api_key" placeholder="vložte klíč zde" autocomplete="off">
+      </div>
+    </div>
+    <div id="ai_local_fields" style="display:none;margin-top:.5rem;padding:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:3px">
+      <div class="f" style="margin-bottom:.5rem">
+        <label>URL endpointu <span style="font-size:.6rem;color:var(--muted)">(OpenAI-compatible /v1/chat/completions)</span></label>
+        <input type="text" id="ai_local_url" placeholder="https://martin--mac-mini.tail6ec3f3.ts.net/v1/chat/completions" autocomplete="off">
+      </div>
+      <div class="f">
+        <label>Název modelu <span style="font-size:.6rem;color:var(--muted)">(přesně jak v Ollama)</span></label>
+        <input type="text" id="ai_local_model" placeholder="gemma3:12b" autocomplete="off">
       </div>
     </div>
     <div style="font-size:.78rem;color:var(--muted);margin-top:.5rem;line-height:1.6">
@@ -2176,11 +2187,28 @@ function nacistTechnika() {
   var aiCfg = STORE.aiConfig || {};
   var providerEl = document.getElementById('ai_provider');
   var keyEl = document.getElementById('ai_api_key');
+  var localUrlEl = document.getElementById('ai_local_url');
+  var localModelEl = document.getElementById('ai_local_model');
   if (providerEl) providerEl.value = aiCfg.provider || '';
   if (keyEl) keyEl.value = aiCfg.apiKey || '';
+  if (localUrlEl) localUrlEl.value = aiCfg.localUrl || '';
+  if (localModelEl) localModelEl.value = aiCfg.localModel || '';
+  toggleAiLocalFields();
+  if (providerEl && !providerEl.dataset.aiLocalWired) {
+    providerEl.dataset.aiLocalWired = '1';
+    providerEl.addEventListener('change', toggleAiLocalFields);
+  }
   // Vždy obnov seznam přístrojů — STORE mohl být změněn jinou akcí
   // (např. ulozitPristrojeJakoVychozi z formuláře)
   renderPristrojePreset();
+}
+
+// Zobraz pole pro URL + model jen když je provider 'local'.
+function toggleAiLocalFields() {
+  var providerEl = document.getElementById('ai_provider');
+  var box = document.getElementById('ai_local_fields');
+  if (!providerEl || !box) return;
+  box.style.display = providerEl.value === 'local' ? '' : 'none';
 }
 
 // Společný helper pro nahrání obrázku do STORE.technik[key].
@@ -2263,10 +2291,14 @@ function ulozitTechnika() {
 function ulozitAiConfigQuiet() {
   var providerEl = document.getElementById('ai_provider');
   var keyEl = document.getElementById('ai_api_key');
+  var localUrlEl = document.getElementById('ai_local_url');
+  var localModelEl = document.getElementById('ai_local_model');
   if (!providerEl && !keyEl) return;
   STORE.aiConfig = {
     provider: providerEl ? providerEl.value : '',
-    apiKey: keyEl ? keyEl.value.trim() : ''
+    apiKey: keyEl ? keyEl.value.trim() : '',
+    localUrl: localUrlEl ? localUrlEl.value.trim() : '',
+    localModel: localModelEl ? localModelEl.value.trim() : ''
   };
 }
 
@@ -2274,7 +2306,13 @@ function ulozitAi() {
   ulozitAiConfigQuiet();
   saveStore();
   var cfg = STORE.aiConfig || {};
-  if (cfg.provider && cfg.apiKey) {
+  if (cfg.provider === 'local') {
+    if (cfg.localUrl && cfg.localModel) {
+      alert('AI nastavení uloženo (lokální AI: ' + cfg.localModel + ').');
+    } else {
+      alert('Lokální AI: vyplňte URL endpointu i název modelu.');
+    }
+  } else if (cfg.provider && cfg.apiKey) {
     alert('AI nastavení uloženo (' + cfg.provider + ').');
   } else if (cfg.provider && !cfg.apiKey) {
     alert('Vyberte poskytovatele a vyplňte API klíč.');
@@ -3839,10 +3877,20 @@ function buildAIPrompt() {
 // pak text parsují do svých struktur.
 function aiCallProvider(prompt, base64) {
   var cfg = STORE.aiConfig || {};
-  if (!cfg.provider || !cfg.apiKey) {
-    return Promise.reject(new Error('AI není nakonfigurováno. Otevřete Nastavení → AI rozpoznávání závad a zadejte API klíč.'));
+  if (!cfg.provider) {
+    return Promise.reject(new Error('AI není nakonfigurováno. Otevřete Nastavení → AI rozpoznávání závad.'));
   }
   if (!base64) return Promise.reject(new Error('Neplatná fotka'));
+  // Lokální AI nepotřebuje API klíč, jen URL + model
+  if (cfg.provider === 'local') {
+    if (!cfg.localUrl || !cfg.localModel) {
+      return Promise.reject(new Error('Lokální AI: chybí URL endpointu nebo název modelu. Zadejte v Nastavení.'));
+    }
+    return aiCallLocal(prompt, base64, cfg.localUrl, cfg.localModel);
+  }
+  if (!cfg.apiKey) {
+    return Promise.reject(new Error('AI není nakonfigurováno. Otevřete Nastavení → AI rozpoznávání závad a zadejte API klíč.'));
+  }
   if (cfg.provider === 'gemini') return aiCallGemini(prompt, base64, cfg.apiKey);
   if (cfg.provider === 'claude') return aiCallClaude(prompt, base64, cfg.apiKey);
   if (cfg.provider === 'openai') return aiCallOpenAI(prompt, base64, cfg.apiKey);
@@ -4052,6 +4100,32 @@ function aiCallMistral(prompt, base64, apiKey) {
   }).then(function(data) {
     var text = ((data.choices || [])[0] || {}).message && data.choices[0].message.content;
     if (!text) throw new Error('Prázdná odpověď od Mistralu');
+    return text;
+  });
+}
+
+// Lokální AI (Ollama / LM Studio přes Tailscale Serve nebo localhost).
+// Endpoint je OpenAI-compatible /v1/chat/completions, payload stejný jako
+// OpenAI / Mistral. Bez Bearer auth — lokální server nemá API klíč.
+// Vyžaduje: CORS povolený na serveru (OLLAMA_ORIGINS=*), HTTPS pro
+// access ze github.io (jinak mixed content blokuje).
+function aiCallLocal(prompt, base64, url, model) {
+  return aiFetchWithRetry('Lokální AI', url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: model,
+      max_tokens: 8192,
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64 } }
+      ]}]
+    })
+  }).then(function(data) {
+    var text = ((data.choices || [])[0] || {}).message && data.choices[0].message.content;
+    if (!text) throw new Error('Prázdná odpověď z lokální AI');
     return text;
   });
 }
