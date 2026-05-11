@@ -433,7 +433,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.31<span class="ver-date"> · 2026-05-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.32<span class="ver-date"> · 2026-05-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2915,7 +2915,7 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
     tr.style.background = '#f8f8f0';
     // Sloučená buňka vlevo — na prvním řádku popisek, na dalších prázdná
     var tdEmpty = document.createElement('td');
-    tdEmpty.colSpan = 8;
+    tdEmpty.colSpan = 9;
     if (idx === 0) {
       tdEmpty.style.cssText = 'border:none;background:#f8f8f0;text-align:right;padding:.2rem .5rem;font-family:var(--mono);font-size:.62rem;color:#9a9488;vertical-align:middle';
       tdEmpty.textContent = 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →';
@@ -5261,7 +5261,7 @@ function generujPDF() {
         prevGroup = '';
         return '<tr' + bg + '>' +
           '<td style="text-align:center">' + esc(m.c || '') + '</td>' +
-          '<td colspan="9" style="font-style:italic">' + esc(m.popis || '') + '</td>' +
+          '<td colspan="10" style="font-style:italic">' + esc(m.popis || '') + '</td>' +
           '<td colspan="4" style="text-align:left">' + esc(m.hodnota || '') + '</td>' +
           '</tr>';
       }
@@ -5273,7 +5273,7 @@ function generujPDF() {
           : 'border:none;background:#f8f8f0';
         var leadText = isFirstSub ? 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →' : '';
         return '<tr' + bg + '>' +
-          '<td colspan="8" style="' + leadStyle + '">' + leadText + '</td>' +
+          '<td colspan="9" style="' + leadStyle + '">' + leadText + '</td>' +
           '<td style="text-align:center;font-weight:bold">' + esc(m.faze||'') + '</td>' +
           '<td style="text-align:center">' + esc(m.vyp||'') + '</td>' +
           '<td style="text-align:center">' + esc(m.cas||'') + '</td>' +
@@ -5336,7 +5336,7 @@ function generujPDF() {
       }
       rozvadeceHtml += '</div>';
     }
-    rozvadeceHtml += pdfMeasHeader + '<tbody>' + (mereniRows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>';
+    rozvadeceHtml += pdfMeasHeader + '<tbody>' + (mereniRows || '<tr><td colspan="15" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>';
     rozvadeceHtml += '</div>';
   });
 
@@ -5823,7 +5823,7 @@ function renderTiskRows(data) {
       prevGroup = '';
       return '<tr>' +
         '<td style="' + s + '">' + esc(m.c || '') + '</td>' +
-        '<td colspan="9" style="text-align:left;padding:1mm 1.5mm;border:.75pt solid #000;' + bg + 'font-style:italic">' + esc(m.popis || '') + '</td>' +
+        '<td colspan="10" style="text-align:left;padding:1mm 1.5mm;border:.75pt solid #000;' + bg + 'font-style:italic">' + esc(m.popis || '') + '</td>' +
         '<td colspan="4" style="text-align:left;padding:1mm 1.5mm;border:.75pt solid #000;' + bg + '">' + esc(m.hodnota || '') + '</td>' +
         '</tr>';
     }
@@ -5835,7 +5835,7 @@ function renderTiskRows(data) {
         : 'border:none;background:#f8f8f0';
       var leadText = isFirstSub ? 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →' : '';
       return '<tr>' +
-        '<td colspan="8" style="' + leadStyle + '">' + leadText + '</td>' +
+        '<td colspan="9" style="' + leadStyle + '">' + leadText + '</td>' +
         '<td style="' + s + 'font-weight:bold">' + esc(m.faze||'') + '</td>' +
         '<td style="' + s + '">' + esc(m.vyp||'') + '</td>' +
         '<td style="' + s + '">' + esc(m.cas||'') + '</td>' +
@@ -5915,7 +5915,7 @@ function tiskMereni() {
       tmHtml += '</div>';
       win.document.write(tmHtml);
     }
-    win.document.write('<table>' + thHtml + '<tbody>' + (rows || '<tr><td colspan="14" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>');
+    win.document.write('<table>' + thHtml + '<tbody>' + (rows || '<tr><td colspan="15" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>');
   });
   win.document.write('<div class="note">U RCD je součástí měření ověření funkce testovacího tlačítka.</div>');
   win.document.write('<div class="footer">');
