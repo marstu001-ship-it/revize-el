@@ -433,7 +433,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.30<span class="ver-date"> · 2026-05-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.31<span class="ver-date"> · 2026-05-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2705,6 +2705,7 @@ function getMeasTableHtml() {
     '<th class="grp" colspan="4">Jmenovité hodnoty jištění</th>' +
     '<th class="grp" rowspan="2">Zsm<br>max Ω</th>' +
     '<th class="grp" rowspan="2">Riso<br>MΩ</th>' +
+    '<th class="grp" rowspan="2">Rpe<br>Ω</th>' +
     '<th class="grp" rowspan="2">Fáze</th>' +
     '<th class="grp" colspan="4">Měření RCD</th>' +
     '<th class="grp" rowspan="2" style="width:11%">Kabel<br>typ, průřez mm²</th>' +
@@ -2827,7 +2828,8 @@ function addMereniRowTo(tbody) {
     { ph: '16', list: 'dl_proud_A' },
     { ph: '0,03', list: 'dl_idn' },
     { ph: '0,23' },
-    { ph: '>20', v: '>20' }
+    { ph: '>20', v: '>20' },
+    { ph: '' }
   ];
   hlavni.forEach(function(col) {
     var td = mkTd(col.ph, col.s, col.list);
@@ -3029,6 +3031,7 @@ function addRcdRow(el) {
   var risoTd = mkTd('>20');
   risoTd.querySelector('input').value = '>20';
   trMain.appendChild(risoTd);
+  trMain.appendChild(mkTd(''));
   // Fáze, Vyp, čas, 5×, Ut — prázdné na hlavním
   for (var i = 0; i < 5; i++) trMain.appendChild(mkTd(''));
   // Kabel
@@ -4708,11 +4711,11 @@ function getData() {
       var rcdGroup = tr.dataset.rcdGroup || '';
       if (rowtype === 'rcd-header') {
         var sel = tr.querySelector('select');
-        if (inp.length >= 13) rozv.mereni.push({
+        if (inp.length >= 14) rozv.mereni.push({
           rowtype: rowtype, rcdGroup: rcdGroup,
           c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: sel ? sel.value : '',
-          a: inp[3].value, idn: inp[4].value, zsm: inp[5].value, riso: inp[6].value,
-          faze: '', vyp: '', cas: '', t5idn: '', ut: '', kabel: inp[12].value
+          a: inp[3].value, idn: inp[4].value, zsm: inp[5].value, riso: inp[6].value, rpe: inp[7].value,
+          faze: '', vyp: '', cas: '', t5idn: '', ut: '', kabel: inp[13].value
         });
       } else if (rowtype === 'rcd-mereni') {
         if (inp.length >= 5) rozv.mereni.push({
@@ -4730,11 +4733,11 @@ function getData() {
           hodnota: hodInp ? hodInp.value : ''
         });
       } else {
-        if (inp.length >= 14) rozv.mereni.push({
+        if (inp.length >= 15) rozv.mereni.push({
           rowtype: rowtype, rcdGroup: rcdGroup,
           c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
-          a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value,
-          faze: inp[8].value, vyp: inp[9].value, cas: inp[10].value, t5idn: inp[11].value, ut: inp[12].value, kabel: inp[13].value
+          a: inp[4].value, idn: inp[5].value, zsm: inp[6].value, riso: inp[7].value, rpe: inp[8].value,
+          faze: inp[9].value, vyp: inp[10].value, cas: inp[11].value, t5idn: inp[12].value, ut: inp[13].value, kabel: inp[14].value
         });
       }
     });
@@ -5289,6 +5292,7 @@ function generujPDF() {
         '<td style="text-align:center">' + esc(m.idn) + '</td>' +
         '<td style="text-align:center">' + esc(m.zsm) + '</td>' +
         '<td style="text-align:center">' + esc(m.riso) + '</td>' +
+        '<td style="text-align:center">' + esc(m.rpe||'') + '</td>' +
         '<td style="text-align:center;font-weight:' + (isRcdH ? 'bold' : 'normal') + '">' + esc(m.faze||'') + '</td>' +
         '<td style="text-align:center">' + esc(m.vyp||'') + '</td>' +
         '<td style="text-align:center">' + esc(m.cas||'') + '</td>' +
@@ -5299,7 +5303,7 @@ function generujPDF() {
     }).join('');
   }
   var pdfMeasHeader = '<table class="pdf-meas"><thead><tr>' +
-    '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
+    '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
     '</tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
 
   var rozvadeceHtml = '';
@@ -5850,6 +5854,7 @@ function renderTiskRows(data) {
       '<td style="' + s + '">' + esc(m.idn) + '</td>' +
       '<td style="' + s + '">' + esc(m.zsm) + '</td>' +
       '<td style="' + s + '">' + esc(m.riso) + '</td>' +
+      '<td style="' + s + '">' + esc(m.rpe||'') + '</td>' +
       '<td style="' + s + 'font-weight:' + (isRcdH?'bold':'normal') + '">' + esc(m.faze||'') + '</td>' +
       '<td style="' + s + '">' + esc(m.vyp||'') + '</td>' +
       '<td style="' + s + '">' + esc(m.cas||'') + '</td>' +
@@ -5881,7 +5886,7 @@ function tiskMereni() {
   win.document.write('.note { font-size: 7pt; margin-top: 2mm; color: #444; }');
   win.document.write('@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
   win.document.write('</style></head><body>');
-  var thHtml = '<thead><tr><th rowspan="2">Č.</th><th rowspan="2" style="min-width:60pt">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:50pt">Kabel typ,<br>průřezu mm²</th></tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
+  var thHtml = '<thead><tr><th rowspan="2">Č.</th><th rowspan="2" style="min-width:60pt">Název obvodu</th><th colspan="4">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th rowspan="2">Fáze</th><th colspan="4">Měření RCD</th><th rowspan="2" style="min-width:50pt">Kabel typ,<br>průřezu mm²</th></tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
   win.document.write('<div class="header">');
   win.document.write('<div class="hbox">' + fmtDate(D.zahajeni) + '</div>');
   win.document.write('<div class="hbox">' + esc(D.ev_cislo||'—') + '</div>');
@@ -6085,11 +6090,11 @@ function nacistData(D) {
           trR.appendChild(chTd);
           // Migrace: prázdné Riso v RCD řádku (před v9.6) → ">20"
           var rcdRisoVal = m.riso || '>20';
-          [m.a, m.idn, m.zsm, rcdRisoVal].forEach(function(v, vi) {
+          [m.a, m.idn, m.zsm, rcdRisoVal, m.rpe || ''].forEach(function(v, vi) {
             trR.appendChild(mkTd('')); trR.querySelectorAll('input')[3 + vi].value = v || '';
           });
           for (var q = 0; q < 5; q++) trR.appendChild(mkTd(''));
-          trR.appendChild(mkTd('', ';text-align:left')); trR.querySelectorAll('input')[12].value = m.kabel || '';
+          trR.appendChild(mkTd('', ';text-align:left')); trR.querySelectorAll('input')[13].value = m.kabel || '';
           var dTd = document.createElement('td');
           dTd.style.border = '1px solid #ccc';
           var dBtn = document.createElement('button');
@@ -6113,7 +6118,7 @@ function nacistData(D) {
             // Migrace: prázdné Riso v archivních datech (před v9.6) se
             // automaticky doplní na typickou hodnotu ">20" MΩ.
             var risoVal = m.riso || '>20';
-            var vals = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, risoVal, m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
+            var vals = [m.c, m.n, m.typ, m.ch, m.a, m.idn, m.zsm, risoVal, m.rpe || '', m.faze, m.vyp, m.cas, m.t5idn, m.ut, m.kabel];
             vals.forEach(function(v, vi) { if (inps[vi]) inps[vi].value = v || ''; });
           }
         }
@@ -6798,7 +6803,7 @@ function navazatZpravu(i) {
   if (D.rozvadece) {
     D.rozvadece.forEach(function(rozv) {
       (rozv.mereni || []).forEach(function(m) {
-        m.zsm = ''; m.riso = ''; m.vyp = ''; m.cas = ''; m.t5idn = ''; m.ut = '';
+        m.zsm = ''; m.riso = ''; m.rpe = ''; m.vyp = ''; m.cas = ''; m.t5idn = ''; m.ut = '';
       });
     });
   }
