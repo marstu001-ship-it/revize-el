@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v7.4 · 2026-04-29**
+**Aktuální verze: v9.35 · 2026-05-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -23,6 +23,23 @@ tím nemusí zabývat — dělejte to automaticky, pokaždé.
 
 **Bez bumpu cache uživatel neuvidí vaše úpravy** a bude si myslet, že
 jste nic neudělali.
+
+## AI funkce — stav
+
+AI funkce (rozpoznávání závad z fotky, skenování štítku rozváděče) jsou
+**implementovány ale vizuálně skryty** přes CSS třídu `ai-feature`:
+
+```css
+/* AI features hidden — remove next line to re-enable */
+.ai-feature{display:none!important}
+```
+
+Toto pravidlo je v `index.html` hned za `.scard { ... }` blokem (~řádek 179).
+
+- **Schovat AI:** třída `ai-feature` + výše uvedený CSS řádek
+- **Znovu zapnout:** smazat řádek `.ai-feature{display:none!important}`
+- Všechen JS kód AI zůstává nedotčen, tlačítka v závadách a rozváděčích
+  se stejně zobrazují jen pokud má uživatel nakonfigurovaný API klíč.
 
 ## Kde hledat
 
