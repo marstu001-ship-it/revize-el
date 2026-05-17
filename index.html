@@ -435,7 +435,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.36<span class="ver-date"> · 2026-05-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.37<span class="ver-date"> · 2026-05-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5876,7 +5876,7 @@ function tiskMereni() {
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
   win.document.write('<title>Měření - ' + (D.ev_cislo||'RZ') + '</title>');
   win.document.write('<style>');
-  win.document.write('@page { size: A4 landscape; margin: 10mm 12mm 22mm 12mm; }');
+  win.document.write('@page { size: A4 landscape; margin: 10mm 12mm; }');
   win.document.write('* { box-sizing: border-box; margin: 0; padding: 0; }');
   win.document.write('body { font-family: "Courier New", Courier, monospace; font-size: 8pt; color: #000; }');
   win.document.write('.header { display: flex; justify-content: space-between; border-bottom: 1pt solid #000; padding-bottom: 2mm; margin-bottom: 4mm; }');
@@ -5887,7 +5887,7 @@ function tiskMereni() {
   win.document.write('table { width: 100%; border-collapse: collapse; }');
   win.document.write('th { border: .75pt solid #000; padding: .8mm 1mm; text-align: center; font-weight: bold; background: #e8e8e8; font-size: 6.5pt; white-space: nowrap; }');
   win.document.write('td { border: .75pt solid #000; font-size: 7.5pt; }');
-  win.document.write('.footer { position: fixed; bottom: 4mm; left: 12mm; right: 12mm; border-top: .5pt solid #000; padding-top: 1mm; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }');
+  win.document.write('.footer { position: fixed; bottom: 8mm; left: 12mm; right: 12mm; border-top: .5pt solid #000; padding-top: 1mm; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }');
   win.document.write('.note { font-size: 7pt; margin-top: 2mm; color: #444; }');
   win.document.write('@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
   win.document.write('</style></head><body>');
