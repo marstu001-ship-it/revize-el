@@ -435,7 +435,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.37<span class="ver-date"> · 2026-05-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.38<span class="ver-date"> · 2026-05-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6078,10 +6078,12 @@ function nacistData(D) {
       });
       var tbody = lastCard.querySelector('tbody');
       if (tbody) tbody.innerHTML = '';
+      var rcdGroupMap = {};
       (rozv.mereni || []).forEach(function(m) {
         if (m.rowtype === 'rcd-header') {
           rcdGroupCounter++;
           var gid = 'rcd-' + rcdGroupCounter;
+          rcdGroupMap[m.rcdGroup] = gid;
           var trR = document.createElement('tr');
           trR.dataset.rowtype = 'rcd-header';
           trR.dataset.rcdGroup = gid;
@@ -6112,7 +6114,19 @@ function nacistData(D) {
           tbody.appendChild(trR);
           addRcdSubRows(tbody, trR, m.ch || 'A', gid);
         } else if (m.rowtype === 'rcd-mereni') {
-          // podřádky se generují z addRcdSubRows, skip
+          var newGid = rcdGroupMap[m.rcdGroup] || '';
+          if (!newGid) return;
+          var subRows = tbody.querySelectorAll('tr[data-rcd-group="' + newGid + '"][data-rowtype="rcd-mereni"]');
+          for (var si = 0; si < subRows.length; si++) {
+            var sInps = subRows[si].querySelectorAll('input');
+            if (sInps.length >= 1 && sInps[0].value === m.faze) {
+              if (sInps[1]) sInps[1].value = m.vyp || '';
+              if (sInps[2]) sInps[2].value = m.cas || '';
+              if (sInps[3]) sInps[3].value = m.t5idn || '';
+              if (sInps[4]) sInps[4].value = m.ut || '';
+              break;
+            }
+          }
         } else if (m.rowtype === 'info') {
           addInfoRowTo(tbody, { cislo: m.c, popis: m.popis, hodnota: m.hodnota });
         } else {
