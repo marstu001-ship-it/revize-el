@@ -435,7 +435,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.39<span class="ver-date"> · 2026-05-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.40<span class="ver-date"> · 2026-05-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5523,7 +5523,11 @@ function generujPDF() {
   requestAnimationFrame(function() {
     var mmToPx = 96 / 25.4;
     var maxA4Px = 297 * mmToPx;
-    function overflows(el) { return el.getBoundingClientRect().height > maxA4Px + 2; }
+    var maxA4LandPx = 210 * mmToPx;
+    function overflows(el) {
+      var max = el.classList.contains('a4-landscape') ? maxA4LandPx : maxA4Px;
+      return el.getBoundingClientRect().height > max + 2;
+    }
     function newA4(className) {
       var np = document.createElement('div');
       np.className = className;
