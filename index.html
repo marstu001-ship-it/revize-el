@@ -435,7 +435,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.41<span class="ver-date"> · 2026-05-21</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.42<span class="ver-date"> · 2026-05-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5041,9 +5041,13 @@ function generujPDF() {
       '</div>';
   }
 
-  var isLpsPdf = (D.typ === 'lps');
-  var secZavady = isLpsPdf ? 7 : 8;
-  var secZaver  = isLpsPdf ? 8 : 9;
+  var isLpsPdf  = (D.typ === 'lps');
+  var hasDoc    = !!(D.dokumentace && D.dokumentace.length > 0);
+  var docOffset = hasDoc ? 1 : 0;
+  var secBase   = 5 + docOffset;
+  var rozvList  = D.rozvadece || [{ nazev: D.rozvadec, umisteni: D.rozvadec_umisteni, mereni: D.mereni }];
+  var secZavady = isLpsPdf ? secBase + 2 : secBase + 4;
+  var secZaver  = isLpsPdf ? secBase + 3 : secBase + 5;
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
   var nadpis = isLpsPdf
     ? 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)'
@@ -5182,7 +5186,7 @@ function generujPDF() {
     '</div>' +
     (D.dokumentace && D.dokumentace.length > 0
       ? '<div data-p2sec="3b">' +
-        '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">B.</div><div class="sec-name">Předložená dokumentace</div></div>' +
+        '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Předložená dokumentace</div></div>' +
         '<table class="data-table" style="font-size:9pt;margin:2mm 2mm 4mm;width:calc(100% - 4mm);border-collapse:collapse">' +
         '<thead><tr>' +
         '<th style="width:22%;border:1px solid #000;padding:1mm 2mm;text-align:left;background:#eee;color:#000">č. dokumentace</th>' +
@@ -5228,11 +5232,11 @@ function generujPDF() {
             'h) pospojování kovových částí vstupujících do objektu,<br>' +
             'i) materiál a hloubka uložení zemničů,<br>' +
             'j) dokumentace LPS a zápisy z předchozích revizí.';
-          return '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">' + head + '</div></div>' +
+          return '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">' + (4 + docOffset) + '.</div><div class="sec-name">' + head + '</div></div>' +
             (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
             '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' + (is1390 ? body1390 : body62305) + '</div>';
         })()
-      : '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">4.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
+      : '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">' + (4 + docOffset) + '.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
         (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
         '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
         '<strong>Prohlídka část A</strong> — prohlídka předchází zkoušce. Prohlídkou se zkontroluje zejména:<br>' +
@@ -5312,11 +5316,11 @@ function generujPDF() {
     '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="5">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th colspan="5">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
     '</tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
 
-  var rozvadeceHtml = '';
-  (D.rozvadece || [{ nazev: D.rozvadec, umisteni: D.rozvadec_umisteni, mereni: D.mereni }]).forEach(function(rozv, ri) {
+  var rozvadeceHtml = '<div class="sec-head"><div class="sec-num">' + secBase + '.</div><div class="sec-name">Naměřené hodnoty</div></div>';
+  rozvList.forEach(function(rozv, ri) {
     var mereniRows = renderMereniRows(rozv.mereni || []);
     rozvadeceHtml += '<div data-rozv="' + ri + '">';
-    rozvadeceHtml += '<div class="sec-head" style="' + (ri > 0 ? 'margin-top:5mm' : '') + '"><div class="sec-num">' + (ri + 1) + '</div><div class="sec-name">Měření: ' + esc(rozv.nazev || 'Rozváděč ' + (ri+1)) + '</div></div>';
+    rozvadeceHtml += '<div class="sec-head" style="' + (ri > 0 ? 'margin-top:5mm' : '') + '"><div class="sec-num">' + secBase + '.' + (ri + 1) + '</div><div class="sec-name">Měření: ' + esc(rozv.nazev || 'Rozváděč ' + (ri+1)) + '</div></div>';
     if (rozv.nazev) rozvadeceHtml += '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>' + esc(rozv.nazev) + '</strong> — ' + esc(rozv.umisteni || '') + '</div>';
     // Přívod + naměřené hodnoty na svorkách (L1/L2/L3 napětí + Ik) — jen pokud něco vyplněné
     var fazeArr = (rozv.faze || []);
@@ -5397,7 +5401,7 @@ function generujPDF() {
   p4.className = 'a4';
   p4.innerHTML = hdr(4) +
     '<div class="a4-content">' +
-    '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">Zkoušení (dle čl. 6.4.3)</div></div>' +
+    '<div class="sec-head"><div class="sec-num">' + (secBase + 1) + '.</div><div class="sec-name">Zkoušení (dle čl. 6.4.3)</div></div>' +
     (D.zkouseni ? '<div style="font-size:9pt;padding:0 2mm;margin:2mm 0"><strong>Výsledek zkoušení:</strong> ' + esc(D.zkouseni) + '</div>' : '') +
     '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:3mm">' +
     '<thead><tr><th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;width:5%"></th>' +
@@ -5405,7 +5409,7 @@ function generujPDF() {
     '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;width:12%">Výsledek</th>' +
     '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;text-align:left;width:38%">Vyhovuje dle</th></tr></thead>' +
     '<tbody>' + zkRows + '</tbody></table>' +
-    '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Měření impedance poruchové smyčky</div></div>' +
+    '<div class="sec-head"><div class="sec-num">' + (secBase + 2) + '.</div><div class="sec-name">Měření impedance poruchové smyčky</div></div>' +
     '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm;margin-bottom:3mm">' +
     'Pokud nebylo možné změřit impedanci vypínací smyčky přímo (možnost poškození — citlivá elektronická zařízení) byla použita náhradní metoda měření odporu ochranných vodičů k hlavní zemnící svorce — ochrannému vodiči dle ČSN 33 2000-6 ed.2, čl. 6.4.3.7.1.' +
     '<br>Před měřením impedance poruchové smyčky byla provedena zkouška elektrické spojitosti dle požadavků ČSN 33 2000-6 ed.2, čl. 6.4.3.7.3.' +
@@ -5413,7 +5417,7 @@ function generujPDF() {
     '<div style="text-align:center;margin:2mm 0;font-weight:bold;font-size:10pt">Zs (m) ≤ ⅔ × Uo / Ia</div>' +
     'Bylo provedeno dle požadavků přílohy D ČSN 33 2000-6 ed.2, čl. D.6.4.3.7.3. Hodnoty impedancí smyček uváděné v tabulce naměřených hodnot jsou skutečně naměřené hodnoty impedance na spotřebičích příslušných vývodů. U skutečně naměřených hodnot byl proveden kontrolní výpočet s bezpečnostním koeficientem 1,5. Naměřené hodnoty jsou nižší než vypočítané hodnoty.' +
     '</div>' +
-    '<div class="sec-head"><div class="sec-num">7.</div><div class="sec-name">Proudové chrániče</div></div>' +
+    '<div class="sec-head"><div class="sec-num">' + (secBase + 3) + '.</div><div class="sec-name">Proudové chrániče</div></div>' +
     '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
     'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla provedena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2 a přílohy NA.' +
     '<br>Bylo provedeno měření přechodových odporů a kontrola průřezu vodičů doplňujícího ochranného pospojování — ČSN 33 2000-4-41 ed.3, čl. 415.2, ČSN 33 2000-5-54 ed.3 čl. 544, ČSN EN 61140 ed.3 čl. 5.5.2.' +
@@ -5443,7 +5447,7 @@ function generujPDF() {
     pLps.className = 'a4';
     pLps.innerHTML = hdr(3) +
       '<div class="a4-content">' +
-      '<div class="sec-head"><div class="sec-num">5.</div><div class="sec-name">' + (lpsNorma1390 ? 'Parametry hromosvodu (dle ČSN 34 1390)' : 'Parametry LPS a zóny LPZ') + '</div></div>' +
+      '<div class="sec-head"><div class="sec-num">' + secBase + '.</div><div class="sec-name">' + (lpsNorma1390 ? 'Parametry hromosvodu (dle ČSN 34 1390)' : 'Parametry LPS a zóny LPZ') + '</div></div>' +
       '<div style="font-size:9pt;padding:0 2mm;margin-bottom:4mm;line-height:1.7">' +
       (L.trida ? '<strong>' + (lpsNorma1390 ? 'Kategorie hromosvodu' : 'Třída LPS') + ':</strong> ' + esc(L.trida) + '<br>' : '') +
       (L.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(L.jimaci) + '<br>' : '') +
@@ -5457,7 +5461,7 @@ function generujPDF() {
       (!lpsNorma1390 && L.potencial ? '<strong>Potenciálové vyrovnání:</strong> ' + esc(L.potencial) + '<br>' : '') +
       (!lpsNorma1390 && L.spd ? '<strong>Osazené SPD:</strong> ' + esc(L.spd) : '') +
       '</div>' +
-      '<div class="sec-head"><div class="sec-num">6.</div><div class="sec-name">Měření zemních odporů (dle ' + (lpsNorma1390 ? 'ČSN 34 1390, čl. 55' : 'ČSN EN 62305-3 ed.2, čl. 5.4.1') + ')</div></div>' +
+      '<div class="sec-head"><div class="sec-num">' + (secBase + 1) + '.</div><div class="sec-name">Měření zemních odporů (dle ' + (lpsNorma1390 ? 'ČSN 34 1390, čl. 55' : 'ČSN EN 62305-3 ed.2, čl. 5.4.1') + ')</div></div>' +
       (L.celkovy_odpor
         ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0;"><strong>Celkový zemní odpor soustavy:</strong> ' + esc(L.celkovy_odpor) + ' Ω</div>'
         : '') +
