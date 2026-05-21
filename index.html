@@ -435,7 +435,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.42<span class="ver-date"> · 2026-05-21</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.43<span class="ver-date"> · 2026-05-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5046,8 +5046,12 @@ function generujPDF() {
   var docOffset = hasDoc ? 1 : 0;
   var secBase   = 5 + docOffset;
   var rozvList  = D.rozvadece || [{ nazev: D.rozvadec, umisteni: D.rozvadec_umisteni, mereni: D.mereni }];
-  var secZavady = isLpsPdf ? secBase + 2 : secBase + 4;
-  var secZaver  = isLpsPdf ? secBase + 3 : secBase + 5;
+  var hasRcd    = rozvList.some(function(r) {
+    return (r.mereni || []).some(function(m) { return m.rowtype === 'rcd-header'; });
+  });
+  var rcdOffset = hasRcd ? 1 : 0;
+  var secZavady = isLpsPdf ? secBase + 2 : secBase + 3 + rcdOffset;
+  var secZaver  = isLpsPdf ? secBase + 3 : secBase + 4 + rcdOffset;
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
   var nadpis = isLpsPdf
     ? 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)'
@@ -5417,16 +5421,18 @@ function generujPDF() {
     '<div style="text-align:center;margin:2mm 0;font-weight:bold;font-size:10pt">Zs (m) ≤ ⅔ × Uo / Ia</div>' +
     'Bylo provedeno dle požadavků přílohy D ČSN 33 2000-6 ed.2, čl. D.6.4.3.7.3. Hodnoty impedancí smyček uváděné v tabulce naměřených hodnot jsou skutečně naměřené hodnoty impedance na spotřebičích příslušných vývodů. U skutečně naměřených hodnot byl proveden kontrolní výpočet s bezpečnostním koeficientem 1,5. Naměřené hodnoty jsou nižší než vypočítané hodnoty.' +
     '</div>' +
-    '<div class="sec-head"><div class="sec-num">' + (secBase + 3) + '.</div><div class="sec-name">Proudové chrániče</div></div>' +
-    '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
-    'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla provedena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2 a přílohy NA.' +
-    '<br>Bylo provedeno měření přechodových odporů a kontrola průřezu vodičů doplňujícího ochranného pospojování — ČSN 33 2000-4-41 ed.3, čl. 415.2, ČSN 33 2000-5-54 ed.3 čl. 544, ČSN EN 61140 ed.3 čl. 5.5.2.' +
-    '<br><br>Měření a zkoušení proudových chráničů bylo provedeno následujícím postupem:' +
-    '<br>— Ověření mezních hodnot reziduálních proudů a časů proudových chráničů.' +
-    '<br>— Měření dotykového napětí Ua na ochranném vodiči způsobené průchodem proudu IΔn.' +
-    '<br>— Ověření funkce kontrolního tlačítka na chráničích.' +
-    '<br><br>Výsledky vyhověly požadavkům norem a jsou uvedeny v tabulce měření této zprávy o revizi.' +
-    '</div>' +
+    (hasRcd ?
+      '<div class="sec-head"><div class="sec-num">' + (secBase + 3) + '.</div><div class="sec-name">Proudové chrániče</div></div>' +
+      '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
+      'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla provedena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2 a přílohy NA.' +
+      '<br>Bylo provedeno měření přechodových odporů a kontrola průřezu vodičů doplňujícího ochranného pospojování — ČSN 33 2000-4-41 ed.3, čl. 415.2, ČSN 33 2000-5-54 ed.3 čl. 544, ČSN EN 61140 ed.3 čl. 5.5.2.' +
+      '<br><br>Měření a zkoušení proudových chráničů bylo provedeno následujícím postupem:' +
+      '<br>— Ověření mezních hodnot reziduálních proudů a časů proudových chráničů.' +
+      '<br>— Měření dotykového napětí Ua na ochranném vodiči způsobené průchodem proudu IΔn.' +
+      '<br>— Ověření funkce kontrolního tlačítka na chráničích.' +
+      '<br><br>Výsledky vyhověly požadavkům norem a jsou uvedeny v tabulce měření této zprávy o revizi.' +
+      '</div>'
+    : '') +
     '</div>' + ftr();
   if (!isLpsPdf) pages.appendChild(p4);
 
