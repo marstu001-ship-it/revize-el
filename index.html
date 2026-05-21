@@ -435,7 +435,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.40<span class="ver-date"> · 2026-05-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.41<span class="ver-date"> · 2026-05-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5042,6 +5042,8 @@ function generujPDF() {
   }
 
   var isLpsPdf = (D.typ === 'lps');
+  var secZavady = isLpsPdf ? 7 : 8;
+  var secZaver  = isLpsPdf ? 8 : 9;
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
   var nadpis = isLpsPdf
     ? 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)'
@@ -5502,9 +5504,9 @@ function generujPDF() {
     : 'VYHRAZENÉ ELEKTRICKÉ ZAŘÍZENÍ NENÍ Z HLEDISKA BEZPEČNOSTI\nSCHOPNO PROVOZU';
   p5.innerHTML = hdr(5) +
     '<div class="a4-content">' +
-    '<div class="sec-head"><div class="sec-num">9.</div><div class="sec-name">Přehled zjištěných závad</div></div>' +
+    '<div class="sec-head"><div class="sec-num">' + secZavady + '.</div><div class="sec-name">Přehled zjištěných závad</div></div>' +
     '<div style="padding:0 2mm;margin-bottom:4mm">' + zavadyHtml + '</div>' +
-    '<div class="sec-head"><div class="sec-num">10.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
+    '<div class="sec-head"><div class="sec-num">' + secZaver + '.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.zhodnoceni || 'Závěr nebyl vyplněn.') + '</div>' +
     (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta provedení příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
     '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
