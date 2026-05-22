@@ -435,7 +435,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.44<span class="ver-date"> · 2026-05-21</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.45<span class="ver-date"> · 2026-05-22</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5055,7 +5055,11 @@ function generujPDF() {
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
   var nadpis = isLpsPdf
     ? 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)'
-    : 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ';
+    : (D.druh === 'Výchozí' || D.druh === 'Výchozí souhrnná'
+        ? 'ZPRÁVA O VÝCHOZÍ REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'
+        : D.druh === 'Pravidelná'
+          ? 'ZPRÁVA O PRAVIDELNÉ REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'
+          : 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ');
   var podnadpis = isLpsPdf
     ? (lpsNorma1390
         ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 34 1390 (starší LPS zřízené před r. 2004), ČSN 33 2000-5-54 ed.3'
