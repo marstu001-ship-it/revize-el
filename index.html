@@ -441,7 +441,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.49<span class="ver-date"> · 2026-05-22</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.50<span class="ver-date"> · 2026-06-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3045,10 +3045,10 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
     tdF.querySelector('input').readOnly = true;
     tr.appendChild(tdF);
     // Vyp. mA, čas ms, 5×IΔn ms, Ut V — editovatelné
-    tr.appendChild(mkTd(''));
-    tr.appendChild(mkTd(''));
-    tr.appendChild(mkTd(''));
-    tr.appendChild(mkTd(''));
+    tr.appendChild(mkTd('26'));
+    tr.appendChild(mkTd('48'));
+    tr.appendChild(mkTd('20'));
+    tr.appendChild(mkTd('28'));
     // Kabel — prázdná buňka
     tr.appendChild(mkEmptyTd());
     // Akce — kopírování celé skupiny jen na posledním řádku
