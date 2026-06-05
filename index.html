@@ -441,7 +441,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.47<span class="ver-date"> · 2026-05-22</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.48<span class="ver-date"> · 2026-05-22</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1184,12 +1184,12 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
   <div class="scard">
     <div class="scard-title">A. Rozsah a popis elektrické instalace</div>
-    <button class="magic-btn" data-action="magicPopis">🔮 Magic – vložit typický text</button>
     <div class="g2">
       <div class="f span2">
         <label>Předmětem této revize je</label>
         <textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_predmet_je">📝 Typický text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_predmet_je">💾 Uložit text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_predmet_je">📋 Z knihovny</button>
         </div>
@@ -1198,6 +1198,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <label>Předmětem této revize není</label>
         <textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_predmet_neni">📝 Typický text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_predmet_neni">💾 Uložit text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_predmet_neni">📋 Z knihovny</button>
         </div>
@@ -1206,6 +1207,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <label>Popis revidované elektroinstalace</label>
         <textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_popis">📝 Typický text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_popis">💾 Uložit text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_popis">📋 Z knihovny</button>
         </div>
@@ -1373,11 +1375,11 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <div class="tab-panel" id="tab-zaver">
   <div class="scard">
     <div class="scard-title">F. Zhodnocení a závěr revizní zprávy</div>
-    <button class="magic-btn" data-action="magicZaver">🔮 Magic – vložit typický text závěru</button>
     <div class="f" style="margin-top:.75rem">
       <label>Slovní zhodnocení</label>
       <textarea id="f_zhodnoceni" style="min-height:180px" placeholder="Způsob a provedení elektroinstalace je v souladu s platnými ČSN..."></textarea>
       <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+        <button class="magic-btn" data-action="typickyText" data-field="f_zhodnoceni">📝 Typický text</button>
         <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_zhodnoceni">💾 Uložit text</button>
         <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_zhodnoceni">📋 Z knihovny</button>
       </div>
@@ -1591,6 +1593,16 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div id="snippety-list" style="max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritKnihovnu">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-typicke-texty">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title">📝 Typické texty</div>
+    <div id="typy-textu-list" style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritTypickeTexty">Zavřít</button>
     </div>
   </div>
 </div>
@@ -3773,6 +3785,80 @@ function magicZaver() {
     text = (vysledek === 'neschopno') ? zaverNeschopno : zaverSchopno;
   }
   el.value = text;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TYPICKÉ TEXTY — přednastavené vzory dle Macháček/Dolenský
+// ═══════════════════════════════════════════════════════════════════════
+var TYPY_TEXTU = {
+  f_predmet_je: [
+    { nazev: 'Rodinný dům (elektro)', text: 'Elektrická instalace rodinného domu včetně přípojky od hlavního domovního vedení, elektroměrového rozváděče a rozvodů silnoproudé instalace v celém objektu.' },
+    { nazev: 'Byt (elektro)', text: 'Elektrická instalace bytové jednotky od bytového rozváděče umístěného v chodbě bytu, veškeré rozvody silnoproudé instalace v prostorách bytu.' },
+    { nazev: 'Průmyslový objekt (elektro)', text: 'Silnoproudá elektrická instalace průmyslového objektu od hlavního rozváděče, veškeré rozvody nn v objektu, přípojnicové rozvody, rozváděče jednotlivých technologií.' },
+    { nazev: 'Hromosvod – ČSN EN 62305 (LPS)', text: 'Systém ochrany před bleskem (LPS) na objektu, zahrnující jímací soustavu, svody, uzemnění, pospojování a přepěťové ochrany (SPD), provedený dle ČSN EN 62305-1 až 4 ed. 2.' },
+    { nazev: 'Hromosvod – ČSN 34 1390 (LPS)', text: 'Hromosvodní zařízení na objektu zahrnující jímací soustavu (hřebenová tyč, jímací tyče), svody, uzemňovací soustavu a pospojování, provedené dle ČSN 34 1390.' }
+  ],
+  f_predmet_neni: [
+    { nazev: 'Přípojková skříň + elektroměr (RD/byt)', text: 'Předmětem revize není přípojková skříň, měřicí místo a elektroměrový rozváděč (zařízení provozovatele distribuční soustavy), ani rozvody ve společných prostorách bytového domu.' },
+    { nazev: 'Spotřebiče a pohyblivé přívody', text: 'Předmětem revize nejsou spotřebiče a jejich pohyblivé přívodní šňůry, ani technologická zařízení. Revize se vztahuje pouze na pevnou elektrickou instalaci.' },
+    { nazev: 'Technologická zařízení (průmysl)', text: 'Předmětem revize nejsou technologická zařízení a jejich silové přívody nad napěťovou skříní stroje, řídicí systémy PLC a sdělovací rozvody. Revize se vztahuje na silnoproudou pevnou instalaci budovy.' },
+    { nazev: 'Vnitřní rozvody budovy (hromosvod)', text: 'Předmětem revize ochrany před bleskem není silnoproudá elektrická instalace objektu ani jí připojená technologická zařízení.' }
+  ],
+  f_popis: [
+    { nazev: 'Rodinný dům', text: 'Jedná se o novostavbu rodinného domu. Rodinný dům je připojen k distribuční síti prostřednictvím pojistkové skříně typ SPP2C, řešeno jako svodová přípojka. Elektroměrový rozváděč je nainstalován v elektroměrovém pilíři na hranici pozemku. Rozváděč RD pro rodinný dům je nainstalován v technické místnosti. Hlavní přívod z elektroměrového rozváděče je proveden kabelem CYKY-J 4x16, který je uložen v zemi v chráničkách Kopoflex v celé délce v hloubce 80 cm. Kabel je zakončen na vstupní svorkovnici rozváděče RD. Souběžně s hlavním přívodem je uložen i kabel CYKY-J 5x2,5 — povelový pro HDO a kabel CYKY-J 3x2,5 pro pohon brány.\n\n— Pod rozváděčem je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nRp doplňujícího ochranného pospojování v koupelně vyhověly ČSN 33 2000-4-41 ed.3, čl. 415.2. Odpor R mezi neživými částmi současně přístupnými dotyku a cizími vodivými částmi splnil podmínku: R ≤ 50V/Ia.\n\nV rozváděči RD vedle hlavního jističe je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C. Délka vodičů přívodu a vývodu z přepěťové ochrany je 30 cm. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. Osvětlení je provedeno LED svítidly s odpovídajícím krytím IP.\n\nU rodinného domu je proveden základový zemnič typu B, který tvoří uzavřenou smyčku. Zemnič je uložen minimálně 10 cm v betonu. Jedná se o společný zemnič pro elektrické zařízení i ochranu před bleskem. Uzemňovací přívody jsou antikorozně ošetřeny dle ČSN 33 2000-5-54 ed.3 příloha ZB čl. 542.2.5.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.' },
+    { nazev: 'Byt', text: 'Jedná se o bytovou jednotku v bytovém domě. Bytová jednotka je ve druhém nadzemním podlaží vlevo. Bytový dům je postaven z cihel. Hlavní přívod z elektroměrového rozváděče, který je nainstalovaný na společné chodbě bytového domu je proveden kabelem CYKY-J 4x10, společně s hlavním přívodem je uložen vodič pospojování v barevné kombinaci žel/žlutá průřezu 10 mm².\n\nBytový rozváděč RB je nainstalován ve vstupní chodbě bytové jednotky. Kabelové rozvody jsou uloženy pod omítkou a v podlahách. Přípojnice pospojování pro BJ je nainstalována v šachtě přístupné z WC.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nRp doplňujícího ochranného pospojování v koupelně vyhověly ČSN 33 2000-4-41 ed.3, čl. 415.2. Odpor R mezi neživými částmi současně přístupnými dotyku a cizími vodivými částmi splnil podmínku: R ≤ 50V/Ia.\n\nV rozváděči BD vedle hlavního jističe je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C typ OEZ SVC-350—3PEN - MZ pro výbojový proud 20 kA (8/20 μs) pro předpokládané nízké účinky bleskového proudu. Délka vodičů přívodu a vývodu z přepěťové ochrany je 45 cm. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.' },
+    { nazev: 'Průmyslový objekt', text: 'Jedná se o rozsáhlý průmyslový objekt s vlastní trafostanicí, která je mimo výrobní objekt u příjezdové komunikace. V trafostanici je nainstalován hlavní rozváděč RH, ze kterého jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy, šaten a technického zázemí.\n\nKabelové rozvody jsou uloženy v zemi — v případě pravidelné revize je vhodné uvést, že stav kabelů a uzemňovací soustavy uložených v zemi nebylo možné zkontrolovat, protože jsou nepřístupné. Kabely jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách.\n\n— V rozvodně VN/NN je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— neživé části zařízení — nádoba transformátoru;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nV rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů. V podružných rozváděčích osazeny SPD.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.' },
+    { nazev: 'Hromosvod – ČSN EN 62305', text: 'Jedná se o vnější systém ochrany před bleskem (LPS) na střeše objektu rodinného domu. Třída LPS odpovídá výpočtu rizika dle ČSN EN 62305-2 ed.2.\n\nJÍMACÍ SOUSTAVA — je provedena pomocí jímacích tyčí a propojovacího vedení AlMgSi ⌀ 8 mm na střeše. Jímače jsou rozmístěny tak, aby celá střecha objektu spadala do jejich ochranného prostoru (metoda valící se koule / ochranného úhlu / mřížové soustavy dle ČSN EN 62305-3 ed.2 čl. 5.2).\n\nSVODY — napojeny na jímací soustavu a vyvedeny po fasádě objektu k zemi. Materiál: AlMgSi ⌀ 8 mm. V dosahu osob (do výšky 1,8 m nad zemí) jsou svody chráněny ochranným úhelníkem proti mechanickému poškození. Měřicí (zkušební) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené.\n\nUZEMŇOVACÍ SOUSTAVA — typu B (základový zemnič — uzavřená smyčka v betonu základů, FeZn pásek 30×4 mm). Slouží i jako společný zemnič pro elektroinstalaci. Spojení na svody je provedeno přes měřicí svorky.\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — všechny kovové části vstupující do objektu (vodovodní přípojka, plynovod, technologie) jsou propojeny na hlavní uzemňovací svornici (MET) v objektu.\n\nVNITŘNÍ OCHRANA PŘED PŘEPĚTÍM — instalována kombinovaná přepěťová ochrana SPD typu T1+T2 v hlavním rozváděči objektu pro koordinovanou ochranu dle ČSN EN 62305-4 ed.2.\n\nIzolační (bezpečné) vzdálenosti „s" mezi LPS a vodivými částmi uvnitř objektu byly ověřeny vizuálně a vyhovují požadavkům ČSN EN 62305-3 ed.2 čl. 6.3.' },
+    { nazev: 'Hromosvod – ČSN 34 1390', text: 'Jedná se o vnější systém ochrany před bleskem (hromosvod), který byl zřízen před rokem 2004 a je posuzován dle ČSN 34 1390 (Předpisy pro ochranu před bleskem).\n\nJÍMACÍ ZAŘÍZENÍ — provedeno jako hřebenové vedení po obvodu střechy, doplněné jímacími tyčemi na vyčnívajících částech objektu (komín, STA). Materiál FeZn ⌀ 8 mm. Vzdálenost jímacího vedení od hořlavých částí střechy vyhovuje požadavkům ČSN 34 1390 čl. 42.\n\nSVODY — celkem osazeny v rozích a po obvodu objektu, rovnoměrně rozmístěné. Materiál FeZn. V dosahu osob (do výšky 1,8 m) jsou svody opatřeny ochranným úhelníkem proti mechanickému poškození. Zkušební (měřicí) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené dle ČSN 34 1390 čl. 50.\n\nUZEMŇOVACÍ SOUSTAVA — jednotlivé zemniče připojené ke svodům. Materiál FeZn pásek, uložení v hloubce cca 0,8 m. Měření zemního odporu u jednotlivých svodů se doporučuje ≤ 15 Ω (ČSN 34 1390 čl. 55).\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — kovové části vstupující do objektu (vodovod, plyn) jsou propojeny s uzemňovací soustavou dle ČSN 34 1390 čl. 62.\n\nCelistvost spojů byla ověřena měřením přechodových odporů — požadavek ≤ 0,2 Ω dle ČSN 34 1390 čl. 124.' }
+  ],
+  f_zhodnoceni: [
+    { nazev: 'Schopno provozu (elektro)', text: 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledky měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).' },
+    { nazev: 'Neschopno provozu (elektro)', text: 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole 9 této zprávy. Zjištěné závady kategorie C1 (nebezpečné) musí být neprodleně odstraněny; revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.\n\nU závad kategorie C2 (potenciálně nebezpečné) je nutné zajistit jejich odstranění v přiměřené lhůtě. U závad kategorie C3 (doporučení) je odstranění ponecháno na zvážení provozovatele.\n\nPo odstranění všech závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že zjištěné nedostatky byly odstraněny a el. zařízení je bezpečné pro provoz.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.' },
+    { nazev: 'LPS schopno – ČSN EN 62305', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací a odpovídají třídě LPS stanovené pro objekt. Naměřené hodnoty zemního odporu vyhovují požadavkům ČSN EN 62305-3 ed.2.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
+    { nazev: 'LPS neschopno – ČSN EN 62305', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN EN 62305-3 ed.2 a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
+    { nazev: 'LPS schopno – ČSN 34 1390', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN 34 1390, ČSN 33 2000-5-54 ed.3.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací. Naměřené hodnoty zemního odporu vyhovují požadavkům ČSN 34 1390.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
+    { nazev: 'LPS neschopno – ČSN 34 1390', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN 34 1390, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN 34 1390 a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' }
+  ]
+};
+
+var __typTextTargetId = '';
+
+function otevritTypickeTexty(fieldId) {
+  __typTextTargetId = fieldId;
+  var texty = TYPY_TEXTU[fieldId] || [];
+  var list = document.getElementById('typy-textu-list');
+  list.innerHTML = '';
+  texty.forEach(function(t, idx) {
+    var div = document.createElement('div');
+    div.style.cssText = 'background:var(--surface);border:1px solid var(--border);padding:.7rem .9rem;border-radius:3px';
+    var preview = t.text.length > 200 ? t.text.slice(0, 200) + '…' : t.text;
+    div.innerHTML =
+      '<div style="font-weight:600;font-size:.82rem;color:var(--accent2);margin-bottom:.3rem">' + t.nazev + '</div>' +
+      '<div style="font-size:.76rem;color:var(--muted);white-space:pre-wrap;max-height:4.5rem;overflow:hidden;margin-bottom:.5rem">' + preview + '</div>' +
+      '<button class="btn btn-gold" style="font-size:.76rem;padding:.25rem .7rem;margin-right:.3rem" data-action="vlozitTypickyTextReplace" data-idx="' + idx + '">↺ Nahradit</button>' +
+      '<button class="btn btn-ghost" style="font-size:.76rem;padding:.25rem .7rem;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="vlozitTypickyTextAppend" data-idx="' + idx + '">+ Přidat na konec</button>';
+    list.appendChild(div);
+  });
+  document.getElementById('modal-typicke-texty').classList.add('open');
+}
+
+function zavritTypickeTexty() {
+  document.getElementById('modal-typicke-texty').classList.remove('open');
+}
+
+function vlozitTypickyText(idx, mode) {
+  var texty = TYPY_TEXTU[__typTextTargetId] || [];
+  var t = texty[idx];
+  if (!t) return;
+  var el = document.getElementById(__typTextTargetId);
+  if (!el) return;
+  if (mode === 'replace') {
+    el.value = t.text;
+  } else {
+    el.value = el.value ? el.value.trimEnd() + '\n\n' + t.text : t.text;
+  }
+  el.dispatchEvent(new Event('input'));
+  zavritTypickeTexty();
 }
 
 // Načte firmu z ARES (veřejné CZ API) a vyplní cílové pole.
@@ -7133,8 +7219,10 @@ document.addEventListener('click', function(e) {
     case 'ulozitPristroje': ulozitPristroje(); break;
     case 'addPristrojPreset': addPristrojPreset(); break;
     case 'openModalRevize': openModalRevize(); break;
-    case 'magicPopis': magicPopis(); break;
-    case 'magicZaver': magicZaver(); break;
+    case 'typickyText': otevritTypickeTexty(el.dataset.field); break;
+    case 'vlozitTypickyTextReplace': vlozitTypickyText(+el.dataset.idx, 'replace'); break;
+    case 'vlozitTypickyTextAppend': vlozitTypickyText(+el.dataset.idx, 'append'); break;
+    case 'zavritTypickeTexty': zavritTypickeTexty(); break;
     case 'lookupProvozovatelIco':
       lookupIcoFromAres(
         (document.getElementById('f_provozovatel_ico') || {}).value,
