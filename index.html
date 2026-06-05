@@ -177,6 +177,12 @@ html.view-mobile .home-wrap{padding:0 .75rem}
   border-left:4px solid var(--accent2);padding:1.5rem 1.75rem;margin-bottom:1.2rem}
 /* AI features hidden — remove next line to re-enable */
 .ai-feature{display:none!important}
+/* Drag-and-drop řádků tabulky měření */
+tr.row-drag-above>td{border-top:2px solid #b5291c!important}
+tr.row-drag-below>td{border-bottom:2px solid #b5291c!important}
+tr.row-dragging{opacity:.35}
+td.dnd-num-cell{position:relative;cursor:grab}
+td.dnd-num-cell .drag-handle{position:absolute;left:1px;top:50%;transform:translateY(-50%);font-size:.55rem;color:#ccc;pointer-events:none;line-height:1}
 .scard-title{font-family:var(--mono);font-size:.65rem;font-weight:500;
   letter-spacing:.15em;text-transform:uppercase;color:var(--accent2);
   margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
@@ -435,7 +441,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.45<span class="ver-date"> · 2026-05-22</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.46<span class="ver-date"> · 2026-05-22</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2620,6 +2626,9 @@ function copyRow(el) {
   if (!tr) return;
   var tbody = tr.parentNode;
   var clone = tr.cloneNode(true);
+  delete clone.dataset.dndInit;
+  clone.querySelectorAll('.drag-handle').forEach(function(h) { h.remove(); });
+  clone.classList.remove('row-dragging', 'row-drag-above', 'row-drag-below');
   if (tr.nextSibling) {
     tbody.insertBefore(clone, tr.nextSibling);
   } else {
@@ -2627,6 +2636,7 @@ function copyRow(el) {
   }
   // Přečísluj celou tabulku, aby čísla šla 1,2,3,... i po kopii uprostřed
   renumberRows(tbody);
+  initRowDnd(clone, tbody);
 }
 
 function delRcdGroup(el) {
@@ -2814,6 +2824,81 @@ function renumberRows(tbody) {
   });
 }
 
+var dndDragging = null;
+
+function getDragGroup(tr) {
+  if (tr.dataset.rowtype !== 'rcd-header') return [tr];
+  var gid = tr.dataset.rcdGroup;
+  var rows = [tr], next = tr.nextElementSibling;
+  while (next && next.dataset.rowtype === 'rcd-mereni' && next.dataset.rcdGroup === gid) {
+    rows.push(next); next = next.nextElementSibling;
+  }
+  return rows;
+}
+
+function initRowDnd(tr, tbody) {
+  if (tr.dataset.rowtype === 'rcd-mereni') return;
+  if (tr.dataset.dndInit === '1') return;
+  tr.dataset.dndInit = '1';
+  tr.setAttribute('draggable', 'true');
+  var firstTd = tr.querySelector('td');
+  if (firstTd && !firstTd.classList.contains('dnd-num-cell')) {
+    firstTd.classList.add('dnd-num-cell');
+    var h = document.createElement('span');
+    h.className = 'drag-handle'; h.textContent = '⠿';
+    firstTd.appendChild(h);
+  }
+  function clearDragClasses() {
+    tbody.querySelectorAll('tr').forEach(function(r) {
+      r.classList.remove('row-drag-above', 'row-drag-below');
+    });
+  }
+  tr.addEventListener('dragstart', function(e) {
+    dndDragging = getDragGroup(tr);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+    setTimeout(function() {
+      if (dndDragging) dndDragging.forEach(function(r) { r.classList.add('row-dragging'); });
+    }, 0);
+  });
+  tr.addEventListener('dragend', function() {
+    if (dndDragging) dndDragging.forEach(function(r) { r.classList.remove('row-dragging'); });
+    clearDragClasses(); dndDragging = null;
+  });
+  tr.addEventListener('dragover', function(e) {
+    if (!dndDragging || dndDragging.indexOf(tr) !== -1) return;
+    if (dndDragging[0].parentNode !== tbody) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    var rect = tr.getBoundingClientRect();
+    clearDragClasses();
+    tr.classList.add(e.clientY < rect.top + rect.height / 2 ? 'row-drag-above' : 'row-drag-below');
+  });
+  tr.addEventListener('dragleave', function() {
+    tr.classList.remove('row-drag-above', 'row-drag-below');
+  });
+  tr.addEventListener('drop', function(e) {
+    e.preventDefault();
+    if (!dndDragging || dndDragging.indexOf(tr) !== -1) return;
+    if (dndDragging[0].parentNode !== tbody) return;
+    tr.classList.remove('row-drag-above', 'row-drag-below');
+    var rect = tr.getBoundingClientRect(), above = e.clientY < rect.top + rect.height / 2;
+    var insertRef;
+    if (above) {
+      insertRef = tr;
+    } else {
+      var g = getDragGroup(tr), last = g[g.length - 1];
+      insertRef = last.nextSibling || null;
+    }
+    dndDragging.forEach(function(r) { r.parentNode.removeChild(r); });
+    if (insertRef) {
+      dndDragging.forEach(function(r) { tbody.insertBefore(r, insertRef); });
+    } else {
+      dndDragging.forEach(function(r) { tbody.appendChild(r); });
+    }
+    renumberRows(tbody);
+  });
+}
+
 function addMereniRowTo(tbody) {
   if (!tbody) return;
   var num = getNextRowNum(tbody);
@@ -2851,6 +2936,7 @@ function addMereniRowTo(tbody) {
   tr.appendChild(mkDelTd());
   tbody.appendChild(tr);
   renumberRows(tbody);
+  initRowDnd(tr, tbody);
 }
 
 function mkSelectTd(options, selected, onChange) {
@@ -2999,6 +3085,7 @@ function addInfoRowTo(tbody, data) {
   tr.appendChild(mkDelTd());
   tbody.appendChild(tr);
   renumberRows(tbody);
+  initRowDnd(tr, tbody);
 }
 
 function addRcdRow(el) {
@@ -3044,6 +3131,7 @@ function addRcdRow(el) {
   emptyActionTd.style.cssText = 'border:1px solid #ccc';
   trMain.appendChild(emptyActionTd);
   tbody.appendChild(trMain);
+  initRowDnd(trMain, tbody);
   // Vygeneruj podřádky dle výchozího typu (A)
   addRcdSubRows(tbody, trMain, 'A', groupId);
   renumberRows(tbody);
@@ -3580,6 +3668,7 @@ function addLpsMereni() {
   tr.appendChild(mkDelTd());
   tbody.appendChild(tr);
   renumberRows(tbody);
+  initRowDnd(tr, tbody);
 }
 
 function addDokumentace() {
@@ -6132,6 +6221,7 @@ function nacistData(D) {
           };})(gid, trR));
           dTd.appendChild(dBtn); trR.appendChild(dTd);
           tbody.appendChild(trR);
+          initRowDnd(trR, tbody);
           addRcdSubRows(tbody, trR, m.ch || 'A', gid);
         } else if (m.rowtype === 'rcd-mereni') {
           var newGid = rcdGroupMap[m.rcdGroup] || '';
