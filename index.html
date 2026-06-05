@@ -441,7 +441,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.48<span class="ver-date"> · 2026-05-22</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.49<span class="ver-date"> · 2026-05-22</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3821,14 +3821,27 @@ var TYPY_TEXTU = {
   ]
 };
 
+// Filtry podle aktTyp/aktPodtyp — index odpovídá pořadí v TYPY_TEXTU.
+// Klíče: 'dum', 'byt', 'prumysl', 'lps'. Chybějící záznam = bez filtru (zobrazit vždy).
+var TYPY_TEXTU_FILTRY = {
+  f_predmet_je:   [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps']],
+  f_predmet_neni: [['dum','byt'], ['dum','byt','prumysl'], ['prumysl'], ['lps']],
+  f_popis:        [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps']],
+  f_zhodnoceni:   [['dum','byt','prumysl'], ['dum','byt','prumysl'], ['lps'], ['lps'], ['lps'], ['lps']]
+};
+
 var __typTextTargetId = '';
 
 function otevritTypickeTexty(fieldId) {
   __typTextTargetId = fieldId;
   var texty = TYPY_TEXTU[fieldId] || [];
+  var filtry = TYPY_TEXTU_FILTRY[fieldId] || [];
+  var currentKey = aktTyp === 'lps' ? 'lps' : (aktPodtyp || 'dum');
   var list = document.getElementById('typy-textu-list');
   list.innerHTML = '';
   texty.forEach(function(t, idx) {
+    var f = filtry[idx];
+    if (f && f.indexOf(currentKey) === -1) return; // skrýt pro jiný typ revize
     var div = document.createElement('div');
     div.style.cssText = 'background:var(--surface);border:1px solid var(--border);padding:.7rem .9rem;border-radius:3px';
     var preview = t.text.length > 200 ? t.text.slice(0, 200) + '…' : t.text;
