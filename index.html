@@ -304,7 +304,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 /* ═══ PDF PREVIEW ═══ */
 #screen-pdf{background:#888}
 .pdf-toolbar{background:#333;color:#fff;display:flex;align-items:center;
-  justify-content:space-between;padding:.6rem 1.5rem;gap:1rem}
+  justify-content:space-between;padding:.6rem 1.5rem;gap:1rem;
+  position:sticky;top:54px;z-index:200}
 .pdf-toolbar-title{font-family:var(--mono);font-size:.8rem;letter-spacing:.1em}
 .pdf-actions{display:flex;gap:.5rem}
 .pbtn{font-family:var(--mono);font-size:.68rem;padding:.4rem .9rem;
@@ -441,7 +442,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.53<span class="ver-date"> · 2026-06-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.54<span class="ver-date"> · 2026-06-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
