@@ -442,7 +442,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.54<span class="ver-date"> · 2026-06-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.55<span class="ver-date"> · 2026-06-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5497,11 +5497,13 @@ function generujPDF() {
 
   var p2 = document.createElement('div');
   p2.className = 'a4';
-  var vymText = 'Předmětem ' + (D.druh || '').toLowerCase() + ' revize bylo VEZ výslovně uvedené v této zprávě.';
+  var vymText = isLpsPdf
+    ? 'Předmětem ' + (D.druh || '').toLowerCase() + ' revize byl systém ochrany před bleskem (LPS) výslovně uvedený v této zprávě.'
+    : 'Předmětem ' + (D.druh || '').toLowerCase() + ' revize bylo VEZ výslovně uvedené v této zprávě.';
   if (D.predmet_je) vymText += '\n\nPředmětem revize je: ' + D.predmet_je;
   if (D.predmet_neni) vymText += '\n\nPředmětem revize není: ' + D.predmet_neni;
   var zkouseniText = '\n\nProvedené zkoušky dle ČSN 33 2000-6 ed.2 čl. 6.4.3:\na) spojitost ochranných vodičů (viz 6.4.3.2)\nb) izolační odpor elektrické instalace (viz 6.4.3.3)\nc) zkoušení izolačních odporů pro potvrzení účinnosti ochrany pomocí SELV, PELV nebo elektrickým oddělením (viz 6.4.3.4)\nd) zkoušení pro potvrzení účinnosti automatického odpojení od zdroje (viz 6.4.3.7)\ne) zkoušení pro potvrzení účinnosti doplňkové ochrany (viz 6.4.3.8)\nf) zkouška pořadí fází (viz 6.4.3.9)\ng) funkční a provozní zkoušky (viz 6.4.3.10)\nh) ověření úbytků napětí (viz 6.4.3.11)';
-  vymText += zkouseniText;
+  if (!isLpsPdf) vymText += zkouseniText;
   p2.innerHTML = hdr(2) +
     '<div class="a4-content">' +
     '<div data-p2sec="1">' +
@@ -5511,9 +5513,13 @@ function generujPDF() {
     '<div data-p2sec="2">' +
     '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zařízení</div></div>' +
     '<div style="font-size:9pt;padding:0 2mm;margin-bottom:3mm">' +
-    (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '') +
-    (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '') +
-    (isLpsPdf ? '' : '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>') +
+    (isLpsPdf
+      ? ((D.lps && D.lps.trida) ? '<strong>Třída LPS:</strong> ' + esc(D.lps.trida) + '<br>' : '')
+        + ((D.lps && D.lps.jimaci) ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) + '<br>' : '')
+        + ((D.lps && D.lps.prohlidka_norma) ? '<strong>Revize provedena dle:</strong> ' + (D.lps.prohlidka_norma === '1390' ? 'ČSN 34 1390' : 'ČSN EN 62305-3 ed.2') + '<br>' : '')
+      : (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '')
+        + (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '')
+        + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>') +
     (D.preruseni_od || D.preruseni_do ? '<strong>Přerušení revize:</strong> ' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '<br>' : '') +
     (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
     (D.pritomen2 ? '<strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
