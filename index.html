@@ -442,7 +442,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.56<span class="ver-date"> · 2026-06-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.57<span class="ver-date"> · 2026-06-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1140,7 +1140,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       <div class="f"><label>IČO</label><input type="text" id="f_rt_ico" class="prefilled"></div>
     </div>
   </div>
-  <div class="scard">
+  <div class="scard" id="scard-vtez">
     <div class="scard-title">VTEZ</div>
     <div class="g2">
       <div class="f span2"><label>Třída VTEZ dle §4 NV 190/2022 Sb.</label>
@@ -1443,6 +1443,17 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <textarea id="f_lps_predmet_neni" style="min-height:60px" placeholder="Silnoproudá elektrická instalace objektu..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_lps_predmet_neni">📝 Typický text</button>
+        </div>
+      </div>
+      <div class="f span2">
+        <label>Rozsah prohlídky</label>
+        <div style="display:flex;gap:1.5rem;margin-top:.4rem">
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:400;cursor:pointer">
+            <input type="checkbox" id="lps_rozsah_vnejsi" checked> Vnější ochrana před bleskem (jímací soustava, svody, uzemnění)
+          </label>
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:400;cursor:pointer">
+            <input type="checkbox" id="lps_rozsah_vnitrni" checked> Vnitřní ochrana (pospojování, SPD)
+          </label>
         </div>
       </div>
     </div>
@@ -2212,6 +2223,8 @@ function novaZprava(typ) {
   if (sNap) sNap.style.display = (typ === 'lps') ? 'none' : '';
   var sOch = document.getElementById('scard-ochrana-char');
   if (sOch) sOch.style.display = (typ === 'lps') ? 'none' : '';
+  var sVtez = document.getElementById('scard-vtez');
+  if (sVtez) sVtez.style.display = (typ === 'lps') ? 'none' : '';
   // Tab 3. Přístroje: pro LPS skryj D.1/D.2/D.3 (prohlídka, zkoušení,
   // tabulka zkoušení jsou elektro-only, duplikuje se s tabem LPS
   // Prohlídka + Měření zemničů). Zůstává C. Měřicí přístroje.
@@ -5245,6 +5258,16 @@ function collectLpsData() {
     if (!cislo && !svorka && !rZem && !rZemnic && !rPrechod) return;
     mereniRows.push({ cislo: cislo, svorka: svorka, rZem: rZem, rZemnic: rZemnic, rPrechod: rPrechod });
   });
+  // Uložit stav checklistu prohlídky — pole polí: [sekce][položka] = string
+  var sada = getLpsProhlidkaData();
+  var prohlidkaChecks = sada.map(function(sec, si) {
+    return sec.items.map(function(item, ii) {
+      var sel = document.getElementById('lps-p-' + si + '-' + ii);
+      return sel ? sel.value : 'Odpovídá';
+    });
+  });
+  var rozsahVnejsi = document.getElementById('lps_rozsah_vnejsi');
+  var rozsahVnitrni = document.getElementById('lps_rozsah_vnitrni');
   return {
     typ_objektu: gv('lps_typ_objektu'),
     strecha_zarizeni: gv('lps_strecha_zarizeni'),
@@ -5261,7 +5284,10 @@ function collectLpsData() {
     spd: gv('lps_spd'),
     prohlidka_norma: gv('lps_prohlidka_norma') || '62305',
     celkovy_odpor: gv('lps_celkovy_odpor'),
-    mereni: mereniRows
+    mereni: mereniRows,
+    prohlidkaChecks: prohlidkaChecks,
+    rozsah_vnejsi: rozsahVnejsi ? rozsahVnejsi.checked : true,
+    rozsah_vnitrni: rozsahVnitrni ? rozsahVnitrni.checked : true
   };
 }
 
@@ -5283,6 +5309,21 @@ function restoreLpsData(lps) {
   });
   // Překreslit prohlídkový checklist podle zvolené normy
   renderLpsProhlidka();
+  // Obnovit uložené výsledky checklistu prohlídky
+  if (Array.isArray(lps.prohlidkaChecks)) {
+    lps.prohlidkaChecks.forEach(function(secArr, si) {
+      if (!Array.isArray(secArr)) return;
+      secArr.forEach(function(val, ii) {
+        var sel = document.getElementById('lps-p-' + si + '-' + ii);
+        if (sel && val) sel.value = val;
+      });
+    });
+  }
+  // Rozsah prohlídky
+  var rv = document.getElementById('lps_rozsah_vnejsi');
+  if (rv) rv.checked = (lps.rozsah_vnejsi !== false);
+  var rn = document.getElementById('lps_rozsah_vnitrni');
+  if (rn) rn.checked = (lps.rozsah_vnitrni !== false);
   // LPZ checkboxy — podle textu
   if (lps.lpz) {
     var want = lps.lpz.split(',').map(function(s) { return s.trim(); });
@@ -5587,31 +5628,34 @@ function generujPDF() {
           var head = is1390
             ? 'Prohlídky LPS (dle ČSN 34 1390)'
             : 'Prohlídky LPS (dle ČSN EN 62305-3 ed.2)';
-          var body62305 = '<strong>Prohlídka systému ochrany před bleskem</strong> — vizuální kontrolou bylo ověřeno zejména:<br>' +
-            'a) celistvost a stav jímací soustavy (jímací tyče, vedení) — bez známek poškození a koroze,<br>' +
-            'b) rozmístění jímačů odpovídá projektové dokumentaci a třídě LPS,<br>' +
-            'c) celistvost a uchycení svodů, vč. neporušenosti svorek,<br>' +
-            'd) stav a přístupnost zkušebních (měřicích) svorek na svodech,<br>' +
-            'e) celistvost a stav uzemňovací soustavy v dostupných místech,<br>' +
-            'f) ekvipotenciální pospojování — propojení všech kovových částí vstupujících do objektu (vodovod, plyn, technologie),<br>' +
-            'g) instalace a stav přepěťových ochran (SPD) na vstupu inženýrských sítí,<br>' +
-            'h) dodržení izolačních (bezpečných) vzdáleností „s" mezi LPS a vodivými částmi uvnitř objektu,<br>' +
-            'i) ochrana svodů proti mechanickému poškození v dosahu osob,<br>' +
-            'j) označení a dokumentace systému LPS.';
-          var body1390 = '<strong>Prohlídka systému ochrany před bleskem</strong> — vizuální kontrolou a měřením bylo ověřeno zejména:<br>' +
-            'a) provedení jímacího zařízení (hřebenové vedení, jímací tyče, náhodné jímače) a vzdálenosti od hořlavých částí budovy,<br>' +
-            'b) počet a rozmístění svodů (min. 2, rovnoměrně po obvodu objektu),<br>' +
-            'c) stav a přístupnost zkušebních svorek (cca 1,5 m nad zemí, označené),<br>' +
-            'd) mechanická ochrana svodů v dosahu osob (do 1,8 m),<br>' +
-            'e) celistvost spojů jímacího zařízení, svodů a zemničů; přechodové odpory ≤ 0,2 Ω,<br>' +
-            'f) stav koroze jímačů, svodů a svorek,<br>' +
-            'g) uzemnění jednotlivých svodů (doporučeno ≤ 15 Ω) a celkový zemní odpor soustavy,<br>' +
-            'h) pospojování kovových částí vstupujících do objektu,<br>' +
-            'i) materiál a hloubka uložení zemničů,<br>' +
-            'j) dokumentace LPS a zápisy z předchozích revizí.';
+          var sada = is1390 ? LPS_PROHLIDKA_1390 : LPS_PROHLIDKA_62305;
+          var checks = (D.lps && Array.isArray(D.lps.prohlidkaChecks)) ? D.lps.prohlidkaChecks : null;
+          // Rozsah prohlídky
+          var rozsahVnejsi = D.lps ? D.lps.rozsah_vnejsi !== false : true;
+          var rozsahVnitrni = D.lps ? D.lps.rozsah_vnitrni !== false : true;
+          var rozsahParts = [];
+          if (rozsahVnejsi) rozsahParts.push('vnější ochrana před bleskem (jímací soustava, svody, uzemnění)');
+          if (rozsahVnitrni) rozsahParts.push('vnitřní ochrana (pospojování, SPD)');
+          var rozsahStr = rozsahParts.length ? rozsahParts.join('; ') : '—';
+          // Sestavit tabulku checklistu
+          var tableRows = '';
+          sada.forEach(function(sec, si) {
+            tableRows += '<tr><td colspan="3" style="border:1px solid #ccc;padding:1.5mm 2mm;background:#1F497D;color:#fff;font-weight:600;font-size:8pt">' + esc(sec.s) + '</td></tr>';
+            sec.items.forEach(function(item, ii) {
+              var val = checks ? (checks[si] && checks[si][ii] ? checks[si][ii] : 'Odpovídá') : 'Odpovídá';
+              var color = val === 'Odpovídá' ? '#1a7a3a' : val === 'Neodpovídá' ? '#b5291c' : '#888';
+              var bg = val === 'Odpovídá' ? '#f0faf3' : val === 'Neodpovídá' ? '#fdf2f0' : '#f9f9f9';
+              tableRows += '<tr style="background:' + bg + '">' +
+                '<td style="border:1px solid #ccc;padding:1mm 2mm;font-size:7.5pt;width:55%">' + esc(item.t) + '</td>' +
+                '<td style="border:1px solid #ccc;padding:1mm 2mm;font-size:7pt;color:#666;width:30%">' + esc(item.csn) + '</td>' +
+                '<td style="border:1px solid #ccc;padding:1mm 2mm;font-size:7.5pt;font-weight:600;color:' + color + ';width:15%;text-align:center">' + esc(val) + '</td>' +
+                '</tr>';
+            });
+          });
           return '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">' + (4 + docOffset) + '.</div><div class="sec-name">' + head + '</div></div>' +
+            '<div style="font-size:8.5pt;padding:0 2mm 1mm;color:#444"><strong>Rozsah prohlídky:</strong> ' + esc(rozsahStr) + '</div>' +
             (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
-            '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' + (is1390 ? body1390 : body62305) + '</div>';
+            '<table style="width:calc(100% - 4mm);margin:1mm 2mm 2mm;border-collapse:collapse">' + tableRows + '</table>';
         })()
       : '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">' + (4 + docOffset) + '.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
         (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
