@@ -441,7 +441,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.52<span class="ver-date"> · 2026-06-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.53<span class="ver-date"> · 2026-06-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -531,6 +531,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">⚙️ Vlastní normy a předpisy</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V panelu „Použité normy a předpisy" přibyl nástroj pro správu vlastního seznamu. Když vyjde nová norma, přidáte ji sami — bez čekání na aktualizaci programu.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Klikněte na <strong>⚙️ Upravit seznam</strong> v záhlaví panelu norem</li>
+        <li>Vyberte záložku <strong>Elektro</strong> nebo <strong>LPS / Hromosvod</strong></li>
+        <li>Klikněte <strong>➕ Přidat normu</strong> — vyplňte název (např. ČSN EN 50549-1 ed.2) a rok platnosti</li>
+        <li>Uložte — norma se ihned objeví v seznamu checkboxů pro nové i stávající zprávy</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Vlastní normy jsou součástí zálohy databáze (.json) — při přenosu na jiné zařízení se obnoví spolu s archiváří a ostatními daty.</div>
+    </div>
   </div>
 
   <div class="scard">
@@ -1064,7 +1079,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
   <div class="normy-panel">
-    <div class="normy-title">📋 Použité normy a předpisy — zaklikněte použité <button class="btn btn-ghost" style="font-size:.7rem;padding:.15rem .45rem;margin-left:.5rem;vertical-align:middle" data-action="otevritNormyEditor">⚙️ Upravit seznam</button></div>
+    <div class="normy-title">📋 Použité normy a předpisy — zaklikněte použité <button style="font-size:.65rem;padding:.15rem .5rem;margin-left:.6rem;vertical-align:middle;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:2px;cursor:pointer;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase" data-action="otevritNormyEditor">⚙️ Upravit seznam</button></div>
     <div id="normy-obsah"></div>
   </div>
   <div class="scard">
