@@ -441,7 +441,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.51<span class="ver-date"> · 2026-06-05</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.52<span class="ver-date"> · 2026-06-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1064,7 +1064,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
   <div class="normy-panel">
-    <div class="normy-title">📋 Použité normy a předpisy — zaklikněte použité</div>
+    <div class="normy-title">📋 Použité normy a předpisy — zaklikněte použité <button class="btn btn-ghost" style="font-size:.7rem;padding:.15rem .45rem;margin-left:.5rem;vertical-align:middle" data-action="otevritNormyEditor">⚙️ Upravit seznam</button></div>
     <div id="normy-obsah"></div>
   </div>
   <div class="scard">
@@ -1603,6 +1603,23 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div id="typy-textu-list" style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritTypickeTexty">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-normy-editor">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-title">⚙️ Vlastní normy a předpisy</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem">Přidejte normy, které v seznamu chybí. Vestavěné normy nelze mazat.</div>
+    <div style="display:flex;gap:.4rem;margin-bottom:.75rem">
+      <button class="btn" id="normy-tab-elektro" data-action="normyTab" data-typ="elektro">Elektro</button>
+      <button class="btn btn-ghost" id="normy-tab-lps" data-action="normyTab" data-typ="lps">LPS / Hromosvod</button>
+    </div>
+    <div id="normy-editor-list" style="max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="normyEditorPridat">➕ Přidat normu</button>
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritNormyEditor">Zavřít</button>
+      <button class="btn btn-gold" data-action="ulozitVlastniNormy">💾 Uložit</button>
     </div>
   </div>
 </div>
@@ -2444,6 +2461,20 @@ function renderNormy(typ) {
     });
     html += '</div>';
   });
+  // Vlastní normy ze STORE
+  var vlastni = (STORE.vlastniNormy && STORE.vlastniNormy[typ]) || [];
+  if (vlastni.length > 0) {
+    html += '<div style="margin-bottom:1rem">';
+    html += '<div style="font-family:monospace;font-size:.6rem;text-transform:uppercase;color:#6e6a60;margin-bottom:.4rem">Vlastní normy</div>';
+    vlastni.forEach(function(n) {
+      var odHtml = n.od ? ' <span style="color:#9a9488;font-size:.72rem;font-style:italic">(' + n.od + ')</span>' : '';
+      html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
+      html += '<input type="checkbox" id="n-' + n.id + '">';
+      html += '<label for="n-' + n.id + '" style="font-size:.82rem;cursor:pointer">' + n.t + odHtml + '</label>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
   c.innerHTML = html;
   // Napojit listener na 1390 checkbox (u LPS) hned při renderu —
   // uživatel ho může kliknout ještě před otevřením Prohlídky LPS.
@@ -2463,7 +2494,91 @@ function getVybrane() {
       if (el && el.checked) vyb.push(n.t);
     });
   });
+  var vlastni = (STORE.vlastniNormy && STORE.vlastniNormy[aktTyp]) || [];
+  vlastni.forEach(function(n) {
+    var el = document.getElementById('n-' + n.id);
+    if (el && el.checked) vyb.push(n.t);
+  });
   return vyb.join(', ');
+}
+
+var __normyEditorTyp = 'elektro';
+
+function otevritNormyEditor() {
+  __normyEditorTyp = aktTyp || 'elektro';
+  renderNormyEditor();
+  document.getElementById('modal-normy-editor').classList.add('open');
+}
+
+function zavritNormyEditor() {
+  document.getElementById('modal-normy-editor').classList.remove('open');
+}
+
+function renderNormyEditor() {
+  var typ = __normyEditorTyp;
+  if (!STORE.vlastniNormy) STORE.vlastniNormy = {};
+  var vlastni = STORE.vlastniNormy[typ] || [];
+  document.getElementById('normy-tab-elektro').className = 'btn' + (typ === 'elektro' ? ' btn-gold' : ' btn-ghost');
+  document.getElementById('normy-tab-lps').className = 'btn' + (typ === 'lps' ? ' btn-gold' : ' btn-ghost');
+  var html = '';
+  // Vestavěné — jen přehled
+  html += '<div style="font-family:monospace;font-size:.6rem;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Vestavěné normy (nelze mazat)</div>';
+  var builtIn = NORMY[typ] || [];
+  builtIn.forEach(function(sk) {
+    sk.items.forEach(function(n) {
+      html += '<div style="font-size:.78rem;color:var(--muted);padding:.2rem .4rem;border-bottom:1px solid var(--border)">' + n.t + (n.od ? ' <em>(' + n.od + ')</em>' : '') + '</div>';
+    });
+  });
+  // Vlastní
+  html += '<div style="font-family:monospace;font-size:.6rem;text-transform:uppercase;color:var(--accent2);margin:.9rem 0 .4rem">Vlastní normy</div>';
+  if (vlastni.length === 0) {
+    html += '<div style="font-size:.8rem;color:var(--muted);font-style:italic;padding:.3rem .4rem">Žádné vlastní normy. Klikněte ➕ Přidat normu.</div>';
+  }
+  vlastni.forEach(function(n, idx) {
+    html += '<div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.35rem">' +
+      '<input type="text" class="normy-editor-t" data-idx="' + idx + '" value="' + esc(n.t) + '" placeholder="Název normy, např. ČSN EN 50549-1 ed.2" style="flex:1;font-size:.8rem;padding:.3rem .5rem;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text)">' +
+      '<input type="text" class="normy-editor-od" data-idx="' + idx + '" value="' + esc(n.od || '') + '" placeholder="od 2024" style="width:82px;font-size:.8rem;padding:.3rem .5rem;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text)">' +
+      '<button class="btn btn-ghost" style="padding:.2rem .45rem;font-size:.8rem" data-action="smazatVlastniNormu" data-idx="' + idx + '" title="Smazat">🗑️</button>' +
+      '</div>';
+  });
+  document.getElementById('normy-editor-list').innerHTML = html;
+}
+
+function normyEditorPridat() {
+  var typ = __normyEditorTyp;
+  if (!STORE.vlastniNormy) STORE.vlastniNormy = {};
+  if (!STORE.vlastniNormy[typ]) STORE.vlastniNormy[typ] = [];
+  STORE.vlastniNormy[typ].push({ id: 'custom_' + Date.now(), t: '', od: '' });
+  renderNormyEditor();
+  var inputs = document.querySelectorAll('.normy-editor-t');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function smazatVlastniNormu(idx) {
+  var typ = __normyEditorTyp;
+  if (STORE.vlastniNormy && STORE.vlastniNormy[typ]) {
+    STORE.vlastniNormy[typ].splice(idx, 1);
+    renderNormyEditor();
+  }
+}
+
+function ulozitVlastniNormy() {
+  var typ = __normyEditorTyp;
+  if (!STORE.vlastniNormy) STORE.vlastniNormy = {};
+  var tInputs = Array.prototype.slice.call(document.querySelectorAll('.normy-editor-t'));
+  var odInputs = Array.prototype.slice.call(document.querySelectorAll('.normy-editor-od'));
+  var result = [];
+  tInputs.forEach(function(inp, i) {
+    var t = inp.value.trim();
+    var od = odInputs[i] ? odInputs[i].value.trim() : '';
+    var idx = +inp.dataset.idx;
+    var existId = (STORE.vlastniNormy[typ] && STORE.vlastniNormy[typ][idx]) ? STORE.vlastniNormy[typ][idx].id : ('custom_' + Date.now() + '_' + i);
+    if (t) result.push({ id: existId, t: t, od: od });
+  });
+  STORE.vlastniNormy[typ] = result;
+  saveStore();
+  zavritNormyEditor();
+  renderNormy(aktTyp);
 }
 
 function renderPristrojePreset() {
@@ -6681,7 +6796,8 @@ function exportDatabaze() {
     pristroje: STORE.pristroje || [],
     archiv: STORE.archiv || [],
     odberatele: STORE.odberatele || [],
-    snippety: STORE.snippety || []
+    snippety: STORE.snippety || [],
+    vlastniNormy: STORE.vlastniNormy || {}
   };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   var d = new Date().toISOString().slice(0, 10);
@@ -6774,11 +6890,14 @@ function importDatabaze() {
         if (data._format !== 'revize-el-backup') {
           if (!confirm('Soubor nevypadá jako záloha Revize EL. Pokračovat?')) return;
         }
+        var vlastniNormy = data.vlastniNormy || {};
+        var vlastniNormyPocet = Object.values(vlastniNormy).reduce(function(s, a) { return s + (a ? a.length : 0); }, 0);
         var msg = 'Obnovit ze zálohy?\n\n' +
           '• Odběratelé: ' + ((data.odberatele || []).length) + '\n' +
           '• Zprávy v archivu: ' + ((data.archiv || []).length) + '\n' +
           '• Přístroje: ' + ((data.pristroje || []).length) + '\n' +
           '• Vlastní texty: ' + ((data.snippety || []).length) + '\n' +
+          (vlastniNormyPocet ? '• Vlastní normy: ' + vlastniNormyPocet + '\n' : '') +
           '• Profil technika: ' + (data.technik && data.technik.jmeno ? 'ano' : 'ne') + '\n\n' +
           'Tyto údaje nahradí aktuální data v prohlížeči.';
         if (!confirm(msg)) return;
@@ -6787,6 +6906,7 @@ function importDatabaze() {
         STORE.archiv = data.archiv || [];
         STORE.odberatele = data.odberatele || [];
         STORE.snippety = data.snippety || [];
+        if (data.vlastniNormy) STORE.vlastniNormy = data.vlastniNormy;
         archiv = STORE.archiv;
         odberatele = STORE.odberatele;
         saveStore();
@@ -7232,6 +7352,12 @@ document.addEventListener('click', function(e) {
     case 'ulozitPristroje': ulozitPristroje(); break;
     case 'addPristrojPreset': addPristrojPreset(); break;
     case 'openModalRevize': openModalRevize(); break;
+    case 'otevritNormyEditor': otevritNormyEditor(); break;
+    case 'zavritNormyEditor': zavritNormyEditor(); break;
+    case 'normyTab': __normyEditorTyp = el.dataset.typ; renderNormyEditor(); break;
+    case 'normyEditorPridat': normyEditorPridat(); break;
+    case 'smazatVlastniNormu': smazatVlastniNormu(+el.dataset.idx); break;
+    case 'ulozitVlastniNormy': ulozitVlastniNormy(); break;
     case 'typickyText': otevritTypickeTexty(el.dataset.field); break;
     case 'vlozitTypickyTextReplace': vlozitTypickyText(+el.dataset.idx, 'replace'); break;
     case 'vlozitTypickyTextAppend': vlozitTypickyText(+el.dataset.idx, 'append'); break;
