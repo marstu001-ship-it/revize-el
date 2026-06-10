@@ -442,7 +442,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.55<span class="ver-date"> · 2026-06-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.56<span class="ver-date"> · 2026-06-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1427,6 +1427,27 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <!-- TAB LPS OBJEKT -->
 <div class="tab-panel" id="tab-lps-objekt">
   <div class="scard">
+    <div class="scard-title">Předmět revize LPS</div>
+    <div class="g1">
+      <div class="f span2">
+        <label>Předmětem této revize je</label>
+        <textarea id="f_lps_predmet_je" style="min-height:80px" placeholder="Systém ochrany před bleskem (LPS) na objektu..."></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_lps_predmet_je">📝 Typický text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_lps_predmet_je">💾 Uložit text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_lps_predmet_je">📋 Z knihovny</button>
+        </div>
+      </div>
+      <div class="f span2">
+        <label>Předmětem této revize není</label>
+        <textarea id="f_lps_predmet_neni" style="min-height:60px" placeholder="Silnoproudá elektrická instalace objektu..."></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_lps_predmet_neni">📝 Typický text</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scard">
     <div class="scard-title">Základní údaje o objektu</div>
     <div class="g2">
       <div class="f"><label>Typ objektu</label>
@@ -2105,25 +2126,27 @@ function novaZprava(typ) {
   if (evCislo) evCislo.value = 'RE-' + rok + '-0001';
   renderNapetoveCheckboxy(aktPodtyp);
   renderOchranaCheckboxy();
-  // Předmět revize dle podtypu
-  var f_predmet = document.getElementById('f_predmet_je');
-  if (f_predmet && !f_predmet.value) {
-    var predmety = {
-      dum: 'Elektrické zařízení rodinného domu, hlavní přívod z pojistkové skříně, elektroměrový rozváděč, vývod z elektroměrového rozváděče — přívod pro rozváděč RD, který je nainstalován v technické místnosti rodinného domu. Dále vývody z rozváděče RD, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
-      byt: 'Elektrické zařízení bytové jednotky, rozváděč RB v bytové jednotce, vývody z rozváděče RB, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
-      prumysl: 'Elektrické zařízení provozovny, hlavní přívody pro rozváděč RH (vlastní trafostanice). Vývody z rozváděče RH, přívody pro strojní a technologické zařízení, napájení el. zařízení zásuvkové a světelné obvody v rozsahu dle popisu revidovaného zařízení.'
-    };
-    f_predmet.value = predmety[aktPodtyp] || predmety.dum;
-  }
-  // Předmět revize NENÍ dle podtypu
-  var f_neni = document.getElementById('f_predmet_neni');
-  if (f_neni && !f_neni.value) {
-    var neníTexty = {
-      dum: '',
-      byt: 'Elektroměrový rozváděč, hlavní přívod — část společné prostory bytového domu.',
-      prumysl: ''
-    };
-    f_neni.value = neníTexty[aktPodtyp] || '';
+  // Předmět revize dle podtypu — jen pro elektro; LPS má vlastní pole f_lps_predmet_je
+  if (typ !== 'lps') {
+    var f_predmet = document.getElementById('f_predmet_je');
+    if (f_predmet && !f_predmet.value) {
+      var predmety = {
+        dum: 'Elektrické zařízení rodinného domu, hlavní přívod z pojistkové skříně, elektroměrový rozváděč, vývod z elektroměrového rozváděče — přívod pro rozváděč RD, který je nainstalován v technické místnosti rodinného domu. Dále vývody z rozváděče RD, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
+        byt: 'Elektrické zařízení bytové jednotky, rozváděč RB v bytové jednotce, vývody z rozváděče RB, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
+        prumysl: 'Elektrické zařízení provozovny, hlavní přívody pro rozváděč RH (vlastní trafostanice). Vývody z rozváděče RH, přívody pro strojní a technologické zařízení, napájení el. zařízení zásuvkové a světelné obvody v rozsahu dle popisu revidovaného zařízení.'
+      };
+      f_predmet.value = predmety[aktPodtyp] || predmety.dum;
+    }
+    // Předmět revize NENÍ dle podtypu
+    var f_neni = document.getElementById('f_predmet_neni');
+    if (f_neni && !f_neni.value) {
+      var neníTexty = {
+        dum: '',
+        byt: 'Elektroměrový rozváděč, hlavní přívod — část společné prostory bytového domu.',
+        prumysl: ''
+      };
+      f_neni.value = neníTexty[aktPodtyp] || '';
+    }
   }
   // Zdroj el. proudu — jen placeholder (hint), ne hodnota. Hodnota by
   // blokovala datalist dropdown; uživatel klikne a rovnou vybere.
@@ -3963,10 +3986,13 @@ var TYPY_TEXTU_FILTRY = {
 
 var __typTextTargetId = '';
 
+var __lpsFieldMap = { f_lps_predmet_je: 'f_predmet_je', f_lps_predmet_neni: 'f_predmet_neni' };
+
 function otevritTypickeTexty(fieldId) {
   __typTextTargetId = fieldId;
-  var texty = TYPY_TEXTU[fieldId] || [];
-  var filtry = TYPY_TEXTU_FILTRY[fieldId] || [];
+  var lookupKey = __lpsFieldMap[fieldId] || fieldId;
+  var texty = TYPY_TEXTU[lookupKey] || [];
+  var filtry = TYPY_TEXTU_FILTRY[lookupKey] || [];
   var currentKey = aktTyp === 'lps' ? 'lps' : (aktPodtyp || 'dum');
   var list = document.getElementById('typy-textu-list');
   list.innerHTML = '';
@@ -3991,7 +4017,8 @@ function zavritTypickeTexty() {
 }
 
 function vlozitTypickyText(idx, mode) {
-  var texty = TYPY_TEXTU[__typTextTargetId] || [];
+  var lookupKey = __lpsFieldMap[__typTextTargetId] || __typTextTargetId;
+  var texty = TYPY_TEXTU[lookupKey] || [];
   var t = texty[idx];
   if (!t) return;
   var el = document.getElementById(__typTextTargetId);
@@ -5134,7 +5161,9 @@ function getData() {
     predchozi: gv('f_predchozi'),
     prebira: gv('f_prebira'), vyhotoveni: gv('f_vyhotoveni'), rozdelovnik: gv('f_rozdelovnik'),
     prilohy: gv('f_prilohy'),
-    predmet_je: gv('f_predmet_je'), predmet_neni: gv('f_predmet_neni'), popis: gv('f_popis'),
+    predmet_je: aktTyp === 'lps' ? gv('f_lps_predmet_je') : gv('f_predmet_je'),
+    predmet_neni: aktTyp === 'lps' ? gv('f_lps_predmet_neni') : gv('f_predmet_neni'),
+    popis: gv('f_popis'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
     prohlídka: gv('f_prohlídka'), zkouseni: gv('f_zkouseni'),
     zkousky: {
@@ -6381,7 +6410,9 @@ function nacistData(D) {
     'f_predano_misto': D.predano_misto, 'f_predano_datum': D.predano_datum,
     'f_prilohy': D.prilohy,
     'f_prebira': D.prebira, 'f_vyhotoveni': D.vyhotoveni, 'f_rozdelovnik': D.rozdelovnik,
-    'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni, 'f_popis': D.popis,
+    'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni,
+    'f_lps_predmet_je': D.predmet_je, 'f_lps_predmet_neni': D.predmet_neni,
+    'f_popis': D.popis,
     'f_zemnič': D.zemnič, 'f_zemni_odpor': D.zemni_odpor,
     'f_prohlídka': D.prohlídka, 'f_zkouseni': D.zkouseni,
     'f_zhodnoceni': D.zhodnoceni, 'f_celkovy_vysledek': D.celkovy_vysledek, 'f_lhuta': D.lhuta,
