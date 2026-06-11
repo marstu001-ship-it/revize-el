@@ -175,6 +175,9 @@ html.view-mobile .home-wrap{padding:0 .75rem}
 /* ═══ CARDS ═══ */
 .scard{background:var(--surface);border:1px solid var(--border);
   border-left:4px solid var(--accent2);padding:1.5rem 1.75rem;margin-bottom:1.2rem}
+.scard-rv{border-left-width:6px;margin-top:2.5rem}
+.scard-rv:first-child{margin-top:0}
+.scard-rv>.scard-title{background:rgba(43,87,154,.07);margin:-1.5rem -1.75rem 1.2rem -1.75rem;padding:1rem 1.75rem .6rem;border-bottom:2px solid var(--accent2)}
 /* AI features hidden — remove next line to re-enable */
 .ai-feature{display:none!important}
 /* Drag-and-drop řádků tabulky měření */
@@ -442,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.59<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.60<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2941,7 +2944,7 @@ function addRozvadec() {
   var container = document.getElementById('rozvadece-container');
   if (!container) return;
   var div = document.createElement('div');
-  div.className = 'scard';
+  div.className = 'scard scard-rv';
   div.dataset.rozvadecId = 'rozv-' + n;
   var phNazev = { dum: 'RD — plastový, zapuštěný, IP30', byt: 'RB — plastový, zapuštěný, IP30', prumysl: 'RH — skříňový OCEP, 1600A, IP40/00' };
   var phUmist = { dum: 'Technická místnost rodinného domu', byt: 'Vstupní chodba bytové jednotky', prumysl: 'Rozvodna VN/NN, trafostanice' };
