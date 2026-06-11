@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.67<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.68<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6418,7 +6418,6 @@ function tiskZpravuPrimo() {
   var portraitPages  = allPages.filter(function(p) { return !p.classList.contains('a4-landscape'); });
   var landscapePages = allPages.filter(function(p) { return  p.classList.contains('a4-landscape'); });
 
-  // CSS sdílené oběma okny
   var sharedCss =
     '* { box-sizing: border-box; margin: 0; padding: 0; }' +
     'body { background: white; }' +
@@ -6452,36 +6451,54 @@ function tiskZpravuPrimo() {
     '.pocet-grid { display: grid; grid-template-columns: auto 1fr; gap: .4mm 3mm; font-size: 8.5pt; }' +
     '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
 
-  function buildTiskOkno(pagesArr, orientation, title) {
-    var isLand = orientation === 'landscape';
-    var a4w = isLand ? '297mm' : '210mm';
-    var a4h = isLand ? '210mm' : '297mm';
-    var a4pad = isLand ? '10mm 12mm 8mm 12mm' : '12mm 14mm 10mm 14mm';
-    var html = pagesArr.map(function(p) { return p.outerHTML; }).join('');
-    // Okno musí být otevřeno synchronně (user gesture), jen print se odkládá
-    var w = window.open('', '_blank');
-    if (!w) { alert('Prosím povolte vyskakovací okna pro tisk.'); return null; }
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
-    w.document.write('<title>' + title + '</title>');
-    w.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">');
-    w.document.write('<style>');
-    w.document.write('@page { size: A4 ' + orientation + '; margin: 0; }');
-    w.document.write('.a4 { width: ' + a4w + '; height: ' + a4h + '; overflow: hidden; background: #fff; padding: ' + a4pad + '; display: flex; flex-direction: column; font-family: "Courier Prime","Courier New",Courier,monospace; font-size: 10pt; color: #000; position: relative; box-shadow: none; }');
-    w.document.write('.a4:not(:last-child) { break-after: page; page-break-after: always; }');
-    w.document.write(sharedCss);
-    w.document.write('</style></head><body>');
-    w.document.write(html);
-    w.document.write('</body></html>');
-    w.document.close();
-    return w;
+  var fontLink = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">';
+
+  // Chrome dovoluje jen JEDEN popup per user gesture.
+  // Landscape okno se proto otevírá kliknutím na tlačítko v portrait okně.
+  // Landscape HTML se přednačte do Blob URL — klik tlačítka Blob URL otevře
+  // (user gesture z portrait okna = popup blocker to povolí).
+  var lBlobUrl = null;
+  if (landscapePages.length) {
+    var lCss = '@page{size:A4 landscape;margin:0}' +
+      '.a4{width:297mm;height:210mm;overflow:hidden;background:#fff;padding:10mm 12mm 8mm 12mm;display:flex;flex-direction:column;font-family:"Courier Prime","Courier New",Courier,monospace;font-size:10pt;color:#000;position:relative;box-shadow:none}' +
+      '.a4:not(:last-child){break-after:page;page-break-after:always}' +
+      sharedCss;
+    var lHtml = landscapePages.map(function(p) { return p.outerHTML; }).join('');
+    var lFull = '<!DOCTYPE html><html><head><meta charset="UTF-8">' + fontLink +
+      '<style>' + lCss + '</style></head><body>' + lHtml + '</body></html>';
+    lBlobUrl = URL.createObjectURL(new Blob([lFull], { type: 'text/html' }));
   }
 
-  // Obě okna otevřít synchronně (user gesture) — setTimeout blokuje popup blocker
-  var w1 = portraitPages.length  ? buildTiskOkno(portraitPages,  'portrait',  'Revizní zpráva')   : null;
-  var w2 = landscapePages.length ? buildTiskOkno(landscapePages, 'landscape', 'Měření — tabulka') : null;
-  // Tisk spustit až po načtení fontů (malý timeout)
-  if (w1) setTimeout(function() { w1.print(); }, 800);
-  if (w2) setTimeout(function() { w2.print(); }, 1200);
+  // Otevři portrait okno (user gesture — povoleno)
+  var w = window.open('', '_blank');
+  if (!w) { alert('Prosím povolte vyskakovací okna pro tisk.'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  w.document.write('<title>Revizní zpráva</title>');
+  w.document.write(fontLink);
+  w.document.write('<style>@page{size:A4 portrait;margin:0}');
+  w.document.write('.a4{width:210mm;height:297mm;overflow:hidden;background:#fff;padding:12mm 14mm 10mm 14mm;display:flex;flex-direction:column;font-family:"Courier Prime","Courier New",Courier,monospace;font-size:10pt;color:#000;position:relative;box-shadow:none}');
+  w.document.write('.a4:not(:last-child){break-after:page;page-break-after:always}');
+  w.document.write(sharedCss);
+  if (lBlobUrl) {
+    w.document.write('#__lb{position:fixed;bottom:0;left:0;right:0;background:#1e2d3d;color:#fff;' +
+      'padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:14px;' +
+      'font-family:sans-serif;font-size:13px;z-index:9999}@media print{#__lb{display:none}}');
+  }
+  w.document.write('</style></head><body>');
+  w.document.write(portraitPages.map(function(p) { return p.outerHTML; }).join(''));
+  if (lBlobUrl) {
+    // Lišta viditelná na obrazovce, skrytá při tisku
+    w.document.write('<div id="__lb">');
+    w.document.write('<span>Krok 2 — tisk tabulky měření na šířku:</span>');
+    w.document.write('<button onclick="var w2=window.open(\'' + lBlobUrl + '\');' +
+      'w2&&setTimeout(function(){w2.print()},1000)" ' +
+      'style="background:#c8962a;color:#fff;border:none;padding:7px 20px;cursor:pointer;' +
+      'font-size:13px;font-weight:bold;border-radius:3px">📐 Tisk měření (A4 šířka)</button>');
+    w.document.write('</div>');
+  }
+  w.document.write('</body></html>');
+  w.document.close();
+  setTimeout(function() { w.print(); }, 800);
 }
 
 // ═══ AUTO-SAVE ═══
