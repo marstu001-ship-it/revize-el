@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.63<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.64<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6408,20 +6408,58 @@ function tiskMereni() {
 }
 
 function tiskZpravuPrimo() {
-  // Přidá dočasný override: .a4 dostane height:297mm + overflow:hidden,
-  // takže každá stránka přesně odpovídá A4 a nepřetéká na další.
-  var st = document.createElement('style');
-  st.id = 'print-fix-override';
-  st.textContent = '@media print{' +
-    '.a4{height:297mm!important;min-height:unset!important;overflow:hidden!important;box-shadow:none!important;}' +
-    '.pdf-pages{padding:0!important;gap:0!important;}' +
-    '}';
-  document.head.appendChild(st);
-  window.print();
-  setTimeout(function() {
-    var s = document.getElementById('print-fix-override');
-    if (s) s.remove();
-  }, 2000);
+  var pages = document.getElementById('pdf-pages');
+  if (!pages || !pages.children.length) {
+    generujPDF();
+    setTimeout(tiskZpravuPrimo, 900);
+    return;
+  }
+  var win = window.open('', '_blank');
+  if (!win) { alert('Prosím povolte vyskakovací okna pro tisk.'); return; }
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  win.document.write('<title>Revizní zpráva</title>');
+  win.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">');
+  win.document.write('<style>');
+  win.document.write('* { box-sizing: border-box; margin: 0; padding: 0; }');
+  win.document.write('body { background: white; }');
+  win.document.write('@page portrait { size: A4 portrait; margin: 0; }');
+  win.document.write('@page landscape { size: A4 landscape; margin: 0; }');
+  win.document.write('.a4 { width: 210mm; min-height: 297mm; background: #fff; padding: 12mm 14mm 10mm 14mm; display: flex; flex-direction: column; font-family: "Courier Prime","Courier New",Courier,monospace; font-size: 10pt; color: #000; position: relative; page: portrait; break-after: page; box-shadow: none; }');
+  win.document.write('.a4.a4-landscape { width: 297mm; min-height: 210mm; page: landscape; }');
+  win.document.write('.a4-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4mm; border-bottom: .5pt solid #000; padding-bottom: 2mm; }');
+  win.document.write('.a4-hbox { border: 1pt solid #000; padding: 1mm 3mm; font-size: 9pt; min-width: 28mm; text-align: center; font-weight: bold; }');
+  win.document.write('.a4-footer { margin-top: auto; padding-top: 2mm; border-top: .5pt solid #000; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }');
+  win.document.write('.a4-content { flex: 1; }');
+  win.document.write('.r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; margin-bottom: 2.5mm; }');
+  win.document.write('.r3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.5mm; margin-bottom: 2.5mm; }');
+  win.document.write('.pbox { border: .75pt solid #000; padding: 1.5mm 2mm; min-height: 8mm; font-size: 9.5pt; line-height: 1.45; }');
+  win.document.write('.pbox-label { font-size: 7.5pt; font-weight: bold; margin-bottom: .75mm; display: block; }');
+  win.document.write('.dtgrid { display: grid; grid-template-columns: auto 1fr; gap: .4mm 3mm; font-size: 9pt; align-items: baseline; }');
+  win.document.write('.dtlabel { font-size: 7.5pt; white-space: nowrap; }');
+  win.document.write('.dtval { border-bottom: .5pt solid #888; min-width: 18mm; }');
+  win.document.write('.ptitle { text-align: center; margin: 4mm 0 3mm; }');
+  win.document.write('.ptitle h1 { font-size: 15pt; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; line-height: 1.2; }');
+  win.document.write('.ptitle p { font-size: 8.5pt; margin-top: 1.5mm; }');
+  win.document.write('.sec-head { display: flex; align-items: stretch; border: .75pt solid #000; margin-bottom: 3mm; }');
+  win.document.write('.sec-num { background: #000; color: #fff; padding: 1mm 3mm; font-weight: 700; font-size: 9.5pt; display: flex; align-items: center; justify-content: center; min-width: 8mm; }');
+  win.document.write('.sec-name { padding: 1.5mm 3mm; font-weight: 700; font-size: 9.5pt; text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; }');
+  win.document.write('.podp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 5mm; }');
+  win.document.write('.podp-inner { border: .75pt solid #000; min-height: 22mm; padding: 1mm; display: flex; align-items: flex-end; justify-content: center; }');
+  win.document.write('.podp-line { border-top: .75pt solid #000; margin: 0 8mm 1mm; text-align: center; }');
+  win.document.write('.podp-lbl { font-size: 7.5pt; text-align: center; }');
+  win.document.write('.pdf-meas { width: 100%; border-collapse: collapse; font-size: 7pt; }');
+  win.document.write('.pdf-meas th { border: .75pt solid #000; padding: .6mm .8mm; text-align: center; font-weight: bold; background: #e8e8e8; font-size: 6pt; white-space: nowrap; }');
+  win.document.write('.pdf-meas td { border: .75pt solid #000; padding: .6mm .8mm; font-size: 7pt; }');
+  win.document.write('.pdf-pristroje { width: 100%; border-collapse: collapse; font-size: 8.5pt; }');
+  win.document.write('.pdf-pristroje th { border-bottom: .75pt solid #000; padding: .5mm 1mm; font-size: 7.5pt; font-weight: bold; text-align: left; }');
+  win.document.write('.pdf-pristroje td { padding: .4mm 1mm; font-size: 8.5pt; }');
+  win.document.write('.pocet-grid { display: grid; grid-template-columns: auto 1fr; gap: .4mm 3mm; font-size: 8.5pt; }');
+  win.document.write('@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
+  win.document.write('</style></head><body>');
+  win.document.write(pages.innerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function() { win.print(); }, 800);
 }
 
 // ═══ AUTO-SAVE ═══
