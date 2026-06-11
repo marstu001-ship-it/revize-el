@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.66<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.67<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6452,14 +6452,15 @@ function tiskZpravuPrimo() {
     '.pocet-grid { display: grid; grid-template-columns: auto 1fr; gap: .4mm 3mm; font-size: 8.5pt; }' +
     '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
 
-  function openTiskOkno(pagesArr, orientation, title) {
+  function buildTiskOkno(pagesArr, orientation, title) {
     var isLand = orientation === 'landscape';
     var a4w = isLand ? '297mm' : '210mm';
     var a4h = isLand ? '210mm' : '297mm';
     var a4pad = isLand ? '10mm 12mm 8mm 12mm' : '12mm 14mm 10mm 14mm';
     var html = pagesArr.map(function(p) { return p.outerHTML; }).join('');
+    // Okno musí být otevřeno synchronně (user gesture), jen print se odkládá
     var w = window.open('', '_blank');
-    if (!w) { alert('Prosím povolte vyskakovací okna pro tisk.'); return; }
+    if (!w) { alert('Prosím povolte vyskakovací okna pro tisk.'); return null; }
     w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
     w.document.write('<title>' + title + '</title>');
     w.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">');
@@ -6472,14 +6473,15 @@ function tiskZpravuPrimo() {
     w.document.write(html);
     w.document.write('</body></html>');
     w.document.close();
-    setTimeout(function() { w.print(); }, 800);
+    return w;
   }
 
-  // Portrait stránky otevři hned, landscape po 400 ms (jinak popup blocker)
-  if (portraitPages.length)  openTiskOkno(portraitPages,  'portrait',  'Revizní zpráva');
-  if (landscapePages.length) setTimeout(function() {
-    openTiskOkno(landscapePages, 'landscape', 'Měření — tabulka');
-  }, portraitPages.length ? 400 : 0);
+  // Obě okna otevřít synchronně (user gesture) — setTimeout blokuje popup blocker
+  var w1 = portraitPages.length  ? buildTiskOkno(portraitPages,  'portrait',  'Revizní zpráva')   : null;
+  var w2 = landscapePages.length ? buildTiskOkno(landscapePages, 'landscape', 'Měření — tabulka') : null;
+  // Tisk spustit až po načtení fontů (malý timeout)
+  if (w1) setTimeout(function() { w1.print(); }, 800);
+  if (w2) setTimeout(function() { w2.print(); }, 1200);
 }
 
 // ═══ AUTO-SAVE ═══
