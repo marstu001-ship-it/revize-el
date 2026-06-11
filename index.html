@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.64<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.65<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6422,10 +6422,16 @@ function tiskZpravuPrimo() {
   win.document.write('<style>');
   win.document.write('* { box-sizing: border-box; margin: 0; padding: 0; }');
   win.document.write('body { background: white; }');
-  win.document.write('@page portrait { size: A4 portrait; margin: 0; }');
-  win.document.write('@page landscape { size: A4 landscape; margin: 0; }');
-  win.document.write('.a4 { width: 210mm; min-height: 297mm; background: #fff; padding: 12mm 14mm 10mm 14mm; display: flex; flex-direction: column; font-family: "Courier Prime","Courier New",Courier,monospace; font-size: 10pt; color: #000; position: relative; page: portrait; break-after: page; box-shadow: none; }');
-  win.document.write('.a4.a4-landscape { width: 297mm; min-height: 210mm; page: landscape; }');
+  // Pojmenované @page pravidla — NESMÍ se jmenovat "portrait"/"landscape"
+  // (kolize s CSS klíčovými slovy v 'size' property → orientace se neaplikovala)
+  win.document.write('@page pg-p { size: A4 portrait; margin: 0; }');
+  win.document.write('@page pg-l { size: A4 landscape; margin: 0; }');
+  // height:297mm (ne min-height) → zápatí nepřeteče na další stránku
+  // overflow:hidden → žádný obsah se neukazuje mimo A4 rámeček
+  // break-after jen přes :not(:last-child) → žádná prázdná poslední stránka
+  win.document.write('.a4 { width: 210mm; height: 297mm; overflow: hidden; background: #fff; padding: 12mm 14mm 10mm 14mm; display: flex; flex-direction: column; font-family: "Courier Prime","Courier New",Courier,monospace; font-size: 10pt; color: #000; position: relative; page: pg-p; box-shadow: none; }');
+  win.document.write('.a4:not(:last-child) { break-after: page; page-break-after: always; }');
+  win.document.write('.a4.a4-landscape { width: 297mm; height: 210mm; page: pg-l; }');
   win.document.write('.a4-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4mm; border-bottom: .5pt solid #000; padding-bottom: 2mm; }');
   win.document.write('.a4-hbox { border: 1pt solid #000; padding: 1mm 3mm; font-size: 9pt; min-width: 28mm; text-align: center; font-weight: bold; }');
   win.document.write('.a4-footer { margin-top: auto; padding-top: 2mm; border-top: .5pt solid #000; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }');
