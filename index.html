@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.69<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.70<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6414,72 +6414,72 @@ function tiskZpravuPrimo() {
     setTimeout(tiskZpravuPrimo, 900);
     return;
   }
-  var allPages = Array.from(pages.children);
 
-  // Každá stránka dostane unikátní @page jméno (pgp0, pgp1, pgl2…).
-  // Změna jména na každé hranici = automatický zlom + správná orientace.
-  // Není potřeba break-after ani dvě okna.
-  var pageAtRules = [];
-  var pagesHtml = allPages.map(function(p, i) {
-    var isLand = p.classList.contains('a4-landscape');
-    var nm = (isLand ? 'pgl' : 'pgp') + i;
-    pageAtRules.push('@page ' + nm + '{size:A4 ' + (isLand ? 'landscape' : 'portrait') + ';margin:0}');
-    var clone = p.cloneNode(true);
-    var existing = clone.getAttribute('style') || '';
-    clone.setAttribute('style', 'page:' + nm + (existing ? ';' + existing : ''));
-    return clone.outerHTML;
-  }).join('');
-
-  var sharedCss =
-    '* { box-sizing: border-box; margin: 0; padding: 0; }' +
-    'body { background: white; }' +
-    '.a4-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4mm; border-bottom: .5pt solid #000; padding-bottom: 2mm; }' +
-    '.a4-hbox { border: 1pt solid #000; padding: 1mm 3mm; font-size: 9pt; min-width: 28mm; text-align: center; font-weight: bold; }' +
-    '.a4-footer { margin-top: auto; padding-top: 2mm; border-top: .5pt solid #000; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }' +
-    '.a4-content { flex: 1; overflow: hidden; }' +
-    '.r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; margin-bottom: 2.5mm; }' +
-    '.r3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.5mm; margin-bottom: 2.5mm; }' +
-    '.pbox { border: .75pt solid #000; padding: 1.5mm 2mm; min-height: 8mm; font-size: 9.5pt; line-height: 1.45; }' +
-    '.pbox-label { font-size: 7.5pt; font-weight: bold; margin-bottom: .75mm; display: block; }' +
-    '.dtgrid { display: grid; grid-template-columns: auto 1fr; gap: .4mm 3mm; font-size: 9pt; align-items: baseline; }' +
-    '.dtlabel { font-size: 7.5pt; white-space: nowrap; }' +
-    '.dtval { border-bottom: .5pt solid #888; min-width: 18mm; }' +
-    '.ptitle { text-align: center; margin: 4mm 0 3mm; }' +
-    '.ptitle h1 { font-size: 15pt; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; line-height: 1.2; }' +
-    '.ptitle p { font-size: 8.5pt; margin-top: 1.5mm; }' +
-    '.sec-head { display: flex; align-items: stretch; border: .75pt solid #000; margin-bottom: 3mm; }' +
-    '.sec-num { background: #000; color: #fff; padding: 1mm 3mm; font-weight: 700; font-size: 9.5pt; display: flex; align-items: center; justify-content: center; min-width: 8mm; }' +
-    '.sec-name { padding: 1.5mm 3mm; font-weight: 700; font-size: 9.5pt; text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; }' +
-    '.podp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 5mm; }' +
-    '.podp-inner { border: .75pt solid #000; min-height: 22mm; padding: 1mm; display: flex; align-items: flex-end; justify-content: center; }' +
-    '.podp-line { border-top: .75pt solid #000; margin: 0 8mm 1mm; text-align: center; }' +
-    '.podp-lbl { font-size: 7.5pt; text-align: center; }' +
-    '.pdf-meas { width: 100%; border-collapse: collapse; font-size: 7pt; }' +
-    '.pdf-meas th { border: .75pt solid #000; padding: .6mm .8mm; text-align: center; font-weight: bold; background: #e8e8e8; font-size: 6pt; white-space: nowrap; }' +
-    '.pdf-meas td { border: .75pt solid #000; padding: .6mm .8mm; font-size: 7pt; }' +
-    '.pdf-pristroje { width: 100%; border-collapse: collapse; font-size: 8.5pt; }' +
-    '.pdf-pristroje th { border-bottom: .75pt solid #000; padding: .5mm 1mm; font-size: 7.5pt; font-weight: bold; text-align: left; }' +
-    '.pdf-pristroje td { padding: .4mm 1mm; font-size: 8.5pt; }' +
-    '.pocet-grid { display: grid; grid-template-columns: auto 1fr; gap: .4mm 3mm; font-size: 8.5pt; }' +
-    '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
-
+  // Otevřít okno SYNCHRONNĚ v rámci user gesture — jinak popup blocker
   var w = window.open('', '_blank');
   if (!w) { alert('Prosím povolte vyskakovací okna pro tisk.'); return; }
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
-  w.document.write('<title>Revizní zpráva</title>');
-  w.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">');
-  w.document.write('<style>');
-  // @page pravidla pro každou stránku (unikátní orientace)
-  w.document.write(pageAtRules.join(''));
-  // Základní styl stránek — BEZ page property (ta jde jen z inline style)
-  w.document.write('.a4{width:210mm;height:297mm;overflow:hidden;background:#fff;padding:12mm 14mm 10mm 14mm;display:flex;flex-direction:column;font-family:"Courier Prime","Courier New",Courier,monospace;font-size:10pt;color:#000;position:relative;box-shadow:none}');
-  w.document.write('.a4.a4-landscape{width:297mm;height:210mm}');
-  w.document.write(sharedCss);
-  w.document.write('</style></head><body>');
-  w.document.write(pagesHtml);
-  w.document.write('</body></html>');
+  w.document.write('<!DOCTYPE html><html><body style="margin:0;background:#f5f5f5;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px"><p style="font-size:1.1rem;color:#333">⏳ Generuji PDF pro tisk…</p><p style="font-size:.85rem;color:#888">Může trvat 5–15 sekund</p></body></html>');
   w.document.close();
-  setTimeout(function() { w.print(); }, 800);
+
+  var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  var canvasFn = window.html2canvas;
+  if (!jsPDFCtor || !canvasFn) {
+    w.close();
+    alert('PDF knihovny nejsou načteny. Obnovte stránku (Ctrl+F5).');
+    return;
+  }
+
+  var pageEls = Array.prototype.slice.call(pages.querySelectorAll('.a4'));
+
+  // Stejný pipeline jako renderPagesToPDF — jsPDF správně renderuje landscape
+  var prevStyles = [];
+  pageEls.forEach(function(p) {
+    var isLand = p.classList.contains('a4-landscape');
+    prevStyles.push({ shadow: p.style.boxShadow, height: p.style.height, maxHeight: p.style.maxHeight, overflow: p.style.overflow });
+    p.style.boxShadow = 'none';
+    p.style.height = isLand ? '210mm' : '297mm';
+    p.style.maxHeight = isLand ? '210mm' : '297mm';
+    p.style.overflow = 'hidden';
+  });
+  function restoreStyles() {
+    pageEls.forEach(function(p, i) {
+      p.style.boxShadow = prevStyles[i].shadow || '';
+      p.style.height = prevStyles[i].height || '';
+      p.style.maxHeight = prevStyles[i].maxHeight || '';
+      p.style.overflow = prevStyles[i].overflow || '';
+    });
+  }
+  function getOrient(p) { return p.classList.contains('a4-landscape') ? 'landscape' : 'portrait'; }
+
+  var pdf = new jsPDFCtor({ unit: 'mm', format: 'a4', orientation: getOrient(pageEls[0]), compress: true });
+  var chain = Promise.resolve();
+  pageEls.forEach(function(p, idx) {
+    chain = chain.then(function() {
+      return canvasFn(p, { scale: 1.5, useCORS: true, letterRendering: true, logging: false, backgroundColor: '#ffffff' }).then(function(canvas) {
+        if (idx > 0) pdf.addPage('a4', getOrient(p));
+        var pw = pdf.internal.pageSize.getWidth();
+        var ph = pdf.internal.pageSize.getHeight();
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pw, ph);
+      });
+    });
+  });
+
+  chain.then(function() {
+    restoreStyles();
+    var blob = pdf.output('blob');
+    var blobUrl = URL.createObjectURL(blob);
+    // Naviguj okno na PDF — Chrome otevře v built-in PDF vieweru
+    w.location.href = blobUrl;
+    // Počkej až se PDF viewer načte, pak spusť tiskový dialog
+    setTimeout(function() {
+      try { w.print(); } catch(e) {}
+      setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 60000);
+    }, 2500);
+  }).catch(function(err) {
+    restoreStyles();
+    w.close();
+    alert('Chyba při přípravě tisku: ' + ((err && err.message) || err));
+  });
 }
 
 // ═══ AUTO-SAVE ═══
