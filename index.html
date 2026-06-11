@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.62<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.63<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1578,6 +1578,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       <button class="pbtn" data-action="stahnoutPDF" style="background:#2e7d32;border-color:#2e7d32" title="Kompletní zpráva v jednom PDF souboru">📄 Uložit zprávu PDF</button>
       <button class="pbtn" data-action="stahnoutMereniPDF" style="background:#c8962a;border-color:#c8962a">📐 Uložit měření PDF</button>
       <button class="pbtn" data-action="tiskMereni" style="background:#5a4b8a;border-color:#5a4b8a" title="Otevře měření v novém okně na šířku — pro tisk z prohlížeče">🖨️ Tisk měření samostatně</button>
+      <button class="pbtn" data-action="tiskZpravuPrimo" style="background:#b5291c;border-color:#b5291c" title="Tiskne přímo z prohlížeče bez uložení PDF">🖨️ Tisk zprávy přímo</button>
     </div>
   </div>
   <div class="pdf-pages" id="pdf-pages"></div>
@@ -6406,6 +6407,23 @@ function tiskMereni() {
   setTimeout(function() { win.print(); }, 500);
 }
 
+function tiskZpravuPrimo() {
+  // Přidá dočasný override: .a4 dostane height:297mm + overflow:hidden,
+  // takže každá stránka přesně odpovídá A4 a nepřetéká na další.
+  var st = document.createElement('style');
+  st.id = 'print-fix-override';
+  st.textContent = '@media print{' +
+    '.a4{height:297mm!important;min-height:unset!important;overflow:hidden!important;box-shadow:none!important;}' +
+    '.pdf-pages{padding:0!important;gap:0!important;}' +
+    '}';
+  document.head.appendChild(st);
+  window.print();
+  setTimeout(function() {
+    var s = document.getElementById('print-fix-override');
+    if (s) s.remove();
+  }, 2000);
+}
+
 // ═══ AUTO-SAVE ═══
 var autoSaveTimer = null;
 function autoSave() {
@@ -7585,6 +7603,7 @@ document.addEventListener('click', function(e) {
     case 'stahnoutPDF': stahnoutPDF(); break;
     case 'stahnoutMereniPDF': stahnoutMereniPDF(); break;
     case 'tiskMereni': tiskMereni(); break;
+    case 'tiskZpravuPrimo': tiskZpravuPrimo(); break;
     case 'delRow': delRowEl(el); break;
     case 'copyRow': copyRow(el); break;
     case 'copyRcdGroup': copyRcdGroup(el); break;
