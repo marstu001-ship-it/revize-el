@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.61<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.62<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1729,6 +1729,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeRevize">Zrušit</button>
       <button class="btn btn-gold" data-action="potvrditRevize">✓ Použít termín</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-prirazit-odb">
+  <div class="modal">
+    <div class="modal-title">👤 Přiřadit odběratele ke zprávě</div>
+    <div style="font-size:.85rem;color:var(--muted);margin-bottom:1rem" id="modal-prirazit-info"></div>
+    <div class="f" style="margin-bottom:1.25rem">
+      <label>Odběratel</label>
+      <select id="modal-prirazit-select" style="width:100%"></select>
+    </div>
+    <div style="display:flex;gap:.75rem;justify-content:flex-end">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closePrirazitOdb">Zrušit</button>
+      <button class="btn btn-gold" data-action="ulozitPrirazeniOdb">✓ Přiřadit</button>
     </div>
   </div>
 </div>
@@ -6730,6 +6745,42 @@ function pocetZpravOdberatele(id) {
   return n;
 }
 
+var __prirazitIdx = -1;
+
+function prirazitOdberatele(el) {
+  var idx = parseInt(el.dataset.idx, 10);
+  if (isNaN(idx) || !archiv[idx]) return;
+  __prirazitIdx = idx;
+  var z = archiv[idx];
+  var info = document.getElementById('modal-prirazit-info');
+  if (info) info.textContent = 'Zpráva: ' + (z.ev_cislo || '—') + ' · ' + (z.misto || '—');
+  var sel = document.getElementById('modal-prirazit-select');
+  if (!sel) return;
+  sel.innerHTML = odberatele.map(function(o) {
+    return '<option value="' + esc(o.id) + '">' + esc(o.nazev || '—') + (o.adresa ? ' — ' + esc(o.adresa.split('\n')[0]) : '') + '</option>';
+  }).join('');
+  document.getElementById('modal-prirazit-odb').classList.add('open');
+}
+
+function closePrirazitOdb() {
+  document.getElementById('modal-prirazit-odb').classList.remove('open');
+  __prirazitIdx = -1;
+}
+
+function ulozitPrirazeniOdb() {
+  var sel = document.getElementById('modal-prirazit-select');
+  if (!sel || __prirazitIdx < 0 || !archiv[__prirazitIdx]) return;
+  var id = sel.value;
+  if (!id) return;
+  archiv[__prirazitIdx].odberatel_id = id;
+  if (archiv[__prirazitIdx].data) archiv[__prirazitIdx].data.odberatel_id = id;
+  STORE.archiv = archiv;
+  saveStore();
+  closePrirazitOdb();
+  renderArchiv();
+  renderOdberatele();
+}
+
 function renderOdberatele() {
   var c = document.getElementById('odberatel-container');
   if (!c) return;
@@ -7114,6 +7165,7 @@ function renderArchiv() {
     html += '<td style="white-space:nowrap;text-align:right">' +
       '<button data-action="togglePinZpravu" data-idx="' + i + '" title="' + pinTitle + '" style="background:transparent;border:none;font-size:.95rem;cursor:pointer;padding:.2rem .35rem;opacity:' + (z.pinned ? '1' : '.4') + '">' + pinIcon + '</button>' +
       (hasData ? '<button data-action="navazatZpravu" data-idx="' + i + '" title="Vytvořit novou zprávu jako kopii této" style="background:#fff;border:1px solid var(--accent2);color:var(--accent2);font-family:var(--mono);font-size:.65rem;letter-spacing:.04em;padding:.28rem .55rem;border-radius:3px;cursor:pointer;margin-right:4px;margin-left:2px;text-transform:uppercase;font-weight:500">🔗 Navázat</button>' : '') +
+      (!z.odberatel_id && odberatele.length > 0 ? '<button data-action="prirazitOdberatele" data-idx="' + i + '" title="Přiřadit odběratele" style="background:#fff;border:1px solid #888;color:#555;font-family:var(--mono);font-size:.65rem;letter-spacing:.04em;padding:.28rem .55rem;border-radius:3px;cursor:pointer;margin-right:2px;margin-left:2px;text-transform:uppercase;font-weight:500">👤 Přiřadit</button>' : '') +
       '<button class="del-btn" data-action="smazatZpravu" data-idx="' + i + '" style="margin-left:4px" title="Smazat">✕</button>' +
       '</td>';
     html += '</tr>';
@@ -7541,6 +7593,9 @@ document.addEventListener('click', function(e) {
     case 'smazatZpravu': e.stopPropagation(); smazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'navazatZpravu': e.stopPropagation(); navazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'togglePinZpravu': e.stopPropagation(); togglePinZpravu(parseInt(el.getAttribute('data-idx'))); break;
+    case 'prirazitOdberatele': e.stopPropagation(); prirazitOdberatele(el); break;
+    case 'closePrirazitOdb': closePrirazitOdb(); break;
+    case 'ulozitPrirazeniOdb': ulozitPrirazeniOdb(); break;
     case 'otevritZpravu': otevritZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'removeZavada': var zi = el.closest('.zavada-item'); if (zi) zi.remove(); break;
     case 'pdf': showScreen('pdf'); break;
