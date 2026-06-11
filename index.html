@@ -442,7 +442,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.58<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.59<span class="ver-date"> · 2026-06-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1454,6 +1454,20 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
           <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:400;cursor:pointer">
             <input type="checkbox" id="lps_rozsah_vnitrni" checked> Vnitřní ochrana (pospojování, SPD)
           </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">Popis objektu a systému LPS</div>
+    <div class="g1">
+      <div class="f span2">
+        <label>Technický popis</label>
+        <textarea id="f_lps_popis" style="min-height:120px" placeholder="Objekt je rodinný dům, střecha sedlová, krytina pálená taška. Systém LPS třídy III je tvořen..."></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_lps_popis">📝 Typický text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_lps_popis">💾 Uložit text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_lps_popis">📋 Z knihovny</button>
         </div>
       </div>
     </div>
@@ -3999,7 +4013,7 @@ var TYPY_TEXTU_FILTRY = {
 
 var __typTextTargetId = '';
 
-var __lpsFieldMap = { f_lps_predmet_je: 'f_predmet_je', f_lps_predmet_neni: 'f_predmet_neni' };
+var __lpsFieldMap = { f_lps_predmet_je: 'f_predmet_je', f_lps_predmet_neni: 'f_predmet_neni', f_lps_popis: 'f_popis' };
 
 function otevritTypickeTexty(fieldId) {
   __typTextTargetId = fieldId;
@@ -5176,7 +5190,7 @@ function getData() {
     prilohy: gv('f_prilohy'),
     predmet_je: aktTyp === 'lps' ? gv('f_lps_predmet_je') : gv('f_predmet_je'),
     predmet_neni: aktTyp === 'lps' ? gv('f_lps_predmet_neni') : gv('f_predmet_neni'),
-    popis: gv('f_popis'),
+    popis: aktTyp === 'lps' ? gv('f_lps_popis') : gv('f_popis'),
     zemnič: gv('f_zemnič'), zemni_odpor: gv('f_zemni_odpor'),
     prohlídka: gv('f_prohlídka'), zkouseni: gv('f_zkouseni'),
     zkousky: {
@@ -5608,7 +5622,7 @@ function generujPDF() {
     '</div>' +
     '<div data-p2sec="3">' +
     '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technický popis vyhrazeného elektrického zařízení</div></div>' +
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || 'Doplňte v záložce A.') + '</div>' +
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || (isLpsPdf ? 'Doplňte v záložce 1. Objekt & LPS.' : 'Doplňte v záložce A.')) + '</div>' +
     '</div>' +
     (D.dokumentace && D.dokumentace.length > 0
       ? '<div data-p2sec="3b">' +
@@ -6464,7 +6478,7 @@ function nacistData(D) {
     'f_prebira': D.prebira, 'f_vyhotoveni': D.vyhotoveni, 'f_rozdelovnik': D.rozdelovnik,
     'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni,
     'f_lps_predmet_je': D.predmet_je, 'f_lps_predmet_neni': D.predmet_neni,
-    'f_popis': D.popis,
+    'f_popis': D.popis, 'f_lps_popis': D.popis,
     'f_zemnič': D.zemnič, 'f_zemni_odpor': D.zemni_odpor,
     'f_prohlídka': D.prohlídka, 'f_zkouseni': D.zkouseni,
     'f_zhodnoceni': D.zhodnoceni, 'f_celkovy_vysledek': D.celkovy_vysledek, 'f_lhuta': D.lhuta,
