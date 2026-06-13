@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.70<span class="ver-date"> · 2026-06-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.71<span class="ver-date"> · 2026-06-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1120,7 +1120,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <label>Objednatel revize <span style="font-size:.7rem;color:var(--muted)">(pokud je stejný jako provozovatel, nechte prázdné)</span></label>
         <input type="text" id="f_objednatel" placeholder="Stejný jako provozovatel / Firma XY s.r.o., Ulice 1, Praha">
       </div>
-      <div class="f"><label>Při revizi byl přítomen</label><input type="text" id="f_pritomen2" placeholder="Jméno Příjmení, funkce"></div>
+      <div class="f"><label>Při revizi byl přítomen</label><input type="text" id="f_pritomen2" placeholder="Jméno Příjmení, funkce" autocomplete="off"></div>
       <div class="f"><label>Elektromontážní práce provedla firma</label><input type="text" id="f_firma_zmena2" placeholder="Firma s.r.o."></div>
       <div class="f"><label>Ev. číslo oprávnění firmy <span style="font-size:.6rem;color:var(--muted)">(výchozí revize)</span></label><input type="text" id="f_firma_opravneni2" placeholder="16680/9/21/EZ-M"></div>
     </div>
@@ -1181,7 +1181,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div class="g3">
       <div class="f"><label>Předáno v (město)</label><input type="text" id="f_predano_misto" placeholder="Uherském Hradišti"></div>
       <div class="f"><label>Dne</label><input type="date" id="f_predano_datum"></div>
-      <div class="f"><label>Jméno osoby přebírající zprávu (VTZ)</label><input type="text" id="f_prebira" placeholder="Jméno Příjmení"></div>
+      <div class="f"><label>Jméno osoby přebírající zprávu (VTZ)</label><input type="text" id="f_prebira" placeholder="Jméno Příjmení" autocomplete="off"></div>
     </div>
     <div class="g2" style="margin-top:.75rem">
       <div class="f"><label>Počet vyhotovení</label><input type="text" id="f_vyhotoveni" value="2"></div>
