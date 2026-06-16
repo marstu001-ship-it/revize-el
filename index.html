@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.74<span class="ver-date"> · 2026-06-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.75<span class="ver-date"> · 2026-06-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -7257,7 +7257,7 @@ function renderArchiv() {
     html += '<td><span class="' + (z.typ === 'elektro' ? 'badge-el' : 'badge-lps') + '">' + (z.typ === 'elektro' ? 'Elektro' : 'LPS') + '</span></td>';
     html += '<td style="font-family:monospace;font-size:.8rem">' + (z.ev_cislo || '—') + '</td>';
     html += '<td style="font-size:.85rem">' + (z.misto || '—') + '</td>';
-    html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + '</td>';
+    html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + (z.timestamp ? '<br><span style="font-size:.68rem;color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</td>';
     html += '<td>' + (z.vysledek === 'schopno' ? '✅' : (z.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
     var pinIcon = z.pinned ? '📌' : '📍';
     var pinTitle = z.pinned ? 'Odepnout' : 'Připnout nahoru';
@@ -7392,7 +7392,7 @@ function renderArchivRecents() {
         (stav ? '<span style="margin-left:auto;margin-right:1.4rem">' + stav + '</span>' : '') +
       '</div>' +
       '<div style="font-size:.85rem;line-height:1.3;margin-bottom:.2rem;padding-right:1.5rem">' + esc(z.misto || '—') + '</div>' +
-      '<div style="font-family:var(--mono);font-size:.7rem;color:#6e6a60">' + fmtDate(z.datum) + '</div>' +
+      '<div style="font-family:var(--mono);font-size:.7rem;color:#6e6a60">' + fmtDate(z.datum) + (z.timestamp ? ' <span style="color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</div>' +
     '</div>';
   });
   html += '</div>';
