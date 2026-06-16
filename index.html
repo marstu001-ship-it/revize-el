@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.71<span class="ver-date"> · 2026-06-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.72<span class="ver-date"> · 2026-06-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5549,14 +5549,36 @@ function generujPDF() {
          (D.lps && D.lps.stav_zeminy ? ' (' + esc(D.lps.stav_zeminy) + ')' : '') +
          '</div></div></div>' +
          '</div>')
-      : ('<div class="r2" style="margin-bottom:2.5mm">' +
-         '<div><div class="pbox-label">Zdroj el. proudu:</div>' +
-         '<div class="pbox" style="min-height:12mm;font-size:9pt">' + esc(D.zdroj || '') + '</div></div>' +
-         '<div><div class="pbox-label">Ochrana před úrazem:</div>' +
-         '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
-         '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
-         '<div class="pbox" style="font-size:9pt">' + esc(D.napetova_soustava || '') + '</div></div></div>' +
-         '</div>')) +
+      : (function() {
+           var nArrE = D.normy ? D.normy.split(', ').filter(Boolean) : [];
+           var manyE = nArrE.length > 8;
+           var innerE = manyE
+             ? '<div style="columns:2;column-gap:3mm">' + nArrE.map(function(n) { return '<div style="break-inside:avoid">' + esc(n) + '</div>'; }).join('') + '</div>'
+             : esc(D.normy);
+           return '<div class="r2" style="margin-bottom:2.5mm">' +
+             '<div>' +
+               '<div class="pbox-label">Zdroj el. proudu:</div>' +
+               '<div class="pbox" style="min-height:12mm;font-size:9pt;margin-bottom:1mm">' + esc(D.zdroj || '') + '</div>' +
+               '<div class="pbox-label">Datum revize:</div>' +
+               '<div class="pbox" style="min-height:18mm"><div class="dtgrid">' +
+               '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
+               '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
+               '<span class="dtlabel">předchozí</span><span class="dtval">' + fmtDate(D.predchozi) + '</span>' +
+               '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
+               '<span class="dtlabel">doporučená příští</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
+               '</div></div>' +
+             '</div>' +
+             '<div>' +
+               '<div class="pbox-label">Ochrana před úrazem:</div>' +
+               '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
+               '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
+               '<div class="pbox" style="font-size:9pt">' + esc(D.napetova_soustava || '') + '</div></div>' +
+               '<div style="margin-top:1mm"><div class="pbox-label">Použité normy:</div>' +
+               '<div class="pbox" style="font-size:' + (manyE ? '7' : '8') + 'pt;min-height:8mm;line-height:' + (manyE ? '1.3' : '1.5') + '">' + innerE + '</div></div>' +
+             '</div>' +
+             '</div>';
+         }())) +
+    (isLpsPdf ?
     '<div class="r2" style="margin-bottom:2.5mm">' +
     '<div><div class="pbox-label">Použité normy:</div>' +
     (function() {
@@ -5577,7 +5599,8 @@ function generujPDF() {
     '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
     '<span class="dtlabel">doporučená příští</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
     '</div></div></div>' +
-    '</div>' +
+    '</div>'
+    : '') +
     '<div style="margin-bottom:2.5mm"><div class="pbox-label">Celkový posudek:</div>' +
     '<div class="pbox" style="font-size:9.5pt;min-height:14mm;line-height:1.5">' + posudek + '</div></div>' +
     '<div class="r2" style="margin-bottom:3mm">' +
