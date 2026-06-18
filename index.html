@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.79<span class="ver-date"> · 2026-06-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.80<span class="ver-date"> · 2026-06-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6236,15 +6236,17 @@ function renderPagesToPDF(pageEls, filename) {
       p.style.overflow = prevStyles[i].overflow || '';
     });
   }
-  // Landscape stránky se otočí o 90° CW na canvasu a vloží do portrait stránky.
+  // Landscape stránky se otočí o 90° CCW na canvasu a vloží do portrait stránky.
   // Tím jsou všechny PDF stránky portrait (210×297mm) — duplex tisk pak nikdy
   // nepřepíná osu přeložení papíru a orientace je konzistentní u všech zpráv.
-  function rotateCW90(src) {
+  // CCW = vrch tabulky vlevo → papír otočíš doleva k přečtení (přirozené při
+  // sešití v levém horním rohu).
+  function rotateCCW90(src) {
     var dst = document.createElement('canvas');
     dst.width = src.height; dst.height = src.width;
     var ctx = dst.getContext('2d');
-    ctx.translate(src.height, 0);
-    ctx.rotate(Math.PI / 2);
+    ctx.translate(0, src.width);
+    ctx.rotate(-Math.PI / 2);
     ctx.drawImage(src, 0, 0);
     return dst;
   }
@@ -6261,7 +6263,7 @@ function renderPagesToPDF(pageEls, filename) {
         backgroundColor: '#ffffff'
       }).then(function(canvas) {
         if (idx > 0) pdf.addPage('a4', 'portrait');
-        var finalCanvas = p.classList.contains('a4-landscape') ? rotateCW90(canvas) : canvas;
+        var finalCanvas = p.classList.contains('a4-landscape') ? rotateCCW90(canvas) : canvas;
         var pageW = pdf.internal.pageSize.getWidth();
         var pageH = pdf.internal.pageSize.getHeight();
         pdf.addImage(finalCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pageW, pageH);
@@ -6471,12 +6473,12 @@ function tiskZpravuPrimo() {
       p.style.overflow = prevStyles[i].overflow || '';
     });
   }
-  function rotateCW90(src) {
+  function rotateCCW90(src) {
     var dst = document.createElement('canvas');
     dst.width = src.height; dst.height = src.width;
     var ctx = dst.getContext('2d');
-    ctx.translate(src.height, 0);
-    ctx.rotate(Math.PI / 2);
+    ctx.translate(0, src.width);
+    ctx.rotate(-Math.PI / 2);
     ctx.drawImage(src, 0, 0);
     return dst;
   }
@@ -6486,7 +6488,7 @@ function tiskZpravuPrimo() {
     chain = chain.then(function() {
       return canvasFn(p, { scale: 1.5, useCORS: true, letterRendering: true, logging: false, backgroundColor: '#ffffff' }).then(function(canvas) {
         if (idx > 0) pdf.addPage('a4', 'portrait');
-        var finalCanvas = p.classList.contains('a4-landscape') ? rotateCW90(canvas) : canvas;
+        var finalCanvas = p.classList.contains('a4-landscape') ? rotateCCW90(canvas) : canvas;
         var pw = pdf.internal.pageSize.getWidth();
         var ph = pdf.internal.pageSize.getHeight();
         pdf.addImage(finalCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pw, ph);
