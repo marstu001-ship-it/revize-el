@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.80<span class="ver-date"> · 2026-06-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.81<span class="ver-date"> · 2026-06-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6634,6 +6634,8 @@ function nacistData(D) {
   if (D.pristroje && D.pristroje.length > 0) {
     D.pristroje.forEach(function(pr, i) { addPristrojRow(pr, i + 1); });
   }
+  // Přepsat přístroje vlastními uloženými z profilu (stejná logika jako u technika)
+  if (STORE.pristroje && STORE.pristroje.length > 0) propsatPristroje();
   // Restore rozvadece
   var rc = document.getElementById('rozvadece-container');
   if (rc) rc.innerHTML = '';
