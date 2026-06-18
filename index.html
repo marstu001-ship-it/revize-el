@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.76<span class="ver-date"> · 2026-06-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.77<span class="ver-date"> · 2026-06-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5646,7 +5646,7 @@ function generujPDF() {
     '</div>' +
     '<div data-p2sec="2">' +
     '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zařízení</div></div>' +
-    '<div style="font-size:9pt;padding:0 2mm;margin-bottom:3mm">' +
+    '<div style="font-size:9.5pt;padding:0 2mm;margin-bottom:3mm">' +
     (isLpsPdf
       ? ((D.lps && D.lps.trida) ? '<strong>Třída LPS:</strong> ' + esc(D.lps.trida) + '<br>' : '')
         + ((D.lps && D.lps.jimaci) ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) + '<br>' : '')
@@ -5717,13 +5717,13 @@ function generujPDF() {
             });
           });
           return '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">' + (4 + docOffset) + '.</div><div class="sec-name">' + head + '</div></div>' +
-            '<div style="font-size:8.5pt;padding:0 2mm 1mm;color:#444"><strong>Rozsah prohlídky:</strong> ' + esc(rozsahStr) + '</div>' +
-            (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
+            '<div style="font-size:9.5pt;padding:0 2mm 1mm;color:#444"><strong>Rozsah prohlídky:</strong> ' + esc(rozsahStr) + '</div>' +
+            (D.prohlídka ? '<div style="font-size:9.5pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
             '<table style="width:calc(100% - 4mm);margin:1mm 2mm 2mm;border-collapse:collapse">' + tableRows + '</table>';
         })()
       : '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">' + (4 + docOffset) + '.</div><div class="sec-name">Prohlídky (dle čl. 6.4.2)</div></div>' +
-        (D.prohlídka ? '<div style="font-size:9pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
-        '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
+        (D.prohlídka ? '<div style="font-size:9.5pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
+        '<div style="font-size:9.5pt;line-height:1.7;padding:0 2mm">' +
         '<strong>Prohlídka část A</strong> — prohlídka předchází zkoušce. Prohlídkou se zkontroluje zejména:<br>' +
         'a) způsob, popřípadě stav ochrany před úrazem elektrickým proudem včetně měření vzdáleností,<br>' +
         'b) použití protipožárních přepážek nebo jiných bezpečnostních opatření proti šíření ohně a ochrana před tepelnými účinky,<br>' +
@@ -5812,7 +5812,7 @@ function generujPDF() {
     var hasFaze = fazeArr.some(function(fz) { return fz && (fz.u || fz.ik || fz.z); });
     var hasPrivod = rozv.privod && rozv.privod.trim();
     if (hasPrivod || hasFaze) {
-      rozvadeceHtml += '<div style="font-size:8.5pt;padding:0 2mm;margin-bottom:2mm;line-height:1.4">';
+      rozvadeceHtml += '<div style="font-size:9.5pt;padding:0 2mm;margin-bottom:2mm;line-height:1.4">';
       if (hasFaze) {
         rozvadeceHtml += fazeArr.map(function(fz) {
           if (!fz || (!fz.u && !fz.ik && !fz.z)) return '';
@@ -5877,8 +5877,8 @@ function generujPDF() {
   ['a','b','c','d','e','f','g','h','ch','i'].forEach(function(k) {
     var vysl = zk[k] || 'Vyhovuje';
     zkRows += '<tr><td style="text-align:center;font-weight:bold;padding:1mm 2mm">' + k + ')</td>' +
-      '<td style="padding:1mm 2mm;font-size:8.5pt">' + zkNazvy[k] + '</td>' +
-      '<td style="text-align:center;padding:1mm 2mm;font-weight:bold;font-size:8.5pt">' + vysl + '</td>' +
+      '<td style="padding:1mm 2mm;font-size:9.5pt">' + zkNazvy[k] + '</td>' +
+      '<td style="text-align:center;padding:1mm 2mm;font-weight:bold;font-size:9.5pt">' + vysl + '</td>' +
       '<td style="padding:1mm 2mm;font-size:7pt;color:#444">' + zkCsn[k] + '</td></tr>';
   });
 
@@ -5887,15 +5887,15 @@ function generujPDF() {
   p4.innerHTML = hdr(4) +
     '<div class="a4-content">' +
     '<div class="sec-head"><div class="sec-num">' + (secBase + 1) + '.</div><div class="sec-name">Zkoušení (dle čl. 6.4.3)</div></div>' +
-    (D.zkouseni ? '<div style="font-size:9pt;padding:0 2mm;margin:2mm 0"><strong>Výsledek zkoušení:</strong> ' + esc(D.zkouseni) + '</div>' : '') +
-    '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:3mm">' +
+    (D.zkouseni ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0"><strong>Výsledek zkoušení:</strong> ' + esc(D.zkouseni) + '</div>' : '') +
+    '<table style="width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:3mm">' +
     '<thead><tr><th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;width:5%"></th>' +
     '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;text-align:left">Zkouška</th>' +
     '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;width:12%">Výsledek</th>' +
     '<th style="border:.75pt solid #000;padding:1mm 2mm;background:#e8e8e8;font-size:7.5pt;text-align:left;width:38%">Vyhovuje dle</th></tr></thead>' +
     '<tbody>' + zkRows + '</tbody></table>' +
     '<div class="sec-head"><div class="sec-num">' + (secBase + 2) + '.</div><div class="sec-name">Měření impedance poruchové smyčky</div></div>' +
-    '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm;margin-bottom:3mm">' +
+    '<div style="font-size:9.5pt;line-height:1.7;padding:0 2mm;margin-bottom:3mm">' +
     'Pokud nebylo možné změřit impedanci vypínací smyčky přímo (možnost poškození — citlivá elektronická zařízení) byla použita náhradní metoda měření odporu ochranných vodičů k hlavní zemnící svorce — ochrannému vodiči dle ČSN 33 2000-6 ed.2, čl. 6.4.3.7.1.' +
     '<br>Před měřením impedance poruchové smyčky byla provedena zkouška elektrické spojitosti dle požadavků ČSN 33 2000-6 ed.2, čl. 6.4.3.7.3.' +
     '<br>Naměřená hodnota impedance smyčky odpovídá požadavkům ČSN 33 2000-4-41 ed.3, čl. 411.3.2. a požadavky normy se považují za splněné, protože naměřená hodnota vyhovuje nerovnosti:' +
@@ -5904,7 +5904,7 @@ function generujPDF() {
     '</div>' +
     (hasRcd ?
       '<div class="sec-head"><div class="sec-num">' + (secBase + 3) + '.</div><div class="sec-name">Proudové chrániče</div></div>' +
-      '<div style="font-size:8.5pt;line-height:1.7;padding:0 2mm">' +
+      '<div style="font-size:9.5pt;line-height:1.7;padding:0 2mm">' +
       'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla provedena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2 a přílohy NA.' +
       '<br>Bylo provedeno měření přechodových odporů a kontrola průřezu vodičů doplňujícího ochranného pospojování — ČSN 33 2000-4-41 ed.3, čl. 415.2, ČSN 33 2000-5-54 ed.3 čl. 544, ČSN EN 61140 ed.3 čl. 5.5.2.' +
       '<br><br>Měření a zkoušení proudových chráničů bylo provedeno následujícím postupem:' +
