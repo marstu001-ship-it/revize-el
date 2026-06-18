@@ -321,7 +321,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 
 /* ═══ STRÁNKY A4 ═══ */
 .a4{width:210mm;min-height:297mm;background:#fff;
-  padding:12mm 14mm 10mm 14mm;
+  padding:10mm 12mm 8mm 12mm;
   box-shadow:0 4px 20px rgba(0,0,0,.35);
   display:flex;flex-direction:column;
   font-family:'Courier Prime','Courier New',Courier,monospace;
@@ -342,9 +342,9 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 /* BLOKY */
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
-.pbox{border:.75pt solid #000;padding:1.5mm 2mm;min-height:8mm;font-size:9.5pt;line-height:1.45}
+.pbox{border:.75pt solid #000;padding:1.5mm 2mm;min-height:8mm;font-size:10.5pt;line-height:1.45}
 .pbox-label{font-size:7.5pt;font-weight:bold;margin-bottom:.75mm;display:block}
-.dtgrid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:9pt;align-items:baseline}
+.dtgrid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:10pt;align-items:baseline}
 .dtlabel{font-size:7.5pt;white-space:nowrap}
 .dtval{border-bottom:.5pt solid #888;min-width:18mm}
 .ptitle{text-align:center;margin:4mm 0 3mm}
@@ -356,16 +356,16 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 .sec-name{padding:1.5mm 3mm;font-weight:700;font-size:9.5pt;
   text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center}
 .podp-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-top:5mm}
-.podp-inner{border:.75pt solid #000;min-height:22mm;padding:1mm;
+.podp-inner{border:.75pt solid #000;min-height:18mm;padding:1mm;
   display:flex;align-items:flex-end;justify-content:center}
 .podp-line{border-top:.75pt solid #000;margin:0 8mm 1mm;text-align:center}
 .podp-lbl{font-size:7.5pt;text-align:center}
 
 /* TABULKA MĚŘENÍ v PDF */
-.pdf-meas{width:100%;border-collapse:collapse;font-size:7pt}
+.pdf-meas{width:100%;border-collapse:collapse;font-size:8pt}
 .pdf-meas th{border:.75pt solid #000;padding:.6mm .8mm;text-align:center;
-  font-weight:bold;background:#e8e8e8;font-size:6pt;white-space:nowrap}
-.pdf-meas td{border:.75pt solid #000;padding:.6mm .8mm;font-size:7pt}
+  font-weight:bold;background:#e8e8e8;font-size:7pt;white-space:nowrap}
+.pdf-meas td{border:.75pt solid #000;padding:.6mm .8mm;font-size:8pt}
 
 /* PŘÍSTROJE PDF */
 .pdf-pristroje{width:100%;border-collapse:collapse;font-size:8.5pt}
@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.75<span class="ver-date"> · 2026-06-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.76<span class="ver-date"> · 2026-06-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
