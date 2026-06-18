@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.77<span class="ver-date"> · 2026-06-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.78<span class="ver-date"> · 2026-06-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6608,6 +6608,8 @@ function nacistData(D) {
     var el = document.getElementById(id);
     if (el && fields[id]) el.value = fields[id];
   });
+  // Vždy přepsat pole revizního technika z vlastního profilu uživatele
+  if (STORE.technik && STORE.technik.jmeno) propsatTechnika();
   // Restore zkousky
   if (D.zkousky) {
     Object.keys(D.zkousky).forEach(function(k) {
