@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.81<span class="ver-date"> · 2026-06-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.82<span class="ver-date"> · 2026-06-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6219,11 +6219,13 @@ function renderPagesToPDF(pageEls, filename) {
     var isLand = p.classList.contains('a4-landscape');
     prevStyles.push({
       shadow: p.style.boxShadow,
-      height: p.style.height,
-      maxHeight: p.style.maxHeight,
+      width: p.style.width, maxWidth: p.style.maxWidth,
+      height: p.style.height, maxHeight: p.style.maxHeight,
       overflow: p.style.overflow
     });
     p.style.boxShadow = 'none';
+    p.style.width = isLand ? '297mm' : '210mm';
+    p.style.maxWidth = isLand ? '297mm' : '210mm';
     p.style.height = isLand ? '210mm' : '297mm';
     p.style.maxHeight = isLand ? '210mm' : '297mm';
     p.style.overflow = 'hidden';
@@ -6231,6 +6233,8 @@ function renderPagesToPDF(pageEls, filename) {
   function restoreStyles() {
     pageEls.forEach(function(p, i) {
       p.style.boxShadow = prevStyles[i].shadow || '';
+      p.style.width = prevStyles[i].width || '';
+      p.style.maxWidth = prevStyles[i].maxWidth || '';
       p.style.height = prevStyles[i].height || '';
       p.style.maxHeight = prevStyles[i].maxHeight || '';
       p.style.overflow = prevStyles[i].overflow || '';
@@ -6255,15 +6259,17 @@ function renderPagesToPDF(pageEls, filename) {
   var chain = Promise.resolve();
   pageEls.forEach(function(p, idx) {
     chain = chain.then(function() {
+      var isLandEl = p.classList.contains('a4-landscape');
       return canvasFn(p, {
         scale: 1.5,
         useCORS: true,
         letterRendering: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: isLandEl ? 1300 : 900
       }).then(function(canvas) {
         if (idx > 0) pdf.addPage('a4', 'portrait');
-        var finalCanvas = p.classList.contains('a4-landscape') ? rotateCCW90(canvas) : canvas;
+        var finalCanvas = isLandEl ? rotateCCW90(canvas) : canvas;
         var pageW = pdf.internal.pageSize.getWidth();
         var pageH = pdf.internal.pageSize.getHeight();
         pdf.addImage(finalCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pageW, pageH);
@@ -6459,8 +6465,10 @@ function tiskZpravuPrimo() {
   var prevStyles = [];
   pageEls.forEach(function(p) {
     var isLand = p.classList.contains('a4-landscape');
-    prevStyles.push({ shadow: p.style.boxShadow, height: p.style.height, maxHeight: p.style.maxHeight, overflow: p.style.overflow });
+    prevStyles.push({ shadow: p.style.boxShadow, width: p.style.width, maxWidth: p.style.maxWidth, height: p.style.height, maxHeight: p.style.maxHeight, overflow: p.style.overflow });
     p.style.boxShadow = 'none';
+    p.style.width = isLand ? '297mm' : '210mm';
+    p.style.maxWidth = isLand ? '297mm' : '210mm';
     p.style.height = isLand ? '210mm' : '297mm';
     p.style.maxHeight = isLand ? '210mm' : '297mm';
     p.style.overflow = 'hidden';
@@ -6468,6 +6476,8 @@ function tiskZpravuPrimo() {
   function restoreStyles() {
     pageEls.forEach(function(p, i) {
       p.style.boxShadow = prevStyles[i].shadow || '';
+      p.style.width = prevStyles[i].width || '';
+      p.style.maxWidth = prevStyles[i].maxWidth || '';
       p.style.height = prevStyles[i].height || '';
       p.style.maxHeight = prevStyles[i].maxHeight || '';
       p.style.overflow = prevStyles[i].overflow || '';
@@ -6486,7 +6496,8 @@ function tiskZpravuPrimo() {
   var chain = Promise.resolve();
   pageEls.forEach(function(p, idx) {
     chain = chain.then(function() {
-      return canvasFn(p, { scale: 1.5, useCORS: true, letterRendering: true, logging: false, backgroundColor: '#ffffff' }).then(function(canvas) {
+      var isLandEl = p.classList.contains('a4-landscape');
+      return canvasFn(p, { scale: 1.5, useCORS: true, letterRendering: true, logging: false, backgroundColor: '#ffffff', windowWidth: isLandEl ? 1300 : 900 }).then(function(canvas) {
         if (idx > 0) pdf.addPage('a4', 'portrait');
         var finalCanvas = p.classList.contains('a4-landscape') ? rotateCCW90(canvas) : canvas;
         var pw = pdf.internal.pageSize.getWidth();
