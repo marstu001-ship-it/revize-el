@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.82<span class="ver-date"> · 2026-06-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.83<span class="ver-date"> · 2026-06-25</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6066,6 +6066,7 @@ function generujPDF() {
       var pContent = page.querySelector('.a4-content');
       if (!pContent) return null;
       var rozvs = pContent.querySelectorAll('[data-rozv]');
+      var trailingPage = null; // stránka s přesunutými trailing rozváděči (z case 1)
       // 1) Více rozváděčů: přesuň trailing rozváděče na novou stránku
       if (rozvs.length > 1) {
         var np = newA4('a4 a4-landscape');
@@ -6077,10 +6078,12 @@ function generujPDF() {
           rozvs = pContent.querySelectorAll('[data-rozv]');
         }
         pages.insertBefore(np, page.nextSibling);
-        return np;
+        trailingPage = np;
+        if (!overflows(page)) return trailingPage;
+        // page stále přetéká jediným rozváděčem — pokračuj case 2
       }
       // 2) Jediný rozváděč s příliš dlouhou tabulkou: rozdělit po řádcích
-      var rozv = rozvs[0];
+      var rozv = pContent.querySelectorAll('[data-rozv]')[0];
       if (!rozv) return null;
       var table = rozv.querySelector('table');
       var tbody = table && table.querySelector('tbody');
@@ -6115,7 +6118,9 @@ function generujPDF() {
       newTable.appendChild(newTbody);
       newRozv.appendChild(newTable);
       np2Content.appendChild(newRozv);
-      pages.insertBefore(np2, page.nextSibling);
+      // Pokud existuje trailingPage (z case 1), vložíme np2 PŘED ni,
+      // aby pořadí bylo: page → np2 (pokračování) → trailingPage (ostatní rozváděče)
+      pages.insertBefore(np2, trailingPage || page.nextSibling);
       return np2;
     }
     // Iterativně: p3 -> split -> další -> split, dokud se vše nevejde
