@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.84<span class="ver-date"> · 2026-06-25</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.85<span class="ver-date"> · 2026-06-25</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6140,6 +6140,38 @@ function generujPDF() {
       }
       safetyCounter++;
     } while (didSplit && safetyCounter < 200);
+
+    // === Rozdělení přetékajících portrait stránek (p4, p5, případné continuation) ===
+    // Přesouvá poslední child elementy z .a4-content na novou portrait stránku
+    // dokud žádná portrait stránka nepřetéká.
+    var didPortraitSplit;
+    var portSafety = 0;
+    do {
+      didPortraitSplit = false;
+      var allPortrait = Array.prototype.slice.call(pages.querySelectorAll('.a4:not(.a4-landscape)'));
+      for (var pi = 0; pi < allPortrait.length; pi++) {
+        var pp = allPortrait[pi];
+        if (!overflows(pp)) continue;
+        var ppContent = pp.querySelector('.a4-content');
+        if (!ppContent || ppContent.children.length <= 1) continue;
+        var npP = newA4('a4');
+        var npPContent = npP.querySelector('.a4-content');
+        var movedEls = [];
+        while (overflows(pp) && ppContent.children.length > 1) {
+          var lastEl = ppContent.children[ppContent.children.length - 1];
+          movedEls.unshift(lastEl);
+          ppContent.removeChild(lastEl);
+        }
+        if (movedEls.length > 0) {
+          movedEls.forEach(function(el) { npPContent.appendChild(el); });
+          pages.insertBefore(npP, pp.nextSibling);
+          didPortraitSplit = true;
+          break;
+        }
+      }
+      portSafety++;
+    } while (didPortraitSplit && portSafety < 100);
+
     // Přečíslování hlaviček a "Počet listů" podle skutečného počtu stran
     var ps = pages.querySelectorAll('.a4');
     var totalFinal = ps.length;
