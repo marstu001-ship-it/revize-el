@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.83<span class="ver-date"> · 2026-06-25</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.84<span class="ver-date"> · 2026-06-25</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6123,13 +6123,23 @@ function generujPDF() {
       pages.insertBefore(np2, trailingPage || page.nextSibling);
       return np2;
     }
-    // Iterativně: p3 -> split -> další -> split, dokud se vše nevejde
-    var cur = p3;
+    // Iterativně skenuj VŠECHNY landscape stránky dokola, dokud žádná nepřetéká.
+    // Předchozí přístup (sledování jednoho řetězu) neopravil stránky vytvořené
+    // z "trailing" rozváděčů — ty zůstaly nepřečíslované a přetékaly.
     var safetyCounter = 0;
-    while (cur && safetyCounter < 50) {
-      cur = splitLandscapePage(cur);
+    var didSplit;
+    do {
+      didSplit = false;
+      var allLand = Array.prototype.slice.call(pages.querySelectorAll('.a4.a4-landscape'));
+      for (var li = 0; li < allLand.length; li++) {
+        if (overflows(allLand[li])) {
+          splitLandscapePage(allLand[li]);
+          didSplit = true;
+          break; // restartuj sken — nové stránky byly vloženy do DOM
+        }
+      }
       safetyCounter++;
-    }
+    } while (didSplit && safetyCounter < 200);
     // Přečíslování hlaviček a "Počet listů" podle skutečného počtu stran
     var ps = pages.querySelectorAll('.a4');
     var totalFinal = ps.length;
