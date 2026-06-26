@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.86<span class="ver-date"> · 2026-06-26</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.87<span class="ver-date"> · 2026-06-26</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3219,39 +3219,39 @@ function addRcdSubRows(tbody, afterRow, typ, rcdGroupId) {
   // Smaž existující podřádky této skupiny
   var existing = tbody.querySelectorAll('tr[data-rcd-group="' + rcdGroupId + '"]');
   existing.forEach(function(r) { if (r !== afterRow) r.remove(); });
-  // Vlož nové podřádky
   var faze = getRcdFazeByType(typ);
+  // Aktualizovat Fáze v header řádku (inp[9]) na první fázi
+  var headerInps = afterRow.querySelectorAll('input');
+  if (headerInps[9]) headerInps[9].value = faze[0];
+  // Sub-řádky jen pro faze[1+] — první fáze je na header řádku
+  var subFaze = faze.slice(1);
   var insertAfter = afterRow;
-  faze.forEach(function(f, idx) {
+  subFaze.forEach(function(f, idx) {
     var tr = document.createElement('tr');
     tr.dataset.rowtype = 'rcd-mereni';
     tr.dataset.rcdGroup = rcdGroupId;
     tr.style.background = '#f8f8f0';
-    // Sloučená buňka vlevo — na prvním řádku popisek, na dalších prázdná
+    // Sloučená buňka vlevo — prázdná
     var tdEmpty = document.createElement('td');
     tdEmpty.colSpan = 10;
-    if (idx === 0) {
-      tdEmpty.style.cssText = 'border:none;background:#f8f8f0;text-align:right;padding:.2rem .5rem;font-family:var(--mono);font-size:.62rem;color:#9a9488;vertical-align:middle';
-      tdEmpty.textContent = 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →';
-    } else {
-      tdEmpty.style.cssText = 'border:none;background:#f8f8f0;padding:.15rem';
-    }
+    tdEmpty.style.cssText = 'border:none;background:#f8f8f0;padding:.15rem';
     tr.appendChild(tdEmpty);
-    // Fáze — předvyplněná, tučná
+    // Fáze — readonly
     var tdF = mkTd(f);
     tdF.querySelector('input').value = f;
     tdF.querySelector('input').style.cssText += ';font-weight:bold;color:#2B579A';
     tdF.querySelector('input').readOnly = true;
     tr.appendChild(tdF);
-    // Vyp. mA, čas ms, 5×IΔn ms, Ut V — editovatelné
-    tr.appendChild(mkTd('18'));
-    tr.appendChild(mkTd('28'));
-    tr.appendChild(mkTd('12'));
-    tr.appendChild(mkTd('22'));
+    // Vyp. mA, čas ms, 5×IΔn ms — editovatelné
+    tr.appendChild(mkTd(''));
+    tr.appendChild(mkTd(''));
+    tr.appendChild(mkTd(''));
+    // Ut — šedá buňka bez inputu (Ut je jedno číslo pro celý chránič, zadává se na prvním řádku)
+    tr.appendChild(mkEmptyTd());
     // Kabel — prázdná buňka
     tr.appendChild(mkEmptyTd());
-    // Akce — kopírování celé skupiny jen na posledním řádku
-    var isLast = (idx === faze.length - 1);
+    // Akce — na posledním sub-řádku
+    var isLast = (idx === subFaze.length - 1);
     tr.appendChild(mkRcdActionTd(rcdGroupId, isLast));
     if (insertAfter.nextSibling) {
       tbody.insertBefore(tr, insertAfter.nextSibling);
@@ -3348,8 +3348,17 @@ function addRcdRow(el) {
   risoTd.querySelector('input').value = '>20';
   trMain.appendChild(risoTd);
   trMain.appendChild(mkTd(''));
-  // Fáze, Vyp, čas, 5×, Ut — prázdné na hlavním
-  for (var i = 0; i < 5; i++) trMain.appendChild(mkTd(''));
+  // Fáze — první polarita, readonly (výchozí typ 'A' → 'A+')
+  var tdFaze = mkTd('A+');
+  tdFaze.querySelector('input').value = 'A+';
+  tdFaze.querySelector('input').style.cssText += ';font-weight:bold;color:#2B579A';
+  tdFaze.querySelector('input').readOnly = true;
+  trMain.appendChild(tdFaze);
+  // Vyp, čas, 5×IΔn, Ut — editovatelné (Ut jedno číslo pro celý chránič)
+  trMain.appendChild(mkTd(''));
+  trMain.appendChild(mkTd(''));
+  trMain.appendChild(mkTd(''));
+  trMain.appendChild(mkTd(''));
   // Kabel
   trMain.appendChild(mkTd('CYKY 3×2,5', ';text-align:left', 'dl_kabel'));
   // Prázdná buňka — akce jsou na posledním podřádku
@@ -5124,13 +5133,13 @@ function getData() {
           rowtype: rowtype, rcdGroup: rcdGroup,
           c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: sel ? sel.value : '',
           a: inp[3].value, idn: inp[4].value, isc: inp[5].value, zsm: inp[6].value, riso: inp[7].value, rpe: inp[8].value,
-          faze: '', vyp: '', cas: '', t5idn: '', ut: '', kabel: inp[14].value
+          faze: inp[9].value, vyp: inp[10].value, cas: inp[11].value, t5idn: inp[12].value, ut: inp[13].value, kabel: inp[14].value
         });
       } else if (rowtype === 'rcd-mereni') {
-        if (inp.length >= 5) rozv.mereni.push({
+        if (inp.length >= 4) rozv.mereni.push({
           rowtype: rowtype, rcdGroup: rcdGroup,
           c: '', n: '', typ: '', ch: '', a: '', idn: '', zsm: '', riso: '',
-          faze: inp[0].value, vyp: inp[1].value, cas: inp[2].value, t5idn: inp[3].value, ut: inp[4].value, kabel: ''
+          faze: inp[0].value, vyp: inp[1].value, cas: inp[2].value, t5idn: inp[3].value, ut: '', kabel: ''
         });
       } else if (rowtype === 'info') {
         var popisInp = tr.querySelector('.info-popis');
@@ -6744,7 +6753,16 @@ function nacistData(D) {
           [m.a, m.idn, m.isc || '', m.zsm, rcdRisoVal, m.rpe || ''].forEach(function(v, vi) {
             trR.appendChild(mkTd('')); trR.querySelectorAll('input')[3 + vi].value = v || '';
           });
-          for (var q = 0; q < 5; q++) trR.appendChild(mkTd(''));
+          var tdFR = mkTd('');
+          tdFR.querySelector('input').readOnly = true;
+          tdFR.querySelector('input').style.cssText += ';font-weight:bold;color:#2B579A';
+          trR.appendChild(tdFR);
+          for (var q = 0; q < 4; q++) trR.appendChild(mkTd(''));
+          trR.querySelectorAll('input')[9].value  = m.faze  || '';
+          trR.querySelectorAll('input')[10].value = m.vyp   || '';
+          trR.querySelectorAll('input')[11].value = m.cas   || '';
+          trR.querySelectorAll('input')[12].value = m.t5idn || '';
+          trR.querySelectorAll('input')[13].value = m.ut    || '';
           trR.appendChild(mkTd('', ';text-align:left')); trR.querySelectorAll('input')[14].value = m.kabel || '';
           var dTd = document.createElement('td');
           dTd.style.border = '1px solid #ccc';
@@ -6768,7 +6786,6 @@ function nacistData(D) {
               if (sInps[1]) sInps[1].value = m.vyp || '';
               if (sInps[2]) sInps[2].value = m.cas || '';
               if (sInps[3]) sInps[3].value = m.t5idn || '';
-              if (sInps[4]) sInps[4].value = m.ut || '';
               break;
             }
           }
