@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.88<span class="ver-date"> · 2026-06-26</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.89<span class="ver-date"> · 2026-06-26</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1023,6 +1023,23 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <option value="40">
   <option value="50">
   <option value="63">
+  <option value="1×6">
+  <option value="1×10">
+  <option value="1×13">
+  <option value="1×16">
+  <option value="1×20">
+  <option value="1×25">
+  <option value="1×32">
+  <option value="1×40">
+  <option value="1×50">
+  <option value="1×63">
+  <option value="3×16">
+  <option value="3×20">
+  <option value="3×25">
+  <option value="3×32">
+  <option value="3×40">
+  <option value="3×50">
+  <option value="3×63">
 </datalist>
 <datalist id="dl_idn">
   <option value="0,03">
@@ -2949,7 +2966,7 @@ function getMeasTableHtml() {
     '<th class="grp" rowspan="2" style="width:11%">Kabel<br>typ, průřez mm²</th>' +
     '<th class="grp" rowspan="2" style="width:3%"></th>' +
     '</tr><tr>' +
-    '<th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th>' +
+    '<th>Typ</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th>' +
     '<th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>' +
     '</tr></thead><tbody></tbody></table>';
 }
@@ -5807,7 +5824,7 @@ function generujPDF() {
   }
   var pdfMeasHeader = '<table class="pdf-meas"><thead><tr>' +
     '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="5">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th colspan="5">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
-    '</tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
+    '</tr><tr><th>Typ</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
 
   var rozvadeceHtml = '<div class="sec-head"><div class="sec-num">' + secBase + '.</div><div class="sec-name">Naměřené hodnoty</div></div>';
   rozvList.forEach(function(rozv, ri) {
