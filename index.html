@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.85<span class="ver-date"> · 2026-06-25</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.86<span class="ver-date"> · 2026-06-26</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3184,8 +3184,7 @@ function mkSelectTd(options, selected, onChange) {
 }
 
 function getRcdFazeByType(typ) {
-  if (typ === 'AC') return ['AC+', 'AC-'];
-  return ['AC+', 'AC-', 'A+', 'A-']; // A, B, F
+  return [typ + '+', typ + '-'];
 }
 
 function mkEmptyTd() {
