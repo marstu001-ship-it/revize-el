@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.90<span class="ver-date"> · 2026-06-26</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.91<span class="ver-date"> · 2026-06-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6207,9 +6207,12 @@ async function ulozitSoubor(blob, filename) {
   // 1. Zkus File System Access API (Chrome/Edge desktop)
   if ('showSaveFilePicker' in window) {
     try {
+      var isJson = blob.type === 'application/json';
       var handle = await window.showSaveFilePicker({
         suggestedName: filename,
-        types: [{ description: 'PDF soubor', accept: { 'application/pdf': ['.pdf'] } }]
+        types: [isJson
+          ? { description: 'JSON soubor', accept: { 'application/json': ['.json'] } }
+          : { description: 'PDF soubor',  accept: { 'application/pdf':  ['.pdf']  } }]
       });
       var writable = await handle.createWritable();
       await writable.write(blob);
@@ -6223,7 +6226,7 @@ async function ulozitSoubor(blob, filename) {
   // 2. Zkus Web Share API (iOS Safari, Android Chrome)
   if (navigator.canShare && navigator.share) {
     try {
-      var file = new File([blob], filename, { type: 'application/pdf' });
+      var file = new File([blob], filename, { type: blob.type });
       if (navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: filename });
         return true;
