@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.91<span class="ver-date"> · 2026-06-29</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.92<span class="ver-date"> · 2026-06-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -7183,8 +7183,10 @@ function exportDatabaze() {
     vlastniNormy: STORE.vlastniNormy || {}
   };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  var d = new Date().toISOString().slice(0, 10);
-  ulozitSoubor(blob, 'revize-el-zaloha-' + d + '.json');
+  var now = new Date();
+  var d = now.toISOString().slice(0, 10);
+  var t = now.toTimeString().slice(0, 5).replace(':', '-');
+  ulozitSoubor(blob, 'revize-el-zaloha-' + d + '_' + t + '.json');
   // Zaznamenej, kdy byla zaloha naposledy stažena, ať můžeme
   // upozornit, když je staré.
   STORE.last_backup_at = new Date().toISOString();
