@@ -186,6 +186,17 @@ tr.row-drag-below>td{border-bottom:2px solid #b5291c!important}
 tr.row-dragging{opacity:.35}
 td.dnd-num-cell{position:relative;cursor:grab}
 td.dnd-num-cell .drag-handle{position:absolute;left:1px;top:50%;transform:translateY(-50%);font-size:.55rem;color:#ccc;pointer-events:none;line-height:1}
+/* Režim řazení rozváděčů — skryje obvody, karty se dají přetahovat */
+#rozvadece-container.razeni-mode .meas-table-wrap{display:none}
+#rozvadece-container.razeni-mode .scard-rv .add-row{display:none}
+#rozvadece-container.razeni-mode .scard-rv{border:1px dashed var(--accent2)}
+#rozvadece-container.razeni-mode .scard-title{cursor:grab}
+.rozv-sort-controls{display:flex;gap:.3rem;align-items:center;margin-right:.6rem}
+.rozv-sort-controls button{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:3px;cursor:pointer;font-size:.75rem;padding:.1rem .55rem;line-height:1.4}
+.rozv-sort-controls button:hover{border-color:var(--accent2);color:var(--accent2)}
+.scard-rv.rozv-drag-above{box-shadow:0 -3px 0 0 #b5291c}
+.scard-rv.rozv-drag-below{box-shadow:0 3px 0 0 #b5291c}
+.scard-rv.rozv-dragging{opacity:.4}
 .scard-title{font-family:var(--mono);font-size:.65rem;font-weight:500;
   letter-spacing:.15em;text-transform:uppercase;color:var(--accent2);
   margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
@@ -445,7 +456,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.97<span class="ver-date"> · 2026-07-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.98<span class="ver-date"> · 2026-07-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -535,6 +546,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">↕ Seřazení rozváděčů</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vkládali jste rozváděče na přeskáčku a chcete je mít od hlavního po podružné? V tabu „E. Měření" jde teď změnit jejich pořadí — obvody se dočasně schovají a karty rozváděčů přeskládáte tažením nebo šipkami.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>V tabu „E. Měření" klepněte dole na <strong>↕ Seřadit rozváděče</strong></li>
+        <li>Tabulky obvodů se schovají — vidíte jen hlavičky rozváděčů s přívodem a fázemi</li>
+        <li>Přetáhněte kartu za titulek na nové místo, nebo použijte šipky <strong>▲▼</strong></li>
+        <li>Klepněte <strong>✓ Hotovo</strong> — obvody se zase ukážou a čísla rozváděčů se přepočítají podle nového pořadí</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Nové pořadí se propíše do PDF i do uložené zprávy. Obvody zůstávají u svých rozváděčů, nic se nemaže.</div>
+    </div>
   </div>
 
   <div class="scard">
@@ -1425,8 +1451,9 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <!-- TAB MĚŘENÍ -->
 <div class="tab-panel" id="tab-mereni">
   <div id="rozvadece-container"></div>
-  <div style="display:flex;gap:.75rem;margin-top:1rem;margin-bottom:1rem">
+  <div style="display:flex;gap:.75rem;margin-top:1rem;margin-bottom:1rem;flex-wrap:wrap">
     <button class="add-row" data-action="addRozvadec" style="border-color:var(--accent2);color:var(--accent2);font-size:.7rem;padding:.5rem 1.2rem">+ Přidat další rozváděč</button>
+    <button class="add-row" id="btn-razeni-rozvadecu" data-action="toggleRazeniRozvadecu" style="font-size:.7rem;padding:.5rem 1.2rem" title="Skryje obvody a umožní změnit pořadí rozváděčů přetažením nebo šipkami">↕ Seřadit rozváděče</button>
   </div>
   <div class="info-box" style="font-size:.76rem">
     U RCD je součástí měření ověření funkce testovacího tlačítka.<br>
@@ -3057,12 +3084,144 @@ function addRozvadec() {
   var tbody = div.querySelector('tbody');
   addMereniRowTo(tbody);
   addMereniRowTo(tbody);
+  // Titulky karet drží pořadí DOM (po mazání/řazení by čísla nesouhlasila)
+  renumberRozvadece();
+  if (container.classList.contains('razeni-mode')) initRozvadecSort(div);
 }
 
 function delRozvadec(el) {
   var id = el.dataset.rozvadec;
   var div = document.querySelector('[data-rozvadec-id="' + id + '"]');
-  if (div && confirm('Smazat rozváděč včetně všech obvodů?')) div.remove();
+  if (div && confirm('Smazat rozváděč včetně všech obvodů?')) {
+    div.remove();
+    renumberRozvadece();
+  }
+}
+
+// ═══ ŘAZENÍ ROZVÁDĚČŮ ════════════════════════════════════════════════════
+// Režim řazení skryje tabulky obvodů (zůstane hlavička, přívod a fáze) a
+// karty rozváděčů jde přeskládat tažením za titulek nebo šipkami ▲▼.
+// Pořadí se ukládá samo — collectData čte karty v pořadí DOM.
+var rozvDragCard = null;
+
+function toggleRazeniRozvadecu() {
+  var rc = document.getElementById('rozvadece-container');
+  var btn = document.getElementById('btn-razeni-rozvadecu');
+  if (!rc) return;
+  var on = rc.classList.toggle('razeni-mode');
+  rc.querySelectorAll('.scard-rv').forEach(function(card) {
+    if (on) initRozvadecSort(card); else teardownRozvadecSort(card);
+  });
+  if (btn) {
+    btn.textContent = on ? '✓ Hotovo — pořadí nastaveno' : '↕ Seřadit rozváděče';
+    btn.style.borderColor = on ? 'var(--gold)' : '';
+    btn.style.color = on ? 'var(--gold)' : '';
+  }
+  if (!on) renumberRozvadece();
+}
+
+function initRozvadecSort(card) {
+  var title = card.querySelector('.scard-title');
+  if (!title) return;
+  if (!title.querySelector('.rozv-sort-controls')) {
+    var ctr = document.createElement('div');
+    ctr.className = 'rozv-sort-controls';
+    var up = document.createElement('button');
+    up.textContent = '▲'; up.title = 'Posunout výš';
+    up.addEventListener('click', function() { moveRozvadec(card, -1); });
+    var down = document.createElement('button');
+    down.textContent = '▼'; down.title = 'Posunout níž';
+    down.addEventListener('click', function() { moveRozvadec(card, 1); });
+    ctr.appendChild(up); ctr.appendChild(down);
+    title.insertBefore(ctr, title.firstChild);
+  }
+  title.setAttribute('draggable', 'true');
+  if (!card.dataset.sortInit) {
+    card.dataset.sortInit = '1';
+    title.addEventListener('dragstart', rozvDragStart);
+    card.addEventListener('dragover', rozvDragOver);
+    card.addEventListener('dragleave', rozvDragLeave);
+    card.addEventListener('drop', rozvDrop);
+    card.addEventListener('dragend', rozvDragEnd);
+  }
+}
+
+function teardownRozvadecSort(card) {
+  var ctr = card.querySelector('.rozv-sort-controls');
+  if (ctr) ctr.remove();
+  var title = card.querySelector('.scard-title');
+  if (title) title.removeAttribute('draggable'); // bez atributu dragstart nenastane
+}
+
+function moveRozvadec(card, dir) {
+  var rc = card.parentNode;
+  if (dir < 0) {
+    var prev = card.previousElementSibling;
+    if (prev) rc.insertBefore(card, prev);
+  } else {
+    var next = card.nextElementSibling;
+    if (next) rc.insertBefore(next, card);
+  }
+  renumberRozvadece();
+  window.__formDirty = true;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function rozvDragStart(e) {
+  rozvDragCard = e.target.closest('.scard-rv');
+  if (rozvDragCard) rozvDragCard.classList.add('rozv-dragging');
+  try {
+    e.dataTransfer.setData('text/plain', '');
+    e.dataTransfer.effectAllowed = 'move';
+  } catch(err) {}
+}
+
+function rozvDragOver(e) {
+  if (!rozvDragCard) return;
+  e.preventDefault();
+  var card = e.currentTarget;
+  if (card === rozvDragCard) return;
+  var r = card.getBoundingClientRect();
+  var above = (e.clientY - r.top) < r.height / 2;
+  card.classList.toggle('rozv-drag-above', above);
+  card.classList.toggle('rozv-drag-below', !above);
+}
+
+function rozvDragLeave(e) {
+  e.currentTarget.classList.remove('rozv-drag-above', 'rozv-drag-below');
+}
+
+function rozvDrop(e) {
+  if (!rozvDragCard) return;
+  e.preventDefault();
+  var card = e.currentTarget;
+  card.classList.remove('rozv-drag-above', 'rozv-drag-below');
+  if (card === rozvDragCard) return;
+  var r = card.getBoundingClientRect();
+  var above = (e.clientY - r.top) < r.height / 2;
+  card.parentNode.insertBefore(rozvDragCard, above ? card : card.nextSibling);
+  renumberRozvadece();
+  window.__formDirty = true;
+}
+
+function rozvDragEnd() {
+  if (rozvDragCard) rozvDragCard.classList.remove('rozv-dragging');
+  rozvDragCard = null;
+  document.querySelectorAll('.rozv-drag-above,.rozv-drag-below').forEach(function(x) {
+    x.classList.remove('rozv-drag-above', 'rozv-drag-below');
+  });
+}
+
+// Po přeskládání sladí čísla v titulcích karet s pořadím v DOM —
+// „Rozváděč [1]" je vždy první karta. Na data-rozvadec-id (interní
+// vazba tlačítek) se nesahá.
+function renumberRozvadece() {
+  document.querySelectorAll('#rozvadece-container .scard-rv').forEach(function(card, i) {
+    var span = card.querySelector('.scard-title > span');
+    if (span && span.firstChild && span.firstChild.nodeType === 3) {
+      span.firstChild.nodeValue = 'Rozváděč [' + (i + 1) + '] ';
+    }
+  });
 }
 
 function getTbodyForRozvadec(el) {
@@ -7946,6 +8105,7 @@ document.addEventListener('click', function(e) {
     case 'toggleAutoCislovani': toggleAutoCislovani(); break;
     case 'vybratSlozkuZaloh': vybratSlozkuZaloh(); break;
     case 'zrusitSlozkuZaloh': zrusitSlozkuZaloh(); break;
+    case 'toggleRazeniRozvadecu': toggleRazeniRozvadecu(); break;
     case 'ulozit': ulozit(); break;
     case 'nacist': nacist(); break;
     case 'generujPDF': generujPDFAsk(); break;
