@@ -197,6 +197,16 @@ td.dnd-num-cell .drag-handle{position:absolute;left:1px;top:50%;transform:transl
 .scard-rv.rozv-drag-above{box-shadow:0 -3px 0 0 #b5291c}
 .scard-rv.rozv-drag-below{box-shadow:0 3px 0 0 #b5291c}
 .scard-rv.rozv-dragging{opacity:.4}
+/* Toasty (nenápadná oznámení dole) + Zpět po smazání */
+#toast-wrap{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:.5rem;align-items:center;pointer-events:none}
+.toast{background:#262626;color:#fff;padding:.6rem 1.1rem;border-radius:4px;font-size:.8rem;display:flex;gap:1rem;align-items:center;box-shadow:0 4px 18px rgba(0,0,0,.35);pointer-events:auto;max-width:92vw;animation:toastIn .18s ease-out}
+.toast button{background:none;border:none;color:var(--gold);font-weight:700;cursor:pointer;font-size:.78rem;letter-spacing:.05em;padding:0;white-space:nowrap}
+.toast button:hover{text-decoration:underline}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* Overlay při přetahování souboru do okna */
+#drop-overlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(43,87,154,.18);border:4px dashed var(--accent2);pointer-events:none}
+#drop-overlay.on{display:flex}
+#drop-overlay span{background:var(--accent2);color:#fff;padding:.8rem 1.6rem;border-radius:4px;font-size:1rem;font-weight:600;box-shadow:0 4px 18px rgba(0,0,0,.3)}
 .scard-title{font-family:var(--mono);font-size:.65rem;font-weight:500;
   letter-spacing:.15em;text-transform:uppercase;color:var(--accent2);
   margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
@@ -456,7 +466,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.98<span class="ver-date"> · 2026-07-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.99<span class="ver-date"> · 2026-07-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -546,6 +556,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🛟 Ochrana práce a moderní ovládání</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Balík vylepšení, která znáte z jiných aplikací — program teď mnohem hůř ztratí vaši práci:</p>
+    <div style="font-size:.85rem;line-height:1.8">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Obnova po pádu</strong> — rozepsaná zpráva se průběžně ukládá jako koncept. Když spadne prohlížeč nebo se zavře okno, při dalším startu program nabídne pokračování tam, kde jste skončili.</li>
+        <li><strong>Zpět po smazání</strong> — smazaný řádek, chránič, závada i celý rozváděč jdou 7 vteřin vrátit tlačítkem <strong>ZPĚT</strong> v liště dole. Žádné otravné potvrzovací dialogy.</li>
+        <li><strong>Ctrl+S</strong> uloží zprávu do archivu (místo ukládání stránky prohlížečem), <strong>Esc</strong> zavře otevřené okno.</li>
+        <li><strong>Import přetažením</strong> — soubor .json (záloha i jednotlivá zpráva) stačí přetáhnout myší kamkoli do okna aplikace.</li>
+        <li><strong>Kontrola před PDF</strong> — pokud chybí důležitá pole (ev. číslo, datum, výsledek…), program je před generováním vyjmenuje. <em>Jen upozorní</em> — pokud pole necháváte prázdná záměrně, PDF se vygeneruje normálně.</li>
+        <li><strong>Šetrnější aktualizace</strong> — když při rozepsané zprávě přijde nová verze programu, stránka se nerestartuje sama; ukáže se lišta „OBNOVIT" a načtete si ji, až se to hodí.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard">
@@ -1778,6 +1803,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
         <label for="pdf_use_podpis">Vložit <strong>podpis</strong> technika</label>
       </div>
     </div>
+    <div id="pdf-warnings" style="display:none;margin-bottom:1.25rem;padding:.6rem .8rem;background:#fff8e6;border:1px solid #e0c060;border-radius:3px;font-size:.8rem;line-height:1.6;color:#7a5c00"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closePdfOptions">Zrušit</button>
       <button class="btn btn-gold" data-action="generujPDFPotvrzeno">📄 Generovat PDF</button>
@@ -2097,6 +2123,151 @@ function showScreen(id) {
   if (id === 'nastaveni') nacistTechnika();
   window.scrollTo(0, 0);
 }
+
+// ═══ TOASTY + SMAZÁNÍ SE ZPĚT ════════════════════════════════════════════
+// Nenápadné oznámení dole místo blokujícího alert(). S actionLabel/action
+// vznikne tlačítko (typicky ZPĚT po smazání).
+function showToast(text, opts) {
+  opts = opts || {};
+  var wrap = document.getElementById('toast-wrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'toast-wrap';
+    document.body.appendChild(wrap);
+  }
+  var t = document.createElement('div');
+  t.className = 'toast';
+  var span = document.createElement('span');
+  span.textContent = text;
+  t.appendChild(span);
+  if (opts.actionLabel && opts.action) {
+    var b = document.createElement('button');
+    b.textContent = opts.actionLabel;
+    b.addEventListener('click', function() {
+      try { opts.action(); } catch(e) {}
+      t.remove();
+    });
+    t.appendChild(b);
+  }
+  wrap.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.remove(); }, opts.timeout || 4000);
+  return t;
+}
+
+// Smaže element s toastem „ZPĚT" — vrácení vloží prvek na původní místo.
+// onChange se volá po smazání i po vrácení (přečíslování apod.).
+function deleteWithUndo(el, label, onChange) {
+  var parent = el.parentNode;
+  if (!parent) return;
+  var next = el.nextSibling;
+  el.remove();
+  if (onChange) try { onChange(); } catch(e) {}
+  window.__formDirty = true;
+  showToast(label, { actionLabel: 'ZPĚT', timeout: 7000, action: function() {
+    if (next && next.parentNode === parent) parent.insertBefore(el, next);
+    else parent.appendChild(el);
+    if (onChange) try { onChange(); } catch(e) {}
+    window.__formDirty = true;
+  }});
+}
+
+// Totéž pro skupinu řádků tabulky (RCD skupina = header + podřádky).
+function deleteRowsWithUndo(rowList, label, tbody) {
+  var rows = Array.prototype.slice.call(rowList);
+  if (!rows.length || !tbody) return;
+  var next = rows[rows.length - 1].nextSibling;
+  rows.forEach(function(r) { r.remove(); });
+  renumberRows(tbody);
+  window.__formDirty = true;
+  showToast(label, { actionLabel: 'ZPĚT', timeout: 7000, action: function() {
+    var ref = (next && next.parentNode === tbody) ? next : null;
+    rows.forEach(function(r) { tbody.insertBefore(r, ref); });
+    renumberRows(tbody);
+    window.__formDirty = true;
+  }});
+}
+
+// ═══ KLÁVESOVÉ ZKRATKY ═══════════════════════════════════════════════════
+// Ctrl/Cmd+S = uložit zprávu do archivu (místo „uložit stránku"),
+// Esc = zavřít otevřený modál.
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key === 's' || e.key === 'S')) {
+    var form = document.getElementById('screen-form');
+    if (form && form.classList.contains('active')) {
+      e.preventDefault();
+      if (saveToArchiv() === true) showToast('Zpráva uložena do archivu ✓');
+      else showToast('Neuloženo — vyplňte aspoň ev. číslo nebo místo revize');
+    }
+  }
+  if (e.key === 'Escape') {
+    var open = document.querySelectorAll('.modal-overlay.open');
+    if (open.length) {
+      zavritKnihovnu();
+      closeAiModal();
+      open.forEach(function(m) { m.classList.remove('open'); });
+    }
+  }
+});
+
+// ═══ IMPORT PŘETAŽENÍM SOUBORU DO OKNA ═══════════════════════════════════
+// .json soubor (záloha databáze i jednotlivá zpráva) jde přetáhnout myší
+// kamkoli do aplikace. Řádkové/kartové drag&drop má typ text/plain, soubory
+// mají typ Files — podle toho se rozlišuje.
+function dragMaSoubor(e) {
+  return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0;
+}
+
+function showDropOverlay(on) {
+  var ov = document.getElementById('drop-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'drop-overlay';
+    ov.innerHTML = '<span>📥 Pusťte soubor — importuje se záloha nebo zpráva (.json)</span>';
+    document.body.appendChild(ov);
+  }
+  ov.classList.toggle('on', !!on);
+}
+
+var __dropDepth = 0;
+window.addEventListener('dragenter', function(e) {
+  if (!dragMaSoubor(e)) return;
+  __dropDepth++;
+  showDropOverlay(true);
+});
+window.addEventListener('dragleave', function(e) {
+  if (!dragMaSoubor(e)) return;
+  __dropDepth--;
+  if (__dropDepth <= 0) { __dropDepth = 0; showDropOverlay(false); }
+});
+window.addEventListener('dragover', function(e) {
+  if (dragMaSoubor(e)) e.preventDefault();
+});
+window.addEventListener('drop', function(e) {
+  if (!dragMaSoubor(e)) return;
+  e.preventDefault();
+  __dropDepth = 0;
+  showDropOverlay(false);
+  var f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!f) return;
+  if (!/\.json$/i.test(f.name)) {
+    showToast('Import umí jen .json soubory (záloha nebo zpráva)');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (data && (data._format === 'revize-el-backup' || (Array.isArray(data.archiv) && !data.ev_cislo))) {
+        obnovZeZalohy(data);
+      } else {
+        zpracovatZpravuData(data);
+      }
+    } catch(err) {
+      alert('Soubor se nepodařilo přečíst: ' + err.message);
+    }
+  };
+  reader.readAsText(f);
+});
 
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
@@ -2949,11 +3120,8 @@ function delRcdGroup(el) {
   var tr = el.closest('tr');
   var tbody = tr ? tr.parentNode : null;
   if (!tbody) return;
-  tbody.querySelectorAll('tr[data-rcd-group="' + groupId + '"]').forEach(function(r) { r.remove(); });
-  // Smaž i hlavičku
-  var header = tbody.querySelector('tr[data-rowtype="rcd-header"][data-rcd-group="' + groupId + '"]');
-  if (header) header.remove();
-  renumberRows(tbody);
+  // selektor zahrnuje hlavičku i podřádky (obě mají data-rcd-group)
+  deleteRowsWithUndo(tbody.querySelectorAll('tr[data-rcd-group="' + groupId + '"]'), 'Chránič smazán', tbody);
 }
 
 function copyRcdGroup(el) {
@@ -3092,10 +3260,8 @@ function addRozvadec() {
 function delRozvadec(el) {
   var id = el.dataset.rozvadec;
   var div = document.querySelector('[data-rozvadec-id="' + id + '"]');
-  if (div && confirm('Smazat rozváděč včetně všech obvodů?')) {
-    div.remove();
-    renumberRozvadece();
-  }
+  if (!div) return;
+  deleteWithUndo(div, 'Rozváděč smazán (včetně obvodů)', renumberRozvadece);
 }
 
 // ═══ ŘAZENÍ ROZVÁDĚČŮ ════════════════════════════════════════════════════
@@ -5661,12 +5827,41 @@ function esc(s) {
 
 // Wrapper přes generujPDF — pokud má technik uložené razítko nebo
 // podpis, otevře modal s volbou, co do PDF vložit. Jinak rovnou generuje.
+// Zkontroluje nejdůležitější pole zprávy před generováním PDF. Vrací
+// seznam nevyplněných — jen INFORMATIVNĚ: technik smí pole záměrně
+// nechat prázdné, generování se nikdy neblokuje.
+function pdfChybejiciPole() {
+  var D = getData();
+  var t = STORE.technik || {};
+  var chybi = [];
+  if (!D.ev_cislo) chybi.push('evidenční číslo');
+  if (!D.misto) chybi.push('místo revize');
+  if (!D.zahajeni) chybi.push('datum zahájení');
+  if (!D.ukonceni) chybi.push('datum ukončení');
+  if (!D.celkovy_vysledek) chybi.push('celkový výsledek');
+  if (!t.jmeno) chybi.push('jméno technika (⚙️ Nastavení)');
+  return chybi;
+}
+
 function generujPDFAsk() {
   var t = STORE.technik || {};
   var hasRaz = !!t.razitko;
   var hasPod = !!t.podpis;
-  if (!hasRaz && !hasPod) {
-    // Nic není nahráno → rovnou generovat
+  var chybi = [];
+  try { chybi = pdfChybejiciPole(); } catch(e) {}
+  var warnEl = document.getElementById('pdf-warnings');
+  if (warnEl) {
+    if (chybi.length) {
+      warnEl.style.display = '';
+      warnEl.innerHTML = '⚠️ <strong>Nevyplněno:</strong> ' + esc(chybi.join(', ')) +
+        '<br><span style="font-size:.72rem">PDF se vygeneruje i tak — pokud je to záměr, pokračujte.</span>';
+    } else {
+      warnEl.style.display = 'none';
+      warnEl.innerHTML = '';
+    }
+  }
+  if (!hasRaz && !hasPod && !chybi.length) {
+    // Nic není nahráno a nic nechybí → rovnou generovat
     window.__pdfOpts = { razitko: false, podpis: false };
     generujPDF();
     return;
@@ -6836,14 +7031,14 @@ function autoSave() {
   autoSaveTimer = setTimeout(function() {
     try {
       var D = getData();
-      localStorage.setItem('revize_el_autosave', JSON.stringify(D));
+      localStorage.setItem('revize_el_autosave', JSON.stringify({ _t: new Date().toISOString(), data: D }));
     } catch(e) {}
   }, 1500);
 }
 
 function saveToArchiv() {
   var D = getData();
-  if (!D.ev_cislo && !D.misto) return; // prázdný formulář neukládej
+  if (!D.ev_cislo && !D.misto) return false; // prázdný formulář neukládej
   // Najdi existující zprávu v archivu podle ev_cislo
   var found = -1;
   archiv.forEach(function(z, i) {
@@ -6866,6 +7061,9 @@ function saveToArchiv() {
   renderZalohaStatus();
   autoZaloha(false); // auto-záloha do složky, throttle 10 min (no-op bez složky)
   window.__formDirty = false; // právě uložené data
+  // Práce je v archivu — koncept pro obnovu po pádu už není potřeba
+  try { localStorage.removeItem('revize_el_autosave'); } catch(e) {}
+  return true;
 }
 
 function otevritZpravu(i) {
@@ -7018,10 +7216,9 @@ function nacistData(D) {
           dTd.style.border = '1px solid #ccc';
           var dBtn = document.createElement('button');
           dBtn.className = 'del-btn'; dBtn.textContent = '✕';
-          dBtn.addEventListener('click', (function(g2, r2) { return function() {
-            tbody.querySelectorAll('tr[data-rcd-group="' + g2 + '"]').forEach(function(x) { x.remove(); });
-            r2.remove();
-          };})(gid, trR));
+          dBtn.addEventListener('click', (function(g2) { return function() {
+            deleteRowsWithUndo(tbody.querySelectorAll('tr[data-rcd-group="' + g2 + '"]'), 'Chránič smazán', tbody);
+          };})(gid));
           dTd.appendChild(dBtn); trR.appendChild(dTd);
           tbody.appendChild(trR);
           initRowDnd(trR, tbody);
@@ -7138,44 +7335,41 @@ function nacistJSON(e) {
   var reader = new FileReader();
   reader.onload = function(ev) {
     try {
-      var D = JSON.parse(ev.target.result);
-      // Detekce typu souboru: záloha celé DB má jiný tvar než jedna zpráva.
-      // Záloha (z 💾 Stáhnout zálohu) má top-level archiv/odberatele/technik
-      // a typicky postrádá vlastnosti jednotlivé zprávy (ev_cislo, misto…).
-      // Zpráva (z Uložit JSON) má naopak ploché vlastnosti zprávy.
-      var looksLikeBackup =
-        Array.isArray(D.archiv) ||
-        Array.isArray(D.odberatele) ||
-        Array.isArray(D.snippety) ||
-        Array.isArray(D.pristroje) ||
-        (D.technik && typeof D.technik === 'object' && (D.technik.jmeno || D.technik.osvedceni));
-      var looksLikeReport = !!(D.ev_cislo || D.misto || D.adresa || D.typ === 'elektro' || D.typ === 'lps');
-      if (looksLikeBackup && !looksLikeReport) {
-        alert('Tento soubor vypadá jako záloha celé databáze, ne jedna konkrétní zpráva.\n\n' +
-              'Pro obnovu zálohy použijte:\n' +
-              'Hlavní stránka → 💾 Záloha a obnovení → ⬆️ Obnovit ze zálohy\n\n' +
-              'Tlačítko 📂 Načíst v topbaru je pro načtení JEDNÉ zprávy.');
-        e.target.value = '';
-        return;
-      }
-      if (!looksLikeReport) {
-        if (!confirm('Soubor neobsahuje rozpoznatelná data zprávy (chybí ev. číslo, místo, adresa). Pokračovat i tak?')) {
-          e.target.value = '';
-          return;
-        }
-      }
-      nacistData(D);
-      // Po načtení rovnou uložit do archivu, aby zpráva nezmizela při
-      // návratu na hlavní. Pokud zpráva se stejným ev. číslem už v archivu
-      // existuje, saveToArchiv() ji aktualizuje místo přidání duplicitu.
-      try { saveToArchiv(); } catch(err2) { console.error(err2); }
-      alert('Zpráva načtena a uložena do archivu: ' + (D.ev_cislo || 'bez čísla'));
+      zpracovatZpravuData(JSON.parse(ev.target.result));
     } catch(err) {
       alert('Chyba při načítání souboru: ' + err.message);
     }
     e.target.value = '';
   };
   reader.readAsText(file);
+}
+
+// Zpracuje objekt jedné zprávy (z tlačítka Načíst i z drag&drop importu).
+// Detekce typu souboru: záloha celé DB má jiný tvar než jedna zpráva —
+// záloha má top-level archiv/odberatele/technik, zpráva ploché vlastnosti
+// (ev_cislo, misto…). Zálohu rovnou pošle do obnovy místo hlášky.
+function zpracovatZpravuData(D) {
+  var looksLikeBackup =
+    Array.isArray(D.archiv) ||
+    Array.isArray(D.odberatele) ||
+    Array.isArray(D.snippety) ||
+    Array.isArray(D.pristroje) ||
+    (D.technik && typeof D.technik === 'object' && (D.technik.jmeno || D.technik.osvedceni));
+  var looksLikeReport = !!(D.ev_cislo || D.misto || D.adresa || D.typ === 'elektro' || D.typ === 'lps');
+  if (looksLikeBackup && !looksLikeReport) {
+    obnovZeZalohy(D);
+    return;
+  }
+  if (!looksLikeReport) {
+    if (!confirm('Soubor neobsahuje rozpoznatelná data zprávy (chybí ev. číslo, místo, adresa). Pokračovat i tak?')) return;
+  }
+  nacistData(D);
+  // Po načtení rovnou uložit do archivu, aby zpráva nezmizela při
+  // návratu na hlavní. Pokud zpráva se stejným ev. číslem už v archivu
+  // existuje, saveToArchiv() ji aktualizuje místo přidání duplicitu.
+  try { saveToArchiv(); } catch(err2) { console.error(err2); }
+  showScreen('form');
+  showToast('Zpráva načtena a uložena do archivu: ' + (D.ev_cislo || 'bez čísla'));
 }
 
 // ═══ ODBĚRATELÉ (zákaznická knihovna) ═══════════════════════════════════
@@ -7635,6 +7829,39 @@ function dismissBackupBanner() {
   if (b) b.style.display = 'none';
 }
 
+// Obnova celé databáze ze zálohy — s potvrzením (destruktivní akce,
+// nahrazuje všechna data v prohlížeči). Volá se z tlačítka Obnovit
+// i z drag&drop importu.
+function obnovZeZalohy(data) {
+  if (data._format !== 'revize-el-backup') {
+    if (!confirm('Soubor nevypadá jako záloha Revize EL. Pokračovat?')) return;
+  }
+  var vlastniNormy = data.vlastniNormy || {};
+  var vlastniNormyPocet = Object.values(vlastniNormy).reduce(function(s, a) { return s + (a ? a.length : 0); }, 0);
+  var msg = 'Obnovit ze zálohy?\n\n' +
+    '• Odběratelé: ' + ((data.odberatele || []).length) + '\n' +
+    '• Zprávy v archivu: ' + ((data.archiv || []).length) + '\n' +
+    '• Přístroje: ' + ((data.pristroje || []).length) + '\n' +
+    '• Vlastní texty: ' + ((data.snippety || []).length) + '\n' +
+    (vlastniNormyPocet ? '• Vlastní normy: ' + vlastniNormyPocet + '\n' : '') +
+    '• Profil technika: ' + (data.technik && data.technik.jmeno ? 'ano' : 'ne') + '\n\n' +
+    'Tyto údaje nahradí aktuální data v prohlížeči.';
+  if (!confirm(msg)) return;
+  STORE.technik = data.technik || {};
+  STORE.pristroje = data.pristroje || [];
+  STORE.archiv = data.archiv || [];
+  STORE.odberatele = data.odberatele || [];
+  STORE.snippety = data.snippety || [];
+  if (data.vlastniNormy) STORE.vlastniNormy = data.vlastniNormy;
+  if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
+  archiv = STORE.archiv;
+  odberatele = STORE.odberatele;
+  saveStore();
+  renderArchiv();
+  renderOdberatele();
+  showToast('Záloha úspěšně obnovena ✓');
+}
+
 function importDatabaze() {
   var inp = document.getElementById('import-input');
   if (!inp) return;
@@ -7645,34 +7872,7 @@ function importDatabaze() {
     var reader = new FileReader();
     reader.onload = function(ev) {
       try {
-        var data = JSON.parse(ev.target.result);
-        if (data._format !== 'revize-el-backup') {
-          if (!confirm('Soubor nevypadá jako záloha Revize EL. Pokračovat?')) return;
-        }
-        var vlastniNormy = data.vlastniNormy || {};
-        var vlastniNormyPocet = Object.values(vlastniNormy).reduce(function(s, a) { return s + (a ? a.length : 0); }, 0);
-        var msg = 'Obnovit ze zálohy?\n\n' +
-          '• Odběratelé: ' + ((data.odberatele || []).length) + '\n' +
-          '• Zprávy v archivu: ' + ((data.archiv || []).length) + '\n' +
-          '• Přístroje: ' + ((data.pristroje || []).length) + '\n' +
-          '• Vlastní texty: ' + ((data.snippety || []).length) + '\n' +
-          (vlastniNormyPocet ? '• Vlastní normy: ' + vlastniNormyPocet + '\n' : '') +
-          '• Profil technika: ' + (data.technik && data.technik.jmeno ? 'ano' : 'ne') + '\n\n' +
-          'Tyto údaje nahradí aktuální data v prohlížeči.';
-        if (!confirm(msg)) return;
-        STORE.technik = data.technik || {};
-        STORE.pristroje = data.pristroje || [];
-        STORE.archiv = data.archiv || [];
-        STORE.odberatele = data.odberatele || [];
-        STORE.snippety = data.snippety || [];
-        if (data.vlastniNormy) STORE.vlastniNormy = data.vlastniNormy;
-        if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
-        archiv = STORE.archiv;
-        odberatele = STORE.odberatele;
-        saveStore();
-        renderArchiv();
-        renderOdberatele();
-        alert('Záloha úspěšně obnovena. ✓');
+        obnovZeZalohy(JSON.parse(ev.target.result));
       } catch (err) {
         alert('Chyba při čtení zálohy: ' + err.message);
       }
@@ -7807,6 +8007,9 @@ function leaveFormDiscard() {
   var m = document.getElementById('modal-leave-form');
   if (m) m.classList.remove('open');
   window.__formDirty = false;
+  // Uživatel změny vědomě zahodil — koncept pro obnovu po pádu smazat,
+  // jinak by ho příští start otravoval nabídkou obnovy.
+  try { localStorage.removeItem('revize_el_autosave'); } catch(e) {}
   var cb = window.__leaveFormCb;
   window.__leaveFormCb = null;
   if (cb) cb();
@@ -7961,17 +8164,13 @@ function delRow(btn) {
   if (!btn) return;
   var tr = btn.closest('tr');
   if (!tr) return;
-  var tbody = tr.parentNode;
-  tr.remove();
-  renumberRows(tbody);
+  deleteRowsWithUndo([tr], 'Řádek smazán', tr.parentNode);
 }
 function delRowEl(el) {
   if (!el) return;
   var tr = el.closest('tr');
   if (!tr) return;
-  var tbody = tr.parentNode;
-  tr.remove();
-  renumberRows(tbody);
+  deleteRowsWithUndo([tr], 'Řádek smazán', tr.parentNode);
 }
 
 // Přepíná mezi kompaktním PC a větším mobilním zobrazením.
@@ -8064,6 +8263,32 @@ async function init() {
   requestPersistentStorage();
   setupVoice();
   renderPristrojePreset();
+  // Obnova po pádu: koncept se ukládá průběžně při psaní a maže při
+  // uložení do archivu (nebo vědomém zahození). Pokud tu po startu je,
+  // prohlížeč spadl / zavřel se s neuloženou prací — nabídnout obnovu.
+  try {
+    var draftRaw = localStorage.getItem('revize_el_autosave');
+    if (draftRaw) {
+      var draft = JSON.parse(draftRaw);
+      var draftD = (draft && draft.data) ? draft.data : draft; // starší koncept bez obálky
+      if (draftD && (draftD.ev_cislo || draftD.misto || draftD.adresa)) {
+        var draftKdy = draft && draft._t ? new Date(draft._t).toLocaleString('cs-CZ') : '';
+        if (confirm('Našla se neuložená rozepsaná zpráva' +
+              (draftD.ev_cislo ? ' ' + draftD.ev_cislo : '') +
+              (draftKdy ? ' (naposledy upravena ' + draftKdy + ')' : '') +
+              '.\n\nObnovit ji a pokračovat v práci?')) {
+          aktTyp = draftD.typ === 'lps' ? 'lps' : 'elektro';
+          nacistData(draftD);
+          showScreen('form');
+          window.__formDirty = true;
+        } else {
+          localStorage.removeItem('revize_el_autosave');
+        }
+      } else {
+        localStorage.removeItem('revize_el_autosave');
+      }
+    }
+  } catch(e) {}
   var search = document.getElementById('odberatel-search');
   if (search) search.addEventListener('input', renderOdberatele);
   var arSearch = document.getElementById('archiv-search');
@@ -8199,7 +8424,7 @@ document.addEventListener('click', function(e) {
     case 'closePrirazitOdb': closePrirazitOdb(); break;
     case 'ulozitPrirazeniOdb': ulozitPrirazeniOdb(); break;
     case 'otevritZpravu': otevritZpravu(parseInt(el.getAttribute('data-idx'))); break;
-    case 'removeZavada': var zi = el.closest('.zavada-item'); if (zi) zi.remove(); break;
+    case 'removeZavada': var zi = el.closest('.zavada-item'); if (zi) deleteWithUndo(zi, 'Závada smazána'); break;
     case 'pdf': showScreen('pdf'); break;
     case 'form': showScreen('form'); break;
   }
@@ -8295,13 +8520,23 @@ window.addEventListener('DOMContentLoaded', function() {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function() {});
   // Když nový SW převezme kontrolu (po bumpu CACHE_NAME v sw.js),
-  // automaticky stránku reloadni — uživatel tím hned uvidí novou verzi,
-  // aniž by musel ručně dávat hard-reload.
+  // stránku reloadni, ať uživatel hned vidí novou verzi. Výjimka: pokud
+  // má rozepsanou neuloženou zprávu, reload by ho vylekal — místo toho
+  // se ukáže lišta s tlačítkem OBNOVIT a reload si odklikne sám.
   var swRefreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', function() {
     if (swRefreshing) return;
     swRefreshing = true;
-    window.location.reload();
+    var form = document.getElementById('screen-form');
+    if (form && form.classList.contains('active') && window.__formDirty) {
+      showToast('Je připravena nová verze programu', {
+        actionLabel: 'OBNOVIT',
+        timeout: 600000,
+        action: function() { window.location.reload(); }
+      });
+    } else {
+      window.location.reload();
+    }
   });
 }
 
