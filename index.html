@@ -469,7 +469,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.101<span class="ver-date"> · 2026-07-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.102<span class="ver-date"> · 2026-07-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -560,6 +560,18 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🆔 Přečíslování zprávy a duplicitní čísla</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Zprávy v archivu už nejsou svázané s evidenčním číslem — každá má vlastní skrytou identitu. Co to znamená v praxi:</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Přečíslování = přejmenování.</strong> Změníte ev. číslo rozpracované zprávy a uložíte — zpráva se v archivu jen přejmenuje. Už se nevytváří druhá kopie se starým číslem. (Kopii záměrně vytvoříte tlačítkem 🔗 Navázat.)</li>
+        <li><strong>Načtení zprávy se stejným číslem</strong> (třeba omylem, nebo od kolegy) už tiše nepřepíše tu původní — program se zeptá: <em>Přepsat, nebo zachovat obě?</em></li>
+        <li><strong>Duplicitní čísla jsou povolená</strong> — dvě zprávy se stejným číslem vedle sebe v archivu nevadí, kterékoli z nich pak číslo opravíte.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard">
@@ -2392,9 +2404,16 @@ function renderOchranaCheckboxy() {
   c.innerHTML = html;
 }
 
+// Interní ID zprávy — identita v archivu. Ev. číslo je jen obyčejné pole:
+// smí být duplicitní a jde kdykoli přepsat bez vzniku kopie zprávy.
+function genZpravaUid() {
+  return 'z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
 function novaZprava(typ) {
   aktTyp = typ;
   window.__aktualniOdberatelId = '';
+  window.__openZpravaUid = genZpravaUid();
   var bcTyp = document.getElementById('bc-typ');
   if (bcTyp) bcTyp.textContent = typ === 'elektro' ? 'Nová zpráva — Elektro' : 'Nová zpráva — LPS';
   renderOdberatelSelect();
@@ -7069,7 +7088,7 @@ function autoSave() {
   autoSaveTimer = setTimeout(function() {
     try {
       var D = getData();
-      localStorage.setItem('revize_el_autosave', JSON.stringify({ _t: new Date().toISOString(), data: D }));
+      localStorage.setItem('revize_el_autosave', JSON.stringify({ _t: new Date().toISOString(), uid: window.__openZpravaUid || '', data: D }));
     } catch(e) {}
   }, 1500);
 }
@@ -7077,12 +7096,38 @@ function autoSave() {
 function saveToArchiv() {
   var D = getData();
   if (!D.ev_cislo && !D.misto) return false; // prázdný formulář neukládej
-  // Najdi existující zprávu v archivu podle ev_cislo
+  // Identita zprávy = interní uid (ne ev. číslo!). Přečíslování zprávy
+  // tak jen změní pole, nevyrobí kopii. Ev. čísla smí být duplicitní.
+  if (!window.__openZpravaUid) window.__openZpravaUid = genZpravaUid();
+  var uid = window.__openZpravaUid;
   var found = -1;
   archiv.forEach(function(z, i) {
-    if (z.ev_cislo && z.ev_cislo === D.ev_cislo) found = i;
+    if (z.uid && z.uid === uid) found = i;
   });
+  // Nová zpráva (uid v archivu není) s číslem, které už existuje —
+  // typicky import cizí zprávy se shodným číslem. Zeptat se, jednou:
+  // po volbě se identita sváže a další ukládání už jde tiše přes uid.
+  if (found < 0 && D.ev_cislo) {
+    var kolize = -1;
+    archiv.forEach(function(z, i) {
+      if (kolize < 0 && z.ev_cislo && z.ev_cislo === D.ev_cislo) kolize = i;
+    });
+    if (kolize >= 0) {
+      var k = archiv[kolize];
+      if (confirm('V archivu už je zpráva s ev. číslem ' + D.ev_cislo +
+            (k.misto ? ' („' + k.misto + '")' : '') + '.\n\n' +
+            'OK = PŘEPSAT ji touto zprávou\n' +
+            'Zrušit = ZACHOVAT OBĚ — tato se uloží vedle jako samostatná zpráva ' +
+            'se stejným číslem (číslo pak můžete kterékoli z nich přepsat)')) {
+        found = kolize;
+        if (!k.uid) k.uid = genZpravaUid();
+        uid = k.uid;
+        window.__openZpravaUid = uid;
+      }
+    }
+  }
   var entry = {
+    uid: uid,
     typ: D.typ, podtyp: D.podtyp, ev_cislo: D.ev_cislo, misto: D.misto,
     datum: D.zahajeni, vysledek: D.celkovy_vysledek,
     odberatel_id: D.odberatel_id || '',
@@ -7090,6 +7135,7 @@ function saveToArchiv() {
     // ať se archiv nerozsvítí celý), úplně nová startuje jako rozpracovaná.
     stav: found >= 0 ? (archiv[found].stav || '') : 'aktivni',
     pinned: found >= 0 ? !!archiv[found].pinned : false,
+    last_opened_at: found >= 0 ? (archiv[found].last_opened_at || '') : '',
     data: D, timestamp: new Date().toISOString()
   };
   if (found >= 0) {
@@ -7116,8 +7162,12 @@ function otevritZpravu(i) {
   }
   // Zaznamenat poslední otevření pro panel "Naposledy otevřené"
   entry.last_opened_at = new Date().toISOString();
+  if (!entry.uid) entry.uid = genZpravaUid(); // migrace starých záznamů
   saveStore();
   nacistData(entry.data);
+  // nacistData (přes novaZprava) přidělila nové uid — u otevřené archivní
+  // zprávy se musí převzít identita záznamu, jinak by uložení vytvořilo kopii
+  window.__openZpravaUid = entry.uid;
 }
 
 function togglePinZpravu(i) {
@@ -8317,6 +8367,13 @@ async function init() {
   await loadStore();
   archiv = STORE.archiv || [];
   odberatele = STORE.odberatele || [];
+  // Migrace: každý záznam archivu dostane interní uid (identita zprávy
+  // nezávislá na ev. čísle — to smí být duplicitní a měnit se).
+  var uidPridano = false;
+  archiv.forEach(function(z) {
+    if (!z.uid) { z.uid = genZpravaUid(); uidPridano = true; }
+  });
+  if (uidPridano) { STORE.archiv = archiv; saveStore(); }
   renderArchiv();
   renderOdberatele();
   renderZalohaStatus();
@@ -8349,6 +8406,9 @@ async function init() {
               '.\n\nObnovit ji a pokračovat v práci?')) {
           aktTyp = draftD.typ === 'lps' ? 'lps' : 'elektro';
           nacistData(draftD);
+          // Převzít identitu z konceptu — uložení pak aktualizuje původní
+          // záznam v archivu místo vytvoření kopie
+          if (draft && draft.uid) window.__openZpravaUid = draft.uid;
           showScreen('form');
           window.__formDirty = true;
         } else {
