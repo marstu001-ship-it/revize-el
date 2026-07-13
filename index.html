@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.93<span class="ver-date"> · 2026-07-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.94<span class="ver-date"> · 2026-07-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2979,7 +2979,7 @@ function getMeasTableHtml() {
     '<th class="grp" rowspan="2" style="width:11%">Kabel<br>typ, průřez mm²</th>' +
     '<th class="grp" rowspan="2" style="width:3%"></th>' +
     '</tr><tr>' +
-    '<th>Typ</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th>' +
+    '<th>Značka</th><th>Ch./Typ</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th>' +
     '<th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>' +
     '</tr></thead><tbody></tbody></table>';
 }
@@ -3024,7 +3024,7 @@ function addRozvadec() {
     '<div class="meas-table-wrap">' + getMeasTableHtml() + '</div>' +
     '<div style="display:flex;gap:.75rem;margin-top:.6rem;flex-wrap:wrap">' +
     '<button class="add-row" data-action="addMereniRow" data-rozvadec="rozv-' + n + '">+ Přidat obvod</button>' +
-    '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD</button>' +
+    '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD/RCBO</button>' +
     '<button class="add-row" data-action="addInfoRow" data-rozvadec="rozv-' + n + '" style="border-color:#a87d00;color:#a87d00" title="Volný řádek pro elektroměr, stykač, pojistku, spotřebič…">+ Přidat jiný řádek</button>' +
     (STORE.aiConfig && STORE.aiConfig.provider && STORE.aiConfig.apiKey
       ? '<button class="add-row" data-action="aiPanelScan" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2);font-weight:600">🤖 Naskenovat štítek (AI)</button>'
@@ -3246,7 +3246,10 @@ function mkSelectTd(options, selected, onChange) {
 }
 
 function getRcdFazeByType(typ) {
-  return [typ + '+', typ + '-'];
+  // U RCBO je hodnota kombinovaná „charakteristika/typ" (např. B/A) —
+  // pro pojmenování měřicích řádků se bere jen typ chrániče za lomítkem.
+  var t = String(typ || '').split('/').pop();
+  return [t + '+', t + '-'];
 }
 
 function mkEmptyTd() {
@@ -3396,7 +3399,7 @@ function addRcdRow(el) {
   // Typ-pol — výrobce
   trMain.appendChild(mkTd('Hager'));
   // Ch. — rozbalovací pole s typem chrániče
-  var chTd = mkSelectTd(['A', 'AC', 'B', 'F'], 'A', function() {
+  var chTd = mkSelectTd(['A', 'AC', 'B', 'F', 'B/A', 'B/AC', 'C/A', 'C/AC'], 'A', function() {
     addRcdSubRows(tbody, trMain, this.value, groupId);
   });
   trMain.appendChild(chTd);
@@ -5869,7 +5872,7 @@ function generujPDF() {
   }
   var pdfMeasHeader = '<table class="pdf-meas"><thead><tr>' +
     '<th rowspan="2">Č.</th><th rowspan="2" style="min-width:80px">Název obvodu</th><th colspan="5">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th colspan="5">Měření RCD</th><th rowspan="2" style="min-width:70px">Kabel typ,<br>průřezu mm²</th>' +
-    '</tr><tr><th>Typ</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
+    '</tr><tr><th>Značka</th><th>Ch./Typ</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
 
   var rozvadeceHtml = '<div class="sec-head"><div class="sec-num">' + secBase + '.</div><div class="sec-name">Naměřené hodnoty</div></div>';
   rozvList.forEach(function(rozv, ri) {
@@ -6515,7 +6518,7 @@ function tiskMereni() {
   win.document.write('.note { font-size: 7pt; margin-top: 2mm; color: #444; }');
   win.document.write('@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
   win.document.write('</style></head><body>');
-  var thHtml = '<thead><tr><th rowspan="2">Č.</th><th rowspan="2" style="min-width:60pt">Název obvodu</th><th colspan="5">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th colspan="5">Měření RCD</th><th rowspan="2" style="min-width:50pt">Kabel typ,<br>průřezu mm²</th></tr><tr><th>Typ-pol</th><th>Ch.</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
+  var thHtml = '<thead><tr><th rowspan="2">Č.</th><th rowspan="2" style="min-width:60pt">Název obvodu</th><th colspan="5">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th colspan="5">Měření RCD</th><th rowspan="2" style="min-width:50pt">Kabel typ,<br>průřezu mm²</th></tr><tr><th>Značka</th><th>Ch./Typ</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
   win.document.write('<div class="header">');
   win.document.write('<div class="hbox">' + fmtDate(D.zahajeni) + '</div>');
   win.document.write('<div class="hbox">' + esc(D.ev_cislo||'—') + '</div>');
@@ -6809,7 +6812,7 @@ function nacistData(D) {
           trR.appendChild(mkTd('')); trR.querySelector('input').value = m.c || '';
           trR.appendChild(mkTd('', ';text-align:left')); trR.querySelectorAll('input')[1].value = m.n || '';
           trR.appendChild(mkTd('')); trR.querySelectorAll('input')[2].value = m.typ || '';
-          var chTd = mkSelectTd(['A','AC','B','F'], m.ch || 'A', function() {
+          var chTd = mkSelectTd(['A','AC','B','F','B/A','B/AC','C/A','C/AC'], m.ch || 'A', function() {
             addRcdSubRows(tbody, trR, this.value, gid);
           });
           trR.appendChild(chTd);
