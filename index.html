@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.96<span class="ver-date"> · 2026-07-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.97<span class="ver-date"> · 2026-07-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -535,6 +535,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📁 Automatické zálohy do složky</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Konec ručního stahování a hledání složky. Vyberete jednou složku na disku a program do ní ukládá zálohy databáze sám — při uložení zprávy, při prvním otevření v nový den a po každé aktualizaci programu. Název souboru obsahuje datum i čas.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Jděte do <strong>⚙️ Nastavení</strong> → sekce <strong>📁 Automatické zálohy do složky</strong></li>
+        <li>Klepněte <strong>📁 Vybrat složku pro zálohy</strong> a vyberte např. Dokumenty\Revize zálohy</li>
+        <li>Povolte prohlížeči ukládání do složky — první záloha se uloží hned</li>
+        <li>Hotovo — o zálohy se už nestaráte. I ruční „⬇️ Stáhnout zálohu" teď ukládá rovnou do této složky</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Drží se posledních 20 záloh, starší se samy promažou — jiných souborů ve složce se program nedotkne. Funguje v Chrome/Edge na počítači; na mobilu zůstává ruční stažení. Tip: zvolte složku synchronizovanou s cloudem (OneDrive, Disk Google) a máte zálohy i mimo počítač.</div>
+    </div>
   </div>
 
   <div class="scard">
@@ -960,6 +975,16 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div id="pristroje-preset-list"></div>
     <button class="add-row" data-action="addPristrojPreset">+ Přidat přístroj</button>
     <div style="margin-top:.5rem;font-size:.72rem;color:var(--muted)">Změny se ukládají automaticky.</div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">📁 Automatické zálohy do složky</div>
+    <div class="info-box">Vyberte jednou složku na disku (třeba <strong>Dokumenty\Revize zálohy</strong>) a program do ní bude zálohy ukládat <strong>sám</strong> — při uložení zprávy (max. 1× za 10 minut), při prvním otevření v nový den a po aktualizaci programu. Drží se posledních 20 záloh, starší se automaticky promazávají (jiných souborů ve složce se to nedotkne). Ruční tlačítko „⬇️ Stáhnout zálohu" pak ukládá rovnou do této složky bez dialogu.</div>
+    <div id="autozaloha-status" style="margin-bottom:.6rem"></div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button class="btn btn-gold" data-action="vybratSlozkuZaloh">📁 Vybrat složku pro zálohy</button>
+      <button class="btn btn-ghost" id="btn-zrusit-autozalohu" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zrusitSlozkuZaloh">✕ Vypnout automatické zálohy</button>
+    </div>
+    <div style="margin-top:.5rem;font-size:.72rem;color:var(--muted)">Funguje v Chrome a Edge na počítači. Na mobilu a v jiných prohlížečích zůstává ruční stažení.</div>
   </div>
 </div>
 </div>
@@ -1802,7 +1827,7 @@ var idb = null;
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
                   'snippety', 'aiConfig', 'vlastniNormy',
                   'last_backup_at', 'archiv_count_at_last_backup',
-                  'auto_cislovani'];
+                  'auto_cislovani', 'auto_zaloha_at', 'auto_zaloha_ver'];
 
 // iOS Safari (tab i PWA) má historicky bugy v IndexedDB v WebKit content
 // procesu — open() někdy nikdy nedovolá callback a stránka padne. Detekce
@@ -6680,6 +6705,7 @@ function saveToArchiv() {
   saveStore();
   renderArchiv();
   renderZalohaStatus();
+  autoZaloha(false); // auto-záloha do složky, throttle 10 min (no-op bez složky)
   window.__formDirty = false; // právě uložené data
 }
 
@@ -7224,7 +7250,7 @@ function ulozitJakoOdberatele() {
 }
 
 // ═══ ZÁLOHA / OBNOVENÍ CELÉ DATABÁZE ═══════════════════════════════════
-function exportDatabaze() {
+function buildZalohaBlob() {
   var data = {
     _format: 'revize-el-backup',
     _version: 1,
@@ -7237,17 +7263,151 @@ function exportDatabaze() {
     vlastniNormy: STORE.vlastniNormy || {},
     auto_cislovani: STORE.auto_cislovani !== false
   };
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+}
+
+// Název souboru zálohy: datum + čas, aby se zálohy z jednoho dne nepřepisovaly
+function zalohaFilename() {
   var now = new Date();
   var d = now.toISOString().slice(0, 10);
   var t = now.toTimeString().slice(0, 5).replace(':', '-');
-  ulozitSoubor(blob, 'revize-el-zaloha-' + d + '_' + t + '.json');
+  return 'revize-el-zaloha-' + d + '_' + t + '.json';
+}
+
+async function exportDatabaze() {
+  // Pokud je nastavená složka pro zálohy, ulož rovnou do ní — bez dialogu
+  if (backupDirHandle && await autoZalohaPermission(true)) {
+    if (await autoZaloha(true)) {
+      alert('Záloha uložena do složky „' + backupDirHandle.name + '" ✓');
+      return;
+    }
+  }
+  ulozitSoubor(buildZalohaBlob(), zalohaFilename());
   // Zaznamenej, kdy byla zaloha naposledy stažena, ať můžeme
   // upozornit, když je staré.
   STORE.last_backup_at = new Date().toISOString();
   STORE.archiv_count_at_last_backup = (STORE.archiv || []).length;
   saveStore();
   renderZalohaStatus();
+}
+
+// ═══ AUTOMATICKÉ ZÁLOHY DO SLOŽKY (File System Access API) ═══════════════
+// Uživatel jednou vybere složku na disku (Chrome/Edge desktop), handle se
+// uloží do IndexedDB (nejde přes JSON/localStorage) a zálohy se pak píšou
+// bez dialogu: při uložení zprávy (max 1× za 10 min), při startu v nový den
+// a při změně verze programu. Starší zálohy nad limit se promazávají.
+var backupDirHandle = null;
+var AUTOZALOHA_LIMIT = 20;
+
+function autoZalohaSupported() { return 'showDirectoryPicker' in window; }
+
+function getAppVer() {
+  var el = document.querySelector('.topbar .ver');
+  return el ? el.textContent.trim() : '';
+}
+
+async function vybratSlozkuZaloh() {
+  if (!autoZalohaSupported()) {
+    alert('Tento prohlížeč výběr složky neumí — automatické zálohy fungují v Chrome nebo Edge na počítači.');
+    return;
+  }
+  try {
+    var handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    backupDirHandle = handle;
+    await idbSetMulti({ backup_dir_handle: handle });
+    STORE.auto_zaloha_at = null;
+    saveStore();
+    updateAutoZalohaUI();
+    if (await autoZaloha(true)) {
+      alert('Hotovo — první záloha uložena do složky „' + handle.name + '".\nDalší se budou ukládat automaticky.');
+    }
+  } catch(e) {
+    if (e && e.name !== 'AbortError') alert('Složku se nepodařilo nastavit: ' + e.message);
+  }
+}
+
+async function zrusitSlozkuZaloh() {
+  backupDirHandle = null;
+  try { await idbSetMulti({ backup_dir_handle: null }); } catch(e) {}
+  updateAutoZalohaUI();
+}
+
+async function autoZalohaPermission(interactive) {
+  if (!backupDirHandle) return false;
+  try {
+    var p = await backupDirHandle.queryPermission({ mode: 'readwrite' });
+    if (p === 'granted') return true;
+    if (p === 'prompt' && interactive) {
+      p = await backupDirHandle.requestPermission({ mode: 'readwrite' });
+      return p === 'granted';
+    }
+  } catch(e) {}
+  return false;
+}
+
+// force=true přeskočí 10min throttle (ruční export, výběr složky, start)
+async function autoZaloha(force) {
+  if (!backupDirHandle) return false;
+  if (!force) {
+    var last = STORE.auto_zaloha_at ? new Date(STORE.auto_zaloha_at).getTime() : 0;
+    if (Date.now() - last < 10 * 60 * 1000) return false;
+  }
+  // requestPermission smí běžet jen uvnitř uživatelské akce (klik)
+  var interactive = !!(navigator.userActivation && navigator.userActivation.isActive);
+  if (!(await autoZalohaPermission(interactive))) return false;
+  try {
+    var fh = await backupDirHandle.getFileHandle(zalohaFilename(), { create: true });
+    var w = await fh.createWritable();
+    await w.write(buildZalohaBlob());
+    await w.close();
+    STORE.auto_zaloha_at = new Date().toISOString();
+    STORE.auto_zaloha_ver = getAppVer();
+    STORE.last_backup_at = STORE.auto_zaloha_at;
+    STORE.archiv_count_at_last_backup = (STORE.archiv || []).length;
+    saveStore();
+    renderZalohaStatus();
+    updateAutoZalohaUI();
+    rotaceZaloh();
+    return true;
+  } catch(e) {
+    try { console.error('Auto-záloha selhala:', e); } catch(e2) {}
+    return false;
+  }
+}
+
+// Smaže nejstarší auto-zálohy nad limit. Sahá VÝHRADNĚ na soubory přesně
+// ve tvaru revize-el-zaloha-RRRR-MM-DD_HH-MM.json — cizích souborů ve
+// složce se nedotkne. Datum v názvu řadí chronologicky i abecedně.
+async function rotaceZaloh() {
+  if (!backupDirHandle) return;
+  try {
+    var names = [];
+    for await (var entry of backupDirHandle.values()) {
+      if (entry.kind === 'file' && /^revize-el-zaloha-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.json$/.test(entry.name)) {
+        names.push(entry.name);
+      }
+    }
+    names.sort();
+    while (names.length > AUTOZALOHA_LIMIT) {
+      await backupDirHandle.removeEntry(names.shift());
+    }
+  } catch(e) {}
+}
+
+function updateAutoZalohaUI() {
+  var el = document.getElementById('autozaloha-status');
+  var btnOff = document.getElementById('btn-zrusit-autozalohu');
+  if (!el) return;
+  if (!autoZalohaSupported()) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:.78rem">Tento prohlížeč výběr složky nepodporuje — automatické zálohy fungují v Chrome nebo Edge na počítači. Ruční stažení zálohy funguje všude.</span>';
+  } else if (!backupDirHandle) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:.78rem">Zatím není nastaveno — zálohy se stahují jen ručně.</span>';
+  } else {
+    var kdy = STORE.auto_zaloha_at ? new Date(STORE.auto_zaloha_at).toLocaleString('cs-CZ') : 'zatím žádná';
+    el.innerHTML = '<span style="display:inline-block;padding:.3rem .6rem;border-radius:3px;background:#2e7d32;color:#fff;font-family:var(--mono);font-size:.65rem;letter-spacing:.03em">📁 ' +
+      esc(backupDirHandle.name) + ' · poslední auto-záloha: ' + esc(kdy) + '</span>';
+  }
+  if (btnOff) btnOff.style.display = backupDirHandle ? '' : 'none';
 }
 
 // Vrátí čas v lidsky čitelném formátu od posledního exportu zálohy
@@ -7732,6 +7892,16 @@ async function init() {
   renderArchiv();
   renderOdberatele();
   renderZalohaStatus();
+  // Automatické zálohy: načíst handle složky z IDB a případně zálohovat
+  // (nový den nebo nová verze programu). Bez trvalého oprávnění se pokus
+  // tiše přeskočí a chytí se při nejbližším kliku na Uložit.
+  try { backupDirHandle = (await idbGet('backup_dir_handle')) || null; } catch(e) {}
+  updateAutoZalohaUI();
+  if (backupDirHandle) {
+    var azDnes = new Date().toISOString().slice(0, 10);
+    var azLast = (STORE.auto_zaloha_at || '').slice(0, 10);
+    if (azLast !== azDnes || STORE.auto_zaloha_ver !== getAppVer()) autoZaloha(true);
+  }
   requestPersistentStorage();
   setupVoice();
   renderPristrojePreset();
@@ -7774,6 +7944,8 @@ document.addEventListener('click', function(e) {
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'novinky': showScreen('novinky'); break;
     case 'toggleAutoCislovani': toggleAutoCislovani(); break;
+    case 'vybratSlozkuZaloh': vybratSlozkuZaloh(); break;
+    case 'zrusitSlozkuZaloh': zrusitSlozkuZaloh(); break;
     case 'ulozit': ulozit(); break;
     case 'nacist': nacist(); break;
     case 'generujPDF': generujPDFAsk(); break;
