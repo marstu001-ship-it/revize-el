@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.92<span class="ver-date"> · 2026-06-29</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.93<span class="ver-date"> · 2026-07-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -535,6 +535,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🔢 Vlastní číslování obvodů (FA1, FA2…)</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Sloupec Č. v tabulce měření už nemusí číslovat automaticky. Pokud si obvody značíte vlastními kódy (FA1, FA2, FA3…), přepněte na vlastní číslování — program pak na vaše označení nesahá ani při přidání, smazání nebo kopírování řádku.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Jak na to:</strong>
+      <ol style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>V tabu „E. Měření" klepněte na záhlaví sloupce <strong>Č.</strong> (ikona 🔢)</li>
+        <li>Ikona se změní na <strong>✏️</strong> — od teď zůstávají čísla řádků tak, jak je napíšete</li>
+        <li>Nový řádek má sloupec Č. prázdný — doplňte si vlastní označení</li>
+        <li>Dalším klepnutím přepnete zpět na automatické — řádky se hned přečíslují 1, 2, 3…</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Volba se pamatuje napořád (i po zavření prohlížeče) a je součástí zálohy databáze — na novém zařízení se obnoví spolu s ostatními daty.</div>
+    </div>
   </div>
 
   <div class="scard">
@@ -1785,8 +1800,9 @@ var IDB_VERSION = 1;
 var IDB_STORE = 'kv';
 var idb = null;
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
-                  'snippety', 'aiConfig',
-                  'last_backup_at', 'archiv_count_at_last_backup'];
+                  'snippety', 'aiConfig', 'vlastniNormy',
+                  'last_backup_at', 'archiv_count_at_last_backup',
+                  'auto_cislovani'];
 
 // iOS Safari (tab i PWA) má historicky bugy v IndexedDB v WebKit content
 // procesu — open() někdy nikdy nedovolá callback a stránka padne. Detekce
@@ -1892,8 +1908,10 @@ async function loadStore() {
         STORE.odberatele = d.odberatele || [];
         STORE.snippety = d.snippety || [];
         STORE.aiConfig = d.aiConfig || {};
+        STORE.vlastniNormy = d.vlastniNormy || {};
         STORE.last_backup_at = d.last_backup_at || null;
         STORE.archiv_count_at_last_backup = d.archiv_count_at_last_backup || 0;
+        STORE.auto_cislovani = (d.auto_cislovani !== false);
         // Zapsat do IDB (jednorázová migrace)
         if (idb) {
           var snapshot = {};
@@ -2946,7 +2964,12 @@ var rozvadecCounter = 0;
 function getMeasTableHtml() {
   return '<table class="data-table meas-table"><thead>' +
     '<tr>' +
-    '<th class="grp" rowspan="2" style="width:3%">Č.</th>' +
+    '<th class="grp" rowspan="2" style="width:3%;cursor:pointer" data-action="toggleAutoCislovani" title="' +
+    (STORE.auto_cislovani === false
+      ? 'Vlastní číslování — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
+      : 'Automatické číslování 1, 2, 3… Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).') +
+    '">Č. <span class="cisl-ico">' +
+    (STORE.auto_cislovani === false ? '✏️' : '🔢') + '</span></th>' +
     '<th class="grp" rowspan="2" style="width:13%">Název obvodu</th>' +
     '<th class="grp" colspan="5">Jmenovité hodnoty jištění</th>' +
     '<th class="grp" rowspan="2">Zsm<br>max Ω</th>' +
@@ -3035,6 +3058,9 @@ function addMereniRow(el) {
 }
 
 function getNextRowNum(tbody) {
+  // V režimu vlastního číslování nechá nový řádek prázdný — uživatel si
+  // doplní vlastní označení (FA1, FA2, …).
+  if (STORE.auto_cislovani === false) return '';
   var n = 0;
   tbody.querySelectorAll('tr[data-rowtype="obvod"], tr[data-rowtype="rcd-header"], tr[data-rowtype="info"]').forEach(function() { n++; });
   return n + 1;
@@ -3046,6 +3072,8 @@ function getNextRowNum(tbody) {
 // Bezpečně se volá i na tbody, které žádné takové řádky nemají
 // (dokumentace, přístroje, závady) — nic se nestane.
 function renumberRows(tbody) {
+  // Režim vlastního číslování — na hodnoty ve sloupci Č. se nesahá.
+  if (STORE.auto_cislovani === false) return;
   if (!tbody) return;
   var n = 0;
   tbody.querySelectorAll('tr').forEach(function(tr) {
@@ -3055,6 +3083,33 @@ function renumberRows(tbody) {
       var firstInput = tr.querySelector('input');
       if (firstInput) firstInput.value = '' + n;
     }
+  });
+}
+
+// Přepínač automatické (1, 2, 3…) vs. vlastní číslování (FA1, FA2…) ve
+// sloupci Č. Vlastní režim nechává hodnoty tak, jak je uživatel napsal —
+// nepřečíslovává se při přidání/smazání/kopírování řádku. Volba je globální
+// a trvalá (STORE), přenáší se i zálohou databáze.
+function toggleAutoCislovani() {
+  var zapnout = (STORE.auto_cislovani === false);
+  if (zapnout && !confirm('Zapnout automatické číslování?\n\nVšechny řádky ve všech tabulkách se hned přečíslují 1, 2, 3… a vlastní označení (FA1, FA2…) se přepíšou.')) return;
+  STORE.auto_cislovani = zapnout;
+  saveStore();
+  updateCislovaniIco();
+  if (zapnout) {
+    document.querySelectorAll('table tbody').forEach(function(tb) { renumberRows(tb); });
+  }
+}
+
+function updateCislovaniIco() {
+  var vlastni = (STORE.auto_cislovani === false);
+  document.querySelectorAll('.cisl-ico').forEach(function(el) {
+    el.textContent = vlastni ? '✏️' : '🔢';
+  });
+  document.querySelectorAll('th[data-action="toggleAutoCislovani"]').forEach(function(el) {
+    el.title = vlastni
+      ? 'Vlastní číslování — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
+      : 'Automatické číslování 1, 2, 3… Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).';
   });
 }
 
@@ -7180,7 +7235,8 @@ function exportDatabaze() {
     archiv: STORE.archiv || [],
     odberatele: STORE.odberatele || [],
     snippety: STORE.snippety || [],
-    vlastniNormy: STORE.vlastniNormy || {}
+    vlastniNormy: STORE.vlastniNormy || {},
+    auto_cislovani: STORE.auto_cislovani !== false
   };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   var now = new Date();
@@ -7292,6 +7348,7 @@ function importDatabaze() {
         STORE.odberatele = data.odberatele || [];
         STORE.snippety = data.snippety || [];
         if (data.vlastniNormy) STORE.vlastniNormy = data.vlastniNormy;
+        if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
         archiv = STORE.archiv;
         odberatele = STORE.odberatele;
         saveStore();
@@ -7717,6 +7774,7 @@ document.addEventListener('click', function(e) {
     case 'home': attemptLeaveForm(function() { showScreen('home'); }); break;
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'novinky': showScreen('novinky'); break;
+    case 'toggleAutoCislovani': toggleAutoCislovani(); break;
     case 'ulozit': ulozit(); break;
     case 'nacist': nacist(); break;
     case 'generujPDF': generujPDFAsk(); break;
