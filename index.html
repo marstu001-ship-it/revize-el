@@ -445,7 +445,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.94<span class="ver-date"> · 2026-07-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.95<span class="ver-date"> · 2026-07-13</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2930,23 +2930,20 @@ function copyRcdGroup(el) {
     if (clone.dataset.rowtype === 'rcd-header') {
       var sel = clone.querySelector('select');
       if (sel) {
+        // cloneNode nepřenáší aktuální výběr <select> — bez tohohle by
+        // kopie spadla na první option ('A') bez ohledu na originál
+        var origSel = r.querySelector('select');
+        if (origSel) sel.value = origSel.value;
         sel.addEventListener('change', function() {
           addRcdSubRows(tbody, clone, this.value, newGroupId);
         });
       }
-      // Aktualizuj delete tlačítko na hlavičce
-      var headerDels = clone.querySelectorAll('button');
-      headerDels.forEach(function(b) {
-        if (b.textContent === '✕' && !b.dataset.action) {
-          var newDel = b.cloneNode(true);
-          newDel.addEventListener('click', function() {
-            var subs = tbody.querySelectorAll('tr[data-rcd-group="' + newGroupId + '"]');
-            subs.forEach(function(x) { x.remove(); });
-            clone.remove();
-          });
-          b.parentNode.replaceChild(newDel, b);
-        }
-      });
+      // cloneNode nepřenáší drag&drop listenery — resetovat a znovu initnout
+      delete clone.dataset.dndInit;
+      clone.querySelectorAll('.drag-handle').forEach(function(h) { h.remove(); });
+      var dndCell = clone.querySelector('td');
+      if (dndCell) dndCell.classList.remove('dnd-num-cell');
+      initRowDnd(clone, tbody);
     }
     if (insertAfter.nextSibling) {
       tbody.insertBefore(clone, insertAfter.nextSibling);
@@ -6850,7 +6847,7 @@ function nacistData(D) {
           // Zjistit první fázi dle typu chrániče (A+, AC+, B+, F+)
           var hdrRow = tbody.querySelector('tr[data-rcd-group="' + newGid + '"][data-rowtype="rcd-header"]');
           var hdrSel = hdrRow ? hdrRow.querySelector('select') : null;
-          var firstFaze = hdrSel ? (hdrSel.value + '+') : '';
+          var firstFaze = hdrSel ? getRcdFazeByType(hdrSel.value)[0] : '';
           if (firstFaze && m.faze === firstFaze) {
             // Migrace starého formátu: první fáze (A+/B+/...) je nyní na header řádku
             var hInps = hdrRow.querySelectorAll('input');
