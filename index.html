@@ -158,6 +158,9 @@ html.view-mobile .home-wrap{padding:0 .75rem}
 .badge-rozprac{background:#f57c00;color:#fff;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px;letter-spacing:.04em;white-space:nowrap}
 tr.row-rozprac>td{background:#fff6e8}
 tr.row-rozprac>td:first-child{box-shadow:inset 3px 0 0 #f57c00}
+.badge-konci{background:#e6b800;color:#3a2f00;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px;letter-spacing:.04em;white-space:nowrap}
+tr.row-konci>td{background:#fffbdd}
+tr.row-konci>td:first-child{box-shadow:inset 3px 0 0 #e6b800}
 
 /* ═══ NASTAVENÍ ═══ */
 .settings-wrap{max-width:700px;margin:0 auto;padding:2rem 1.5rem}
@@ -469,7 +472,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.102<span class="ver-date"> · 2026-07-13</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.103<span class="ver-date"> · 2026-07-14</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -524,6 +527,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       <select id="archiv-stav" style="padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px;font-size:.85rem;background:#fff">
         <option value="">Všechny stavy</option>
         <option value="rozpracovana">🔨 Rozpracované</option>
+        <option value="konci">🟡 Končí platnost</option>
         <option value="schopno">✅ Schopno</option>
         <option value="neschopno">❌ Neschopno</option>
         <option value="neuvedeno">— Neuvedeno —</option>
@@ -560,6 +564,19 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">🟡 Končící platnost revizí + přehlednější archiv</div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Archiv teď sám hlídá doporučené termíny příštích revizí a dlouhé seznamy stránkuje.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Žluté zvýraznění</strong> — zprávy, kterým podle pole „Příští revize" končí platnost v letošním roce, svítí žlutě se štítkem 🟡 končí M/RRRR. Už prošlé termíny mají ⚠ po termínu.</li>
+        <li><strong>Chytré řazení:</strong> nahoře 🔨 rozpracované, pod nimi 🟡 končící (nejbližší termín první), pak ostatní od nejnovější.</li>
+        <li><strong>Filtr „🟡 Končí platnost"</strong> — jedním klikem seznam zákazníků, které je čas obvolat.</li>
+        <li><strong>Stránkování po 25</strong> — místo nekonečného seznamu tlačítko „▼ Zobrazit dalších 25". To podstatné je díky řazení vždy nahoře.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard">
@@ -8016,6 +8033,7 @@ function renderArchiv() {
   if (fStav) {
     filtered = filtered.filter(function(it) {
       if (fStav === 'rozpracovana') return it.z.stav === 'aktivni';
+      if (fStav === 'konci') return !!zpravaKonci(it.z);
       var v = it.z.vysledek;
       if (fStav === 'neuvedeno') return v !== 'schopno' && v !== 'neschopno';
       return v === fStav;
@@ -8044,26 +8062,49 @@ function renderArchiv() {
     c.innerHTML = '<div class="archiv-empty">Žádné zprávy neodpovídají filtru.</div>';
     return;
   }
-  // Rozpracované zprávy (stav 'aktivni') vždy nahoře — na těch se právě
-  // pracuje. Uvnitř skupin zůstává původní pořadí (nejnovější první).
+  // Řazení: 1) rozpracované (na těch se právě pracuje), 2) zprávy, kterým
+  // letos končí / už skončila platnost (nejbližší termín první), 3) zbytek
+  // v původním pořadí (nejnovější první).
   filtered.sort(function(a, b) {
     var ra = a.z.stav === 'aktivni' ? 1 : 0;
     var rb = b.z.stav === 'aktivni' ? 1 : 0;
     if (ra !== rb) return rb - ra;
+    var ka = zpravaKonci(a.z), kb = zpravaKonci(b.z);
+    if (!!ka !== !!kb) return ka ? -1 : 1;
+    if (ka && kb && ka.pristi !== kb.pristi) return ka.pristi < kb.pristi ? -1 : 1;
     return a.i - b.i;
   });
+  // Stránkování: prvních N zpráv + tlačítko „Zobrazit další". Díky řazení
+  // je vše podstatné (rozpracované, končící) vždy v první dávce. Změna
+  // filtru vrací stránkování na začátek.
+  var sig = q + '|' + fRok + '|' + fTyp + '|' + fStav;
+  if (window.__archivFilterSig !== sig) {
+    window.__archivFilterSig = sig;
+    window.__archivLimit = 25;
+  }
+  var limit = window.__archivLimit || 25;
+  var zbyva = Math.max(0, filtered.length - limit);
+  var zobrazene = filtered.slice(0, limit);
   var html = '<table class="archiv-table"><thead><tr><th>#</th><th>Typ</th><th>Ev. číslo</th><th>Místo</th><th>Datum</th><th>Stav</th><th></th></tr></thead><tbody>';
-  filtered.forEach(function(it) {
+  zobrazene.forEach(function(it) {
     var z = it.z, i = it.i;
     var hasData = z.data ? true : false;
     var jeRozprac = z.stav === 'aktivni';
-    html += '<tr' + (jeRozprac ? ' class="row-rozprac"' : '') + ' style="cursor:' + (hasData ? 'pointer' : 'default') + '"' + (hasData ? ' data-action="otevritZpravu" data-idx="' + i + '"' : '') + '>';
+    var konci = jeRozprac ? null : zpravaKonci(z);
+    var rowCls = jeRozprac ? ' class="row-rozprac"' : (konci ? ' class="row-konci"' : '');
+    html += '<tr' + rowCls + ' style="cursor:' + (hasData ? 'pointer' : 'default') + '"' + (hasData ? ' data-action="otevritZpravu" data-idx="' + i + '"' : '') + '>';
     html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
     html += '<td><span class="' + (z.typ === 'elektro' ? 'badge-el' : 'badge-lps') + '">' + (z.typ === 'elektro' ? 'Elektro' : 'LPS') + '</span></td>';
     html += '<td style="font-family:monospace;font-size:.8rem">' + (z.ev_cislo || '—') + '</td>';
     html += '<td style="font-size:.85rem">' + (z.misto || '—') + '</td>';
     html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + (z.timestamp ? '<br><span style="font-size:.68rem;color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</td>';
-    html += '<td>' + (jeRozprac ? '<span class="badge-rozprac">🔨 rozprac.</span> ' : '') + (z.vysledek === 'schopno' ? '✅' : (z.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
+    var konciBadge = '';
+    if (konci) {
+      konciBadge = konci.proslo
+        ? '<span class="badge-konci" title="Doporučený termín příští revize: ' + fmtDate(konci.pristi) + '">⚠ po termínu</span> '
+        : '<span class="badge-konci" title="Doporučený termín příští revize: ' + fmtDate(konci.pristi) + '">🟡 končí ' + konci.pristi.slice(5, 7) + '/' + konci.pristi.slice(0, 4) + '</span> ';
+    }
+    html += '<td>' + (jeRozprac ? '<span class="badge-rozprac">🔨 rozprac.</span> ' : '') + konciBadge + (z.vysledek === 'schopno' ? '✅' : (z.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
     var pinIcon = z.pinned ? '📌' : '📍';
     var pinTitle = z.pinned ? 'Odepnout' : 'Připnout nahoru';
     html += '<td style="white-space:nowrap;text-align:right">' +
@@ -8078,7 +8119,31 @@ function renderArchiv() {
     html += '</tr>';
   });
   html += '</tbody></table>';
+  if (zbyva > 0) {
+    html += '<div style="text-align:center;margin-top:.8rem">' +
+      '<button class="add-row" data-action="archivShowMore" style="font-size:.72rem;padding:.5rem 1.4rem">▼ Zobrazit dalších ' + Math.min(25, zbyva) + ' (zbývá ' + zbyva + ')</button>' +
+      '</div>';
+  }
   c.innerHTML = html;
+}
+
+// Zjistí, zda zprávě letos končí (nebo už skončila) platnost dle
+// doporučeného termínu příští revize (pole „Příští revize" ve zprávě).
+// Vrací { pristi: 'RRRR-MM-DD', proslo: bool } nebo null. Rozpracované
+// zprávy se řeší zvlášť (oranžově), tohle je pro dokončené.
+function zpravaKonci(z) {
+  var pristi = z.data && z.data.pristi;
+  if (!pristi) return null;
+  var rok = String(pristi).slice(0, 4);
+  var letos = String(new Date().getFullYear());
+  var dnes = new Date().toISOString().slice(0, 10);
+  if (rok > letos) return null;               // končí až v budoucích letech
+  return { pristi: String(pristi), proslo: String(pristi) < dnes };
+}
+
+function archivShowMore() {
+  window.__archivLimit = (window.__archivLimit || 25) + 25;
+  renderArchiv();
 }
 
 // Naplní dropdown let v archivu unikátními roky podle datumů zpráv.
@@ -8551,6 +8616,7 @@ document.addEventListener('click', function(e) {
     case 'navazatZpravu': e.stopPropagation(); navazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'togglePinZpravu': e.stopPropagation(); togglePinZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'toggleStavZpravy': e.stopPropagation(); toggleStavZpravy(parseInt(el.getAttribute('data-idx'))); break;
+    case 'archivShowMore': archivShowMore(); break;
     case 'prirazitOdberatele': e.stopPropagation(); prirazitOdberatele(el); break;
     case 'closePrirazitOdb': closePrirazitOdb(); break;
     case 'ulozitPrirazeniOdb': ulozitPrirazeniOdb(); break;
