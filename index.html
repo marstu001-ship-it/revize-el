@@ -506,7 +506,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.111<span class="ver-date"> · 2026-07-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.112<span class="ver-date"> · 2026-07-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1922,7 +1922,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <div class="modal-overlay" id="modal-pdf-options">
   <div class="modal">
     <div class="modal-title">📄 Generovat PDF</div>
-    <div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">U podpisu revizního technika v PDF můžete vložit uložené razítko a/nebo podpis. Vyberte, co se má použít:</div>
+    <div id="pdf-podpis-intro" style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">U podpisu revizního technika v PDF můžete vložit uložené razítko a/nebo podpis. Vyberte, co se má použít:</div>
     <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.25rem">
       <div class="char-row" id="pdf-razitko-row" style="display:none">
         <input type="checkbox" id="pdf_use_razitko" checked>
@@ -6107,7 +6107,11 @@ function generujPDFAsk() {
     generujPDF();
     return;
   }
-  // Ukázat modal s checkboxy podle toho, co je k dispozici
+  // Ukázat modal s checkboxy podle toho, co je k dispozici. Text o razítku
+  // a podpisu jen pro ty, kdo je mají nahrané — kdo razítkuje ručně,
+  // vidí jen upozornění na nevyplněná pole.
+  var intro = document.getElementById('pdf-podpis-intro');
+  if (intro) intro.style.display = (hasRaz || hasPod) ? '' : 'none';
   var rowR = document.getElementById('pdf-razitko-row');
   var rowP = document.getElementById('pdf-podpis-row');
   if (rowR) rowR.style.display = hasRaz ? '' : 'none';
