@@ -302,16 +302,12 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 .data-table td input:focus{outline:1px solid var(--accent2);background:#f0f5ff}
 .data-table tr:nth-child(even) td{background:#f5f4f0}
 .meas-table-wrap{overflow-x:auto;width:100%}
-/* Na širokém PC monitoru tabulka měření přeroste 960px formuláře a
-   roztáhne se přes celé okno (až 1500px), aby se 14 sloupců nemuselo
-   skrolovat horizontálně. Zbytek formuláře (popis, závěr, zákazník)
-   zůstává úzký pro čitelnost dlouhých textů. */
+/* Na širokém PC monitoru se rozšíří celý tab E. Měření (karty rozváděčů
+   včetně tabulek) — každý rozváděč je jedna ucelená dlaždice, ze které
+   nic nevystupuje. Tabulka zůstává UVNITŘ rámečku karty. Ostatní taby
+   (popis, závěr…) zůstávají úzké pro čitelnost dlouhých textů. */
 @media (min-width:1100px){
-  .meas-table-wrap{
-    width:min(1500px, calc(100vw - 3rem));
-    margin-left:50%;
-    transform:translateX(-50%);
-  }
+  #tab-mereni.tab-panel{max-width:min(1540px, calc(100vw - 2rem))}
 }
 .meas-table{width:100%;min-width:900px;table-layout:auto}
 .meas-table th.grp{background:#1F497D}
@@ -510,7 +506,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.110<span class="ver-date"> · 2026-07-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.111<span class="ver-date"> · 2026-07-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
