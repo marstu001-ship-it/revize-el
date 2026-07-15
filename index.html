@@ -514,7 +514,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.113<span class="ver-date"> · 2026-07-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.114<span class="ver-date"> · 2026-07-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1778,7 +1778,10 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <div class="tab-panel" id="tab-lps-mereni">
   <div class="scard">
     <div class="scard-title">Měření zemních odporů <span id="lps-mereni-head-norma" style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">ČSN EN 62305-3 ed.2, čl. 5.4.1</span></div>
-    <div class="f" style="margin-bottom:1rem"><label>Celkový zemní odpor soustavy (Ω)</label><input type="text" id="lps_celkovy_odpor" placeholder="9,5"></div>
+    <!-- Celkový zemní odpor: skryto na přání uživatele (2026-07-15), dokud
+         nebude jasné, jak s ním pracovat. Pro znovuzapnutí smazat
+         style="display:none". JS, ukládání i PDF zůstávají funkční. -->
+    <div class="f" style="margin-bottom:1rem;display:none"><label>Celkový zemní odpor soustavy (Ω)</label><input type="text" id="lps_celkovy_odpor" placeholder="9,5"></div>
     <table class="data-table">
       <thead><tr><th style="width:6%">P.č.</th><th>Označení zkušební svorky</th><th>Odpor zemní smyčky (Ω)</th><th>Odpor zemniče (Ω)</th><th>Přechodový odpor ZS (Ω)</th><th style="width:5%"></th></tr></thead>
       <tbody id="lps-mereni-body"></tbody>
