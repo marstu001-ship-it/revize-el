@@ -164,10 +164,18 @@ tr.row-konci>td:first-child{box-shadow:inset 3px 0 0 #e6b800}
 tr.row-nested>td{background:#f7f6f1;font-size:.8rem;color:#6e6a60}
 tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
 /* Dokončená zpráva otevřená jen pro čtení — pole nejdou editovat,
-   editační tlačítka uvnitř tabů jsou skrytá. Taby a topbar fungují. */
+   editační tlačítka uvnitř tabů jsou skrytá. Taby a topbar fungují.
+   Textová pole dostávají readOnly přes JS (setFormReadOnly), takže
+   dlouhé texty jdou rolovat, označit a kopírovat — jen ne měnit.
+   pointer-events:none zůstává pro prvky, kde readOnly nefunguje. */
+#screen-form.form-readonly .tab-panel select,
+#screen-form.form-readonly .tab-panel input[type="checkbox"],
+#screen-form.form-readonly .tab-panel input[type="radio"],
+#screen-form.form-readonly .tab-panel input[type="date"],
+#screen-form.form-readonly .tab-panel input[type="file"]{pointer-events:none}
 #screen-form.form-readonly .tab-panel input,
 #screen-form.form-readonly .tab-panel textarea,
-#screen-form.form-readonly .tab-panel select{pointer-events:none;background:#f7f6f2!important}
+#screen-form.form-readonly .tab-panel select{background:#f7f6f2!important}
 #screen-form.form-readonly .tab-panel button{display:none!important}
 #screen-form.form-readonly .drag-handle{display:none!important}
 #readonly-banner{position:sticky;top:0;z-index:50;display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;
@@ -506,7 +514,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.112<span class="ver-date"> · 2026-07-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.113<span class="ver-date"> · 2026-07-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -541,14 +549,6 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </button>
   </div>
   <div class="scard">
-    <div class="scard-title">👥 Odběratelé <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">knihovna zákazníků pro rychlé vyplnění zpráv</span></div>
-    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;align-items:center;flex-wrap:wrap">
-      <input type="text" id="odberatel-search" placeholder="🔍 Hledat podle jména, IČO…" style="flex:1;min-width:200px;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem" autocomplete="off">
-      <button class="btn btn-gold" data-action="openOdberatelModal">+ Přidat odběratele</button>
-    </div>
-    <div id="odberatel-container"><div class="archiv-empty">Zatím žádní odběratelé. Přidejte prvního. 👆</div></div>
-  </div>
-  <div class="scard">
     <div class="scard-title">📋 Archiv zpráv <span id="archiv-count" style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem"></span></div>
     <div style="display:flex;gap:.5rem;margin-bottom:.75rem;align-items:center;flex-wrap:wrap">
       <input type="text" id="archiv-search" placeholder="🔍 Hledat (ev. číslo, místo, objednatel…)" style="flex:1;min-width:160px;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem" autocomplete="off">
@@ -570,6 +570,14 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
     <div id="archiv-recents"></div>
     <div id="archiv-container"><div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše. 👆</div></div>
+  </div>
+  <div class="scard">
+    <div class="scard-title">👥 Odběratelé <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">knihovna zákazníků pro rychlé vyplnění zpráv</span></div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;align-items:center;flex-wrap:wrap">
+      <input type="text" id="odberatel-search" placeholder="🔍 Hledat podle jména, IČO…" style="flex:1;min-width:200px;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem" autocomplete="off">
+      <button class="btn btn-gold" data-action="openOdberatelModal">+ Přidat odběratele</button>
+    </div>
+    <div id="odberatel-container"><div class="archiv-empty">Zatím žádní odběratelé. Přidejte prvního. 👆</div></div>
   </div>
   <div class="scard">
     <div class="scard-title">💾 Záloha a obnovení <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">export/import celé databáze</span></div>
@@ -7402,6 +7410,25 @@ function setFormReadOnly(on) {
   if (f) f.classList.toggle('form-readonly', !!on);
   var b = document.getElementById('readonly-banner');
   if (b) b.style.display = on ? '' : 'none';
+  // Textová pole a textarey dostanou readOnly — dlouhé texty (popis
+  // instalace, závěr…) tak jdou rolovat, označit a kopírovat, jen ne
+  // měnit. Pole, která jsou readOnly už z výroby (fáze RCD), se
+  // označí flagem, aby jim odemknutí readOnly neodebralo.
+  if (on) {
+    document.querySelectorAll('#screen-form .tab-panel input, #screen-form .tab-panel textarea').forEach(function(el) {
+      var t = (el.type || '').toLowerCase();
+      if (t === 'checkbox' || t === 'radio' || t === 'file') return;
+      if (!el.readOnly) {
+        el.readOnly = true;
+        el.dataset.roLock = '1';
+      }
+    });
+  } else {
+    document.querySelectorAll('#screen-form [data-ro-lock]').forEach(function(el) {
+      el.readOnly = false;
+      delete el.dataset.roLock;
+    });
+  }
 }
 
 function odemknoutZpravu() {
@@ -9070,6 +9097,7 @@ function dlValueMatchesOption(el) {
 document.addEventListener('focusin', function(e) {
   var el = e.target;
   if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
+  if (el.readOnly) return; // zamčená zpráva — hodnoty se nesmí ani dočasně mazat
   el.dataset.dlPrev = el.value;
   el.dataset.dlTouched = '0';
   // Vyprázdnit jen pokud je hodnota přesně z datalistu (uživatel ji „vybral")
