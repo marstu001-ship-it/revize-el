@@ -103,6 +103,31 @@ panel scan + závada scan u všech 3 providerů, ke kterým má klíč.**
 - `literatura/` — odborné podklady (vzory zpráv Macháček/Dolenský,
   normy ČSN) — read-only reference pro implementaci, neměnit
 
+## 📌 ODSOUHLASENÝ NÁVRH — čeká na "udělej to" od uživatele
+
+**Vlastní číslování zpráv + převzaté zprávy od kolegů** (návrh schválen
+k zapamatování 2026-07-15, uživatel se k němu vrátí):
+
+1. **Šablona čísla zprávy v profilu technika** (`STORE.technik.cislo_format`):
+   značky `{RR}` (rok 2cif.), `{RRRR}` (rok 4cif.), `{NNNN}` (pořadové
+   číslo, počet N = šířka s nulami), okolo volný text. Výchozí
+   `RE-{RR}-{NNNN}` (dnešní stav). V Nastavení živá ukázka
+   „Příští číslo: …".
+2. **Nová zpráva dostane číslo automaticky** — scan archivu přes regex
+   ze šablony, max+1, doplnit nuly. Obsahuje-li šablona rok → roční
+   reset řady. Malé tlačítko ⟳ u pole ev. čísla = přidělit další číslo.
+3. **Navázat** používá šablonu místo natvrdo `RE-YY-NNNN`
+   (v `navazatZpravu`, regex `^RE-' + rok + '-(\d{4})$`).
+4. **Import jedné zprávy (Načíst / drag&drop) se ptá**: „Zpráva od
+   kolegy?" → entry.puvod='import', štítek 📥 převzatá, uloží se jako
+   dokončená (read-only), číslo se NIKDY nemění (byla vydaná).
+   „Moje zpráva?" (přesun mezi zařízeními) → normální vlastní.
+5. **Číselná řada ignoruje převzaté zprávy** (entry.puvod === 'import')
+   — kolegova čísla ve stejném formátu řadu neposunou.
+6. **Navázání na převzatou** → nové číslo z MÉ řady dle MÉ šablony;
+   převzatá se vnoří do řetězu (predchudce_uid, už funguje).
+7. Štítek 📥 v archivu půjde přepnout (překlik při importu).
+
 ## Už implementované (neřešit jako nový nápad)
 
 - ✅ **Odběratelé (zákaznická knihovna)** — scard na hlavní straně,
