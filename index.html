@@ -173,6 +173,11 @@ tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
 #readonly-banner{position:sticky;top:0;z-index:50;display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;
   background:#eef3fb;border:1px solid var(--accent2);border-left:5px solid var(--accent2);
   border-radius:4px;padding:.6rem .9rem;margin:.6rem 0;font-size:.85rem;color:#1F497D}
+/* Novinky: datum vydání u každé karty + pulsující tlačítko při nepřečtených */
+.nov-datum{float:right;font-family:var(--mono);font-size:.6rem;color:var(--muted);font-weight:400;letter-spacing:.05em;text-transform:none}
+.novinky-nove{animation:novinkyPulse 1.6s ease-in-out infinite}
+@keyframes novinkyPulse{0%,100%{box-shadow:0 0 0 0 rgba(181,41,28,.55)}50%{box-shadow:0 0 0 7px rgba(181,41,28,0)}}
+.novinky-badge{color:#fff;background:var(--accent);border-radius:8px;font-size:.58rem;padding:.08rem .35rem;margin-left:.25rem;font-weight:700;letter-spacing:.05em}
 
 /* ═══ NASTAVENÍ ═══ */
 .settings-wrap{max-width:700px;margin:0 auto;padding:2rem 1.5rem}
@@ -484,12 +489,12 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.108<span class="ver-date"> · 2026-07-14</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.109<span class="ver-date"> · 2026-07-14</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
-    <button class="btn btn-ghost" data-action="novinky">📰 Novinky</button>
+    <button class="btn btn-ghost" id="btn-novinky" data-action="novinky">📰 Novinky</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
     <button class="btn btn-ghost" data-action="ulozit">💾 Uložit</button>
     <button class="btn btn-ghost" data-action="nacist">📂 Načíst</button>
@@ -578,8 +583,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <p>Přehled funkcí a jak je používat</p>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🔒 Dokončené zprávy jen pro čtení</div>
+  <div class="scard" data-nov-datum="2026-07-14">
+    <div class="scard-title">🔒 Dokončené zprávy jen pro čtení <span class="nov-datum">14. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Dokončenou zprávu už v archivu omylem nezměníte. Otevře se zamčená — všechna pole jsou jen k prohlížení a editační tlačítka jsou schovaná. Generování PDF funguje normálně.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak to funguje:</strong>
@@ -593,8 +598,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">⛓️ Řetězy revizí — historie objektu pod jednou zprávou</div>
+  <div class="scard" data-nov-datum="2026-07-14">
+    <div class="scard-title">⛓️ Řetězy revizí — historie objektu pod jednou zprávou <span class="nov-datum">14. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Aby archiv časem nezežloutl prošlými revizemi: starší revize stejného objektu se dají vnořit pod tu nejnovější. V seznamu je pak vidět jen aktuální zpráva objektu a historie se rozbalí na kliknutí.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak to funguje:</strong>
@@ -609,8 +614,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🟡 Končící platnost revizí + přehlednější archiv</div>
+  <div class="scard" data-nov-datum="2026-07-14">
+    <div class="scard-title">🟡 Končící platnost revizí + přehlednější archiv <span class="nov-datum">14. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Archiv teď sám hlídá doporučené termíny příštích revizí a dlouhé seznamy stránkuje.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
@@ -622,8 +627,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🆔 Přečíslování zprávy a duplicitní čísla</div>
+  <div class="scard" data-nov-datum="2026-07-13">
+    <div class="scard-title">🆔 Přečíslování zprávy a duplicitní čísla <span class="nov-datum">13. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Zprávy v archivu už nejsou svázané s evidenčním číslem — každá má vlastní skrytou identitu. Co to znamená v praxi:</p>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
@@ -634,8 +639,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🔨 Rozpracované zprávy nahoře v archivu</div>
+  <div class="scard" data-nov-datum="2026-07-13">
+    <div class="scard-title">🔨 Rozpracované zprávy nahoře v archivu <span class="nov-datum">13. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Zprávy, na kterých právě pracujete, už se neztrácejí dole v seznamu. Rozpracovaná zpráva je v archivu vždy úplně nahoře, podbarvená oranžově a označená štítkem 🔨.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak to funguje:</strong>
@@ -649,8 +654,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🛟 Ochrana práce a moderní ovládání</div>
+  <div class="scard" data-nov-datum="2026-07-13">
+    <div class="scard-title">🛟 Ochrana práce a moderní ovládání <span class="nov-datum">13. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Balík vylepšení, která znáte z jiných aplikací — program teď mnohem hůř ztratí vaši práci:</p>
     <div style="font-size:.85rem;line-height:1.8">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
@@ -664,8 +669,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">↕ Seřazení rozváděčů</div>
+  <div class="scard" data-nov-datum="2026-07-13">
+    <div class="scard-title">↕ Seřazení rozváděčů <span class="nov-datum">13. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vkládali jste rozváděče na přeskáčku a chcete je mít od hlavního po podružné? V tabu „E. Měření" jde teď změnit jejich pořadí — obvody se dočasně schovají a karty rozváděčů přeskládáte tažením nebo šipkami.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -679,8 +684,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">📁 Automatické zálohy do složky</div>
+  <div class="scard" data-nov-datum="2026-07-13">
+    <div class="scard-title">📁 Automatické zálohy do složky <span class="nov-datum">13. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Konec ručního stahování a hledání složky. Vyberete jednou složku na disku a program do ní ukládá zálohy databáze sám — při uložení zprávy, při prvním otevření v nový den a po každé aktualizaci programu. Název souboru obsahuje datum i čas.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -694,8 +699,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🔢 Vlastní číslování obvodů (FA1, FA2…)</div>
+  <div class="scard" data-nov-datum="2026-07-13">
+    <div class="scard-title">🔢 Vlastní číslování obvodů (FA1, FA2…) <span class="nov-datum">13. 7. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Sloupec Č. v tabulce měření už nemusí číslovat automaticky. Pokud si obvody značíte vlastními kódy (FA1, FA2, FA3…), přepněte na vlastní číslování — program pak na vaše označení nesahá ani při přidání, smazání nebo kopírování řádku.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -709,8 +714,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">⚙️ Vlastní normy a předpisy</div>
+  <div class="scard" data-nov-datum="2026-06-10">
+    <div class="scard-title">⚙️ Vlastní normy a předpisy <span class="nov-datum">10. 6. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V panelu „Použité normy a předpisy" přibyl nástroj pro správu vlastního seznamu. Když vyjde nová norma, přidáte ji sami — bez čekání na aktualizaci programu.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -724,8 +729,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">↕ Přeřazování řádků tažením</div>
+  <div class="scard" data-nov-datum="2026-06-05">
+    <div class="scard-title">↕ Přeřazování řádků tažením <span class="nov-datum">5. 6. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Řádky v tabulce měření teď můžete přeskládat — uchopte řádek a přetáhněte ho na novou pozici. Čísla se přepočítají automaticky.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -739,8 +744,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🎤 Hlasový diktát</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">🎤 Hlasový diktát <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Místo psaní můžete v terénu diktovat texty rovnou. Funguje v češtině přímo v prohlížeči, nepotřebuje žádnou aplikaci navíc.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -755,7 +760,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
 
   <div class="scard ai-feature">
-    <div class="scard-title">🤖 AI rozpoznávání závad z fotky</div>
+    <div class="scard-title">🤖 AI rozpoznávání závad z fotky <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyfotíte závadu, AI ji popíše, zařadí do kategorie C1/C2/C3 a navrhne konkrétní článek ČSN. Vy jen potvrdíte nebo upravíte.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -772,7 +777,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   </div>
 
   <div class="scard ai-feature">
-    <div class="scard-title">🤖 AI naskenování štítku rozváděče</div>
+    <div class="scard-title">🤖 AI naskenování štítku rozváděče <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyfotíte štítek (legendu jističů) v rozváděči, AI rozpozná všechny obvody včetně typu, jmenovitého proudu, charakteristiky a kabelu — a vyplní tabulku měření jedním klikem.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -788,8 +793,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">📷 Fotky u závad</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">📷 Fotky u závad <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Ke každé závadě lze přidat až 6 fotek. V PDF se zobrazí pod popisem závady.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -803,8 +808,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">📋 Vlastní knihovna textů (snippety)</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">📋 Vlastní knihovna textů (snippety) <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Často píšete stejný odstavec? Uložte ho a jedním klikem ho příště vložíte zpět.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -817,8 +822,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">📝 Razítko a podpis technika</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">📝 Razítko a podpis technika <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Naskenujte své razítko a podpis. Při generování PDF se automaticky vykreslí u podpisu revizního technika.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -831,8 +836,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">👥 Knihovna odběratelů (zákazníků)</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">👥 Knihovna odběratelů (zákazníků) <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Uložte si zákazníky jednou — při nové zprávě je vyberete z rozbalovacího seznamu, vše se předvyplní.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -845,8 +850,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🔗 Nová zpráva jako kopie (Navázat)</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">🔗 Nová zpráva jako kopie (Navázat) <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Pravidelná revize stejného objektu? Nemusíte vyplňovat znovu — kopírujte starší zprávu jedním klikem.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -859,8 +864,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🔍 Načtení firmy z ARES</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">🔍 Načtení firmy z ARES <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Stačí znát IČO — program z veřejného registru ARES automaticky doplní jméno, adresu a DIČ.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -872,8 +877,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">📋 Archiv — hledání, filtry a připnuté</div>
+  <div class="scard" data-nov-datum="2026-06-16">
+    <div class="scard-title">📋 Archiv — hledání, filtry a připnuté <span class="nov-datum">16. 6. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Pro 50+ zpráv ročně se ploché tabulce ztrácíte. Archiv má fulltext hledání, filtry rok/typ/stav a panel s naposledy otevřenými + připnutými zprávami.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -888,8 +893,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🛡 Ochrana před ztrátou rozepsané zprávy</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">🛡 Ochrana před ztrátou rozepsané zprávy <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Když omylem kliknete „🏠 Hlavní" v rozepsaném formuláři, program se zeptá — uložit / zahodit / zůstat. Žádné ztracené hodiny práce.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak to funguje:</strong>
@@ -903,8 +908,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🖨️ Tisk samostatné tabulky měření</div>
+  <div class="scard" data-nov-datum="2026-06-11">
+    <div class="scard-title">🖨️ Tisk samostatné tabulky měření <span class="nov-datum">11. 6. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Když je tabulka měření tak široká, že se v PDF láme nepříjemně, můžete ji vytisknout zvlášť na šířku.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -916,8 +921,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">💾 Záloha a obnovení</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">💾 Záloha a obnovení <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Data jsou uložena jen v prohlížeči — pravidelně si stáhněte zálohu, ať o ně nepřijdete.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -931,8 +936,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">⛈ LPS — obě normy (62305 i starší 1390)</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">⛈ LPS — obě normy (62305 i starší 1390) <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Pro revize starších hromosvodů (před 2004) podle ČSN 34 1390 program automaticky přepne všechny texty, kontrolní body i parametry.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -944,8 +949,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">📱 PC / Mobil zobrazení</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">📱 PC / Mobil zobrazení <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Tlačítko v topbaru přepíná mezi kompaktním zobrazením a větším mobilním (větší písmo, větší tlačítka pro prsty v rukavicích).</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -957,8 +962,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">📋 Datalisty — typické hodnoty na klik</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">📋 Datalisty — typické hodnoty na klik <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Spousta polí (název obvodu, typ kabelu, proud jističe, IΔn RCD, ochrana před úrazem, typ zemniče, distributor el. proudu…) má rozbalovací nabídku s typickými hodnotami z norem.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
@@ -970,13 +975,13 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     </div>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">🔢 Auto-číslování řádků měření</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">🔢 Auto-číslování řádků měření <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Když přidáte, smažete nebo zkopírujete řádek uprostřed tabulky měření, čísla obvodů se automaticky přepočítají od 1. U RCD má číslo jen hlavička skupiny — podřádky čísla nemají.</p>
   </div>
 
-  <div class="scard">
-    <div class="scard-title">⚖️ Typické závady s normou (dropdown)</div>
+  <div class="scard" data-nov-datum="2026-05-15">
+    <div class="scard-title">⚖️ Typické závady s normou (dropdown) <span class="nov-datum">15. 5. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">U každé závady je dropdown s typickými formulacemi (20 elektro, 16 LPS dle 62305, 16 LPS dle 1390). Kliknutím se vyplní popis, kategorie C1/C2/C3 i odkaz na konkrétní článek normy najednou.</p>
   </div>
 
@@ -2228,7 +2233,34 @@ function showScreen(id) {
   var sc = document.getElementById('screen-' + id);
   if (sc) sc.classList.add('active');
   if (id === 'nastaveni') nacistTechnika();
+  if (id === 'novinky') {
+    // Otevřením Novinek je vše „přečteno" — tlačítko přestane pulsovat
+    try { localStorage.setItem('revize_el_novinky_seen', getNovinkyLatest()); } catch(e) {}
+    updateNovinkyBadge();
+  }
   window.scrollTo(0, 0);
+}
+
+// ═══ UPOZORNĚNÍ NA NOVÉ NOVINKY ══════════════════════════════════════════
+// Nejnovější datum se bere z data-nov-datum atributů karet v Novinkách —
+// při přidání nové karty (s datem) začne tlačítko 📰 pulsovat samo.
+function getNovinkyLatest() {
+  var max = '';
+  document.querySelectorAll('#screen-novinky [data-nov-datum]').forEach(function(el) {
+    var d = el.getAttribute('data-nov-datum') || '';
+    if (d > max) max = d;
+  });
+  return max;
+}
+
+function updateNovinkyBadge() {
+  var btn = document.getElementById('btn-novinky');
+  if (!btn) return;
+  var seen = '';
+  try { seen = localStorage.getItem('revize_el_novinky_seen') || ''; } catch(e) {}
+  var nove = getNovinkyLatest() > seen;
+  btn.classList.toggle('novinky-nove', nove);
+  btn.innerHTML = nove ? '📰 Novinky <span class="novinky-badge">NOVÉ</span>' : '📰 Novinky';
 }
 
 // ═══ TOASTY + SMAZÁNÍ SE ZPĚT ════════════════════════════════════════════
@@ -8722,6 +8754,7 @@ async function init() {
   requestPersistentStorage();
   setupVoice();
   renderPristrojePreset();
+  updateNovinkyBadge();
   // Obnova po pádu: koncept se ukládá průběžně při psaní a maže při
   // uložení do archivu (nebo vědomém zahození). Pokud tu po startu je,
   // prohlížeč spadl / zavřel se s neuloženou prací — nabídnout obnovu.

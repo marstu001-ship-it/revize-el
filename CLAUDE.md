@@ -24,6 +24,13 @@ tím nemusí zabývat — dělejte to automaticky, pokaždé.
 **Bez bumpu cache uživatel neuvidí vaše úpravy** a bude si myslet, že
 jste nic neudělali.
 
+3. **Nová uživatelská funkce = karta v Novinkách** (`#screen-novinky`,
+   nová karta nahoru). Karta MUSÍ mít datum:
+   `<div class="scard" data-nov-datum="YYYY-MM-DD">` a v titulku
+   `<span class="nov-datum">D. M. YYYY</span>`. Z max. `data-nov-datum`
+   se automaticky odvozuje pulsování tlačítka 📰 Novinky (localStorage
+   `revize_el_novinky_seen`) — bez data se uživatelé o novince nedozví.
+
 ## AI funkce — stav
 
 AI funkce (rozpoznávání závad z fotky, skenování štítku rozváděče) jsou
