@@ -191,9 +191,30 @@ tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
   background:transparent;color:var(--muted);border-bottom:2px solid transparent;
   margin-bottom:-2px;white-space:nowrap;transition:all .15s}
 .tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
 .tab-panel{display:none;padding:1.5rem 1.5rem 5rem;max-width:960px;margin:0 auto}
 .tab-panel.active{display:block}
+/* Stepper — číslované kroky průvodce v tab liště. Prošlé kroky zeleně
+   s fajfkou, aktuální červeně vyplněný, budoucí šedý obrys. */
+.tab-bar{counter-reset:krok}
+.tab-btn{display:flex;align-items:center;gap:.45rem;counter-increment:krok}
+.tab-btn::before{content:counter(krok);display:inline-flex;align-items:center;justify-content:center;
+  width:1.35rem;height:1.35rem;border-radius:50%;border:2px solid var(--border-dark);
+  color:var(--muted);background:var(--bg);font-size:.6rem;font-weight:700;flex:0 0 auto;
+  letter-spacing:0;transition:all .15s}
+.tab-btn.active::before{content:counter(krok);background:var(--accent);border-color:var(--accent);color:#fff}
+.tab-btn.step-done::before{content:"✓";background:#2e7d32;border-color:#2e7d32;color:#fff}
+/* Navigace Zpět / Pokračovat dole na každé kartě průvodce */
+.tab-nav{display:flex;gap:1rem;align-items:center;margin-top:2.5rem;padding-top:1.2rem;border-top:1px solid var(--border)}
+.tab-nav button{font-family:var(--mono);letter-spacing:.05em;font-size:.72rem;padding:.7rem 1.3rem;
+  border-radius:4px;cursor:pointer;text-transform:uppercase;font-weight:600;transition:all .15s}
+.tab-nav-back{background:var(--bg);border:1px solid var(--border-dark);color:var(--muted)}
+.tab-nav-back:hover{color:var(--text);border-color:var(--muted)}
+.tab-nav-next{background:var(--accent2);border:1px solid var(--accent2);color:#fff}
+.tab-nav-next:hover{filter:brightness(1.12)}
+.tab-nav-pdf{background:var(--gold);border:1px solid var(--gold);color:#fff}
+/* V režimu jen pro čtení musí navigace průvodce zůstat funkční */
+#screen-form.form-readonly .tab-panel .tab-nav button{display:inline-block!important}
 
 /* ═══ CARDS ═══ */
 .scard{background:var(--surface);border:1px solid var(--border);
@@ -489,7 +510,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.109<span class="ver-date"> · 2026-07-14</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.110<span class="ver-date"> · 2026-07-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -581,6 +602,19 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-07-15">
+    <div class="scard-title">🧭 Průvodce zprávou — stepper a tlačítka Pokračovat <span class="nov-datum">15. 7. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyplňování zprávy vás teď vede jako průvodce. Karty nahoře mají číslované kroky se stavem a dole na každé kartě jsou tlačítka pro plynulý postup.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Číslované kroky</strong> v horní liště: ✓ zelená = prošlé, červená = právě tady jste, šedá = čeká vás</li>
+        <li><strong>„Pokračovat →"</strong> dole na každé kartě vás po vyplnění posune na další krok (a „← Zpět" vrátí)</li>
+        <li>Na posledním kroku je zlaté <strong>„📄 Generovat PDF"</strong> — přirozené zakončení revize</li>
+        <li>Horní lišta zůstává klikací jako dřív — kroky můžete přeskakovat libovolně</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-07-14">
@@ -2409,11 +2443,70 @@ window.addEventListener('drop', function(e) {
 });
 
 function switchTab(id, btn) {
+  // Krok, ze kterého se odchází, se počítá jako prošlý (zelená fajfka)
+  window.__tabsVisited = window.__tabsVisited || {};
+  document.querySelectorAll('.tab-btn.active').forEach(function(b) {
+    window.__tabsVisited[b.getAttribute('data-tab')] = true;
+  });
   document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   var panel = document.getElementById('tab-' + id);
   if (panel) panel.classList.add('active');
   if (btn) btn.classList.add('active');
+  refreshStepper();
+  updateTabNav();
+  window.scrollTo(0, 0);
+}
+
+// Obarví kroky stepperu dle stavu: prošlé (✓ zeleně), aktuální, budoucí.
+function refreshStepper() {
+  var v = window.__tabsVisited || {};
+  document.querySelectorAll('.tab-btn').forEach(function(b) {
+    b.classList.toggle('step-done', !b.classList.contains('active') && !!v[b.getAttribute('data-tab')]);
+  });
+}
+
+// Doplní na konec aktivní karty tlačítka „← Zpět" a „Pokračovat →" dle
+// pořadí kroků ve viditelné tab liště (elektro vs. LPS). Na posledním
+// kroku je místo Pokračovat zlaté „Generovat PDF".
+function updateTabNav() {
+  document.querySelectorAll('.tab-nav').forEach(function(n) { n.remove(); });
+  var panel = document.querySelector('.tab-panel.active');
+  if (!panel) return;
+  var barLps = document.getElementById('tab-bar-lps');
+  var bar = (barLps && barLps.style.display !== 'none') ? barLps : document.getElementById('tab-bar-el');
+  if (!bar) return;
+  var btns = Array.prototype.slice.call(bar.querySelectorAll('.tab-btn'));
+  var ids = btns.map(function(b) { return b.getAttribute('data-tab'); });
+  var curId = panel.id.replace(/^tab-/, '');
+  var idx = ids.indexOf(curId);
+  if (idx < 0) return;
+  var nav = document.createElement('div');
+  nav.className = 'tab-nav';
+  if (idx > 0) {
+    var back = document.createElement('button');
+    back.className = 'tab-nav-back';
+    back.textContent = '← ' + btns[idx - 1].textContent;
+    back.addEventListener('click', function() { switchTab(ids[idx - 1], btns[idx - 1]); });
+    nav.appendChild(back);
+  }
+  var spacer = document.createElement('div');
+  spacer.style.flex = '1';
+  nav.appendChild(spacer);
+  if (idx < ids.length - 1) {
+    var next = document.createElement('button');
+    next.className = 'tab-nav-next';
+    next.textContent = 'Pokračovat → ' + btns[idx + 1].textContent;
+    next.addEventListener('click', function() { switchTab(ids[idx + 1], btns[idx + 1]); });
+    nav.appendChild(next);
+  } else {
+    var pdf = document.createElement('button');
+    pdf.className = 'tab-nav-pdf';
+    pdf.textContent = '📄 Generovat PDF';
+    pdf.addEventListener('click', function() { generujPDFAsk(); });
+    nav.appendChild(pdf);
+  }
+  panel.appendChild(nav);
 }
 
 // Napěťové soustavy podle podtypu
@@ -2688,6 +2781,10 @@ function novaZprava(typ) {
   var firstTab = activeBar ? activeBar.querySelector('.tab-btn') : document.querySelector('.tab-btn');
   if (firstTab) firstTab.classList.add('active');
   var titPanel = document.getElementById('tab-titulni'); if (titPanel) titPanel.classList.add('active');
+  // Nová zpráva = průvodce od začátku: žádné prošlé kroky
+  window.__tabsVisited = {};
+  refreshStepper();
+  updateTabNav();
   window.__formDirty = false;
   showScreen('form');
 }
