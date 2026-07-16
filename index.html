@@ -514,7 +514,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.114<span class="ver-date"> · 2026-07-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.115<span class="ver-date"> · 2026-07-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6196,7 +6196,11 @@ function generujPDF() {
   var secZaver  = isLpsPdf ? secBase + 3 : secBase + 4 + rcdOffset;
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
   var nadpis = isLpsPdf
-    ? 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)'
+    ? (D.druh === 'Výchozí' || D.druh === 'Výchozí souhrnná'
+        ? 'ZPRÁVA O VÝCHOZÍ REVIZI OCHRANY PŘED BLESKEM (LPS)'
+        : D.druh === 'Pravidelná'
+          ? 'ZPRÁVA O PRAVIDELNÉ REVIZI OCHRANY PŘED BLESKEM (LPS)'
+          : 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)')
     : (D.druh === 'Výchozí' || D.druh === 'Výchozí souhrnná'
         ? 'ZPRÁVA O VÝCHOZÍ REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'
         : D.druh === 'Pravidelná'
