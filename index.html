@@ -321,6 +321,11 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 .meas-table th.grp{background:#1F497D}
 .meas-table th{font-size:.52rem;padding:.3rem .2rem}
 .meas-table td input{font-size:.75rem}
+/* V úzkých buňkách tabulky měření překrývá nativní šipka našeptávače
+   (datalist) zapsanou hodnotu — schovat ji. Nabídka se dál otevírá
+   kliknutím do pole (focus-trik vyprázdní pole a ukáže celý seznam). */
+.meas-table td input::-webkit-calendar-picker-indicator{display:none!important;opacity:0}
+.meas-table td input::-webkit-list-button{display:none!important;opacity:0}
 .meas-table td select{font-size:.72rem}
 .add-row{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;
   text-transform:uppercase;color:var(--accent2);background:none;
@@ -514,7 +519,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.119<span class="ver-date"> · 2026-07-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.120<span class="ver-date"> · 2026-07-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
