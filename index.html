@@ -519,7 +519,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.120<span class="ver-date"> · 2026-07-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.121<span class="ver-date"> · 2026-07-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6709,7 +6709,7 @@ function generujPDF() {
         ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0;"><strong>Celkový zemní odpor soustavy:</strong> ' + esc(L.celkovy_odpor) + ' Ω</div>'
         : '') +
       (lpsMereniRows
-        ? '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin:2mm 2mm">' +
+        ? '<table class="pdf-lps-mereni-tab" style="width:100%;border-collapse:collapse;font-size:9pt;margin:2mm 2mm">' +
           '<thead><tr>' +
           '<th style="border:.5pt solid #000;padding:1mm 2mm;background:#eee;width:6%">P.č.</th>' +
           '<th style="border:.5pt solid #000;padding:1mm 2mm;background:#eee">Označení zkušební svorky</th>' +
@@ -7143,9 +7143,12 @@ function stahnoutMereniPDF() {
   // Pro LPS: portrét stránky s textem "Měření zemních odporů".
   var pageList;
   if (isLps) {
+    // Stránka s nadpisem NEBO s tabulkou hodnot — overflow splitting umí
+    // tabulku přesunout na pokračovací stránku bez nadpisu.
     pageList = Array.prototype.slice.call(container.querySelectorAll('.a4'))
       .filter(function(p) {
-        return p.textContent && p.textContent.indexOf('Měření zemních odporů') !== -1;
+        return (p.textContent && p.textContent.indexOf('Měření zemních odporů') !== -1) ||
+               p.querySelector('.pdf-lps-mereni-tab');
       });
   } else {
     pageList = Array.prototype.slice.call(container.querySelectorAll('.a4.a4-landscape'));
