@@ -236,8 +236,12 @@ tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
 tr.row-drag-above>td{border-top:2px solid #b5291c!important}
 tr.row-drag-below>td{border-bottom:2px solid #b5291c!important}
 tr.row-dragging{opacity:.35}
-td.dnd-num-cell{position:relative;cursor:grab}
-td.dnd-num-cell .drag-handle{position:absolute;left:1px;top:50%;transform:translateY(-50%);font-size:.55rem;color:#ccc;pointer-events:none;line-height:1}
+td.dnd-num-cell{position:relative}
+td.dnd-num-cell .drag-handle{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;
+  font-size:.8rem;color:#a9a294;cursor:grab;padding:0 3px;line-height:1;user-select:none}
+td.dnd-num-cell .drag-handle:hover{color:var(--accent2);background:rgba(43,87,154,.08)}
+td.dnd-num-cell .drag-handle:active{cursor:grabbing}
+td.dnd-num-cell input{padding-left:15px}
 /* Režim řazení rozváděčů — skryje obvody, karty se dají přetahovat */
 #rozvadece-container.razeni-mode .meas-table-wrap{display:none}
 #rozvadece-container.razeni-mode .scard-rv .add-row{display:none}
@@ -519,7 +523,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.122<span class="ver-date"> · 2026-07-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.123<span class="ver-date"> · 2026-07-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -806,8 +810,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
       <ol style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li>V tabu „D. Měření" najeďte myší na číselnou buňku řádku — kurzor se změní na ✋</li>
-        <li>Uchopte řádek a táhněte ho nahoru nebo dolů</li>
+        <li>V tabu „E. Měření" najeďte myší na úchyt <strong>⠿</strong> na levém okraji řádku — kurzor se změní na ✋</li>
+        <li>Uchopte řádek za úchyt a táhněte ho nahoru nebo dolů (zbytek řádku slouží normálně k výběru a kopírování textu)</li>
         <li>Červená čára ukáže, kam řádek zapadne</li>
         <li>Pusťte — pořadí se změní a čísla se přečíslují</li>
       </ol>
@@ -3856,31 +3860,41 @@ function initRowDnd(tr, tbody) {
   if (tr.dataset.rowtype === 'rcd-mereni') return;
   if (tr.dataset.dndInit === '1') return;
   tr.dataset.dndInit = '1';
-  tr.setAttribute('draggable', 'true');
+  // Táhne se VÝHRADNĚ za úchyt ⠿ — řádek samotný draggable není, aby šel
+  // v buňkách normálně označovat a kopírovat text myší.
   var firstTd = tr.querySelector('td');
-  if (firstTd && !firstTd.classList.contains('dnd-num-cell')) {
+  var h = null;
+  if (firstTd) {
     firstTd.classList.add('dnd-num-cell');
-    var h = document.createElement('span');
-    h.className = 'drag-handle'; h.textContent = '⠿';
-    firstTd.appendChild(h);
+    h = firstTd.querySelector('.drag-handle');
+    if (!h) {
+      h = document.createElement('span');
+      h.className = 'drag-handle'; h.textContent = '⠿';
+      h.title = 'Přetáhnout řádek (uchopit a táhnout)';
+      firstTd.appendChild(h);
+    }
+    h.setAttribute('draggable', 'true');
   }
   function clearDragClasses() {
     tbody.querySelectorAll('tr').forEach(function(r) {
       r.classList.remove('row-drag-above', 'row-drag-below');
     });
   }
-  tr.addEventListener('dragstart', function(e) {
-    dndDragging = getDragGroup(tr);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', '');
-    setTimeout(function() {
-      if (dndDragging) dndDragging.forEach(function(r) { r.classList.add('row-dragging'); });
-    }, 0);
-  });
-  tr.addEventListener('dragend', function() {
-    if (dndDragging) dndDragging.forEach(function(r) { r.classList.remove('row-dragging'); });
-    clearDragClasses(); dndDragging = null;
-  });
+  if (h) {
+    h.addEventListener('dragstart', function(e) {
+      e.stopPropagation();
+      dndDragging = getDragGroup(tr);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+      setTimeout(function() {
+        if (dndDragging) dndDragging.forEach(function(r) { r.classList.add('row-dragging'); });
+      }, 0);
+    });
+    h.addEventListener('dragend', function() {
+      if (dndDragging) dndDragging.forEach(function(r) { r.classList.remove('row-dragging'); });
+      clearDragClasses(); dndDragging = null;
+    });
+  }
   tr.addEventListener('dragover', function(e) {
     if (!dndDragging || dndDragging.indexOf(tr) !== -1) return;
     if (dndDragging[0].parentNode !== tbody) return;
