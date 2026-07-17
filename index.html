@@ -519,7 +519,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.121<span class="ver-date"> · 2026-07-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.122<span class="ver-date"> · 2026-07-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -611,6 +611,19 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-07-17">
+    <div class="scard-title">⌨️ Pohyb v tabulkách šipkami a Enterem <span class="nov-datum">17. 7. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyplňování tabulek měření bez myši — jako v Excelu. Platí pro tabulku obvodů, přístroje i LPS zemniče.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>↑ / ↓</strong> — skok do buňky nad/pod (stejný sloupec)</li>
+        <li><strong>← / →</strong> — pohyb kurzoru v textu; na kraji textu přeskočí do vedlejší buňky</li>
+        <li><strong>Enter</strong> — skok do buňky pod (další obvod)</li>
+        <li>Po skoku je obsah buňky označený — rovnou píšete a stará hodnota se přepíše</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-07-17">
@@ -2412,6 +2425,80 @@ document.addEventListener('keydown', function(e) {
       open.forEach(function(m) { m.classList.remove('open'); });
     }
   }
+});
+
+// ═══ EXCELOVSKÁ NAVIGACE V TABULKÁCH (měření, přístroje, LPS zemniče) ════
+// ↑/↓ = buňka nahoru/dolů, ←/→ = pohyb v textu a od kraje skok do vedlejší
+// buňky, Enter = buňka pod. Po skoku se obsah cílové buňky označí, takže
+// se rovnou přepisuje. Je-li označen celý obsah (hned po skoku), šipka
+// pokračuje na další buňku jako v Excelu.
+function tabulkaNavFocus(el, dir) {
+  var td = el.closest('td');
+  var tr = el.closest('tr');
+  if (!td || !tr) return false;
+  var target = null;
+  if (dir === 'left' || dir === 'right') {
+    var rowInputs = Array.prototype.slice.call(tr.querySelectorAll('input'));
+    var i = rowInputs.indexOf(el);
+    if (i < 0) return false;
+    var j = (dir === 'left') ? i - 1 : i + 1;
+    if (j >= 0 && j < rowInputs.length) {
+      target = rowInputs[j];
+    } else {
+      var row2 = (dir === 'left') ? tr.previousElementSibling : tr.nextElementSibling;
+      while (row2 && !row2.querySelector('input')) {
+        row2 = (dir === 'left') ? row2.previousElementSibling : row2.nextElementSibling;
+      }
+      if (!row2) return false;
+      var inps2 = row2.querySelectorAll('input');
+      target = (dir === 'left') ? inps2[inps2.length - 1] : inps2[0];
+    }
+  } else {
+    var ci = td.cellIndex;
+    var row = (dir === 'up') ? tr.previousElementSibling : tr.nextElementSibling;
+    while (row && !row.querySelector('input')) {
+      row = (dir === 'up') ? row.previousElementSibling : row.nextElementSibling;
+    }
+    if (!row) return false;
+    var best = null, bestDist = Infinity;
+    Array.prototype.forEach.call(row.querySelectorAll('td'), function(td2) {
+      var inp = td2.querySelector('input');
+      if (!inp) return;
+      var d = Math.abs(td2.cellIndex - ci);
+      if (d < bestDist) { bestDist = d; best = inp; }
+    });
+    target = best;
+  }
+  if (!target) return false;
+  window.__navFocus = true; // přeskočit datalist focus-trik (nemazat hodnotu)
+  target.focus();
+  try { target.select(); } catch(e) {}
+  return true;
+}
+
+document.addEventListener('keydown', function(e) {
+  var el = e.target;
+  if (!el || el.tagName !== 'INPUT') return;
+  if (!el.closest('.meas-table') && !el.closest('.data-table')) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  var k = e.key;
+  var dir = null;
+  if (k === 'ArrowUp') dir = 'up';
+  else if (k === 'ArrowDown' || k === 'Enter') dir = 'down';
+  else if (k === 'ArrowLeft' || k === 'ArrowRight') {
+    if (el.selectionStart == null) return;
+    var s = el.selectionStart, en = el.selectionEnd;
+    var celeOznaceno = (s === 0 && en === el.value.length && el.value.length > 0);
+    if (!celeOznaceno) {
+      if (s !== en) return;                           // část textu označena — nesahat
+      if (k === 'ArrowLeft' && s > 0) return;         // pohyb kurzoru ve slově
+      if (k === 'ArrowRight' && s < el.value.length) return;
+    }
+    dir = (k === 'ArrowLeft') ? 'left' : 'right';
+  } else {
+    return;
+  }
+  if (tabulkaNavFocus(el, dir)) e.preventDefault();
 });
 
 // ═══ IMPORT PŘETAŽENÍM SOUBORU DO OKNA ═══════════════════════════════════
@@ -9162,6 +9249,8 @@ function dlValueMatchesOption(el) {
 }
 document.addEventListener('focusin', function(e) {
   var el = e.target;
+  // Programový skok šipkami/Enterem — hodnotu nemazat, jen označit
+  if (window.__navFocus) { window.__navFocus = false; return; }
   if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
   if (el.readOnly) return; // zamčená zpráva — hodnoty se nesmí ani dočasně mazat
   el.dataset.dlPrev = el.value;
