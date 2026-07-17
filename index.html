@@ -514,7 +514,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.115<span class="ver-date"> · 2026-07-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.116<span class="ver-date"> · 2026-07-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -606,6 +606,21 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-07-17">
+    <div class="scard-title">🏘️ Nový typ objektu: Bytový dům — společné prostory <span class="nov-datum">17. 7. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Při zakládání nové elektro zprávy je vedle rodinného domu, bytu a průmyslu čtvrtá karta — <strong>Bytový dům — společné prostory</strong>. Pokrývá revize HDV, elektroměrových rozváděčů, osvětlení schodišť, sklepů, zvonků a STA.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <strong>Co je předvyplněné:</strong>
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Předmět revize</strong> — HDV, elektroměrové rozváděče, rozváděč společné spotřeby, obvody společných prostor, zvonky, STA</li>
+        <li><strong>Předmětem není</strong> — bytové jednotky, elektroměry, výtah (samostatná revize)</li>
+        <li><strong>🔮 Magic popis</strong> — kompletní vzorový popis instalace společných prostor k doladění</li>
+        <li>Napěťová soustava 3PEN (HDV je třífázové), normy bez koupelnové ČSN 33 2000-7-701, lhůta 5 let (bytové domy), placeholdery SVJ a rozváděče RS</li>
+        <li>V „Typickém textu" u předmětu, popisu i zhodnocení jsou varianty pro společné prostory</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-07-15">
@@ -1054,6 +1069,11 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
       <div class="podtyp-icon">🏭</div>
       <div class="podtyp-title">Průmyslový objekt</div>
       <div class="podtyp-desc">Trafostanice, hlavní rozváděč RH, podružné rozváděče, strojní zařízení</div>
+    </button>
+    <button class="podtyp-card" id="pt-spolecne">
+      <div class="podtyp-icon">🏘️</div>
+      <div class="podtyp-title">Bytový dům — společné prostory</div>
+      <div class="podtyp-desc">HDV, elektroměrové rozváděče, osvětlení schodiště a sklepů, zvonky, STA — bez bytových jednotek</div>
     </button>
   </div>
   <div style="text-align:center;margin-top:1rem">
@@ -2520,7 +2540,8 @@ function updateTabNav() {
 var NAPETOVE = {
   dum:     ['1NPE ~50Hz 230V / TN-C-S', '3PEN ~50Hz 400V / TN-C-S'],
   byt:     ['1NPE ~50Hz 230V / TN-C-S', '3PEN ~50Hz 400V / TN-C-S'],
-  prumysl: ['3PEN ~50Hz 400V / TN-C-S', '1NPE ~50Hz 230V / TN-C-S', '3PE ~50Hz 400V / IT']
+  prumysl: ['3PEN ~50Hz 400V / TN-C-S', '1NPE ~50Hz 230V / TN-C-S', '3PE ~50Hz 400V / IT'],
+  spolecne: ['3PEN ~50Hz 400V / TN-C-S', '1NPE ~50Hz 230V / TN-C-S']
 };
 
 var aktPodtyp = 'dum'; // default
@@ -2673,7 +2694,8 @@ function novaZprava(typ) {
       var predmety = {
         dum: 'Elektrické zařízení rodinného domu, hlavní přívod z pojistkové skříně, elektroměrový rozváděč, vývod z elektroměrového rozváděče — přívod pro rozváděč RD, který je nainstalován v technické místnosti rodinného domu. Dále vývody z rozváděče RD, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
         byt: 'Elektrické zařízení bytové jednotky, rozváděč RB v bytové jednotce, vývody z rozváděče RB, světelné a zásuvkové obvody, včetně pevně připojených spotřebičů v rozsahu dle popisu revidovaného zařízení.',
-        prumysl: 'Elektrické zařízení provozovny, hlavní přívody pro rozváděč RH (vlastní trafostanice). Vývody z rozváděče RH, přívody pro strojní a technologické zařízení, napájení el. zařízení zásuvkové a světelné obvody v rozsahu dle popisu revidovaného zařízení.'
+        prumysl: 'Elektrické zařízení provozovny, hlavní přívody pro rozváděč RH (vlastní trafostanice). Vývody z rozváděče RH, přívody pro strojní a technologické zařízení, napájení el. zařízení zásuvkové a světelné obvody v rozsahu dle popisu revidovaného zařízení.',
+        spolecne: 'Elektrické zařízení společných prostor bytového domu: hlavní domovní vedení (HDV) od přípojkové skříně, elektroměrové rozváděče na chodbách jednotlivých podlaží, rozváděč společné spotřeby, stoupací vedení, světelné a zásuvkové obvody společných prostor (schodiště, chodby, sklepy, kočárkárna, technické místnosti), zvonkové tablo a domovní dorozumívací zařízení, společná televizní anténa (STA) v rozsahu dle popisu revidovaného zařízení.'
       };
       f_predmet.value = predmety[aktPodtyp] || predmety.dum;
     }
@@ -2683,7 +2705,8 @@ function novaZprava(typ) {
       var neníTexty = {
         dum: '',
         byt: 'Elektroměrový rozváděč, hlavní přívod — část společné prostory bytového domu.',
-        prumysl: ''
+        prumysl: '',
+        spolecne: 'Elektrická zařízení jednotlivých bytových jednotek od bytových rozváděčů. Elektroměry — měřicí zařízení provozovatele distribuční soustavy. Výtah — vyhrazené zdvihací zařízení (samostatná revize).'
       };
       f_neni.value = neníTexty[aktPodtyp] || '';
     }
@@ -2695,7 +2718,8 @@ function novaZprava(typ) {
     var zdrojPh = {
       dum: 'např. ČEZ Distribuce, a.s. — vyberte ze seznamu',
       byt: 'např. ČEZ Distribuce, a.s. — vyberte ze seznamu',
-      prumysl: 'např. Vlastní trafostanice 22/0,4 kV'
+      prumysl: 'např. Vlastní trafostanice 22/0,4 kV',
+      spolecne: 'např. EG.D, a.s. — vyberte ze seznamu'
     };
     zdroj.placeholder = zdrojPh[aktPodtyp] || zdrojPh.dum;
   }
@@ -2730,6 +2754,16 @@ function novaZprava(typ) {
       f_zemnič: 'Uzemňovací soustava rozsáhlého objektu — typ B',
       f_zemni_odpor: '2,8',
       f_predmet_neni: ''
+    },
+    spolecne: {
+      f_misto: 'Bytový dům č.p. 456 — společné prostory',
+      f_adresa: 'Sídlištní 456\n697 01 Kyjov',
+      f_provozovatel: 'Společenství vlastníků jednotek Sídlištní 456\nSídlištní 456\n697 01 Kyjov\nIČ: 12345678',
+      f_rozvadec: 'RS — rozváděč společné spotřeby, plastový, IP40',
+      f_rozvadec_umisteni: 'Chodba 1. NP u vstupu do objektu',
+      f_zemnič: 'Společná uzemňovací soustava bytového domu — typ B',
+      f_zemni_odpor: '3,6',
+      f_predmet_neni: 'Bytové jednotky, elektroměry, výtah'
     }
   };
   var podtypPh = ph[aktPodtyp] || ph.dum;
@@ -2987,7 +3021,9 @@ function propsatTechnika() {
 var NORMY_PODTYP = {
   dum:     { csn2000701: true, csn2130: true, csn2000554: true, csn2000551: true, csn2000552: true },
   byt:     { csn2000701: true, csn2130: true, csn2000554: true, csn2000551: true, csn2000552: true },
-  prumysl: { csn2000554: true, csn2000551: true, csn2000552: true, csn60073: false }
+  prumysl: { csn2000554: true, csn2000551: true, csn2000552: true, csn60073: false },
+  // Společné prostory BD: bez koupelnové 7-701, jinak jako obytné objekty
+  spolecne: { csn2130: true, csn2000554: true, csn2000551: true, csn2000552: true }
 };
 
 var NORMY = {
@@ -3461,8 +3497,8 @@ function addRozvadec() {
   var div = document.createElement('div');
   div.className = 'scard scard-rv';
   div.dataset.rozvadecId = 'rozv-' + n;
-  var phNazev = { dum: 'RD — plastový, zapuštěný, IP30', byt: 'RB — plastový, zapuštěný, IP30', prumysl: 'RH — skříňový OCEP, 1600A, IP40/00' };
-  var phUmist = { dum: 'Technická místnost rodinného domu', byt: 'Vstupní chodba bytové jednotky', prumysl: 'Rozvodna VN/NN, trafostanice' };
+  var phNazev = { dum: 'RD — plastový, zapuštěný, IP30', byt: 'RB — plastový, zapuštěný, IP30', prumysl: 'RH — skříňový OCEP, 1600A, IP40/00', spolecne: 'RS — rozváděč společné spotřeby, IP40' };
+  var phUmist = { dum: 'Technická místnost rodinného domu', byt: 'Vstupní chodba bytové jednotky', prumysl: 'Rozvodna VN/NN, trafostanice', spolecne: 'Chodba 1. NP bytového domu' };
   div.innerHTML = '<div class="scard-title" style="display:flex;justify-content:space-between;align-items:center">' +
     '<span>Rozváděč [' + n + '] <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 Z2 – příloha G</span></span>' +
     (n > 1 ? '<button class="del-btn" style="font-size:.75rem" data-action="delRozvadec" data-rozvadec="rozv-' + n + '">✕ Odebrat rozváděč</button>' : '') +
@@ -4605,6 +4641,8 @@ function magicPopis() {
 
     prumysl: 'Jedná se o rozsáhlý průmyslový objekt s vlastní trafostanicí, která je mimo výrobní objekt u příjezdové komunikace. V trafostanici je nainstalován hlavní rozváděč RH, ze kterého jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy, šaten a technického zázemí.\n\nKabelové rozvody jsou uloženy v zemi — v případě pravidelné revize je vhodné uvést, že stav kabelů a uzemňovací soustavy uložených v zemi nebylo možné zkontrolovat, protože jsou nepřístupné. Kabely jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách.\n\n— V rozvodně VN/NN je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— neživé části zařízení — nádoba transformátoru;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nV rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů. V podružných rozváděčích osazeny SPD.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.',
 
+    spolecne: 'Jedná se o elektrické zařízení společných prostor bytového domu. Objekt je připojen k distribuční síti prostřednictvím přípojkové skříně, ze které je provedeno hlavní domovní vedení (HDV) kabelem CYKY-J 4x25. HDV je vedeno v instalační šachtě a napájí elektroměrové rozváděče umístěné na chodbách jednotlivých podlaží. V elektroměrovém rozváděči v 1. NP je osazen elektroměr společné spotřeby s hlavním jističem.\n\nZ rozváděče společné spotřeby RS jsou napájeny obvody: osvětlení schodiště a chodeb (ovládané tlačítky přes schodišťový automat), osvětlení sklepních prostor a kočárkárny, zásuvkové obvody společných prostor, zvonkové tablo a domovní dorozumívací zařízení, společná televizní anténa (STA) a osvětlení vstupu do objektu.\n\n— V objektu je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu (vodovodní a plynovodní přípojka).\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nKabelové rozvody společných prostor jsou uloženy pod omítkou a v instalačních lištách. Stoupací vedení je vedeno v instalační šachtě přístupné z chodeb jednotlivých podlaží.\n\nV rozváděči RS je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody společných prostor jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. Osvětlení je provedeno LED svítidly s odpovídajícím krytím IP. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrická zařízení jednotlivých bytových jednotek (od bytových rozváděčů), elektroměry a výtah nejsou předmětem této revize.',
+
     lps: 'Jedná se o vnější systém ochrany před bleskem (LPS) na střeše objektu rodinného domu. Třída LPS odpovídá výpočtu rizika dle ČSN EN 62305-2 ed.2.\n\nJÍMACÍ SOUSTAVA — je provedena pomocí jímacích tyčí a propojovacího vedení AlMgSi ⌀ 8 mm na střeše. Jímače jsou rozmístěny tak, aby celá střecha objektu spadala do jejich ochranného prostoru (metoda valící se koule / ochranného úhlu / mřížové soustavy dle ČSN EN 62305-3 ed.2 čl. 5.2).\n\nSVODY — napojeny na jímací soustavu a vyvedeny po fasádě objektu k zemi. Materiál: AlMgSi ⌀ 8 mm. V dosahu osob (do výšky 1,8 m nad zemí) jsou svody chráněny ochranným úhelníkem proti mechanickému poškození. Měřicí (zkušební) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené.\n\nUZEMŇOVACÍ SOUSTAVA — typu B (základový zemnič — uzavřená smyčka v betonu základů, FeZn pásek 30×4 mm). Souží i jako společný zemnič pro elektroinstalaci. Spojení na svody je provedeno přes měřicí svorky.\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — všechny kovové části vstupující do objektu (vodovodní přípojka, plynovod, technologie) jsou propojeny na hlavní uzemňovací svornici (MET) v objektu.\n\nVNITŘNÍ OCHRANA PŘED PŘEPĚTÍM — instalována kombinovaná přepěťová ochrana SPD typu T1+T2 v hlavním rozváděči objektu pro koordinovanou ochranu dle ČSN EN 62305-4 ed.2.\n\nIzolační (bezpečné) vzdálenosti „s" mezi LPS a vodivými částmi uvnitř objektu byly ověřeny vizuálně a vyhovují požadavkům ČSN EN 62305-3 ed.2 čl. 6.3.',
 
     lps1390: 'Jedná se o vnější systém ochrany před bleskem (hromosvod), který byl zřízen před rokem 2004 a je posuzován dle ČSN 34 1390 (Předpisy pro ochranu před bleskem).\n\nJÍMACÍ ZAŘÍZENÍ — provedeno jako hřebenové vedení po obvodu střechy, doplněné jímacími tyčemi na vyčnívajících částech objektu (komín, STA). Materiál FeZn ⌀ 8 mm. Vzdálenost jímacího vedení od hořlavých částí střechy vyhovuje požadavkům ČSN 34 1390 čl. 42.\n\nSVODY — celkem osazeny v rozích a po obvodu objektu, rovnoměrně rozmístěné. Materiál FeZn. V dosahu osob (do výšky 1,8 m) jsou svody opatřeny ochranným úhelníkem proti mechanickému poškození. Zkušební (měřicí) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené dle ČSN 34 1390 čl. 50.\n\nUZEMŇOVACÍ SOUSTAVA — jednotlivé zemniče připojené ke svodům. Materiál FeZn pásek, uložení v hloubce cca 0,8 m. Měření zemního odporu u jednotlivých svodů se doporučuje ≤ 15 Ω (ČSN 34 1390 čl. 55).\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — kovové části vstupující do objektu (vodovod, plyn) jsou propojeny s uzemňovací soustavou dle ČSN 34 1390 čl. 62.\n\nCelistvost spojů byla ověřena měřením přechodových odporů — požadavek ≤ 0,2 Ω dle ČSN 34 1390 čl. 124.'
@@ -4668,20 +4706,23 @@ var TYPY_TEXTU = {
     { nazev: 'Byt (elektro)', text: 'Elektrická instalace bytové jednotky od bytového rozváděče umístěného v chodbě bytu, veškeré rozvody silnoproudé instalace v prostorách bytu.' },
     { nazev: 'Průmyslový objekt (elektro)', text: 'Silnoproudá elektrická instalace průmyslového objektu od hlavního rozváděče, veškeré rozvody nn v objektu, přípojnicové rozvody, rozváděče jednotlivých technologií.' },
     { nazev: 'Hromosvod – ČSN EN 62305 (LPS)', text: 'Systém ochrany před bleskem (LPS) na objektu, zahrnující jímací soustavu, svody, uzemnění, pospojování a přepěťové ochrany (SPD), provedený dle ČSN EN 62305-1 až 4 ed. 2.' },
-    { nazev: 'Hromosvod – ČSN 34 1390 (LPS)', text: 'Hromosvodní zařízení na objektu zahrnující jímací soustavu (hřebenová tyč, jímací tyče), svody, uzemňovací soustavu a pospojování, provedené dle ČSN 34 1390.' }
+    { nazev: 'Hromosvod – ČSN 34 1390 (LPS)', text: 'Hromosvodní zařízení na objektu zahrnující jímací soustavu (hřebenová tyč, jímací tyče), svody, uzemňovací soustavu a pospojování, provedené dle ČSN 34 1390.' },
+    { nazev: 'Bytový dům — společné prostory (elektro)', text: 'Elektrické zařízení společných prostor bytového domu: hlavní domovní vedení (HDV) od přípojkové skříně, elektroměrové rozváděče, rozváděč společné spotřeby, stoupací vedení, světelné a zásuvkové obvody společných prostor (schodiště, chodby, sklepy, kočárkárna, technické místnosti), zvonkové tablo a domovní dorozumívací zařízení, společná televizní anténa (STA).' }
   ],
   f_predmet_neni: [
     { nazev: 'Přípojková skříň + elektroměr (RD/byt)', text: 'Předmětem revize není přípojková skříň, měřicí místo a elektroměrový rozváděč (zařízení provozovatele distribuční soustavy), ani rozvody ve společných prostorách bytového domu.' },
     { nazev: 'Spotřebiče a pohyblivé přívody', text: 'Předmětem revize nejsou spotřebiče a jejich pohyblivé přívodní šňůry, ani technologická zařízení. Revize se vztahuje pouze na pevnou elektrickou instalaci.' },
     { nazev: 'Technologická zařízení (průmysl)', text: 'Předmětem revize nejsou technologická zařízení a jejich silové přívody nad napěťovou skříní stroje, řídicí systémy PLC a sdělovací rozvody. Revize se vztahuje na silnoproudou pevnou instalaci budovy.' },
-    { nazev: 'Vnitřní rozvody budovy (hromosvod)', text: 'Předmětem revize ochrany před bleskem není silnoproudá elektrická instalace objektu ani jí připojená technologická zařízení.' }
+    { nazev: 'Vnitřní rozvody budovy (hromosvod)', text: 'Předmětem revize ochrany před bleskem není silnoproudá elektrická instalace objektu ani jí připojená technologická zařízení.' },
+    { nazev: 'Bytové jednotky + výtah (spol. prostory BD)', text: 'Předmětem revize nejsou elektrická zařízení jednotlivých bytových jednotek od bytových rozváděčů, spotřebiče v bytech, elektroměry (měřicí zařízení provozovatele distribuční soustavy) ani výtah — vyhrazené zdvihací zařízení podléhající samostatné revizi.' }
   ],
   f_popis: [
     { nazev: 'Rodinný dům', text: 'Jedná se o novostavbu rodinného domu. Rodinný dům je připojen k distribuční síti prostřednictvím pojistkové skříně typ SPP2C, řešeno jako svodová přípojka. Elektroměrový rozváděč je nainstalován v elektroměrovém pilíři na hranici pozemku. Rozváděč RD pro rodinný dům je nainstalován v technické místnosti. Hlavní přívod z elektroměrového rozváděče je proveden kabelem CYKY-J 4x16, který je uložen v zemi v chráničkách Kopoflex v celé délce v hloubce 80 cm. Kabel je zakončen na vstupní svorkovnici rozváděče RD. Souběžně s hlavním přívodem je uložen i kabel CYKY-J 5x2,5 — povelový pro HDO a kabel CYKY-J 3x2,5 pro pohon brány.\n\n— Pod rozváděčem je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nRp doplňujícího ochranného pospojování v koupelně vyhověly ČSN 33 2000-4-41 ed.3, čl. 415.2. Odpor R mezi neživými částmi současně přístupnými dotyku a cizími vodivými částmi splnil podmínku: R ≤ 50V/Ia.\n\nV rozváděči RD vedle hlavního jističe je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C. Délka vodičů přívodu a vývodu z přepěťové ochrany je 30 cm. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. Osvětlení je provedeno LED svítidly s odpovídajícím krytím IP.\n\nU rodinného domu je proveden základový zemnič typu B, který tvoří uzavřenou smyčku. Zemnič je uložen minimálně 10 cm v betonu. Jedná se o společný zemnič pro elektrické zařízení i ochranu před bleskem. Uzemňovací přívody jsou antikorozně ošetřeny dle ČSN 33 2000-5-54 ed.3 příloha ZB čl. 542.2.5.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.' },
     { nazev: 'Byt', text: 'Jedná se o bytovou jednotku v bytovém domě. Bytová jednotka je ve druhém nadzemním podlaží vlevo. Bytový dům je postaven z cihel. Hlavní přívod z elektroměrového rozváděče, který je nainstalovaný na společné chodbě bytového domu je proveden kabelem CYKY-J 4x10, společně s hlavním přívodem je uložen vodič pospojování v barevné kombinaci žel/žlutá průřezu 10 mm².\n\nBytový rozváděč RB je nainstalován ve vstupní chodbě bytové jednotky. Kabelové rozvody jsou uloženy pod omítkou a v podlahách. Přípojnice pospojování pro BJ je nainstalována v šachtě přístupné z WC.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nRp doplňujícího ochranného pospojování v koupelně vyhověly ČSN 33 2000-4-41 ed.3, čl. 415.2. Odpor R mezi neživými částmi současně přístupnými dotyku a cizími vodivými částmi splnil podmínku: R ≤ 50V/Ia.\n\nV rozváděči BD vedle hlavního jističe je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C typ OEZ SVC-350—3PEN - MZ pro výbojový proud 20 kA (8/20 μs) pro předpokládané nízké účinky bleskového proudu. Délka vodičů přívodu a vývodu z přepěťové ochrany je 45 cm. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.' },
     { nazev: 'Průmyslový objekt', text: 'Jedná se o rozsáhlý průmyslový objekt s vlastní trafostanicí, která je mimo výrobní objekt u příjezdové komunikace. V trafostanici je nainstalován hlavní rozváděč RH, ze kterého jsou napájeny podružné rozváděče výrobního objektu, administrativní budovy, šaten a technického zázemí.\n\nKabelové rozvody jsou uloženy v zemi — v případě pravidelné revize je vhodné uvést, že stav kabelů a uzemňovací soustavy uložených v zemi nebylo možné zkontrolovat, protože jsou nepřístupné. Kabely jsou uloženy na lávkách, v drátěných nosných systémech a elektroinstalačních ohebných trubkách.\n\n— V rozvodně VN/NN je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— neživé části zařízení — nádoba transformátoru;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu.\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nV rozváděči RH vedle hlavního jističe je osazen svodič bleskových proudů. V podružných rozváděčích osazeny SPD.\n\nElektrické zařízení v umývacím prostoru a v ochranném prostoru sporáku (varné desky) jsou řešeny dle požadavků ČSN 33 2130 ed.4 čl. 8.8.\n\nElektrické zařízení v prostorech s vanou nebo sprchou je provedeno dle požadavků ČSN 33 2000-7-701 ed.3.' },
     { nazev: 'Hromosvod – ČSN EN 62305', text: 'Jedná se o vnější systém ochrany před bleskem (LPS) na střeše objektu rodinného domu. Třída LPS odpovídá výpočtu rizika dle ČSN EN 62305-2 ed.2.\n\nJÍMACÍ SOUSTAVA — je provedena pomocí jímacích tyčí a propojovacího vedení AlMgSi ⌀ 8 mm na střeše. Jímače jsou rozmístěny tak, aby celá střecha objektu spadala do jejich ochranného prostoru (metoda valící se koule / ochranného úhlu / mřížové soustavy dle ČSN EN 62305-3 ed.2 čl. 5.2).\n\nSVODY — napojeny na jímací soustavu a vyvedeny po fasádě objektu k zemi. Materiál: AlMgSi ⌀ 8 mm. V dosahu osob (do výšky 1,8 m nad zemí) jsou svody chráněny ochranným úhelníkem proti mechanickému poškození. Měřicí (zkušební) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené.\n\nUZEMŇOVACÍ SOUSTAVA — typu B (základový zemnič — uzavřená smyčka v betonu základů, FeZn pásek 30×4 mm). Slouží i jako společný zemnič pro elektroinstalaci. Spojení na svody je provedeno přes měřicí svorky.\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — všechny kovové části vstupující do objektu (vodovodní přípojka, plynovod, technologie) jsou propojeny na hlavní uzemňovací svornici (MET) v objektu.\n\nVNITŘNÍ OCHRANA PŘED PŘEPĚTÍM — instalována kombinovaná přepěťová ochrana SPD typu T1+T2 v hlavním rozváděči objektu pro koordinovanou ochranu dle ČSN EN 62305-4 ed.2.\n\nIzolační (bezpečné) vzdálenosti „s" mezi LPS a vodivými částmi uvnitř objektu byly ověřeny vizuálně a vyhovují požadavkům ČSN EN 62305-3 ed.2 čl. 6.3.' },
-    { nazev: 'Hromosvod – ČSN 34 1390', text: 'Jedná se o vnější systém ochrany před bleskem (hromosvod), který byl zřízen před rokem 2004 a je posuzován dle ČSN 34 1390 (Předpisy pro ochranu před bleskem).\n\nJÍMACÍ ZAŘÍZENÍ — provedeno jako hřebenové vedení po obvodu střechy, doplněné jímacími tyčemi na vyčnívajících částech objektu (komín, STA). Materiál FeZn ⌀ 8 mm. Vzdálenost jímacího vedení od hořlavých částí střechy vyhovuje požadavkům ČSN 34 1390 čl. 42.\n\nSVODY — celkem osazeny v rozích a po obvodu objektu, rovnoměrně rozmístěné. Materiál FeZn. V dosahu osob (do výšky 1,8 m) jsou svody opatřeny ochranným úhelníkem proti mechanickému poškození. Zkušební (měřicí) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené dle ČSN 34 1390 čl. 50.\n\nUZEMŇOVACÍ SOUSTAVA — jednotlivé zemniče připojené ke svodům. Materiál FeZn pásek, uložení v hloubce cca 0,8 m. Měření zemního odporu u jednotlivých svodů se doporučuje ≤ 15 Ω (ČSN 34 1390 čl. 55).\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — kovové části vstupující do objektu (vodovod, plyn) jsou propojeny s uzemňovací soustavou dle ČSN 34 1390 čl. 62.\n\nCelistvost spojů byla ověřena měřením přechodových odporů — požadavek ≤ 0,2 Ω dle ČSN 34 1390 čl. 124.' }
+    { nazev: 'Hromosvod – ČSN 34 1390', text: 'Jedná se o vnější systém ochrany před bleskem (hromosvod), který byl zřízen před rokem 2004 a je posuzován dle ČSN 34 1390 (Předpisy pro ochranu před bleskem).\n\nJÍMACÍ ZAŘÍZENÍ — provedeno jako hřebenové vedení po obvodu střechy, doplněné jímacími tyčemi na vyčnívajících částech objektu (komín, STA). Materiál FeZn ⌀ 8 mm. Vzdálenost jímacího vedení od hořlavých částí střechy vyhovuje požadavkům ČSN 34 1390 čl. 42.\n\nSVODY — celkem osazeny v rozích a po obvodu objektu, rovnoměrně rozmístěné. Materiál FeZn. V dosahu osob (do výšky 1,8 m) jsou svody opatřeny ochranným úhelníkem proti mechanickému poškození. Zkušební (měřicí) svorky jsou umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené dle ČSN 34 1390 čl. 50.\n\nUZEMŇOVACÍ SOUSTAVA — jednotlivé zemniče připojené ke svodům. Materiál FeZn pásek, uložení v hloubce cca 0,8 m. Měření zemního odporu u jednotlivých svodů se doporučuje ≤ 15 Ω (ČSN 34 1390 čl. 55).\n\nEKVIPOTENCIÁLNÍ POSPOJOVÁNÍ — kovové části vstupující do objektu (vodovod, plyn) jsou propojeny s uzemňovací soustavou dle ČSN 34 1390 čl. 62.\n\nCelistvost spojů byla ověřena měřením přechodových odporů — požadavek ≤ 0,2 Ω dle ČSN 34 1390 čl. 124.' },
+    { nazev: 'Bytový dům — společné prostory', text: 'Jedná se o elektrické zařízení společných prostor bytového domu. Objekt je připojen k distribuční síti prostřednictvím přípojkové skříně, ze které je provedeno hlavní domovní vedení (HDV) kabelem CYKY-J 4x25. HDV je vedeno v instalační šachtě a napájí elektroměrové rozváděče umístěné na chodbách jednotlivých podlaží. V elektroměrovém rozváděči v 1. NP je osazen elektroměr společné spotřeby s hlavním jističem.\n\nZ rozváděče společné spotřeby RS jsou napájeny obvody: osvětlení schodiště a chodeb (ovládané tlačítky přes schodišťový automat), osvětlení sklepních prostor a kočárkárny, zásuvkové obvody společných prostor, zvonkové tablo a domovní dorozumívací zařízení, společná televizní anténa (STA) a osvětlení vstupu do objektu.\n\n— V objektu je nainstalována přípojnice MET — hlavní uzemňovací svorka, ke které jsou připojeny:\n— vodiče ochranného pospojování;\n— uzemňovací přívody;\n— ochranné vodiče;\n— cizí vodivé části vstupující do objektu (vodovodní a plynovodní přípojka).\n\nSpojitost ochranných vodičů dle čl. 6.4.3.2 ČSN 33 2000-6 ed.2 a připojení k neživým částem, byla ověřena měřením elektrického odporu u:\na) ochranných vodičů včetně vodičů ochranného pospojování;\nb) neživých částí.\n\nKabelové rozvody společných prostor jsou uloženy pod omítkou a v instalačních lištách. Stoupací vedení je vedeno v instalační šachtě přístupné z chodeb jednotlivých podlaží.\n\nV rozváděči RS je osazena přepěťová ochrana stupně T2 (C) pro síť TN-C. Při měření izolačních odporů instalace byly SPD odpojeny.\n\nZásuvkové obvody společných prostor jsou jištěny jističi charakteristiky B a chráněny proudovými chrániči s IΔn = 30 mA. Osvětlení je provedeno LED svítidly s odpovídajícím krytím IP. Uložení elektrických rozvodů je provedeno v instalačních zónách — ČSN 33 2130 ed.4 čl. 8.10.3.\n\nElektrická zařízení jednotlivých bytových jednotek (od bytových rozváděčů), elektroměry a výtah nejsou předmětem této revize.' }
   ],
   f_zhodnoceni: [
     { nazev: 'Schopno provozu (elektro)', text: 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledky měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).' },
@@ -4696,10 +4737,10 @@ var TYPY_TEXTU = {
 // Filtry podle aktTyp/aktPodtyp — index odpovídá pořadí v TYPY_TEXTU.
 // Klíče: 'dum', 'byt', 'prumysl', 'lps'. Chybějící záznam = bez filtru (zobrazit vždy).
 var TYPY_TEXTU_FILTRY = {
-  f_predmet_je:   [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps']],
-  f_predmet_neni: [['dum','byt'], ['dum','byt','prumysl'], ['prumysl'], ['lps']],
-  f_popis:        [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps']],
-  f_zhodnoceni:   [['dum','byt','prumysl'], ['dum','byt','prumysl'], ['lps'], ['lps'], ['lps'], ['lps']]
+  f_predmet_je:   [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps'], ['spolecne']],
+  f_predmet_neni: [['dum','byt'], ['dum','byt','prumysl','spolecne'], ['prumysl'], ['lps'], ['spolecne']],
+  f_popis:        [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps'], ['spolecne']],
+  f_zhodnoceni:   [['dum','byt','prumysl','spolecne'], ['dum','byt','prumysl','spolecne'], ['lps'], ['lps'], ['lps'], ['lps']]
 };
 
 var __typTextTargetId = '';
@@ -5697,6 +5738,7 @@ function openModalRevize() {
     if (aktPodtyp === 'dum') typObj.value = '4';
     else if (aktPodtyp === 'byt') typObj.value = '4';
     else if (aktPodtyp === 'prumysl') typObj.value = '3';
+    else if (aktPodtyp === 'spolecne') typObj.value = '5'; // bytové domy — 5 let
   }
   updateRevizeLhuta();
   m.classList.add('open');
@@ -8937,7 +8979,7 @@ async function init() {
   var bLps = document.getElementById('btn-nova-lps');
   if (bLps) bLps.addEventListener('click', function() { aktTyp = 'lps'; novaZprava('lps'); });
   // Podtyp karty
-  ['dum','byt','prumysl'].forEach(function(pt) {
+  ['dum','byt','prumysl','spolecne'].forEach(function(pt) {
     var btn = document.getElementById('pt-' + pt);
     if (btn) btn.addEventListener('click', function() { volbaPodtypu(pt); });
   });
