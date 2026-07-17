@@ -514,7 +514,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.118<span class="ver-date"> · 2026-07-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.119<span class="ver-date"> · 2026-07-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6958,7 +6958,12 @@ function generujPDF() {
 }
 
 // Univerzální funkce pro uložení/sdílení PDF souboru
+var __ulozitSouborLock = 0;
 async function ulozitSoubor(blob, filename) {
+  // Pojistka proti dvojímu stažení (Safari umí click/share zduplikovat)
+  var ted = Date.now();
+  if (ted - __ulozitSouborLock < 1500) return false;
+  __ulozitSouborLock = ted;
   // 1. Zkus File System Access API (Chrome/Edge desktop)
   if ('showSaveFilePicker' in window) {
     try {
@@ -6978,8 +6983,12 @@ async function ulozitSoubor(blob, filename) {
       // jiná chyba — pokračuj na další metodu
     }
   }
-  // 2. Zkus Web Share API (iOS Safari, Android Chrome)
-  if (navigator.canShare && navigator.share) {
+  // 2. Zkus Web Share API — ale JEN na dotykových zařízeních (iPhone/iPad/
+  // Android), kde nejde stáhnout soubor rozumněji. Na desktop Safari se
+  // share sheet chová nevyzpytatelně (duplicitní soubory, žádný dialog) —
+  // tam se jde rovnou na klasické stažení.
+  var jeDotykove = ('ontouchstart' in window) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+  if (jeDotykove && navigator.canShare && navigator.share) {
     try {
       var file = new File([blob], filename, { type: blob.type });
       if (navigator.canShare({ files: [file] })) {
