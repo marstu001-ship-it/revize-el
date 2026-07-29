@@ -523,7 +523,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.127<span class="ver-date"> · 2026-07-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.128<span class="ver-date"> · 2026-07-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3563,24 +3563,37 @@ function copyRcdGroup(el) {
 var rozvadecCounter = 0;
 
 function getMeasTableHtml() {
-  return '<table class="data-table meas-table"><thead>' +
+  // table-layout:fixed bere šířky POUZE z prvního řádku buněk — kvůli
+  // colspan skupinám ("Jmenovité hodnoty jištění") se proto šířky musí
+  // definovat přes <colgroup>. Poměry zrcadlí výsledné PDF: úzké hodnotové
+  // sloupce (IΔn, Isc, Zsm, Riso, Rpe, Fáze, Vyp, čas, Ut — nesou 3–4
+  // znaky), široká Značka, A, Název a Kabel.
+  return '<table class="data-table meas-table">' +
+    '<colgroup>' +
+    '<col style="width:4.5%"><col style="width:14%">' +
+    '<col style="width:8.5%"><col style="width:5%"><col style="width:7%"><col style="width:4%"><col style="width:4%">' +
+    '<col style="width:4.5%"><col style="width:4%"><col style="width:4%">' +
+    '<col style="width:4.5%"><col style="width:4.5%"><col style="width:4%"><col style="width:5%"><col style="width:4%">' +
+    '<col style="width:15.5%"><col style="width:3%">' +
+    '</colgroup>' +
+    '<thead>' +
     '<tr>' +
-    '<th class="grp" rowspan="2" style="width:4.5%;cursor:pointer" data-action="toggleAutoCislovani" title="' +
+    '<th class="grp" rowspan="2" style="cursor:pointer" data-action="toggleAutoCislovani" title="' +
     (STORE.auto_cislovani === false
       ? 'Vlastní číslování — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
       : 'Automatické číslování 1, 2, 3… Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).') +
     '">Č. <span class="cisl-ico">' +
     (STORE.auto_cislovani === false ? '✏️' : '🔢') + '</span></th>' +
-    '<th class="grp" rowspan="2" style="width:11%">Název obvodu</th>' +
+    '<th class="grp" rowspan="2">Název obvodu</th>' +
     '<th class="grp" colspan="5">Jmenovité hodnoty jištění</th>' +
     '<th class="grp" rowspan="2">Zsm<br>max Ω</th>' +
     '<th class="grp" rowspan="2">Riso<br>MΩ</th>' +
     '<th class="grp" rowspan="2">Rpe<br>Ω</th>' +
     '<th class="grp" colspan="5">Měření RCD</th>' +
-    '<th class="grp" rowspan="2" style="width:9.5%">Kabel<br>typ, průřez mm²</th>' +
-    '<th class="grp" rowspan="2" style="width:3%"></th>' +
+    '<th class="grp" rowspan="2">Kabel<br>typ, průřez mm²</th>' +
+    '<th class="grp" rowspan="2"></th>' +
     '</tr><tr>' +
-    '<th style="width:8%">Značka</th><th style="width:5.5%">Ch./Typ</th><th style="width:6.5%">A</th><th>IΔn</th><th>Isc<br>kA</th>' +
+    '<th>Značka</th><th>Ch./Typ</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th>' +
     '<th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>' +
     '</tr></thead><tbody></tbody></table>';
 }
