@@ -523,7 +523,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.125<span class="ver-date"> · 2026-07-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.126<span class="ver-date"> · 2026-07-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6428,6 +6428,7 @@ function generujPDF() {
                '<div class="pbox" style="min-height:18mm"><div class="dtgrid">' +
                '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
                '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
+               (D.preruseni_od || D.preruseni_do ? '<span class="dtlabel">přerušení</span><span class="dtval">' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '</span>' : '') +
                '<span class="dtlabel">předchozí</span><span class="dtval">' + fmtDate(D.predchozi) + '</span>' +
                '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
                '<span class="dtlabel">doporučená příští</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
@@ -6452,6 +6453,7 @@ function generujPDF() {
     '<div class="dtgrid">' +
     '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
     '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
+    (D.preruseni_od || D.preruseni_do ? '<span class="dtlabel">přerušení</span><span class="dtval">' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '</span>' : '') +
     '<span class="dtlabel">předchozí</span><span class="dtval">' + fmtDate(D.predchozi) + '</span>' +
     '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
     '<span class="dtlabel">doporučená příští</span><span class="dtval" style="font-weight:bold">' + fmtPristi(D.pristi) + '</span>' +
@@ -6767,7 +6769,7 @@ function generujPDF() {
       '<div style="font-size:9.5pt;line-height:1.7;padding:0 2mm">' +
       'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla provedena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2 a přílohy NA.' +
       '<br>Bylo provedeno měření přechodových odporů a kontrola průřezu vodičů doplňujícího ochranného pospojování — ČSN 33 2000-4-41 ed.3, čl. 415.2, ČSN 33 2000-5-54 ed.3 čl. 544, ČSN EN 61140 ed.3 čl. 5.5.2.' +
-      '<br><br>Měření a zkoušení proudových chráničů bylo provedeno následujícím postupem:' +
+      '<br><br><strong>Měření a zkoušení proudových chráničů bylo provedeno následujícím postupem:</strong>' +
       '<br>— Ověření mezních hodnot reziduálních proudů a časů proudových chráničů.' +
       '<br>— Měření dotykového napětí Ut na ochranném vodiči způsobené průchodem proudu IΔn.' +
       '<br>— Ověření funkce kontrolního tlačítka na chráničích.' +
@@ -7137,18 +7139,52 @@ async function ulozitSoubor(blob, filename) {
 // html2pdf má vnitřní pagination, která produkovala prázdné stránky a
 // nešla spolehlivě vypnout. S přímým API máme plnou kontrolu — addPage
 // voláme my, addImage cílíme na actual page dims.
+// Overlay s průběhem ukládání PDF — u vícestránkových zpráv trvá render
+// i 15 s a bez vizualizace uživatel kliká znovu a znovu.
+function pdfProgressShow(total) {
+  var ov = document.getElementById('pdf-progress-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'pdf-progress-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(20,20,20,.55);display:flex;align-items:center;justify-content:center';
+    ov.innerHTML = '<div style="background:#fff;border-radius:6px;padding:1.4rem 2rem;min-width:280px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.35)">' +
+      '<div style="font-size:2rem;line-height:1;margin-bottom:.6rem;animation:novinkyPulse 1.2s ease-in-out infinite;display:inline-block;border-radius:50%">📄</div>' +
+      '<div id="pdf-progress-text" style="font-family:var(--mono);font-size:.8rem;letter-spacing:.05em;color:#333">Připravuji PDF…</div>' +
+      '<div style="background:#eee;border-radius:4px;height:8px;margin-top:.8rem;overflow:hidden"><div id="pdf-progress-bar" style="background:var(--accent2);height:100%;width:0%;transition:width .3s"></div></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+  }
+  ov.style.display = 'flex';
+  pdfProgressUpdate(0, total);
+}
+function pdfProgressUpdate(done, total) {
+  var t = document.getElementById('pdf-progress-text');
+  var b = document.getElementById('pdf-progress-bar');
+  if (t) t.textContent = 'Ukládám PDF — stránka ' + Math.min(done + 1, total) + ' z ' + total + '…';
+  if (b) b.style.width = Math.round(done / total * 100) + '%';
+}
+function pdfProgressHide() {
+  var ov = document.getElementById('pdf-progress-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
 function renderPagesToPDF(pageEls, filename) {
   if (!pageEls || pageEls.length === 0) {
     alert('Žádné stránky k vygenerování.');
     return Promise.resolve();
   }
+  // Zámek proti opakovaným klikům během běžícího renderu
+  if (window.__pdfRendering) return Promise.resolve();
+  window.__pdfRendering = true;
   // Ověřit dostupnost knihoven (load přes script tags v hlavičce)
   var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
   var canvasFn = window.html2canvas;
   if (!jsPDFCtor || !canvasFn) {
+    window.__pdfRendering = false;
     alert('PDF knihovny se nenačetly. Zkuste obnovit stránku (Ctrl+F5).');
     return Promise.resolve();
   }
+  pdfProgressShow(pageEls.length);
   // Force-fit .a4 na přesné rozměry — bez tohoto může html2canvas captures
   // canvas o 0.5mm vyšší než A4 (kvůli rounding s padding), addImage
   // pak roztáhne na celý a obsah vypadá zoomed.
@@ -7211,15 +7247,20 @@ function renderPagesToPDF(pageEls, filename) {
         var pageW = pdf.internal.pageSize.getWidth();
         var pageH = pdf.internal.pageSize.getHeight();
         pdf.addImage(finalCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pageW, pageH);
+        pdfProgressUpdate(idx + 1, pageEls.length);
       });
     });
   });
   return chain.then(function() {
     restoreStyles();
+    pdfProgressHide();
+    window.__pdfRendering = false;
     var blob = pdf.output('blob');
     ulozitSoubor(blob, filename);
   }).catch(function(err) {
     restoreStyles();
+    pdfProgressHide();
+    window.__pdfRendering = false;
     console.error(err);
     alert('Chyba při generování PDF: ' + (err && err.message || err));
   });
