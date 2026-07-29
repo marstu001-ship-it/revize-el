@@ -321,7 +321,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 @media (min-width:1100px){
   #tab-mereni.tab-panel{max-width:min(1540px, calc(100vw - 2rem))}
 }
-.meas-table{width:100%;min-width:900px;table-layout:auto}
+.meas-table{width:100%;min-width:900px;table-layout:fixed}
 .meas-table th.grp{background:#1F497D}
 .meas-table th{font-size:.52rem;padding:.3rem .2rem}
 .meas-table td input{font-size:.75rem}
@@ -523,7 +523,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.126<span class="ver-date"> · 2026-07-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.127<span class="ver-date"> · 2026-07-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3565,22 +3565,22 @@ var rozvadecCounter = 0;
 function getMeasTableHtml() {
   return '<table class="data-table meas-table"><thead>' +
     '<tr>' +
-    '<th class="grp" rowspan="2" style="width:3%;cursor:pointer" data-action="toggleAutoCislovani" title="' +
+    '<th class="grp" rowspan="2" style="width:4.5%;cursor:pointer" data-action="toggleAutoCislovani" title="' +
     (STORE.auto_cislovani === false
       ? 'Vlastní číslování — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
       : 'Automatické číslování 1, 2, 3… Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).') +
     '">Č. <span class="cisl-ico">' +
     (STORE.auto_cislovani === false ? '✏️' : '🔢') + '</span></th>' +
-    '<th class="grp" rowspan="2" style="width:13%">Název obvodu</th>' +
+    '<th class="grp" rowspan="2" style="width:11%">Název obvodu</th>' +
     '<th class="grp" colspan="5">Jmenovité hodnoty jištění</th>' +
     '<th class="grp" rowspan="2">Zsm<br>max Ω</th>' +
     '<th class="grp" rowspan="2">Riso<br>MΩ</th>' +
     '<th class="grp" rowspan="2">Rpe<br>Ω</th>' +
     '<th class="grp" colspan="5">Měření RCD</th>' +
-    '<th class="grp" rowspan="2" style="width:11%">Kabel<br>typ, průřez mm²</th>' +
+    '<th class="grp" rowspan="2" style="width:9.5%">Kabel<br>typ, průřez mm²</th>' +
     '<th class="grp" rowspan="2" style="width:3%"></th>' +
     '</tr><tr>' +
-    '<th>Značka</th><th>Ch./Typ</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th>' +
+    '<th style="width:8%">Značka</th><th style="width:5.5%">Ch./Typ</th><th style="width:6.5%">A</th><th>IΔn</th><th>Isc<br>kA</th>' +
     '<th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th>' +
     '</tr></thead><tbody></tbody></table>';
 }
