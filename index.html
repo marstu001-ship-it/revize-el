@@ -325,6 +325,8 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 .meas-table th.grp{background:#1F497D}
 .meas-table th{font-size:.52rem;padding:.3rem .2rem}
 .meas-table td input{font-size:.75rem}
+/* Akční buňka (⧉ ✕) — kompaktní tlačítka vycentrovaná, ne nalepená na kraj */
+.meas-table td .del-btn{padding:.15rem .2rem}
 /* V úzkých buňkách tabulky měření překrývá nativní šipka našeptávače
    (datalist) zapsanou hodnotu — schovat ji. Nabídka se dál otevírá
    kliknutím do pole (focus-trik vyprázdní pole a ukáže celý seznam). */
@@ -523,7 +525,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.129<span class="ver-date"> · 2026-07-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.130<span class="ver-date"> · 2026-07-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3574,7 +3576,7 @@ function getMeasTableHtml() {
     '<col style="width:8.5%"><col style="width:5%"><col style="width:7%"><col style="width:4%"><col style="width:4%">' +
     '<col style="width:4.5%"><col style="width:4%"><col style="width:4%">' +
     '<col style="width:4.5%"><col style="width:4.5%"><col style="width:4%"><col style="width:5%"><col style="width:4%">' +
-    '<col style="width:15.5%"><col style="width:3%">' +
+    '<col style="width:14.5%"><col style="width:4%">' +
     '</colgroup>' +
     '<thead>' +
     '<tr>' +
