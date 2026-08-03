@@ -25,7 +25,9 @@ tím nemusí zabývat — dělejte to automaticky, pokaždé.
 jste nic neudělali.
 
 3. **Nová uživatelská funkce = karta v Novinkách** (`#screen-novinky`,
-   nová karta nahoru). Karta MUSÍ mít datum:
+   nová karta nahoru). **Datum ber ze systémového data session**
+   (`currentDate` v kontextu), NE odhadem podle předchozích karet —
+   dřív se tím do Novinek dostalo chybné datum. Karta MUSÍ mít datum:
    `<div class="scard" data-nov-datum="YYYY-MM-DD">` a v titulku
    `<span class="nov-datum">D. M. YYYY</span>`. Z max. `data-nov-datum`
    se automaticky odvozuje pulsování tlačítka 📰 Novinky (localStorage
