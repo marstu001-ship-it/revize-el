@@ -539,7 +539,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.134<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.135<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -643,6 +643,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
         <li>Volba <strong>drží u rozváděče</strong> i když ho přesunete tlačítkem „↕ Seřadit rozváděče"</li>
         <li>Starší zprávy program posoudí podle dat — pokud v Č. najde označení jako FA12, sám zapne vlastní číslování a hodnoty ochrání</li>
         <li>Nově přidaný rozváděč převezme způsob, který jste použili naposledy</li>
+        <li>Omylem přepnuto? Dole se na <strong>10 vteřin</strong> ukáže <strong>ZPĚT</strong> — vrátí režim i původní označení obvodů</li>
+        <li>V dokončené (zamčené) zprávě přepínač nejde použít, dokud ji nevrátíte mezi rozpracované</li>
       </ul>
     </div>
   </div>
@@ -3891,13 +3893,37 @@ function toggleAutoCislovani(el) {
   if (!karta) return;
   var tbody = karta.querySelector('tbody');
   var zapnout = (karta.dataset.autoCislovani === '0');
-  if (zapnout && !confirm('Zapnout automatické číslování u tohoto rozváděče?\n\nJeho řádky se hned přečíslují 1, 2, 3… a vlastní označení (FA1, FA2…) se přepíšou.\n\nOstatních rozváděčů se změna nedotkne.')) return;
+  // Záloha označení obvodů — zapnutí automatiky je přepíše čísly a uživatel
+  // to musí umět vzít zpět (místo otravného potvrzovacího okna).
+  var zaloha = [];
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(function(tr) {
+      var rt = tr.dataset.rowtype;
+      if (rt === 'obvod' || rt === 'rcd-header' || rt === 'lps-row' || rt === 'info') {
+        var inp = tr.querySelector('input');
+        if (inp) zaloha.push({ inp: inp, val: inp.value });
+      }
+    });
+  }
+  var predchoziDefault = STORE.auto_cislovani;
   karta.dataset.autoCislovani = zapnout ? '1' : '0';
   STORE.auto_cislovani = zapnout;   // výchozí pro další nové rozváděče
   saveStore();
   updateCislovaniIco();
   if (zapnout && tbody) renumberRows(tbody);
   window.__formDirty = true;
+  var nazevRozv = (karta.querySelector('.rozv-nazev') || {}).value || '';
+  showToast((zapnout ? 'Automatické číslování zapnuto' : 'Vlastní číslování zapnuto') +
+      (nazevRozv ? ' — ' + nazevRozv : ''), {
+    actionLabel: 'ZPĚT', timeout: 10000, action: function() {
+      karta.dataset.autoCislovani = zapnout ? '0' : '1';
+      STORE.auto_cislovani = predchoziDefault;
+      saveStore();
+      updateCislovaniIco();
+      zaloha.forEach(function(z) { z.inp.value = z.val; });  // vrátit FA1, FA2…
+      window.__formDirty = true;
+    }
+  });
 }
 
 // Sladí ikonu a popisek s režimem KAŽDÉ tabulky zvlášť.
