@@ -327,6 +327,15 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 .meas-table td input{font-size:.75rem}
 /* Akční buňka (⧉ ✕) — kompaktní tlačítka vycentrovaná, ne nalepená na kraj */
 .meas-table td .del-btn{padding:.15rem .2rem}
+/* Přepínač číslování v hlavičce sloupce Č. — musí vypadat jako tlačítko
+   a být dobře vidět, ale nesmí rozšířit sloupec (proto sloupec pod sebe). */
+th[data-action="toggleAutoCislovani"]{padding:.2rem .1rem!important}
+.cisl-hlavicka{display:flex;flex-direction:column;align-items:center;gap:.15rem;line-height:1}
+.cisl-ico{display:inline-flex;align-items:center;justify-content:center;
+  font-size:1.05rem;line-height:1;background:#fff;border:1px solid var(--gold);
+  border-radius:4px;padding:.1rem .25rem;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
+  border-color:#fff;transform:scale(1.08)}
 /* V úzkých buňkách tabulky měření překrývá nativní šipka našeptávače
    (datalist) zapsanou hodnotu — schovat ji. Nabídka se dál otevírá
    kliknutím do pole (focus-trik vyprázdní pole a ukáže celý seznam). */
@@ -525,7 +534,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.132<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.133<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3598,8 +3607,8 @@ function getMeasTableHtml() {
     (STORE.auto_cislovani === false
       ? 'Vlastní číslování — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
       : 'Automatické číslování 1, 2, 3… Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).') +
-    '">Č. <span class="cisl-ico">' +
-    (STORE.auto_cislovani === false ? '✏️' : '🔢') + '</span></th>' +
+    '"><div class="cisl-hlavicka">Č.<span class="cisl-ico">' +
+    (STORE.auto_cislovani === false ? '✏️' : '🔢') + '</span></div></th>' +
     '<th class="grp" rowspan="2">Název obvodu</th>' +
     '<th class="grp" colspan="5">Jmenovité hodnoty jištění</th>' +
     '<th class="grp" rowspan="2">Zsm<br>max Ω</th>' +
