@@ -239,7 +239,15 @@ tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
 .novinky-badge{color:#fff;background:var(--accent);border-radius:8px;font-size:.58rem;padding:.08rem .35rem;margin-left:.25rem;font-weight:700;letter-spacing:.05em}
 
 /* ═══ NASTAVENÍ ═══ */
-.settings-wrap{max-width:700px;margin:0 auto;padding:2rem 1.5rem}
+.settings-wrap{max-width:980px;margin:0 auto;padding:2rem 1.5rem}
+/* Řádek přednastaveného přístroje — pole se přizpůsobí šířce a na úzkém
+   okně se zalomí, aby datum platnosti nepřetékalo z karty ven. */
+.pristroj-row{display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center;flex-wrap:wrap}
+.pristroj-row input{min-width:0}
+.pristroj-row input[type=date]{flex:0 1 150px}
+/* Vizitka revizního technika v hlavičce formuláře */
+.rt-badge{background:#f0f6ff;border:1px solid #b8d0f0;padding:.6rem 1rem;border-radius:2px;margin-bottom:.75rem}
+html.dark .rt-badge{background:#1e2733;border-color:#39506e;color:var(--text)}
 
 /* ═══ FORMULÁŘ ═══ */
 .tab-bar{background:var(--surface);border-bottom:2px solid var(--border-dark);
@@ -590,7 +598,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.140<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.141<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3209,9 +3217,9 @@ function propsatTechnika() {
   var badge = document.getElementById('rt-badge');
   if (!badge) return;
   if (t.jmeno) {
-    badge.innerHTML = '<div style="background:#f0f6ff;border:1px solid #b8d0f0;padding:.6rem 1rem;border-radius:2px;margin-bottom:.75rem"><strong>' + t.jmeno + '</strong> | Ev.c.: ' + (t.osvedceni || '—') + ' | IČO: ' + (t.ico || '—') + '</div>';
+    badge.innerHTML = '<div class="rt-badge"><strong>' + t.jmeno + '</strong> | Ev.c.: ' + (t.osvedceni || '—') + ' | IČO: ' + (t.ico || '—') + '</div>';
   } else {
-    badge.innerHTML = '<div class="warn-box">Profil RT neni nastaven. <a href="#" data-action="nastaveni" style="color:#2B579A;font-weight:600">Nastavit</a></div>';
+    badge.innerHTML = '<div class="warn-box">Profil RT neni nastaven. <a href="#" data-action="nastaveni" style="color:var(--accent2);font-weight:600">Nastavit</a></div>';
   }
 }
 
@@ -3407,7 +3415,7 @@ function renderPristrojePreset() {
   list.innerHTML = '';
   p.forEach(function(pr, i) {
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center';
+    row.className = 'pristroj-row';
     var fields = [
       { k: 'nazev', v: pr.nazev || '', ph: 'Název a typ', flex: '2' },
       { k: 'vyrCislo', v: pr.vyrCislo || '', ph: 'Výr. číslo', flex: '1' },
@@ -3418,7 +3426,7 @@ function renderPristrojePreset() {
       inp.type = 'text';
       inp.value = f.v;
       inp.placeholder = f.ph;
-      inp.style.cssText = 'flex:' + f.flex + ';font-size:.85rem;padding:.4rem .6rem;border:1px solid #ccc;border-radius:2px';
+      inp.style.cssText = 'flex:' + f.flex + ' 1 0;min-width:110px;font-size:.85rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:2px;background:var(--input-bg);color:var(--text)';
       inp.dataset.idx = i;
       inp.dataset.key = f.k;
       inp.addEventListener('input', function() { updatePreset(this, parseInt(this.dataset.idx), this.dataset.key); });
@@ -3427,7 +3435,7 @@ function renderPristrojePreset() {
     var datInp = document.createElement('input');
     datInp.type = 'date';
     datInp.value = pr.platnost || '';
-    datInp.style.cssText = 'font-size:.82rem;padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px';
+    datInp.style.cssText = 'font-size:.82rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:2px;background:var(--input-bg);color:var(--text)';
     datInp.dataset.idx = i;
     datInp.dataset.key = 'platnost';
     datInp.addEventListener('input', function() { updatePreset(this, parseInt(this.dataset.idx), this.dataset.key); });
