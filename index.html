@@ -50,6 +50,50 @@ html.dark textarea,html.dark select{
   background:var(--input-bg);color:var(--text);border-color:var(--border)
 }
 html.dark .archiv-table tr:hover td{background:#2a3242}
+/* ── Dark mode: dorovnání míst, kde je světlá barva natvrdo v HTML/JS ──
+   Řádky tabulek dostávají pozadí inline (tr.style.background), proto je
+   nutné !important. Bez toho svítí bílé řádky s bílým textem. */
+html.dark .data-table td{border-color:var(--border)!important}
+html.dark .data-table td,html.dark .data-table tr{background-color:transparent!important}
+html.dark .data-table tr:nth-child(even) td{background-color:rgba(255,255,255,.028)!important}
+html.dark .meas-table tr[data-rowtype="obvod"]{background-color:#221f1a!important}
+html.dark .meas-table tr[data-rowtype="rcd-header"]{background-color:#1d2836!important}
+html.dark .meas-table tr[data-rowtype="rcd-mereni"]{background-color:#232118!important}
+html.dark .meas-table tr[data-rowtype="info"]{background-color:#2c2412!important}
+html.dark .meas-table tr[data-rowtype="lps-row"]{background-color:#221f1a!important}
+html.dark .data-table td input,html.dark .data-table td select{color:var(--text)}
+html.dark .data-table td input::placeholder{color:#8d887b}
+/* Fáze RCD (A+/A−) má inline tmavě modrou — na tmavém pozadí nečitelná */
+html.dark .meas-table td input[readonly]{color:var(--accent2)!important}
+html.dark .cisl-ico{background:var(--surface)}
+html.dark th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);color:#1a1815}
+/* Archiv — zvýrazněné a vnořené řádky */
+html.dark .archiv-table tr.row-rozprac>td{background-color:#3a2b12!important}
+html.dark .archiv-table tr.row-konci>td{background-color:#39331a!important}
+html.dark .archiv-table tr.row-nested>td{background-color:#232019!important;color:var(--muted)}
+html.dark .archiv-empty{color:var(--muted)}
+/* Světlé plochy v inline stylech (filtry, tlačítka, náhledy) */
+html.dark #archiv-rok,html.dark #archiv-typ,html.dark #archiv-stav,
+html.dark #archiv-clear,html.dark #odberatel-search,html.dark #archiv-search{
+  background:var(--input-bg)!important;color:var(--text)!important;border-color:var(--border)!important}
+html.dark .info-box{background:#1e2733!important;border-color:#39506e!important;color:var(--text)}
+html.dark .f .prefilled{background:#1e2733;border-color:#39506e;color:var(--accent2)}
+html.dark .f input:focus,html.dark .f select:focus,html.dark .f textarea:focus{background:#332f28}
+html.dark .badge-el{background:#1e2b3f;color:#9dc0ee}
+html.dark .badge-lps{background:#3a2c12;color:#e8c07a}
+/* Modrá --accent2 je v dark světlá → hlavičky a topbar potřebují tmavé
+   pozadí, jinak je bílý text na světle modré nečitelný. */
+html.dark .topbar{background:#1c2b40;border-bottom-color:var(--accent)}
+html.dark .archiv-table th,html.dark .data-table th{background:#1c2b40;color:#dfe7f2}
+html.dark .data-table th.grp{background:#16233a}
+/* Tlačítka v archivu mají inline bílé pozadí — ztlumit na plochu karty */
+html.dark .archiv-table button{background:var(--surface)!important}
+html.dark .archiv-table button[data-action="toggleStavZpravy"]{color:#7bc47f!important;border-color:#7bc47f!important}
+html.dark .archiv-table button[data-action="vyjmoutZretezce"],
+html.dark .archiv-table button[data-action="prirazitOdberatele"]{color:var(--muted)!important;border-color:var(--border-dark)!important}
+html.dark .archiv-table button[data-action="navazatZpravu"],
+html.dark .archiv-table button[data-action="toggleArchivChain"]{color:var(--accent2)!important;border-color:var(--accent2)!important}
+html.dark .scard-title{color:var(--accent2)}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh}
 
 /* ═══ TOPBAR ═══ */
@@ -539,7 +583,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.137<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.138<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
