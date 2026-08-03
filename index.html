@@ -525,7 +525,7 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.130<span class="ver-date"> · 2026-07-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.131<span class="ver-date"> · 2026-07-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -617,6 +617,20 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-07-18">
+    <div class="scard-title">🔢 Číslování obvodů zvlášť pro každý rozváděč <span class="nov-datum">18. 7. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Přepínač číslování (🔢 / ✏️ v záhlaví sloupce Č.) platí nově <strong>jen pro ten rozváděč, u kterého ho přepnete</strong> — ne pro celý program.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Hlavní rozváděč můžete mít značený <strong>FA1, FA2…</strong> a podružné číslované 1, 2, 3 — vedle sebe v jedné zprávě</li>
+        <li>Nastavení je <strong>uložené ve zprávě</strong>: zpráva od kolegy si nese jeho způsob značení a vaše nastavení mu ho nepřepíše</li>
+        <li>Volba <strong>drží u rozváděče</strong> i když ho přesunete tlačítkem „↕ Seřadit rozváděče"</li>
+        <li>Starší zprávy program posoudí podle dat — pokud v Č. najde označení jako FA12, sám zapne vlastní číslování a hodnoty ochrání</li>
+        <li>Nově přidaný rozváděč převezme způsob, který jste použili naposledy</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-07-17">
@@ -3608,6 +3622,8 @@ function addRozvadec() {
   var div = document.createElement('div');
   div.className = 'scard scard-rv';
   div.dataset.rozvadecId = 'rozv-' + n;
+  // Režim číslování patří rozváděči; nový převezme poslední volbu uživatele
+  div.dataset.autoCislovani = (STORE.auto_cislovani === false) ? '0' : '1';
   var phNazev = { dum: 'RD — plastový, zapuštěný, IP30', byt: 'RB — plastový, zapuštěný, IP30', prumysl: 'RH — skříňový OCEP, 1600A, IP40/00', spolecne: 'RS — rozváděč společné spotřeby, IP40' };
   var phUmist = { dum: 'Technická místnost rodinného domu', byt: 'Vstupní chodba bytové jednotky', prumysl: 'Rozvodna VN/NN, trafostanice', spolecne: 'Chodba 1. NP bytového domu' };
   div.innerHTML = '<div class="scard-title" style="display:flex;justify-content:space-between;align-items:center">' +
@@ -3803,10 +3819,23 @@ function addMereniRow(el) {
   addMereniRowTo(tbody);
 }
 
+// Režim číslování je vlastností KONKRÉTNÍ tabulky (rozváděče), ne programu
+// — zpráva od kolegy s vlastním značením (FA1, FA2…) si svůj režim nese
+// s sebou a moje nastavení jí ho nepřepíše. Volba v STORE.auto_cislovani
+// slouží už jen jako výchozí pro nově přidané rozváděče.
+// Nositelem je karta rozváděče (data-auto-cislovani), takže přeskládání
+// rozváděčů nastavení nijak nemíchá.
+function autoCislovaniProTbody(tbody) {
+  if (!tbody) return STORE.auto_cislovani !== false;
+  var karta = tbody.closest('[data-auto-cislovani]');
+  if (karta) return karta.dataset.autoCislovani !== '0';
+  return STORE.auto_cislovani !== false;
+}
+
 function getNextRowNum(tbody) {
   // V režimu vlastního číslování nechá nový řádek prázdný — uživatel si
   // doplní vlastní označení (FA1, FA2, …).
-  if (STORE.auto_cislovani === false) return '';
+  if (!autoCislovaniProTbody(tbody)) return '';
   var n = 0;
   tbody.querySelectorAll('tr[data-rowtype="obvod"], tr[data-rowtype="rcd-header"], tr[data-rowtype="info"]').forEach(function() { n++; });
   return n + 1;
@@ -3818,9 +3847,9 @@ function getNextRowNum(tbody) {
 // Bezpečně se volá i na tbody, které žádné takové řádky nemají
 // (dokumentace, přístroje, závady) — nic se nestane.
 function renumberRows(tbody) {
-  // Režim vlastního číslování — na hodnoty ve sloupci Č. se nesahá.
-  if (STORE.auto_cislovani === false) return;
   if (!tbody) return;
+  // Režim vlastního číslování — na hodnoty ve sloupci Č. se nesahá.
+  if (!autoCislovaniProTbody(tbody)) return;
   var n = 0;
   tbody.querySelectorAll('tr').forEach(function(tr) {
     var rt = tr.dataset.rowtype;
@@ -3836,26 +3865,32 @@ function renumberRows(tbody) {
 // sloupci Č. Vlastní režim nechává hodnoty tak, jak je uživatel napsal —
 // nepřečíslovává se při přidání/smazání/kopírování řádku. Volba je globální
 // a trvalá (STORE), přenáší se i zálohou databáze.
-function toggleAutoCislovani() {
-  var zapnout = (STORE.auto_cislovani === false);
-  if (zapnout && !confirm('Zapnout automatické číslování?\n\nVšechny řádky ve všech tabulkách se hned přečíslují 1, 2, 3… a vlastní označení (FA1, FA2…) se přepíšou.')) return;
-  STORE.auto_cislovani = zapnout;
+// Přepíná režim číslování JEN u rozváděče, na jehož hlavičku se kleplo.
+// Volba se zároveň zapamatuje jako výchozí pro nově přidané rozváděče.
+function toggleAutoCislovani(el) {
+  var karta = el && el.closest ? el.closest('[data-auto-cislovani]') : null;
+  if (!karta) return;
+  var tbody = karta.querySelector('tbody');
+  var zapnout = (karta.dataset.autoCislovani === '0');
+  if (zapnout && !confirm('Zapnout automatické číslování u tohoto rozváděče?\n\nJeho řádky se hned přečíslují 1, 2, 3… a vlastní označení (FA1, FA2…) se přepíšou.\n\nOstatních rozváděčů se změna nedotkne.')) return;
+  karta.dataset.autoCislovani = zapnout ? '1' : '0';
+  STORE.auto_cislovani = zapnout;   // výchozí pro další nové rozváděče
   saveStore();
   updateCislovaniIco();
-  if (zapnout) {
-    document.querySelectorAll('table tbody').forEach(function(tb) { renumberRows(tb); });
-  }
+  if (zapnout && tbody) renumberRows(tbody);
+  window.__formDirty = true;
 }
 
+// Sladí ikonu a popisek s režimem KAŽDÉ tabulky zvlášť.
 function updateCislovaniIco() {
-  var vlastni = (STORE.auto_cislovani === false);
-  document.querySelectorAll('.cisl-ico').forEach(function(el) {
-    el.textContent = vlastni ? '✏️' : '🔢';
-  });
-  document.querySelectorAll('th[data-action="toggleAutoCislovani"]').forEach(function(el) {
-    el.title = vlastni
-      ? 'Vlastní číslování — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
-      : 'Automatické číslování 1, 2, 3… Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).';
+  document.querySelectorAll('th[data-action="toggleAutoCislovani"]').forEach(function(th) {
+    var karta = th.closest('[data-auto-cislovani]');
+    var vlastni = karta ? karta.dataset.autoCislovani === '0' : (STORE.auto_cislovani === false);
+    var ico = th.querySelector('.cisl-ico');
+    if (ico) ico.textContent = vlastni ? '✏️' : '🔢';
+    th.title = vlastni
+      ? 'Vlastní číslování tohoto rozváděče — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
+      : 'Automatické číslování 1, 2, 3… u tohoto rozváděče. Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).';
   });
 }
 
@@ -5949,6 +5984,9 @@ function getData() {
       umisteni: umistEl ? umistEl.value : '',
       privod: privodEl ? privodEl.value : '',
       faze: faze,
+      // Režim číslování patří rozváděči — přenáší se se zprávou (i mezi
+      // techniky) a přežije přeskládání rozváděčů
+      auto_cislovani: card.dataset.autoCislovani !== '0',
       mereni: []
     };
     card.querySelectorAll('tbody tr').forEach(function(tr) {
@@ -7765,6 +7803,18 @@ function nacistData(D) {
       var umistEl = lastCard.querySelector('.rozv-umisteni');
       if (nazevEl) nazevEl.value = rozv.nazev || '';
       if (umistEl) umistEl.value = rozv.umisteni || '';
+      // Režim číslování ze zprávy. Starší zprávy (bez údaje) se posoudí
+      // podle dat: obsahuje-li sloupec Č. nečíselné označení (FA1, 1a…),
+      // jde o vlastní číslování a nesmí se přepsat — ani u zpráv od kolegů.
+      if (rozv.auto_cislovani !== undefined) {
+        lastCard.dataset.autoCislovani = rozv.auto_cislovani === false ? '0' : '1';
+      } else {
+        var vlastniZnaceni = (rozv.mereni || []).some(function(m) {
+          return m && m.rowtype !== 'rcd-mereni' && m.c && !/^\d+$/.test(String(m.c).trim());
+        });
+        lastCard.dataset.autoCislovani = vlastniZnaceni ? '0' : '1';
+      }
+      updateCislovaniIco();
       var privodEl = lastCard.querySelector('.rozv-privod');
       if (privodEl) privodEl.value = rozv.privod || '';
       (rozv.faze || []).forEach(function(fz) {
@@ -9175,7 +9225,7 @@ document.addEventListener('click', function(e) {
     case 'home': attemptLeaveForm(function() { showScreen('home'); }); break;
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'novinky': showScreen('novinky'); break;
-    case 'toggleAutoCislovani': toggleAutoCislovani(); break;
+    case 'toggleAutoCislovani': toggleAutoCislovani(el); break;
     case 'vybratSlozkuZaloh': vybratSlozkuZaloh(); break;
     case 'zrusitSlozkuZaloh': zrusitSlozkuZaloh(); break;
     case 'toggleRazeniRozvadecu': toggleRazeniRozvadecu(); break;
