@@ -583,16 +583,16 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.138<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.139<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" id="btn-novinky" data-action="novinky">📰 Novinky</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
-    <button class="btn btn-ghost" data-action="ulozit">💾 Uložit</button>
+    <button class="btn btn-ghost report-only" data-action="ulozit">💾 Uložit</button>
     <button class="btn btn-ghost" data-action="nacist">📂 Načíst</button>
-    <button class="btn btn-gold" data-action="generujPDF">📄 Generovat PDF</button>
+    <button class="btn btn-gold report-only" data-action="generujPDF">📄 Generovat PDF</button>
   </div>
 </div>
 
@@ -675,6 +675,19 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-03">
+    <div class="scard-title">🌙 Použitelný tmavý režim + jasnější tlačítka v liště <span class="nov-datum">3. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Tmavý režim (🌙 v liště) byl v tabulkách nečitelný — svítily bílé řádky se světlým textem. Teď je celý program v tmavém režimu čitelný: tabulka měření, archiv i hlavičky.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Typy řádků (obvod, RCD, „jiný řádek") si drží rozlišení i v tmavých odstínech</li>
+        <li>V archivu jsou rozpracované i končící zprávy zvýrazněné decentně, ne zářivě</li>
+        <li><strong>💾 Uložit</strong> a <strong>📄 Generovat PDF</strong> se v liště zobrazují jen když máte otevřenou zprávu — na hlavní straně už nejde omylem vygenerovat PDF poslední otevřené zprávy</li>
+      </ul>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">PDF se vždy generuje světlé (papír je papír), tmavý režim se do výstupu nepropisuje.</div>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-03">
@@ -2392,6 +2405,12 @@ function showScreen(id) {
   var sc = document.getElementById('screen-' + id);
   if (sc) sc.classList.add('active');
   if (id === 'nastaveni') nacistTechnika();
+  // „💾 Uložit" a „📄 Generovat PDF" patří k otevřené zprávě — mimo ni
+  // mizí, aby nebylo matoucí, co by vlastně uložily/vygenerovaly.
+  var veZprave = (id === 'form' || id === 'pdf');
+  document.querySelectorAll('.report-only').forEach(function(b) {
+    b.style.display = veZprave ? '' : 'none';
+  });
   if (id === 'novinky') {
     // Otevřením Novinek je vše „přečteno" — tlačítko přestane pulsovat
     try { localStorage.setItem('revize_el_novinky_seen', getNovinkyLatest()); } catch(e) {}
@@ -9257,6 +9276,8 @@ async function init() {
   setupVoice();
   renderPristrojePreset();
   updateNovinkyBadge();
+  // Po startu jsme na hlavní straně — akce patřící ke zprávě schovat
+  document.querySelectorAll('.report-only').forEach(function(b) { b.style.display = 'none'; });
   // Obnova po pádu: koncept se ukládá průběžně při psaní a maže při
   // uložení do archivu (nebo vědomém zahození). Pokud tu po startu je,
   // prohlížeč spadl / zavřel se s neuloženou prací — nabídnout obnovu.
