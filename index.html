@@ -336,6 +336,11 @@ th[data-action="toggleAutoCislovani"]{padding:.2rem .1rem!important}
   border-radius:4px;padding:.1rem .25rem;box-shadow:0 1px 2px rgba(0,0,0,.25)}
 th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   border-color:#fff;transform:scale(1.08)}
+/* V zamčené (dokončené) zprávě přepínač nevybízí ke kliknutí */
+#screen-form.form-readonly th[data-action="toggleAutoCislovani"]{cursor:default}
+#screen-form.form-readonly .cisl-ico{opacity:.45;box-shadow:none}
+#screen-form.form-readonly th[data-action="toggleAutoCislovani"]:hover .cisl-ico{
+  background:#fff;border-color:var(--gold);transform:none}
 /* V úzkých buňkách tabulky měření překrývá nativní šipka našeptávače
    (datalist) zapsanou hodnotu — schovat ji. Nabídka se dál otevírá
    kliknutím do pole (focus-trik vyprázdní pole a ukáže celý seznam). */
@@ -534,7 +539,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.133<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.134<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3877,6 +3882,11 @@ function renumberRows(tbody) {
 // Přepíná režim číslování JEN u rozváděče, na jehož hlavičku se kleplo.
 // Volba se zároveň zapamatuje jako výchozí pro nově přidané rozváděče.
 function toggleAutoCislovani(el) {
+  // Dokončená zpráva je jen pro čtení — přepnutí by přepsalo označení obvodů
+  if (window.__formReadOnly) {
+    showToast('Zpráva je dokončená — pro úpravy ji vraťte mezi rozpracované (✏️ nahoře).');
+    return;
+  }
   var karta = el && el.closest ? el.closest('[data-auto-cislovani]') : null;
   if (!karta) return;
   var tbody = karta.querySelector('tbody');
