@@ -94,6 +94,13 @@ html.dark .archiv-table button[data-action="prirazitOdberatele"]{color:var(--mut
 html.dark .archiv-table button[data-action="navazatZpravu"],
 html.dark .archiv-table button[data-action="toggleArchivChain"]{color:var(--accent2)!important;border-color:var(--accent2)!important}
 html.dark .scard-title{color:var(--accent2)}
+/* Karty „Naposledy otevřené" — inline pozadí přes CSS proměnné */
+html.dark{--recent-bg:#221f1a;--recent-pin-bg:#1d2836}
+/* Zbylá místa s inline bílou plochou na obrazovce (ne v PDF náhledu) */
+html.dark #screen-home input,html.dark #screen-home select,
+html.dark #screen-home button:not(.btn):not(.del-btn){
+  background:var(--input-bg);color:var(--text);border-color:var(--border)}
+html.dark #screen-home .archiv-table button{background:var(--surface)!important}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh}
 
 /* ═══ TOPBAR ═══ */
@@ -583,7 +590,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.139<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.140<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -9072,7 +9079,7 @@ function renderArchivRecents() {
     html += '<div data-action="otevritZpravu" data-idx="' + i + '" ' +
       'style="cursor:pointer;flex:1 1 220px;min-width:200px;max-width:300px;' +
       'border:1px solid ' + (z.pinned ? 'var(--accent2)' : 'var(--border)') + ';' +
-      'background:' + (z.pinned ? '#f0f6ff' : '#fafaf7') + ';' +
+      'background:' + (z.pinned ? 'var(--recent-pin-bg,#f0f6ff)' : 'var(--recent-bg,#fafaf7)') + ';' +
       'border-radius:4px;padding:.6rem .7rem;position:relative">' +
       '<button data-action="togglePinZpravu" data-idx="' + i + '" ' +
         'onclick="event.stopPropagation()" ' +
@@ -9082,11 +9089,11 @@ function renderArchivRecents() {
       '</button>' +
       '<div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.3rem">' +
         typBadge +
-        '<span style="font-family:var(--mono);font-size:.72rem;color:#6e6a60">' + esc(z.ev_cislo || '—') + '</span>' +
+        '<span style="font-family:var(--mono);font-size:.72rem;color:var(--muted)">' + esc(z.ev_cislo || '—') + '</span>' +
         (stav ? '<span style="margin-left:auto;margin-right:1.4rem">' + stav + '</span>' : '') +
       '</div>' +
       '<div style="font-size:.85rem;line-height:1.3;margin-bottom:.2rem;padding-right:1.5rem">' + esc(z.misto || '—') + '</div>' +
-      '<div style="font-family:var(--mono);font-size:.7rem;color:#6e6a60">' + fmtDate(z.datum) + (z.timestamp ? ' <span style="color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</div>' +
+      '<div style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">' + fmtDate(z.datum) + (z.timestamp ? ' <span style="color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</div>' +
     '</div>';
   });
   html += '</div>';
