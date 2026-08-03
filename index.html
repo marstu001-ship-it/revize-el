@@ -539,7 +539,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.136<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.137<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -7465,7 +7465,7 @@ function tiskMereni() {
   win.document.write('<style>');
   win.document.write('@page { size: A4 landscape; margin: 10mm 12mm; }');
   win.document.write('* { box-sizing: border-box; margin: 0; padding: 0; }');
-  win.document.write('body { font-family: "Courier New", Courier, monospace; font-size: 8pt; color: #000; padding-bottom: 14mm; }');
+  win.document.write('body { font-family: "Courier New", Courier, monospace; font-size: 8pt; color: #000; }');
   win.document.write('.header { display: flex; justify-content: space-between; border-bottom: 1pt solid #000; padding-bottom: 2mm; margin-bottom: 4mm; }');
   win.document.write('.hbox { border: 1pt solid #000; padding: 1mm 3mm; font-size: 8pt; font-weight: bold; min-width: 25mm; text-align: center; }');
   win.document.write('.sec { display: flex; align-items: center; border: .75pt solid #000; margin-bottom: 3mm; }');
@@ -7474,10 +7474,24 @@ function tiskMereni() {
   win.document.write('table { width: 100%; border-collapse: collapse; }');
   win.document.write('th { border: .75pt solid #000; padding: .8mm 1mm; text-align: center; font-weight: bold; background: #e8e8e8; font-size: 6.5pt; white-space: nowrap; }');
   win.document.write('td { border: .75pt solid #000; font-size: 7.5pt; }');
-  win.document.write('.footer { position: fixed; bottom: 8mm; left: 12mm; right: 12mm; border-top: .5pt solid #000; padding-top: 1mm; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }');
+  // Zápatí je v <tfoot> obalové tabulky — prohlížeč ho při tisku zopakuje
+  // na každé stránce a vždy AŽ POD obsahem (dřív bylo position:fixed a text
+  // tabulky se pod ním prokresloval).
+  win.document.write('.footer { border-top: .5pt solid #000; padding-top: 1mm; margin-top: 3mm; display: flex; justify-content: space-between; font-size: 7pt; color: #444; }');
+  win.document.write('table.pagewrap { width: 100%; border-collapse: collapse; }');
+  win.document.write('table.pagewrap > tbody > tr > td, table.pagewrap > tfoot > tr > td { border: none; padding: 0; }');
+  win.document.write('table.pagewrap > tfoot { display: table-footer-group; }');
   win.document.write('.note { font-size: 7pt; margin-top: 2mm; color: #444; }');
   win.document.write('@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }');
   win.document.write('</style></head><body>');
+  // Obalová tabulka: <tfoot> se zápatím se při tisku opakuje na každé
+  // stránce pod obsahem; veškerý obsah jde do jediné buňky <tbody>.
+  win.document.write('<table class="pagewrap"><tfoot><tr><td>' +
+    '<div class="footer">' +
+    '<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>' +
+    '<span>ev. \u010D\u00EDslo: ' + esc(D.rt_osvedceni) + '</span>' +
+    '<span>Revize EL ' + new Date().getFullYear() + '</span>' +
+    '</div></td></tr></tfoot><tbody><tr><td>');
   var thHtml = '<thead><tr><th rowspan="2">Č.</th><th rowspan="2" style="min-width:60pt">Název obvodu</th><th colspan="5">Jmenovité hodnoty jištění</th><th rowspan="2">Zsm<br>max Ω</th><th rowspan="2">Riso<br>MΩ</th><th rowspan="2">Rpe<br>Ω</th><th colspan="5">Měření RCD</th><th rowspan="2" style="min-width:50pt">Kabel typ,<br>průřezu mm²</th></tr><tr><th>Značka</th><th>Ch./Typ</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
   win.document.write('<div class="header">');
   win.document.write('<div class="hbox">' + fmtDate(D.zahajeni) + '</div>');
@@ -7510,11 +7524,7 @@ function tiskMereni() {
     win.document.write('<table>' + thHtml + '<tbody>' + (rows || '<tr><td colspan="16" style="text-align:center;padding:3mm;color:#888">Žádné obvody</td></tr>') + '</tbody></table>');
   });
   win.document.write('<div class="note">U RCD je součástí měření ověření funkce testovacího tlačítka.</div>');
-  win.document.write('<div class="footer">');
-  win.document.write('<span>' + esc(D.rt_jmeno) + (D.rt_adresa ? ', ' + esc(D.rt_adresa) : '') + '</span>');
-  win.document.write('<span>ev. číslo: ' + esc(D.rt_osvedceni) + '</span>');
-  win.document.write('<span>Revize EL ' + new Date().getFullYear() + '</span>');
-  win.document.write('</div>');
+  win.document.write('</td></tr></tbody></table>');
   win.document.write('</body></html>');
   win.document.close();
   setTimeout(function() { win.print(); }, 500);
