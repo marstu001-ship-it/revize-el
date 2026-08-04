@@ -384,6 +384,13 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 .meas-table th.grp{background:#1F497D}
 .meas-table th{font-size:.52rem;padding:.3rem .2rem}
 .meas-table td input{font-size:.75rem}
+/* Zvýraznění řádku pod myší — pomůcka při kontrole obvod po obvodu.
+   Zesvětluje se přes overlay, takže barevné rozlišení typů řádků
+   (obvod / RCD / jiný řádek) zůstává zachované. */
+.meas-table tbody tr:hover>td{box-shadow:inset 0 0 0 9999px rgba(43,87,154,.09)}
+.meas-table tbody tr:hover>td:first-child{box-shadow:inset 3px 0 0 var(--accent2),inset 0 0 0 9999px rgba(43,87,154,.09)}
+html.dark .meas-table tbody tr:hover>td{box-shadow:inset 0 0 0 9999px rgba(122,163,216,.13)}
+html.dark .meas-table tbody tr:hover>td:first-child{box-shadow:inset 3px 0 0 var(--accent2),inset 0 0 0 9999px rgba(122,163,216,.13)}
 /* Akční buňka (⧉ ✕) — kompaktní tlačítka vycentrovaná, ne nalepená na kraj */
 .meas-table td .del-btn{padding:.15rem .2rem}
 /* Přepínač číslování v hlavičce sloupce Č. — musí vypadat jako tlačítko
@@ -598,7 +605,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.141<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.142<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
