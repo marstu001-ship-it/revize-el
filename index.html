@@ -618,7 +618,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.145<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.146<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -718,7 +718,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
         <li><strong>Tahací roh:</strong> klepněte do buňky — v jejím pravém dolním rohu se objeví modrý čtvereček. Uchopte ho a táhněte dolů (nebo nahoru) — hodnota se zkopíruje do celého úseku</li>
-        <li>Kopíruje se jen do řádků se stejnou strukturou; podřádky chráničů a „jiné řádky" se přeskočí</li>
+        <li><strong>Automatické číslování řady:</strong> táhnete-li označení jako <strong>FA1</strong>, <strong>QF 12</strong> nebo <strong>Zásuvky 3</strong>, čísla se navyšují (FA2, FA3, FA4…). Naměřené hodnoty a typy (10, 0,23, &gt;20, 3x16, CYKY 3×2,5) se kopírují beze změny — o číslo se nikdy nezmění. Tažením nahoru se čísluje pozpátku. Nechcete číslovat? V liště je tlačítko <strong>JEN KOPÍROVAT</strong></li>
+        <li>Kopíruje se do všech řádků včetně podřádků chráničů; sloučené buňky a zamčená pole (Fáze A+/A−) se přeskočí</li>
         <li>Špatně jste to táhli? Dole se na 10 vteřin ukáže <strong>ZPĚT</strong></li>
         <li><strong>Zvýraznění řádku pod myší</strong> — stejné jako v archivu, pomáhá při kontrole obvod po obvodu</li>
       </ul>
@@ -2505,15 +2506,16 @@ function showToast(text, opts) {
   var span = document.createElement('span');
   span.textContent = text;
   t.appendChild(span);
-  if (opts.actionLabel && opts.action) {
+  [[opts.actionLabel, opts.action], [opts.action2Label, opts.action2]].forEach(function(a) {
+    if (!a[0] || !a[1]) return;
     var b = document.createElement('button');
-    b.textContent = opts.actionLabel;
+    b.textContent = a[0];
     b.addEventListener('click', function() {
-      try { opts.action(); } catch(e) {}
+      try { a[1](); } catch(e) {}
       t.remove();
     });
     t.appendChild(b);
-  }
+  });
   wrap.appendChild(t);
   setTimeout(function() { if (t.parentNode) t.remove(); }, opts.timeout || 4000);
   return t;
@@ -2609,6 +2611,25 @@ function hideFillHandle() {
   if (h) h.style.display = 'none';
 }
 
+// Rozpozná označení tvaru „text + číslo na konci" (FA1, QF 12, Zásuvky 3),
+// které se při tažení čísluje. Naměřené hodnoty a typy (10, 0,23, >20,
+// 3x16, CYKY 3×2,5) se NESMÍ měnit — proto musí být předpona jen z písmen,
+// mezer a pomlček a nesmí obsahovat číslici.
+function fillRada(val) {
+  var m = /^([\p{L} _.\-]*[\p{L}][\p{L} _.\-]*?)\s*(\d+)$/u.exec(val || '');
+  if (!m) return null;
+  return { prefix: m[1], cislo: parseInt(m[2], 10), sirka: m[2].length,
+           mezera: /\s$/.test(val.slice(0, val.length - m[2].length)) ? ' ' : '' };
+}
+
+function fillHodnota(rada, offset) {
+  var n = rada.cislo + offset;
+  if (n < 0) n = 0;
+  var s = String(n);
+  while (s.length < rada.sirka) s = '0' + s;      // zachovat vedoucí nuly (FA01)
+  return rada.prefix + rada.mezera + s;
+}
+
 // Podřádky RCD a „jiné řádky" mají sloučené buňky, takže pořadí buněk
 // neodpovídá sloupci tabulky — počítá se skutečný (vizuální) sloupec.
 function fillVizualniSloupec(td) {
@@ -2660,14 +2681,20 @@ function fillMove(e) {
   __fill.tbody.querySelectorAll('.fill-preview').forEach(function(td) { td.classList.remove('fill-preview'); });
   __fill.rows = [];
   var from = Math.min(idx, __fill.srcIdx), to = Math.max(idx, __fill.srcIdx);
-  for (var i = from; i <= to; i++) {
-    if (i === __fill.srcIdx) continue;
+  var krok = 0;                       // pořadí mezi vyplňovanými řádky
+  var smerDolu = idx > __fill.srcIdx;
+  var poradi = [];
+  for (var i = from; i <= to; i++) poradi.push(i);
+  if (!smerDolu) poradi.reverse();    // nahoru = číslovat pozpátku
+  poradi.forEach(function(i) {
+    if (i === __fill.srcIdx) return;
     var row = __fill.tbody.children[i];
     var inp = fillCilovyInput(row, __fill.ci);
-    if (!inp) continue;
-    __fill.rows.push(inp);
+    if (!inp) return;
+    krok++;
+    __fill.rows.push({ inp: inp, offset: smerDolu ? krok : -krok });
     inp.closest('td').classList.add('fill-preview');
-  }
+  });
 }
 
 function fillEnd() {
@@ -2678,17 +2705,34 @@ function fillEnd() {
   var srcTd = f.src.closest('td');
   if (srcTd) srcTd.classList.remove('fill-src');
   if (!f.rows.length) return;
-  var zaloha = f.rows.map(function(inp) { return { inp: inp, val: inp.value }; });
-  f.rows.forEach(function(inp) { inp.value = f.val; });
+  var zaloha = f.rows.map(function(r) { return { inp: r.inp, val: r.inp.value }; });
+  var rada = fillRada(f.val);        // FA1 → číslovat; 0,23 / >20 / 3x16 → kopírovat
+  function vratZpet() {
+    zaloha.forEach(function(z) { z.inp.value = z.val; });
+    window.__formDirty = true; autoSave();
+  }
+  function jenKopirovat() {
+    f.rows.forEach(function(r) { r.inp.value = f.val; });
+    window.__formDirty = true; autoSave();
+    showToast('Hodnota „' + f.val + '" zkopírována do ' + f.rows.length + ' řádků',
+      { actionLabel: 'ZPĚT', timeout: 10000, action: vratZpet });
+  }
+  f.rows.forEach(function(r) {
+    r.inp.value = rada ? fillHodnota(rada, r.offset) : f.val;
+  });
   window.__formDirty = true;
   autoSave();
-  showToast('Hodnota „' + f.val + '" zkopírována do ' + f.rows.length + ' řádků', {
-    actionLabel: 'ZPĚT', timeout: 10000, action: function() {
-      zaloha.forEach(function(z) { z.inp.value = z.val; });
-      window.__formDirty = true;
-      autoSave();
-    }
-  });
+  if (rada) {
+    var prvni = fillHodnota(rada, f.rows[0].offset);
+    var posledni = fillHodnota(rada, f.rows[f.rows.length - 1].offset);
+    showToast('Vyplněno ' + prvni + ' – ' + posledni + ' (' + f.rows.length + ' řádků)', {
+      actionLabel: 'ZPĚT', timeout: 10000, action: vratZpet,
+      action2Label: 'JEN KOPÍROVAT', action2: jenKopirovat
+    });
+  } else {
+    showToast('Hodnota „' + f.val + '" zkopírována do ' + f.rows.length + ' řádků',
+      { actionLabel: 'ZPĚT', timeout: 10000, action: vratZpet });
+  }
 }
 
 document.addEventListener('focusin', function(e) {
