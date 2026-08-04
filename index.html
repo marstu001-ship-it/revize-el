@@ -392,8 +392,11 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   cursor:crosshair;z-index:6;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 html.dark .fill-handle{border-color:#1a1815}
 .fill-src{outline:2px solid var(--accent2);outline-offset:-2px}
-.fill-preview{background-image:linear-gradient(rgba(43,87,154,.18),rgba(43,87,154,.18))}
-html.dark .fill-preview{background-image:linear-gradient(rgba(122,163,216,.22),rgba(122,163,216,.22))}
+/* Náhled tažení: overlay přes box-shadow (background by přebilo zebrování
+   sudých řádků a náhled by vypadal pruhovaně) + rámeček kolem úseku. */
+.meas-table td.fill-preview{box-shadow:inset 0 0 0 9999px rgba(43,87,154,.2)!important;
+  outline:1px dashed var(--accent2);outline-offset:-1px}
+html.dark .meas-table td.fill-preview{box-shadow:inset 0 0 0 9999px rgba(122,163,216,.26)!important}
 /* Zvýraznění řádku pod myší — pomůcka při kontrole obvod po obvodu.
    Zesvětluje se přes overlay, takže barevné rozlišení typů řádků
    (obvod / RCD / jiný řádek) zůstává zachované. */
@@ -615,7 +618,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.143<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.144<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
