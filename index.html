@@ -618,7 +618,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.146<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.147<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -721,6 +721,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
         <li><strong>Automatické číslování řady:</strong> táhnete-li označení jako <strong>FA1</strong>, <strong>QF 12</strong> nebo <strong>Zásuvky 3</strong>, čísla se navyšují (FA2, FA3, FA4…). Naměřené hodnoty a typy (10, 0,23, &gt;20, 3x16, CYKY 3×2,5) se kopírují beze změny — o číslo se nikdy nezmění. Tažením nahoru se čísluje pozpátku. Nechcete číslovat? V liště je tlačítko <strong>JEN KOPÍROVAT</strong></li>
         <li>Kopíruje se do všech řádků včetně podřádků chráničů; sloučené buňky a zamčená pole (Fáze A+/A−) se přeskočí</li>
         <li>Špatně jste to táhli? Dole se na 10 vteřin ukáže <strong>ZPĚT</strong></li>
+        <li><strong>Predikce psaní:</strong> jakmile začnete psát, program doplní zbytek podle hodnot, které už ve stejném sloupci máte (napříč všemi rozváděči) nebo z nabídky typických hodnot. Doplněk je označený — <strong>Enter</strong> nebo <strong>Tab</strong> ho potvrdí, psaním ho přepíšete, <strong>Delete</strong> smaže</li>
         <li><strong>Zvýraznění řádku pod myší</strong> — stejné jako v archivu, pomáhá při kontrole obvod po obvodu</li>
       </ul>
     </div>
@@ -2574,6 +2575,58 @@ document.addEventListener('keydown', function(e) {
       open.forEach(function(m) { m.classList.remove('open'); });
     }
   }
+});
+
+// ═══ PREDIKCE PSANÍ V TABULCE MĚŘENÍ ═════════════════════════════════════
+// Jako v Excelu: rozepsaný text se doplní podle hodnot, které už ve stejném
+// sloupci (napříč rozváděči) jsou, případně z nabídky datalistu. Doplněk je
+// označený — psaním se přepíše, Enter/Tab/šipka ho potvrdí, Delete zruší.
+function predikceKandidati(inp) {
+  var td = inp.closest('td');
+  var tabulka = inp.closest('table');
+  if (!td || !tabulka) return [];
+  var sloupec = fillVizualniSloupec(td);
+  var pocty = {};
+  // hodnoty ze stejného sloupce všech tabulek měření ve zprávě
+  document.querySelectorAll('#rozvadece-container .meas-table').forEach(function(t) {
+    t.querySelectorAll('tbody tr').forEach(function(tr) {
+      var cil = fillCilovyInput(tr, sloupec);
+      if (!cil || cil === inp) return;
+      var v = (cil.value || '').trim();
+      if (v) pocty[v] = (pocty[v] || 0) + 1;
+    });
+  });
+  // + položky datalistu (typické hodnoty), s nižší vahou
+  var listId = inp.getAttribute('list');
+  if (listId) {
+    var dl = document.getElementById(listId);
+    if (dl) Array.prototype.forEach.call(dl.options, function(o) {
+      if (o.value && !pocty[o.value]) pocty[o.value] = 0.5;
+    });
+  }
+  return Object.keys(pocty).sort(function(a, b) { return pocty[b] - pocty[a]; });
+}
+
+function predikceDoplnit(inp) {
+  var psane = inp.value;
+  if (!psane || psane.length < 2) return;
+  var lower = psane.toLowerCase();
+  var shoda = predikceKandidati(inp).find(function(k) {
+    return k.length > psane.length && k.toLowerCase().indexOf(lower) === 0;
+  });
+  if (!shoda) return;
+  inp.value = shoda;
+  try { inp.setSelectionRange(psane.length, shoda.length); } catch(e) {}
+}
+
+document.addEventListener('input', function(e) {
+  var inp = e.target;
+  if (!inp || inp.tagName !== 'INPUT' || inp.readOnly) return;
+  if (!inp.closest('.meas-table')) return;
+  // jen při psaní znaku — ne při mazání, vkládání ze schránky ani doplnění
+  if (e.inputType !== 'insertText') return;
+  if (inp.selectionStart !== inp.value.length) return;   // kurzor uprostřed textu
+  predikceDoplnit(inp);
 });
 
 // ═══ EXCELOVSKÉ TAŽENÍ HODNOTY (fill handle) ═════════════════════════════
