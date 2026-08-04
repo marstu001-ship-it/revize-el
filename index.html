@@ -384,6 +384,16 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
 .meas-table th.grp{background:#1F497D}
 .meas-table th{font-size:.52rem;padding:.3rem .2rem}
 .meas-table td input{font-size:.75rem}
+/* Excelovský úchyt v rohu aktivní buňky — tažením dolů/nahoru se hodnota
+   zkopíruje do stejného sloupce ostatních řádků. */
+.meas-table td{position:relative}
+.fill-handle{position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;
+  background:var(--accent2);border:1px solid #fff;border-radius:1px;
+  cursor:crosshair;z-index:6;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+html.dark .fill-handle{border-color:#1a1815}
+.fill-src{outline:2px solid var(--accent2);outline-offset:-2px}
+.fill-preview{background-image:linear-gradient(rgba(43,87,154,.18),rgba(43,87,154,.18))}
+html.dark .fill-preview{background-image:linear-gradient(rgba(122,163,216,.22),rgba(122,163,216,.22))}
 /* Zvýraznění řádku pod myší — pomůcka při kontrole obvod po obvodu.
    Zesvětluje se přes overlay, takže barevné rozlišení typů řádků
    (obvod / RCD / jiný řádek) zůstává zachované. */
@@ -605,7 +615,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.142<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.143<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -697,6 +707,19 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-03">
+    <div class="scard-title">🖱️ Excel v tabulce měření — tažení hodnot a zvýraznění řádku <span class="nov-datum">3. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyplňování opakujících se hodnot (Zsm, Riso, jistič…) je teď rychlé jako v Excelu.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Tahací roh:</strong> klepněte do buňky — v jejím pravém dolním rohu se objeví modrý čtvereček. Uchopte ho a táhněte dolů (nebo nahoru) — hodnota se zkopíruje do celého úseku</li>
+        <li>Kopíruje se jen do řádků se stejnou strukturou; podřádky chráničů a „jiné řádky" se přeskočí</li>
+        <li>Špatně jste to táhli? Dole se na 10 vteřin ukáže <strong>ZPĚT</strong></li>
+        <li><strong>Zvýraznění řádku pod myší</strong> — stejné jako v archivu, pomáhá při kontrole obvod po obvodu</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-03">
@@ -2546,6 +2569,109 @@ document.addEventListener('keydown', function(e) {
       open.forEach(function(m) { m.classList.remove('open'); });
     }
   }
+});
+
+// ═══ EXCELOVSKÉ TAŽENÍ HODNOTY (fill handle) ═════════════════════════════
+// V rohu aktivní buňky tabulky měření se ukáže malý čtvereček; tažením
+// nahoru/dolů se hodnota zkopíruje do stejného sloupce ostatních řádků
+// (jen řádky se shodnou strukturou — sloučené řádky RCD měření a „jiný
+// řádek" se přeskočí). Vyplnění jde vzít zpět tlačítkem ZPĚT.
+var __fill = null;
+
+function fillHandleEl() {
+  var h = document.getElementById('fill-handle');
+  if (!h) {
+    h = document.createElement('div');
+    h.id = 'fill-handle';
+    h.className = 'fill-handle';
+    h.title = 'Táhnutím zkopírujete hodnotu do dalších řádků';
+    h.addEventListener('pointerdown', fillStart);
+    document.body.appendChild(h);
+  }
+  return h;
+}
+
+function showFillHandle(inp) {
+  if (!inp || window.__formReadOnly) { hideFillHandle(); return; }
+  var td = inp.closest('td');
+  if (!td || !td.closest('.meas-table') || td.colSpan > 1) { hideFillHandle(); return; }
+  var h = fillHandleEl();
+  td.appendChild(h);       // pozice přes CSS (right/bottom v buňce)
+  h.style.display = '';
+  h.__srcInput = inp;
+}
+
+function hideFillHandle() {
+  var h = document.getElementById('fill-handle');
+  if (h) h.style.display = 'none';
+}
+
+function fillCilovyInput(tr, cellIndex) {
+  var tds = tr.children;
+  if (!tds[cellIndex] || tds[cellIndex].colSpan > 1) return null;
+  return tds[cellIndex].querySelector('input:not([readonly])');
+}
+
+function fillStart(e) {
+  var h = e.currentTarget;
+  var src = h.__srcInput;
+  if (!src) return;
+  e.preventDefault();
+  var srcTd = src.closest('td');
+  var srcTr = src.closest('tr');
+  var tbody = srcTr.parentNode;
+  __fill = { src: src, val: src.value, ci: srcTd.cellIndex, tbody: tbody,
+             srcIdx: Array.prototype.indexOf.call(tbody.children, srcTr), rows: [] };
+  srcTd.classList.add('fill-src');
+  h.setPointerCapture && h.setPointerCapture(e.pointerId);
+  document.addEventListener('pointermove', fillMove);
+  document.addEventListener('pointerup', fillEnd, { once: true });
+}
+
+function fillMove(e) {
+  if (!__fill) return;
+  var el = document.elementFromPoint(e.clientX, e.clientY);
+  var tr = el && el.closest ? el.closest('tr') : null;
+  if (!tr || tr.parentNode !== __fill.tbody) return;
+  var idx = Array.prototype.indexOf.call(__fill.tbody.children, tr);
+  __fill.tbody.querySelectorAll('.fill-preview').forEach(function(td) { td.classList.remove('fill-preview'); });
+  __fill.rows = [];
+  var from = Math.min(idx, __fill.srcIdx), to = Math.max(idx, __fill.srcIdx);
+  for (var i = from; i <= to; i++) {
+    if (i === __fill.srcIdx) continue;
+    var row = __fill.tbody.children[i];
+    var inp = fillCilovyInput(row, __fill.ci);
+    if (!inp) continue;
+    __fill.rows.push(inp);
+    inp.closest('td').classList.add('fill-preview');
+  }
+}
+
+function fillEnd() {
+  document.removeEventListener('pointermove', fillMove);
+  if (!__fill) return;
+  var f = __fill; __fill = null;
+  f.tbody.querySelectorAll('.fill-preview').forEach(function(td) { td.classList.remove('fill-preview'); });
+  var srcTd = f.src.closest('td');
+  if (srcTd) srcTd.classList.remove('fill-src');
+  if (!f.rows.length) return;
+  var zaloha = f.rows.map(function(inp) { return { inp: inp, val: inp.value }; });
+  f.rows.forEach(function(inp) { inp.value = f.val; });
+  window.__formDirty = true;
+  autoSave();
+  showToast('Hodnota „' + f.val + '" zkopírována do ' + f.rows.length + ' řádků', {
+    actionLabel: 'ZPĚT', timeout: 10000, action: function() {
+      zaloha.forEach(function(z) { z.inp.value = z.val; });
+      window.__formDirty = true;
+      autoSave();
+    }
+  });
+}
+
+document.addEventListener('focusin', function(e) {
+  var el = e.target;
+  if (el && el.tagName === 'INPUT' && el.closest('.meas-table')) showFillHandle(el);
+  else if (!el.closest || !el.closest('#fill-handle')) hideFillHandle();
 });
 
 // ═══ EXCELOVSKÁ NAVIGACE V TABULKÁCH (měření, přístroje, LPS zemniče) ════
