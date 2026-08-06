@@ -618,7 +618,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.147<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.148<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -710,6 +710,17 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-03">
+    <div class="scard-title">⛈ Opravy u LPS revizí <span class="nov-datum">3. 8. 2026</span></div>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Smazaný seznam příloh se už nevrací.</strong> Když přílohy vymažete a zprávu uložíte, po znovuotevření zůstanou prázdné. (Týká se to i ostatních polí — vymazaný text zůstane vymazaný.)</li>
+        <li><strong>Předložená dokumentace i u LPS</strong> — tabulka je nově v tabu „2. Objekt &amp; LPS" a tiskne se do zprávy stejně jako u elektro revizí.</li>
+        <li><strong>V PDF se vypíšou všechny zvolené normy.</strong> V kapitole 2 dřív byla jen posuzovací norma LPS; teď je pod ní i celý seznam norem ze zprávy.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-03">
@@ -1664,7 +1675,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       <div class="f"><label>Naměřený zemní odpor (Ω)</label><input type="text" id="f_zemni_odpor" placeholder="12,5"></div>
     </div>
   </div>
-  <div class="scard">
+  <div class="scard" id="scard-dokumentace">
     <div class="scard-title">B. Předložená dokumentace</div>
     <table class="data-table">
       <thead><tr><th style="width:20%">č. dokumentace</th><th style="width:18%">Datum</th><th>Název dokumentace</th><th style="width:40px"></th></tr></thead>
@@ -3238,6 +3249,13 @@ function novaZprava(typ) {
   var tabBarLps = document.getElementById('tab-bar-lps');
   if (tabBarEl) tabBarEl.style.display = (typ === 'lps') ? 'none' : 'flex';
   if (tabBarLps) tabBarLps.style.display = (typ === 'lps') ? 'flex' : 'none';
+  // Předložená dokumentace je společná pro oba typy revize — u LPS ji
+  // přesuneme do tabu „2. Objekt & LPS" (elektro tab „A. Popis" tam není).
+  var dokCard = document.getElementById('scard-dokumentace');
+  if (dokCard) {
+    var cil = document.getElementById(typ === 'lps' ? 'tab-lps-objekt' : 'tab-popis');
+    if (cil && dokCard.parentNode !== cil) cil.appendChild(dokCard);
+  }
   // Pro LPS skryj elektro-only sekce na titulní straně (Napěťová soustava
   // 1NPE/3PEN TN-C-S a Ochrana před úrazem el. proudem) — nedávají
   // u hromosvodu smysl.
@@ -5061,8 +5079,10 @@ function updateLpsMereniTexts() {
     var default62305 = '1. Projektová dokumentace LPS\n2. Výpočet rizika dle ČSN EN 62305-2 ed.2\n3. Protokol o měření zemního odporu\n4. Prohlášení o shodě jednotlivých částí';
     var default1390 = '1. Projektová dokumentace hromosvodu (popř. provozní dokumentace)\n2. Protokol o měření zemního odporu\n3. Záznamy z předchozích revizí dle ČSN 34 1390';
     var cur = pril.value.trim();
-    // Přepiš jen pokud je pole prázdné nebo obsahuje původní druhý default
-    if (!cur || cur === default62305.trim() || cur === default1390.trim()) {
+    // Přepiš JEN když tam stojí druhý předvyplněný text (přepnutí normy).
+    // Prázdné pole se nedoplňuje — uživatel přílohy záměrně smazal a po
+    // uložení a znovuotevření by se mu jinak pořád vracely.
+    if (cur === default62305.trim() || cur === default1390.trim()) {
       pril.value = is1390 ? default1390 : default62305;
     }
   }
@@ -6944,7 +6964,8 @@ function generujPDF() {
     (isLpsPdf
       ? ((D.lps && D.lps.trida) ? '<strong>Třída LPS:</strong> ' + esc(D.lps.trida) + '<br>' : '')
         + ((D.lps && D.lps.jimaci) ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) + '<br>' : '')
-        + ((D.lps && D.lps.prohlidka_norma) ? '<strong>Revize provedena dle:</strong> ' + (D.lps.prohlidka_norma === '1390' ? 'ČSN 34 1390' : 'ČSN EN 62305-3 ed.2') + '<br>' : '')
+        + ((D.lps && D.lps.prohlidka_norma) ? '<strong>Posouzeno dle:</strong> ' + (D.lps.prohlidka_norma === '1390' ? 'ČSN 34 1390' : 'ČSN EN 62305-3 ed.2') + '<br>' : '')
+        + (D.normy ? '<strong>Revize provedena dle:</strong> ' + esc(D.normy) + '<br>' : '')
       : (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '')
         + (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '')
         + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>') +
@@ -8156,7 +8177,11 @@ function nacistData(D) {
   if (fields.f_trida && tridaMigrace[fields.f_trida]) fields.f_trida = tridaMigrace[fields.f_trida];
   Object.keys(fields).forEach(function(id) {
     var el = document.getElementById(id);
-    if (el && fields[id]) el.value = fields[id];
+    if (!el) return;
+    // Zapsat i prázdnou hodnotu — pokud uživatel pole ve zprávě vymazal
+    // (např. seznam příloh), nesmí se mu vrátit předvyplněný text.
+    // Chybí-li klíč úplně (starší zprávy), předvyplnění zůstane.
+    if (fields[id] !== undefined && fields[id] !== null) el.value = fields[id];
   });
   // Vždy přepsat pole revizního technika z vlastního profilu uživatele
   if (STORE.technik && STORE.technik.jmeno) propsatTechnika();
