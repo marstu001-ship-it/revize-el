@@ -246,6 +246,11 @@ tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
 .pristroj-row input{min-width:0}
 .pristroj-row input[type=date]{flex:0 1 150px}
 /* Vizitka revizního technika v hlavičce formuláře */
+.obr-nahled{max-width:200px;max-height:110px;border:1px solid var(--border);padding:4px;border-radius:2px;
+  background-color:#fff;background-image:
+    linear-gradient(45deg,#e2e2e2 25%,transparent 25%),linear-gradient(-45deg,#e2e2e2 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#e2e2e2 75%),linear-gradient(-45deg,transparent 75%,#e2e2e2 75%);
+  background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0}
 .rt-badge{background:#f0f6ff;border:1px solid #b8d0f0;padding:.6rem 1rem;border-radius:2px;margin-bottom:.75rem}
 html.dark .rt-badge{background:#1e2733;border-color:#39506e;color:var(--text)}
 
@@ -623,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.154<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.155<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3409,8 +3414,11 @@ function upravitRazitko(dataUrl, cb) {
           if (a > 12 && svetlePozadi) {
             var jas = 0.299 * p[j] + 0.587 * p[j + 1] + 0.114 * p[j + 2];
             var odchylka = Math.abs(p[j] - bg[0]) + Math.abs(p[j + 1] - bg[1]) + Math.abs(p[j + 2] - bg[2]);
-            // papír = podobná barva jako rohy a není výrazně tmavší
-            if (odchylka < 90 && jas > bgJas - 42) { p[j + 3] = 0; a = 0; }
+            // Barevnost pixelu — razítka bývají světle červená/modrá a dřív
+            // se mazala jako papír; barevný pixel se proto nechává vždy.
+            var sytost = Math.max(p[j], p[j + 1], p[j + 2]) - Math.min(p[j], p[j + 1], p[j + 2]);
+            var jePapir = (sytost < 26 && odchylka < 70 && jas > bgJas - 34);
+            if (jePapir) { p[j + 3] = 0; a = 0; }
           }
           if (a > 12) {
             if (x2 < minX) minX = x2; if (x2 > maxX) maxX = x2;
@@ -3419,7 +3427,9 @@ function upravitRazitko(dataUrl, cb) {
         }
       }
       var plocha = (maxX - minX + 1) * (maxY - minY + 1);
-      if (maxX < 0 || plocha < c.width * c.height * 0.0008) { cb(dataUrl); return; }
+      // Když by po ořezu zbyl jen drobek, něco se nepovedlo — raději
+      // ponechat původní obrázek, než uživateli „zmizet" razítko.
+      if (maxX < 0 || plocha < c.width * c.height * 0.004) { cb(dataUrl); return; }
       ctx.putImageData(d, 0, 0);
       var okraj = Math.round(Math.min(c.width, c.height) * 0.01);
       minX = Math.max(0, minX - okraj); minY = Math.max(0, minY - okraj);
@@ -3464,8 +3474,15 @@ function renderRazitkoPreview() {
   if (!prev) return;
   var t = STORE.technik || {};
   if (t.razitko) {
-    prev.innerHTML = '<div style="font-size:.7rem;color:var(--muted);margin-bottom:.3rem">Náhled:</div>' +
-      '<img src="' + t.razitko + '" style="max-width:160px;max-height:90px;border:1px solid var(--border);padding:4px;background:#fff;border-radius:2px">';
+    prev.innerHTML = '<div style="font-size:.7rem;color:var(--muted);margin-bottom:.3rem">Náhled (šachovnice = průhledné pozadí):</div>' +
+      '<img id="rt_razitko_img" src="' + t.razitko + '" class="obr-nahled">' +
+      '<div id="rt_razitko_info" style="font-size:.68rem;color:var(--muted);margin-top:.25rem"></div>';
+    var im = new Image();
+    im.onload = function() {
+      var el = document.getElementById('rt_razitko_info');
+      if (el) el.textContent = 'Rozměr: ' + im.naturalWidth + '×' + im.naturalHeight + ' px';
+    };
+    im.src = t.razitko;
   } else {
     prev.innerHTML = '<div style="font-size:.72rem;color:var(--muted);font-style:italic">Žádné razítko.</div>';
   }
@@ -3476,8 +3493,15 @@ function renderPodpisPreview() {
   if (!prev) return;
   var t = STORE.technik || {};
   if (t.podpis) {
-    prev.innerHTML = '<div style="font-size:.7rem;color:var(--muted);margin-bottom:.3rem">Náhled:</div>' +
-      '<img src="' + t.podpis + '" style="max-width:160px;max-height:60px;border:1px solid var(--border);padding:4px;background:#fff;border-radius:2px">';
+    prev.innerHTML = '<div style="font-size:.7rem;color:var(--muted);margin-bottom:.3rem">Náhled (šachovnice = průhledné pozadí):</div>' +
+      '<img src="' + t.podpis + '" class="obr-nahled">' +
+      '<div id="rt_podpis_info" style="font-size:.68rem;color:var(--muted);margin-top:.25rem"></div>';
+    var im2 = new Image();
+    im2.onload = function() {
+      var el = document.getElementById('rt_podpis_info');
+      if (el) el.textContent = 'Rozměr: ' + im2.naturalWidth + '×' + im2.naturalHeight + ' px';
+    };
+    im2.src = t.podpis;
   } else {
     prev.innerHTML = '<div style="font-size:.72rem;color:var(--muted);font-style:italic">Žádný podpis.</div>';
   }
