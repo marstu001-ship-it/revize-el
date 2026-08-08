@@ -628,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.155<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.156<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3383,55 +3383,54 @@ function upravitRazitko(dataUrl, cb) {
       var ctx = c.getContext('2d');
       ctx.drawImage(img, 0, 0);
       var d = ctx.getImageData(0, 0, c.width, c.height);
-      var p = d.data;
-      // Barvu papíru odhadneme z rohů — fotka bývá našedlá či nažloutlá,
-      // pevná hranice „bílá" by ji nepoznala a nic by se neořízlo.
-      var vzorky = [], krok = Math.max(1, Math.floor(Math.min(c.width, c.height) / 40));
-      [[0,0],[c.width-1,0],[0,c.height-1],[c.width-1,c.height-1]].forEach(function(roh) {
-        for (var dy = 0; dy < 8 * krok; dy += krok) {
-          for (var dx = 0; dx < 8 * krok; dx += krok) {
-            var x = Math.min(c.width - 1, Math.max(0, roh[0] + (roh[0] ? -dx : dx)));
-            var y = Math.min(c.height - 1, Math.max(0, roh[1] + (roh[1] ? -dy : dy)));
-            var i = (y * c.width + x) * 4;
-            if (p[i + 3] > 12) vzorky.push([p[i], p[i + 1], p[i + 2]]);
+      var p = d.data, celkem = c.width * c.height;
+      // Má obrázek už průhledné pozadí? (PNG vyrobené odstraňovačem pozadí)
+      var pruhledne = 0;
+      for (var q = 3; q < p.length; q += 4) if (p[q] < 12) pruhledne++;
+      var maPruhlednost = pruhledne > celkem * 0.1;
+      var bg = [255, 255, 255], bgJas = 255;
+      if (!maPruhlednost) {
+        // Barva papíru = medián rohů (fotka bývá našedlá či nažloutlá)
+        var vz = [], krok = Math.max(1, Math.floor(Math.min(c.width, c.height) / 40));
+        [[0,0],[c.width-1,0],[0,c.height-1],[c.width-1,c.height-1]].forEach(function(roh) {
+          for (var dy = 0; dy < 8 * krok; dy += krok) {
+            for (var dx = 0; dx < 8 * krok; dx += krok) {
+              var x = Math.min(c.width - 1, Math.max(0, roh[0] ? roh[0] - dx : dx));
+              var y = Math.min(c.height - 1, Math.max(0, roh[1] ? roh[1] - dy : dy));
+              var i = (y * c.width + x) * 4;
+              if (p[i + 3] > 12) vz.push([p[i], p[i + 1], p[i + 2]]);
+            }
           }
-        }
-      });
-      var bg = [255, 255, 255];
-      if (vzorky.length) {
-        bg = [0, 1, 2].map(function(k) {
-          var s = vzorky.map(function(v) { return v[k]; }).sort(function(a, b) { return a - b; });
-          return s[Math.floor(s.length / 2)];                 // medián = barva papíru
         });
+        if (vz.length) bg = [0,1,2].map(function(k) {
+          var s = vz.map(function(v) { return v[k]; }).sort(function(a, b) { return a - b; });
+          return s[Math.floor(s.length / 2)];
+        });
+        bgJas = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2];
       }
-      var bgJas = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2];
-      var svetlePozadi = bgJas > 140;                          // tmavé pozadí neřešíme
       var minX = c.width, minY = c.height, maxX = -1, maxY = -1;
       for (var y2 = 0; y2 < c.height; y2++) {
         for (var x2 = 0; x2 < c.width; x2++) {
           var j = (y2 * c.width + x2) * 4;
           var a = p[j + 3];
-          if (a > 12 && svetlePozadi) {
-            var jas = 0.299 * p[j] + 0.587 * p[j + 1] + 0.114 * p[j + 2];
-            var odchylka = Math.abs(p[j] - bg[0]) + Math.abs(p[j + 1] - bg[1]) + Math.abs(p[j + 2] - bg[2]);
-            // Barevnost pixelu — razítka bývají světle červená/modrá a dřív
-            // se mazala jako papír; barevný pixel se proto nechává vždy.
-            var sytost = Math.max(p[j], p[j + 1], p[j + 2]) - Math.min(p[j], p[j + 1], p[j + 2]);
-            var jePapir = (sytost < 26 && odchylka < 70 && jas > bgJas - 34);
-            if (jePapir) { p[j + 3] = 0; a = 0; }
+          if (a <= 12) continue;                        // už průhledné
+          if (!maPruhlednost && bgJas > 140) {
+            // Papír = barva blízká rohům a bez vlastního odstínu. Hranice
+            // je volná, aby přežil i bledý inkoust razítka.
+            var sytost = Math.max(p[j], p[j+1], p[j+2]) - Math.min(p[j], p[j+1], p[j+2]);
+            var rozdil = Math.abs(p[j] - bg[0]) + Math.abs(p[j+1] - bg[1]) + Math.abs(p[j+2] - bg[2]);
+            if (sytost < 22 && rozdil < 62) { p[j + 3] = 0; continue; }   // 62 = tolerance zrna fotky
           }
-          if (a > 12) {
-            if (x2 < minX) minX = x2; if (x2 > maxX) maxX = x2;
-            if (y2 < minY) minY = y2; if (y2 > maxY) maxY = y2;
-          }
+          if (x2 < minX) minX = x2; if (x2 > maxX) maxX = x2;
+          if (y2 < minY) minY = y2; if (y2 > maxY) maxY = y2;
         }
       }
-      var plocha = (maxX - minX + 1) * (maxY - minY + 1);
-      // Když by po ořezu zbyl jen drobek, něco se nepovedlo — raději
-      // ponechat původní obrázek, než uživateli „zmizet" razítko.
-      if (maxX < 0 || plocha < c.width * c.height * 0.004) { cb(dataUrl); return; }
+      var w0 = maxX - minX + 1, h0 = maxY - minY + 1;
+      // Pojistka jen proti úplnému selhání (pár pixelů) — malé razítko
+      // uprostřed velkého listu je běžné a ořezat se MUSÍ.
+      if (maxX < 0 || w0 < 8 || h0 < 8) { cb(dataUrl); return; }
       ctx.putImageData(d, 0, 0);
-      var okraj = Math.round(Math.min(c.width, c.height) * 0.01);
+      var okraj = Math.max(2, Math.round(Math.min(w0, h0) * 0.03));
       minX = Math.max(0, minX - okraj); minY = Math.max(0, minY - okraj);
       maxX = Math.min(c.width - 1, maxX + okraj); maxY = Math.min(c.height - 1, maxY + okraj);
       var w = maxX - minX + 1, h = maxY - minY + 1;
@@ -3439,7 +3438,7 @@ function upravitRazitko(dataUrl, cb) {
       out.width = w; out.height = h;
       out.getContext('2d').drawImage(c, minX, minY, w, h, 0, 0, w, h);
       cb(out.toDataURL('image/png'));
-    } catch (e) { cb(dataUrl); }                              // radši původní než nic
+    } catch (e) { cb(dataUrl); }                        // radši původní než nic
   };
   img.onerror = function() { cb(dataUrl); };
   img.src = dataUrl;
