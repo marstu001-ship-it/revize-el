@@ -623,7 +623,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.149<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.150<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2135,6 +2135,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       <div class="char-row" id="pdf-razitko-row" style="display:none">
         <input type="checkbox" id="pdf_use_razitko" checked>
         <label for="pdf_use_razitko">Vložit <strong>razítko</strong> technika</label>
+        <img id="pdf-razitko-nahled" alt="" style="max-height:34px;max-width:70px;margin-left:auto;border:1px solid var(--border);border-radius:2px;background:#fff;padding:2px">
       </div>
       <div class="char-row" id="pdf-podpis-row" style="display:none">
         <input type="checkbox" id="pdf_use_podpis" checked>
@@ -6730,6 +6731,11 @@ function generujPDFAsk() {
   if (intro) intro.style.display = (hasRaz || hasPod) ? '' : 'none';
   var rowR = document.getElementById('pdf-razitko-row');
   var rowP = document.getElementById('pdf-podpis-row');
+  var nahled = document.getElementById('pdf-razitko-nahled');
+  if (nahled) {           // ať je vidět, které razítko se vloží
+    if (hasRaz) { nahled.src = t.razitko; nahled.style.display = ''; }
+    else nahled.style.display = 'none';
+  }
   if (rowR) rowR.style.display = hasRaz ? '' : 'none';
   if (rowP) rowP.style.display = hasPod ? '' : 'none';
   // Default check obou (uživatel typicky chce vše vložit)
