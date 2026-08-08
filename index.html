@@ -530,7 +530,12 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center}
 .podp-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-top:5mm}
 .podp-inner{border:.75pt solid #000;min-height:18mm;padding:1mm;
-  display:flex;align-items:flex-end;justify-content:center}
+  display:flex;align-items:flex-end;justify-content:center;position:relative}
+/* Razítko technika — jako v reálu: velké (cca 3,5 cm) a smí přetékat přes
+   rámeček i text nad ním. Kreslí se nad obsah, ale průhledné PNG nechá
+   podpisovou čáru i text prosvítat. */
+.razitko-pdf{position:absolute;right:3mm;bottom:5mm;max-height:35mm;max-width:55mm;
+  z-index:4;pointer-events:none}
 .podp-line{border-top:.75pt solid #000;margin:0 8mm 1mm;text-align:center}
 .podp-lbl{font-size:7.5pt;text-align:center}
 
@@ -618,7 +623,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.148<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.149<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6934,8 +6939,8 @@ function generujPDF() {
     '<div class="podp-grid">' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center">' +
-      ((pdfOpts.razitko && STORE.technik && STORE.technik.razitko) ? '<img src="' + STORE.technik.razitko + '" style="max-height:16mm;max-width:48mm;display:block;margin:0 auto" alt="razítko">' : '') +
-      ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:10mm;max-width:48mm;display:block;margin:0 auto" alt="podpis">' : '') +
+      ((pdfOpts.razitko && STORE.technik && STORE.technik.razitko) ? '<img class="razitko-pdf" src="' + STORE.technik.razitko + '" alt="razítko">' : '') +
+      ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:12mm;max-width:48mm;display:block;margin:0 auto;position:relative;z-index:5" alt="podpis">' : '') +
       '<div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
     '</div></div>' + ftr();
   pages.appendChild(p1);
