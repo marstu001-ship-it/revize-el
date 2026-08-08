@@ -623,7 +623,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.151<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.152<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -7497,14 +7497,35 @@ function generujPDF() {
       var tit = pages.querySelector('.a4-titulni');
       if (!tit) return;
       var obsah = tit.querySelector('.a4-content');
-      if (!obsah) return;
+      if (!obsah || !obsah.children.length) return;
+      // Obsah se vloží do obalu, který se zmenšuje; .a4-content dostane
+      // pevnou výšku, takže stránka zůstane přesně A4 (transform sám
+      // rozměry bloku nemění a stránka by jinak narostla a tisk ořízl).
+      var obal = document.createElement('div');
+      while (obsah.firstChild) obal.appendChild(obsah.firstChild);
+      obsah.appendChild(obal);
+      var mimoObsah = tit.getBoundingClientRect().height - obsah.getBoundingClientRect().height;
+      var kDispozici = maxA4Px - mimoObsah - 2;
+      if (kDispozici <= 0) return;
       var scale = 1;
-      var guard = 0;
-      while (overflows(tit) && scale > 0.62 && guard++ < 40) {
-        scale -= 0.02;
-        obsah.style.transformOrigin = 'top left';
-        obsah.style.transform = 'scale(' + scale.toFixed(2) + ')';
-        obsah.style.width = (100 / scale).toFixed(2) + '%';
+      for (var i = 0; i < 6; i++) {
+        obal.style.transform = '';
+        obal.style.width = (100 / scale).toFixed(3) + '%';
+        var prirozena = obal.getBoundingClientRect().height;
+        var novy = Math.min(1, kDispozici / prirozena);
+        if (Math.abs(novy - scale) < 0.004) { scale = novy; break; }
+        scale = novy;
+      }
+      if (scale < 1) {
+        obal.style.transformOrigin = 'top left';
+        obal.style.width = (100 / scale).toFixed(3) + '%';
+        obal.style.transform = 'scale(' + scale.toFixed(3) + ')';
+        // .a4-content má flex:1 — bez flex:none by pevná výška neplatila
+        obsah.style.flex = 'none';
+        obsah.style.height = kDispozici + 'px';
+        obsah.style.overflow = 'hidden';
+      } else {
+        obal.style.width = '';
       }
     })();
 
