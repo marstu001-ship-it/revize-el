@@ -623,7 +623,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.152<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.153<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3366,6 +3366,48 @@ function toggleAiLocalFields() {
 }
 
 // Společný helper pro nahrání obrázku do STORE.technik[key].
+// Připraví nahrané razítko/podpis pro tisk: odstraní bílé pozadí (u foto
+// a JPG skenů) a ořízne prázdné okraje. Bez toho je „velký" podpis v PDF
+// drobný — většinu obrázku tvoří papír okolo.
+function upravitRazitko(dataUrl, cb) {
+  var img = new Image();
+  img.onload = function() {
+    try {
+      var c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      var d = ctx.getImageData(0, 0, c.width, c.height);
+      var p = d.data;
+      var minX = c.width, minY = c.height, maxX = -1, maxY = -1;
+      for (var y = 0; y < c.height; y++) {
+        for (var x = 0; x < c.width; x++) {
+          var i = (y * c.width + x) * 4;
+          var a = p[i + 3];
+          var svetly = (p[i] > 233 && p[i + 1] > 233 && p[i + 2] > 233);
+          if (a > 12 && svetly) { p[i + 3] = 0; a = 0; }   // bílý papír → průhledný
+          if (a > 12) {
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < 0) { cb(dataUrl); return; }               // prázdný obrázek
+      ctx.putImageData(d, 0, 0);
+      var okraj = 2;
+      minX = Math.max(0, minX - okraj); minY = Math.max(0, minY - okraj);
+      maxX = Math.min(c.width - 1, maxX + okraj); maxY = Math.min(c.height - 1, maxY + okraj);
+      var w = maxX - minX + 1, h = maxY - minY + 1;
+      var out = document.createElement('canvas');
+      out.width = w; out.height = h;
+      out.getContext('2d').drawImage(c, minX, minY, w, h, 0, 0, w, h);
+      cb(out.toDataURL('image/png'));
+    } catch (e) { cb(dataUrl); }                            // radši původní než nic
+  };
+  img.onerror = function() { cb(dataUrl); };
+  img.src = dataUrl;
+}
+
 function wireImageUpload(inputId, storeKey, renderFn) {
   var inp = document.getElementById(inputId);
   if (!inp || inp.dataset.wired) return;
@@ -3379,10 +3421,12 @@ function wireImageUpload(inputId, storeKey, renderFn) {
     }
     var reader = new FileReader();
     reader.onload = function(ev) {
-      if (!STORE.technik) STORE.technik = {};
-      STORE.technik[storeKey] = ev.target.result; // dataURL
-      saveStore(); // bez tohohle se obrázek ztratí při reloadu
-      if (renderFn) renderFn();
+      upravitRazitko(ev.target.result, function(hotovo) {
+        if (!STORE.technik) STORE.technik = {};
+        STORE.technik[storeKey] = hotovo;
+        saveStore(); // bez tohohle se obrázek ztratí při reloadu
+        if (renderFn) renderFn();
+      });
     };
     reader.readAsDataURL(file);
   });
@@ -6946,7 +6990,7 @@ function generujPDF() {
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center">' +
       ((pdfOpts.razitko && STORE.technik && STORE.technik.razitko) ? '<img class="razitko-pdf" src="' + STORE.technik.razitko + '" alt="razítko">' : '') +
-      ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:12mm;max-width:48mm;display:block;margin:0 auto;position:relative;z-index:5" alt="podpis">' : '') +
+      ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:20mm;max-width:70mm;display:block;margin:0 auto -3mm;position:relative;z-index:5" alt="podpis">' : '') +
       '<div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
     '</div></div>' + ftr();
   p1.classList.add('a4-titulni');   // titulní strana se NIKDY nedělí
