@@ -628,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.157<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.158<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6817,6 +6817,10 @@ function pdfChybejiciPole() {
 }
 
 function generujPDFAsk() {
+  // Uložení (a případný dotaz na shodné ev. číslo) vyřešit HNED na začátku.
+  // Dřív se archivovalo až uvnitř generování, takže dotaz na duplicitu mohl
+  // předběhnout okno s razítkem a to se pak vůbec neukázalo.
+  try { saveToArchiv(); } catch (e) { console.error(e); }
   var t = STORE.technik || {};
   var hasRaz = !!t.razitko;
   var hasPod = !!t.podpis;
