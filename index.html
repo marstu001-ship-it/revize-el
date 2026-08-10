@@ -628,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.158<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.159<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -7615,20 +7615,24 @@ function generujPDF() {
     // Titulní strana musí vyjít na JEDNU stranu. Když je obsahu moc
     // (hodně norem, dlouhé texty), obsah se plynule zmenší, dokud se
     // nevejde — nikdy se nezalomí na druhý list.
-    (function fitTitulku() {
-      var tit = pages.querySelector('.a4-titulni');
-      if (!tit) return;
-      var obsah = tit.querySelector('.a4-content');
-      if (!obsah || !obsah.children.length) return;
-      // Obsah se vloží do obalu, který se zmenšuje; .a4-content dostane
-      // pevnou výšku, takže stránka zůstane přesně A4 (transform sám
-      // rozměry bloku nemění a stránka by jinak narostla a tisk ořízl).
-      var obal = document.createElement('div');
-      while (obsah.firstChild) obal.appendChild(obsah.firstChild);
-      obsah.appendChild(obal);
-      var mimoObsah = tit.getBoundingClientRect().height - obsah.getBoundingClientRect().height;
-      var kDispozici = maxA4Px - mimoObsah - 2;
-      if (kDispozici <= 0) return;
+    // Vejde obsah stránky na jeden list? Když ne, obsah se vloží do obalu
+    // a plynule zmenší. Používá se pro titulku (ta se nesmí dělit nikdy)
+    // i pro stránky, kterým přetéká jen kousek — jinak by pár řádků
+    // poznámky vyhnalo celou další, skoro prázdnou stranu.
+    function vejdiNaStranku(stranka, limitPx) {
+      var obsah = stranka.querySelector('.a4-content');
+      if (!obsah || !obsah.children.length) return false;
+      var obal = obsah.children.length === 1 && obsah.firstElementChild.dataset.fitWrap
+        ? obsah.firstElementChild : null;
+      if (!obal) {
+        obal = document.createElement('div');
+        obal.dataset.fitWrap = '1';
+        while (obsah.firstChild) obal.appendChild(obsah.firstChild);
+        obsah.appendChild(obal);
+      }
+      var mimoObsah = stranka.getBoundingClientRect().height - obsah.getBoundingClientRect().height;
+      var kDispozici = limitPx - mimoObsah - 2;
+      if (kDispozici <= 0) return false;
       var scale = 1;
       for (var i = 0; i < 6; i++) {
         obal.style.transform = '';
@@ -7642,14 +7646,17 @@ function generujPDF() {
         obal.style.transformOrigin = 'top left';
         obal.style.width = (100 / scale).toFixed(3) + '%';
         obal.style.transform = 'scale(' + scale.toFixed(3) + ')';
-        // .a4-content má flex:1 — bez flex:none by pevná výška neplatila
         obsah.style.flex = 'none';
         obsah.style.height = kDispozici + 'px';
         obsah.style.overflow = 'hidden';
       } else {
         obal.style.width = '';
       }
-    })();
+      return true;
+    }
+
+    var titulka = pages.querySelector('.a4-titulni');
+    if (titulka) vejdiNaStranku(titulka, maxA4Px);
 
     var didPortraitSplit;
     var portSafety = 0;
@@ -7679,6 +7686,36 @@ function generujPDF() {
       }
       portSafety++;
     } while (didPortraitSplit && portSafety < 100);
+
+    // LPS: kapitoly navazují na stejné stránce, pokud je na ní místo.
+    // Sekce měření zemničů končila pár řádky poznámky a další kapitola
+    // začínala na nové straně — mezi tím zbývala skoro prázdná stránka.
+    // (U elektro se nechává původní chování — tam je členění po stranách
+    // zavedené a tabulky na šířku by se míchaly s textem.)
+    if (isLpsPdf) {
+      var spojeno = true, spojGuard = 0;
+      while (spojeno && spojGuard++ < 40) {
+        spojeno = false;
+        var portrety = Array.prototype.slice.call(pages.querySelectorAll('.a4:not(.a4-landscape)'));
+        for (var si = 0; si < portrety.length - 1; si++) {
+          var A = portrety[si], B = portrety[si + 1];
+          if (A.classList.contains('a4-titulni')) continue;   // titulka zůstává sama
+          var ca = A.querySelector('.a4-content'), cb = B.querySelector('.a4-content');
+          if (!ca || !cb || !cb.children.length) continue;
+          // Přesouvat po jednotlivých blocích, dokud se na stránku vejdou —
+          // celá kapitola se často nevejde, ale její začátek ano.
+          var presunuto = 0;
+          while (cb.firstElementChild) {
+            var blok = cb.firstElementChild;
+            ca.appendChild(blok);
+            if (overflows(A)) { cb.insertBefore(blok, cb.firstChild); break; }
+            presunuto++;
+          }
+          if (!cb.children.length) { B.remove(); spojeno = true; break; }
+          if (presunuto) { spojeno = true; break; }
+        }
+      }
+    }
 
     // Přečíslování hlaviček a "Počet listů" podle skutečného počtu stran
     var ps = pages.querySelectorAll('.a4');
