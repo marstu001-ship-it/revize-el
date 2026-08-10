@@ -176,6 +176,34 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .char-row input[type=text]{flex:0 0 140px;font-size:.8rem;padding:.25rem .5rem;
   border:1px solid var(--border);border-radius:2px;background:var(--surface)}
 
+/* ═══ ROZBALOVACÍ NÁPOVĚDA (LPZ zóny) ═══
+   Starší kolegové ČSN EN 62305 tak často nepoužívají a nevědí, kterou zónu
+   zakliknout — u každé zóny je proto krátký popis a pod nimi rozklikávací
+   podrobné vysvětlení s příklady. */
+.lpz-row{align-items:flex-start}
+.lpz-row input[type=checkbox]{margin-top:.15rem}
+.lpz-row label{display:block}
+/* .f label je mono/VERZÁLKY — pro popisek zóny to musíme vrátit na běžné
+   písmo, jinak je věta psaná kapitálkami hůř čitelná než sám název zóny. */
+.lpz-nazev{font-family:var(--mono);font-weight:500;font-size:.8rem;
+  letter-spacing:.04em;color:var(--text)}
+.lpz-kratky{display:block;font-family:var(--sans);font-size:.75rem;
+  text-transform:none;letter-spacing:normal;color:var(--muted);
+  line-height:1.4;margin-top:.1rem}
+.help-det{margin-top:.55rem;border:1px solid var(--border);border-radius:3px;
+  background:var(--surface);font-size:.8rem}
+.help-det>summary{cursor:pointer;padding:.45rem .7rem;font-weight:500;
+  color:var(--accent2);list-style:none;user-select:none}
+.help-det>summary::-webkit-details-marker{display:none}
+.help-det>summary::before{content:'▸ '}
+.help-det[open]>summary::before{content:'▾ '}
+.help-det>summary:hover{background:rgba(43,87,154,.08)}
+.help-body{padding:.2rem .9rem .85rem;line-height:1.55;border-top:1px solid var(--border)}
+.help-body dl{margin:0}
+.help-body dt{font-family:var(--mono);font-weight:500;margin-top:.6rem;color:var(--accent2)}
+.help-body dd{margin:.1rem 0 0;color:var(--text)}
+.help-body .lpz-priklad{color:var(--muted);font-size:.76rem}
+
 /* ═══ ARCHIV ═══ */
 #archiv-container,#odberatel-container{overflow-x:auto;-webkit-overflow-scrolling:touch}
 /* Na mobilu: data-table se chová jako scrollovatelný blok s horizontálním
@@ -628,7 +656,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.160<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.161<span class="ver-date"> · 2026-08-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -720,6 +748,19 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-10">
+    <div class="scard-title">🌩 Nápověda k zónám LPZ <span class="nov-datum">10. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">U LPS revizí v tabu „2. Objekt &amp; LPS" je karta <strong>Zóny ochrany před bleskem (LPZ) a SPD</strong>. Kdo zóny nepoužívá denně, nevěděl, co zakliknout — teď je u toho vysvětlení.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>U každé zóny je jednou větou popsáno, kde se nachází</strong> — např. LPZ 0<sub>A</sub> = venku mimo ochranný prostor jímačů (komín, anténa, hřeben střechy), LPZ 0<sub>B</sub> = venku v ochranném prostoru jímačů, LPZ 1 = uvnitř objektu za SPD typu 1.</li>
+        <li><strong>Rozklikávací nápověda</strong> pod zónami popisuje každou zónu podrobně, s příklady z běžného domu (ČSN EN 62305-1 ed.2).</li>
+        <li><strong>Tlačítko „🏠 Nastavit takto"</strong> nastaví zóny na nejčastější případ rodinného domu s hromosvodem a přepěťovou ochranou: LPZ 0<sub>A</sub> + 0<sub>B</sub> + 1.</li>
+        <li>Do zprávy se tiskne jen název zóny (LPZ 0B…), popisky jsou pouze pomůcka v programu.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-03">
@@ -1956,6 +1997,32 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       </div>
       <div class="f"><label>Potenciálové vyrovnání</label>
         <select id="lps_potencial"><option value="TT">síť TT</option><option value="TN" selected>síť TN</option><option value="IT">síť IT</option></select></div>
+      <div class="f span2">
+        <details class="help-det" id="lpz-napoveda">
+          <summary>Nevíte, kterou zónu zakliknout? Rozklikněte nápovědu k LPZ</summary>
+          <div class="help-body">
+            <p style="margin:.55rem 0 .1rem">Zóna LPZ říká, <strong>jak moc je dané místo chráněné před bleskem</strong> — od volného prostoru venku (LPZ 0) až po prostor hluboko uvnitř objektu za druhým stupněm přepěťové ochrany (LPZ 2). Zaklikněte ty zóny, které na revidovaném objektu <strong>skutečně jsou</strong>.</p>
+            <dl>
+              <dt>LPZ 0</dt>
+              <dd>Vnější prostor bez jakékoli ochrany — hrozí přímý úder, předměty vedou <strong>plný bleskový proud</strong> a elektromagnetické pole není nijak zeslabené. Zaklikává se tam, kde zóny 0A a 0B nerozlišujete.</dd>
+              <dt>LPZ 0<sub>A</sub></dt>
+              <dd>Část venkovního prostoru <strong>mimo ochranný prostor jímací soustavy</strong> — sem může blesk uhodit přímo.
+                <span class="lpz-priklad">Např. hřeben a plocha střechy s jímacím vedením, komín, anténní stožár, klimatizace na střeše mimo ochranný prostor jímací tyče.</span></dd>
+              <dt>LPZ 0<sub>B</sub></dt>
+              <dd>Venkovní prostor, který je jímací soustavou <strong>chráněný před přímým úderem</strong> (leží v ochranném prostoru — metoda valící se koule / ochranný úhel), magnetické pole je ale stále plné.
+                <span class="lpz-priklad">Např. fasáda a plocha střechy pod ochranou jímačů, terasa nebo zahrada v ochranném prostoru stožáru.</span></dd>
+              <dt>LPZ 1</dt>
+              <dd><strong>Vnitřek objektu</strong> — přímý úder je vyloučen, bleskový proud je rozdělen svody a omezen <strong>SPD typu 1 (T1) na vstupu</strong>, pole je zeslabené stíněním (armování, mřížová soustava).
+                <span class="lpz-priklad">Např. celý interiér domu za hlavním rozváděčem s bleskojistkou.</span></dd>
+              <dt>LPZ 2 (a vyšší)</dt>
+              <dd>Prostor <strong>hlouběji uvnitř</strong> objektu za dalším stupněm ochrany — <strong>SPD typu 2 / 3</strong> v podružném rozváděči nebo v zásuvce, případně další stínění. Zaklikněte, jen když druhý stupeň ochrany opravdu je.
+                <span class="lpz-priklad">Např. místnost se serverem, rozváděč měření a regulace, chráněná zásuvková větev.</span></dd>
+            </dl>
+            <p style="margin:.75rem 0 .4rem"><strong>Běžný rodinný dům s hromosvodem a přepěťovou ochranou:</strong> LPZ 0<sub>A</sub> + LPZ 0<sub>B</sub> + LPZ 1. LPZ 2 přidejte, až když je v podružném rozváděči nebo u zásuvek druhý stupeň SPD.</p>
+            <button class="btn btn-gold" data-action="lpzTypickyDum" style="font-size:.62rem;padding:.35rem .7rem">🏠 Nastavit takto</button>
+          </div>
+        </details>
+      </div>
       <div class="f span2"><label>Osazené typy SPD</label><textarea id="lps_spd" placeholder="Výrobce, typové označení, místo instalace" style="min-height:60px"></textarea></div>
     </div>
   </div>
@@ -5007,6 +5074,16 @@ function renderChecklist() {
 
 // ═══ LPS FUNKCE ═══
 var LPS_LPZ = ['LPZ 0', 'LPZ 0A', 'LPZ 0B', 'LPZ 1', 'LPZ 2'];
+// Krátký popis u každé zóny (delší vysvětlení s příklady je v rozbalovací
+// nápovědě pod checkboxy — #lpz-napoveda). Klíč = přesný název zóny, aby
+// popisky nikdy neovlivnily hodnotu ukládanou do zprávy (ta jde z data-lpz).
+var LPS_LPZ_POPIS = {
+  'LPZ 0': 'venku, bez ochrany — přímý úder, plný bleskový proud i pole',
+  'LPZ 0A': 'venku MIMO ochranný prostor jímačů — hrozí přímý úder (komín, anténa, hřeben střechy)',
+  'LPZ 0B': 'venku V ochranném prostoru jímačů — bez přímého úderu, pole plné (fasáda, střecha pod ochranou)',
+  'LPZ 1': 'uvnitř objektu za SPD typu 1 v hlavním rozváděči — proud i pole omezené',
+  'LPZ 2': 'hlouběji uvnitř za druhým stupněm SPD (typ 2/3 v podružném rozváděči nebo zásuvce)'
+};
 // Kontrolní body prohlídky LPS — dvě sady podle normy, podle které byla
 // LPS postavena. Volba se přepíná přes dropdown lps_prohlidka_norma.
 var LPS_PROHLIDKA_62305 = [
@@ -5194,10 +5271,38 @@ function renderLpsLpz() {
   c.innerHTML = '';
   LPS_LPZ.forEach(function(z, i) {
     var div = document.createElement('div');
-    div.className = 'char-row';
-    div.innerHTML = '<input type="checkbox" id="lpz-' + i + '"' + (i < 2 ? ' checked' : '') + '><label for="lpz-' + i + '">' + z + '</label>';
+    div.className = 'char-row lpz-row';
+    // Název zóny drž v data-lpz — do zprávy se ukládá odtud, takže popisek
+    // v labelu (viz LPS_LPZ_POPIS) nemůže hodnotu v PDF rozbít.
+    div.innerHTML = '<input type="checkbox" id="lpz-' + i + '" data-lpz="' + z + '"' + (i < 2 ? ' checked' : '') + '>' +
+      '<label for="lpz-' + i + '"><span class="lpz-nazev">' + z + '</span>' +
+      '<span class="lpz-kratky">' + (LPS_LPZ_POPIS[z] || '') + '</span></label>';
     c.appendChild(div);
   });
+}
+
+// Rychlé nastavení zón pro nejčastější případ (rodinný dům s hromosvodem
+// a přepěťovou ochranou v hlavním rozváděči) — tlačítko v nápovědě.
+function lpzTypickyDum() {
+  if (window.__formReadOnly) return;
+  var typicke = ['LPZ 0A', 'LPZ 0B', 'LPZ 1'];
+  document.querySelectorAll('#lps-lpz-checkboxy input[type=checkbox]').forEach(function(chk) {
+    chk.checked = typicke.indexOf(lpzNazev(chk)) !== -1;
+  });
+  if (typeof autoSave === 'function') autoSave();
+  window.__formDirty = true;
+  if (typeof showToast === 'function') showToast('Zóny nastaveny na LPZ 0A + 0B + 1');
+}
+
+// Název zóny z checkboxu. data-lpz je zdroj pravdy; fallback na text labelu
+// kvůli starším uloženým zprávám a případnému ručně upravenému DOM.
+function lpzNazev(chk) {
+  var d = chk.getAttribute('data-lpz');
+  if (d) return d;
+  var lbl = document.querySelector('label[for="' + chk.id + '"]');
+  if (!lbl) return '';
+  var n = lbl.querySelector('.lpz-nazev');
+  return (n ? n.textContent : lbl.textContent).trim();
 }
 
 function renderLpsProhlidka() {
@@ -6721,8 +6826,8 @@ function collectLpsData() {
   var lpz = [];
   document.querySelectorAll('#lps-lpz-checkboxy input[type=checkbox]').forEach(function(chk) {
     if (chk.checked) {
-      var lbl = document.querySelector('label[for="' + chk.id + '"]');
-      if (lbl) lpz.push(lbl.textContent);
+      var nazev = lpzNazev(chk);
+      if (nazev) lpz.push(nazev);
     }
   });
   var mereniRows = [];
@@ -6803,12 +6908,13 @@ function restoreLpsData(lps) {
   if (rv) rv.checked = (lps.rozsah_vnejsi !== false);
   var rn = document.getElementById('lps_rozsah_vnitrni');
   if (rn) rn.checked = (lps.rozsah_vnitrni !== false);
-  // LPZ checkboxy — podle textu
-  if (lps.lpz) {
-    var want = lps.lpz.split(',').map(function(s) { return s.trim(); });
+  // LPZ checkboxy — podle názvu zóny (data-lpz). Prázdný řetězec je platná
+  // hodnota (technik odklikal všechny zóny), proto se testuje na undefined —
+  // jinak by se odkliknuté zóny po znovuotevření vrátily.
+  if (lps.lpz !== undefined && lps.lpz !== null) {
+    var want = String(lps.lpz).split(',').map(function(s) { return s.trim(); });
     document.querySelectorAll('#lps-lpz-checkboxy input[type=checkbox]').forEach(function(chk) {
-      var lbl = document.querySelector('label[for="' + chk.id + '"]');
-      if (lbl && want.indexOf(lbl.textContent) !== -1) chk.checked = true;
+      chk.checked = want.indexOf(lpzNazev(chk)) !== -1;
     });
   }
   // Měření zemničů — přebudovat řádky z dat
@@ -9905,6 +10011,7 @@ document.addEventListener('click', function(e) {
     case 'nastaveni': showScreen('nastaveni'); break;
     case 'novinky': showScreen('novinky'); break;
     case 'toggleAutoCislovani': toggleAutoCislovani(el); break;
+    case 'lpzTypickyDum': lpzTypickyDum(); break;
     case 'vybratSlozkuZaloh': vybratSlozkuZaloh(); break;
     case 'zrusitSlozkuZaloh': zrusitSlozkuZaloh(); break;
     case 'toggleRazeniRozvadecu': toggleRazeniRozvadecu(); break;
