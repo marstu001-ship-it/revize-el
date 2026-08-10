@@ -628,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.159<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.160<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5315,6 +5315,50 @@ function magicPopis() {
 // Číslo kapitoly „Zjištěné závady" se liší podle toho, co zpráva obsahuje
 // (předložená dokumentace, u elektro navíc kapitola Proudové chrániče).
 // Musí odpovídat číslování v PDF, jinak text odkazuje na špatnou kapitolu.
+// Které kategorie závad zpráva skutečně obsahuje (C1 / C2 / C3).
+// Závěr pak nemluví o kategoriích, které v ní nejsou.
+function pouziteKategorieZavad() {
+  var kat = {};
+  document.querySelectorAll('.zavada-item select').forEach(function(sel) {
+    if (sel.value) kat[sel.value] = true;
+  });
+  return kat;
+}
+
+// Sestaví odstavce závěru podle skutečně použitých kategorií závad.
+function textyKategoriiZavad(kapitola, isLps) {
+  var kat = pouziteKategorieZavad();
+  var maC1 = !!kat.C1, maC2 = !!kat.C2, maC3 = !!kat.C3;
+  var t = [];
+  if (maC1) {
+    t.push('Zjištěné závady kategorie C1 (stav bezprostředně ohrožující bezpečnost) musí být neprodleně odstraněny; revidované ' +
+      (isLps ? 'zařízení ochrany před bleskem' : 'elektrické zařízení') + ' NENÍ z hlediska bezpečnosti schopno provozu.');
+  }
+  if (maC2) {
+    t.push('Závady kategorie C2 (stav ohrožující bezpečnost) je nutné odstranit v nejbližším možném termínu.');
+  }
+  if (maC3) {
+    t.push('U závad kategorie C3 (stav vyžadující doporučení) je odstranění ponecháno na zvážení provozovatele.');
+  }
+  // Doporučení k následné revizi — jen pro kategorie, které se ve zprávě
+  // objevily. Po odstranění C1 se dělá nová (mimořádná) revize, protože
+  // zařízení bylo označeno jako neschopné provozu.
+  var resene = [];
+  if (maC1) resene.push('C1');
+  if (maC2) resene.push('C2');
+  if (resene.length) {
+    if (maC1) {
+      t.push('Po odstranění závad kategorie ' + resene.join(' a ') +
+        ' je nutné provést novou (mimořádnou) revizi, která potvrdí, že zjištěné nedostatky byly odstraněny a ' +
+        (isLps ? 'LPS je ve stavu způsobilém plnit požadovanou funkci' : 'elektrické zařízení je bezpečné pro provoz') + '.');
+    } else {
+      t.push('Odstranění závad kategorie C2 doporučujeme doložit dokladem o opravě; ' +
+        (isLps ? 'LPS je jinak ve stavu způsobilém plnit požadovanou funkci' : 'v ostatním rozsahu je zařízení schopno provozu') + '.');
+    }
+  }
+  return t.join('\n\n');
+}
+
 function cisloKapitolyZavady() {
   var maDok = document.querySelectorAll('#dokumentace-body tr').length > 0 &&
     Array.prototype.some.call(document.querySelectorAll('#dokumentace-body tr'), function(tr) {
@@ -5343,7 +5387,11 @@ function magicZaver() {
   var zaverSchopno = 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledky měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).';
 
   // Elektro — neschopno
-  var zaverNeschopno = 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole 9 této zprávy. Zjištěné závady kategorie C1 (nebezpečné) musí být neprodleně odstraněny; revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.\n\nU závad kategorie C2 (potenciálně nebezpečné) je nutné zajistit jejich odstranění v přiměřené lhůtě. U závad kategorie C3 (doporučení) je odstranění ponecháno na zvážení provozovatele.\n\nPo odstranění všech závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že zjištěné nedostatky byly odstraněny a el. zařízení je bezpečné pro provoz.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.';
+  var kapZav = cisloKapitolyZavady();
+  var katText = textyKategoriiZavad(kapZav, false);
+  var zaverNeschopno = 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole ' + kapZav + ' této zprávy.' +
+    (katText ? '\n\n' + katText : '') +
+    '\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.';
 
   // LPS — zvolená norma (62305 nebo 1390) určuje, které normy se citují
   var lpsProhlNorma = (document.getElementById('lps_prohlidka_norma') || {}).value || '62305';
@@ -5361,7 +5409,12 @@ function magicZaver() {
     '. Naměřené hodnoty zemního odporu vyhovují požadavkům ' + refNorma + '.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
 
   // LPS — neschopno
-  var lpsNeschopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ' + normyRef + '.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ' + refNorma + ' a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
+  var kapZavL = cisloKapitolyZavady();
+  var katTextL = textyKategoriiZavad(kapZavL, true);
+  var lpsNeschopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ' + normyRef + '.' +
+    '\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole ' + kapZavL + ' této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ' + refNorma + '.' +
+    (katTextL ? '\n\n' + katTextL : '') +
+    '\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
 
   var text;
   if (isLps) {
