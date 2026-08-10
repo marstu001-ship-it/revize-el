@@ -628,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.156<span class="ver-date"> · 2026-08-03</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.157<span class="ver-date"> · 2026-08-03</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5312,6 +5312,26 @@ function magicPopis() {
   el.value = texty[klic] || texty.dum;
 }
 
+// Číslo kapitoly „Zjištěné závady" se liší podle toho, co zpráva obsahuje
+// (předložená dokumentace, u elektro navíc kapitola Proudové chrániče).
+// Musí odpovídat číslování v PDF, jinak text odkazuje na špatnou kapitolu.
+function cisloKapitolyZavady() {
+  var maDok = document.querySelectorAll('#dokumentace-body tr').length > 0 &&
+    Array.prototype.some.call(document.querySelectorAll('#dokumentace-body tr'), function(tr) {
+      return Array.prototype.some.call(tr.querySelectorAll('input'), function(i) { return i.value.trim(); });
+    });
+  var docOffset = maDok ? 1 : 0;
+  var secBase = 5 + docOffset;
+  if (aktTyp === 'lps') return secBase + 2;
+  var maRcd = !!document.querySelector('#rozvadece-container tr[data-rowtype="rcd-header"]');
+  return secBase + 3 + (maRcd ? 1 : 0);
+}
+
+// Přepíše odkaz „v kapitole N" na skutečné číslo kapitoly závad.
+function opravKapitoluZavady(text, cislo) {
+  return String(text || '').replace(/v kapitole\s+\d+/g, 'v kapitole ' + cislo);
+}
+
 function magicZaver() {
   var el = document.getElementById('f_zhodnoceni');
   if (!el) return;
@@ -5349,7 +5369,7 @@ function magicZaver() {
   } else {
     text = (vysledek === 'neschopno') ? zaverNeschopno : zaverSchopno;
   }
-  el.value = text;
+  el.value = opravKapitoluZavady(text, cisloKapitolyZavady());
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -5437,10 +5457,11 @@ function vlozitTypickyText(idx, mode) {
   if (!t) return;
   var el = document.getElementById(__typTextTargetId);
   if (!el) return;
+  var vkladany = opravKapitoluZavady(t.text, cisloKapitolyZavady());
   if (mode === 'replace') {
-    el.value = t.text;
+    el.value = vkladany;
   } else {
-    el.value = el.value ? el.value.trimEnd() + '\n\n' + t.text : t.text;
+    el.value = el.value ? el.value.trimEnd() + '\n\n' + vkladany : vkladany;
   }
   el.dispatchEvent(new Event('input'));
   zavritTypickeTexty();
@@ -7419,7 +7440,10 @@ function generujPDF() {
     '<div class="sec-head"><div class="sec-num">' + secZavady + '.</div><div class="sec-name">Přehled zjištěných závad</div></div>' +
     '<div style="padding:0 2mm;margin-bottom:4mm">' + zavadyHtml + '</div>' +
     '<div class="sec-head"><div class="sec-num">' + secZaver + '.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.zhodnoceni || 'Závěr nebyl vyplněn.') + '</div>' +
+    // Odkaz na kapitolu závad se srovná se skutečným číslováním této
+    // zprávy — text mohl vzniknout dřív nebo v jiné sestavě kapitol.
+    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' +
+    esc(String(D.zhodnoceni || 'Závěr nebyl vyplněn.').replace(/v kapitole\s+\d+/g, 'v kapitole ' + secZavady)) + '</div>' +
     (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta provedení příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
     '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
     (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + esc(D.prilohy) + '</span></div>' : '') +
