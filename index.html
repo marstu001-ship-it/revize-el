@@ -133,6 +133,10 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .btn-red:hover{background:#8f1f13}
 .btn-gold{background:var(--gold);color:#fff}
 .btn-gold:hover{background:#a07820}
+/* Disketka „Uložit do archivu" — svítí zlatě, dokud jsou neuložené změny,
+   po uložení zezelená (jako v Excelu poznáš, že je hotovo). */
+#btn-ulozit-archiv.dirty{border-color:var(--gold);color:var(--gold)}
+#btn-ulozit-archiv.saved{border-color:#5aa469;color:#8fd6a0}
 
 /* ═══ SCREENS ═══ */
 .screen{display:none}.screen.active{display:block}
@@ -656,14 +660,15 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.166<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.167<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
     <button class="btn btn-ghost" data-action="home">🏠 Hlavní</button>
     <button class="btn btn-ghost" id="btn-novinky" data-action="novinky">📰 Novinky</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
-    <button class="btn btn-ghost report-only" data-action="ulozit">💾 Uložit</button>
+    <button class="btn btn-ghost report-only" id="btn-ulozit-archiv" data-action="ulozitDoArchivu" title="Uložit zprávu do archivu (Ctrl+S) — bez dialogů, jako disketka v Excelu">💾 Uložit</button>
+    <button class="btn btn-ghost report-only" data-action="ulozit" title="Uložit zprávu jako soubor .json (pro přenos na jiné zařízení nebo kolegovi)">📤 Do souboru</button>
     <button class="btn btn-ghost" data-action="nacist">📂 Načíst</button>
     <button class="btn btn-gold report-only" data-action="generujPDF">📄 Generovat PDF</button>
   </div>
@@ -748,6 +753,20 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-11">
+    <div class="scard-title">💾 Disketka — uložení zprávy jedním klikem <span class="nov-datum">11. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V horní liště je u otevřené zprávy tlačítko <strong>💾 Uložit</strong>. Klepnete na něj a zpráva je okamžitě v archivu — žádné okno, žádný soubor ke stažení, píšete dál. Přesně jako disketka v Excelu.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Ctrl+S</strong> (na Macu Cmd+S) dělá totéž.</li>
+        <li><strong>Poznáte, kdy máte neuložené změny</strong> — jakmile něco napíšete, tlačítko zežloutne a objeví se u něj tečka: <em>💾 Uložit •</em>. Po uložení zezelená na <em>💾 Uloženo</em>.</li>
+        <li>Ukládá se pod stejnou zprávou — opakovaným uložením nevzniká kopie v archivu.</li>
+        <li>Dosavadní ukládání do souboru zůstalo vedle jako <strong>📤 Do souboru</strong> (pro přenos na jiné zařízení nebo kolegovi).</li>
+        <li>U dokončené (zamčené) zprávy se nic nepřepíše — program napoví, že ji máte nejdřív odemknout.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-11">
@@ -2586,6 +2605,7 @@ function showScreen(id) {
   document.querySelectorAll('.report-only').forEach(function(b) {
     b.style.display = veZprave ? '' : 'none';
   });
+  updateUlozitStav();
   if (id === 'novinky') {
     // Otevřením Novinek je vše „přečteno" — tlačítko přestane pulsovat
     try { localStorage.setItem('revize_el_novinky_seen', getNovinkyLatest()); } catch(e) {}
@@ -8686,6 +8706,7 @@ function togglePinZpravu(i) {
 // Odemkne se tlačítkem v banneru — zpráva se tím vrátí mezi rozpracované.
 function setFormReadOnly(on) {
   window.__formReadOnly = !!on;
+  setTimeout(updateUlozitStav, 0);
   var f = document.getElementById('screen-form');
   if (f) f.classList.toggle('form-readonly', !!on);
   var b = document.getElementById('readonly-banner');
@@ -8989,9 +9010,55 @@ function nacistData(D) {
   window.__formDirty = false;
 }
 
+// „Disketka" — uloží rozepsanou zprávu do archivu (databáze zpráv) a hned
+// pokračuješ v práci. Žádné dialogy, žádný soubor ke stažení. Klávesová
+// zkratka Ctrl+S / Cmd+S, stejně jako v Excelu.
+function ulozitDoArchivu() {
+  if (window.__formReadOnly) {
+    showToast('Zpráva je dokončená — nejdřív ji odemkněte tlačítkem v horním pruhu');
+    return false;
+  }
+  var D = getData();
+  if (!D.ev_cislo && !D.misto) {
+    showToast('Není co uložit — vyplňte aspoň ev. číslo nebo místo revize');
+    return false;
+  }
+  if (!saveToArchiv()) return false;   // uživatel zrušil dotaz na duplicitu
+  showToast('💾 Uloženo do archivu — ' + (D.ev_cislo || D.misto));
+  oznacUlozeno();
+  return true;
+}
+
+// Stav disketky: zlatá = neuložené změny, zelená = právě uloženo.
+function updateUlozitStav() {
+  var b = document.getElementById('btn-ulozit-archiv');
+  if (!b) return;
+  if (window.__formDirty && !window.__formReadOnly) {
+    b.classList.add('dirty');
+    b.classList.remove('saved');
+    b.textContent = '💾 Uložit •';
+  } else {
+    b.classList.remove('dirty');
+    b.textContent = '💾 Uložit';
+  }
+}
+
+function oznacUlozeno() {
+  var b = document.getElementById('btn-ulozit-archiv');
+  if (!b) return;
+  b.classList.remove('dirty');
+  b.classList.add('saved');
+  b.textContent = '💾 Uloženo';
+  clearTimeout(window.__ulozenoTimer);
+  window.__ulozenoTimer = setTimeout(function() {
+    b.classList.remove('saved');
+    updateUlozitStav();
+  }, 2500);
+}
+
 function ulozit() {
   var D = getData();
-  saveToArchiv();
+  if (saveToArchiv()) oznacUlozeno();
   var blob = new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' });
   var mistoSlug = (D.misto || '').replace(/[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/g, '_').replace(/^_|_$/g, '');
   var filename = 'RZ_' + (D.ev_cislo || 'nova') + (mistoSlug ? '_' + mistoSlug : '') + '_' + (D.zahajeni || 'datum') + '.json';
@@ -10251,6 +10318,7 @@ document.addEventListener('click', function(e) {
     case 'novinky': showScreen('novinky'); break;
     case 'toggleAutoCislovani': toggleAutoCislovani(el); break;
     case 'lpzTypickyDum': lpzTypickyDum(); break;
+    case 'ulozitDoArchivu': ulozitDoArchivu(); break;
     case 'vybratSlozkuZaloh': vybratSlozkuZaloh(); break;
     case 'zrusitSlozkuZaloh': zrusitSlozkuZaloh(); break;
     case 'toggleRazeniRozvadecu': toggleRazeniRozvadecu(); break;
@@ -10369,11 +10437,21 @@ document.addEventListener('change', function(e) {
   if (action === 'updZavadaKod') updZavadaKod(el);
   if (el.id === 'f_druh') updateDuvodMimoradne();
   // Auto-save + dirty flag při změně
-  if (el.closest('#screen-form')) { autoSave(); window.__formDirty = true; }
+  if (el.closest('#screen-form')) { autoSave(); window.__formDirty = true; updateUlozitStav(); }
 });
 
 document.addEventListener('input', function(e) {
-  if (e.target.closest('#screen-form')) { autoSave(); window.__formDirty = true; }
+  if (e.target.closest('#screen-form')) { autoSave(); window.__formDirty = true; updateUlozitStav(); }
+});
+
+// Ctrl+S / Cmd+S = uložit zprávu do archivu (Excel návyk). Prohlížeči
+// zabráníme, aby místo toho nabídl uložení HTML stránky.
+document.addEventListener('keydown', function(e) {
+  if (!(e.key === 's' || e.key === 'S') || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+  var formAktivni = document.getElementById('screen-form');
+  if (!formAktivni || !formAktivni.classList.contains('active')) return;
+  e.preventDefault();
+  ulozitDoArchivu();
 });
 
 // HTML datalist filtruje nabídku podle aktuální hodnoty — když pole obsahuje
