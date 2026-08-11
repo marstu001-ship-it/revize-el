@@ -656,7 +656,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.165<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.166<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -748,6 +748,19 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-11">
+    <div class="scard-title">🛠 Po odstranění závady — kontrola, nebo nová revize <span class="nov-datum">11. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Pole u závady se jmenuje <strong>„Po odstranění závady"</strong> a nabízí hotové texty podle kategorie závady — stačí klepnout do pole a vybrat.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>C1</strong> — nabízí <em>nová (mimořádná) revize</em> (neprodleně / do 1 měsíce / do 3 měsíců). Po odstranění závady, kvůli které není zařízení schopno provozu, se dělá nová revize, ne pouhá prohlídka.</li>
+        <li><strong>C2 a C3</strong> — nabízí <em>kontrolní prohlídka</em> (do 3 / 6 / 12 měsíců, nebo při příští pravidelné revizi); u C3 navíc <em>bez kontroly — odstranění na zvážení provozovatele</em>.</li>
+        <li>Když kategorii přepnete a pole je prázdné, text se doplní sám. <strong>Váš vlastní text se nikdy nepřepíše</strong> a můžete psát cokoliv jiného.</li>
+        <li>Ve zprávě se tiskne celá věta, např. <em>„Po odstranění závady: kontrolní prohlídka — do 6 měsíců"</em>.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-11">
@@ -4977,10 +4990,14 @@ function addZavada() {
   var f2 = document.createElement('div');
   f2.className = 'f';
   var l2 = document.createElement('label');
-  l2.textContent = 'Po odstranění další prohlídka';
+  l2.textContent = 'Po odstranění závady';
   var inp2 = document.createElement('input');
   inp2.type = 'text';
-  inp2.placeholder = 'ano — za 6 měsíců / ne';
+  inp2.className = 'zavada-poodstr';
+  inp2.autocomplete = 'off';
+  zajistiDatalistyPoOdstraneni();
+  inp2.setAttribute('list', 'dl-poodstr-' + sel.value);
+  inp2.placeholder = (PO_ODSTRANENI[sel.value] || PO_ODSTRANENI.C3)[0];
   f2.appendChild(l2);
   f2.appendChild(inp2);
   body.appendChild(f2);
@@ -5057,16 +5074,75 @@ function addZavada() {
     ta.value = z.popis;
     inp3.value = z.norma;
     sel.value = z.kod;
-    // Aktualizuj barevný rámeček podle kategorie (třídy c1/c2/c3)
-    div.classList.remove('c1', 'c2', 'c3');
-    div.classList.add(z.kod.toLowerCase());
+    // Barevný rámeček + nabídka „Po odstranění" podle nové kategorie
+    updZavadaKod(sel);
     // Nechej dropdown viditelný pro případ další změny
+  });
+}
+
+// Co následuje po odstranění závady — řídí se kategorií. C1 znamená, že
+// zařízení není schopno provozu, takže po opravě musí přijít nová
+// (mimořádná) revize; u C2 a C3 stačí kontrolní prohlídka. Nabídka je
+// jen nápověda — technik smí napsat cokoli vlastního.
+var PO_ODSTRANENI = {
+  C1: ['nová (mimořádná) revize — neprodleně po odstranění závady',
+       'nová (mimořádná) revize — do 1 měsíce',
+       'nová (mimořádná) revize — do 3 měsíců'],
+  C2: ['kontrolní prohlídka — do 6 měsíců',
+       'kontrolní prohlídka — do 3 měsíců',
+       'kontrolní prohlídka — do 12 měsíců',
+       'kontrolní prohlídka — při příští pravidelné revizi'],
+  C3: ['kontrolní prohlídka — při příští pravidelné revizi',
+       'kontrolní prohlídka — do 12 měsíců',
+       'bez kontroly — odstranění na zvážení provozovatele']
+};
+
+// Datalisty pro pole „Po odstranění závady" — jeden na kategorii, vytvoří
+// se při první závadě a pak se jen přepíná atribut list.
+function zajistiDatalistyPoOdstraneni() {
+  Object.keys(PO_ODSTRANENI).forEach(function(kod) {
+    var id = 'dl-poodstr-' + kod;
+    if (document.getElementById(id)) return;
+    var dl = document.createElement('datalist');
+    dl.id = id;
+    PO_ODSTRANENI[kod].forEach(function(t) {
+      var o = document.createElement('option');
+      o.value = t;
+      dl.appendChild(o);
+    });
+    document.body.appendChild(dl);
   });
 }
 
 function updZavadaKod(sel) {
   var item = sel.closest('.zavada-item');
   if (item) item.className = 'zavada-item ' + sel.value.toLowerCase();
+  if (!item) return;
+  // Přepnout nabídku „Po odstranění" na kategorii a doplnit výchozí text,
+  // pokud pole zůstalo prázdné. Vyplněný text technika nikdy nepřepisujeme.
+  var kod = PO_ODSTRANENI[sel.value] ? sel.value : 'C3';
+  var inp = item.querySelector('.zavada-poodstr');
+  if (!inp) return;
+  zajistiDatalistyPoOdstraneni();
+  inp.setAttribute('list', 'dl-poodstr-' + kod);
+  inp.placeholder = PO_ODSTRANENI[kod][0];
+  if (!inp.value.trim() && !window.__formReadOnly) inp.value = PO_ODSTRANENI[kod][0];
+}
+
+// Text do PDF. Starší zprávy mají v poli jen „ano — za 6 měsíců" nebo „ne",
+// z čehož ve zprávě nebylo poznat, co se má stát. Podle kategorie se to
+// doplní na plnou větu; vlastní text technika zůstává beze změny.
+function textPoOdstraneni(hodnota, kod) {
+  var v = String(hodnota || '').trim();
+  if (!v) return '';
+  var akce = (kod === 'C1') ? 'nová (mimořádná) revize' : 'kontrolní prohlídka';
+  var ano = v.match(/^ano\b[\s.,:;–—-]*/i);
+  if (ano) {
+    var zbytek = v.slice(ano[0].length).trim();
+    return akce + (zbytek ? ' — ' + zbytek : '');
+  }
+  if (/^ne\b[\s.,:;–—-]*$/i.test(v)) return 'další kontrola se nevyžaduje';
+  return v;
 }
 
 var CL = [
@@ -7680,7 +7756,7 @@ function generujPDF() {
         // a dlouhý seznam (hlavně s fotkami) by se v PDF ořízl.
         return '<div style="margin-bottom:3mm;padding:0 2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + esc(z.popis) +
           (z.norma ? ' <em style="font-size:8.5pt;color:#444">(porušení: ' + esc(z.norma) + ')</em>' : '') +
-          (z.dalsi ? '<br><em>Po odstranění: ' + esc(z.dalsi) + '</em>' : '') +
+          (z.dalsi ? '<br><em>Po odstranění závady: ' + esc(textPoOdstraneni(z.dalsi, z.kod)) + '</em>' : '') +
           fotkyHtml +
           '</div>';
       }).join('')
