@@ -133,10 +133,13 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .btn-red:hover{background:#8f1f13}
 .btn-gold{background:var(--gold);color:#fff}
 .btn-gold:hover{background:#a07820}
-/* Disketka „Uložit do archivu" — svítí zlatě, dokud jsou neuložené změny,
-   po uložení zezelená (jako v Excelu poznáš, že je hotovo). */
-#btn-ulozit-archiv.dirty{border-color:var(--gold);color:var(--gold)}
-#btn-ulozit-archiv.saved{border-color:#5aa469;color:#8fd6a0}
+/* Disketka „Uložit do archivu" — dokud jsou neuložené změny, je celá zlatá
+   jako „Generovat PDF", ať je na první pohled vidět, že je co uložit.
+   Po uložení krátce zezelená a pak se vrátí do klidného stavu. */
+#btn-ulozit-archiv.dirty{background:var(--gold);color:#fff;border-color:var(--gold)}
+#btn-ulozit-archiv.dirty:hover{background:#a07820;border-color:#a07820;color:#fff}
+#btn-ulozit-archiv.saved{background:#3f8b52;color:#fff;border-color:#3f8b52}
+#btn-ulozit-archiv.saved:hover{background:#3f8b52;border-color:#3f8b52;color:#fff}
 
 /* ═══ SCREENS ═══ */
 .screen{display:none}.screen.active{display:block}
@@ -660,7 +663,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.167<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.168<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -761,7 +764,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
         <li><strong>Ctrl+S</strong> (na Macu Cmd+S) dělá totéž.</li>
-        <li><strong>Poznáte, kdy máte neuložené změny</strong> — jakmile něco napíšete, tlačítko zežloutne a objeví se u něj tečka: <em>💾 Uložit •</em>. Po uložení zezelená na <em>💾 Uloženo</em>.</li>
+        <li><strong>Poznáte, kdy máte neuložené změny</strong> — jakmile něco napíšete, tlačítko se celé rozsvítí zlatě (stejně jako Generovat PDF) a objeví se u něj tečka: <em>💾 Uložit •</em>. Po uložení krátce zezelená na <em>💾 Uloženo</em>.</li>
         <li>Ukládá se pod stejnou zprávou — opakovaným uložením nevzniká kopie v archivu.</li>
         <li>Dosavadní ukládání do souboru zůstalo vedle jako <strong>📤 Do souboru</strong> (pro přenos na jiné zařízení nebo kolegovi).</li>
         <li>U dokončené (zamčené) zprávy se nic nepřepíše — program napoví, že ji máte nejdřív odemknout.</li>
