@@ -667,7 +667,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.173<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.174<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -8430,8 +8430,14 @@ function odeslatEmailem() {
   return renderPagesToPDF(allPages, filename, { vratitBlob: true }).then(function(blob) {
     if (!blob) return;
     var file = new File([blob], filename, { type: 'application/pdf' });
-    // 1) Sdílení souboru — mobil, tablet, Chrome/Edge na Windows
-    if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+    // Panel sdílení jen na mobilu a tabletu. Na Windows se v něm sice něco
+    // nabídne, ale Outlook Classic tam NENÍ — jako desktopová aplikace není
+    // registrovaný jako cíl sdílení, objeví se jen „nový" Outlook ze Storu.
+    // Na počítači proto jdeme rovnou přes mailto:, což otevře výchozího
+    // poštovního klienta (tedy i Outlook Classic) s vyplněnou hlavičkou.
+    var jeDotykove = ('ontouchstart' in window) ||
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+    if (jeDotykove && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
       return navigator.share({ files: [file], title: predmet, text: telo })
         .then(function() {
           oznacOdeslano(D);
@@ -8439,10 +8445,9 @@ function odeslatEmailem() {
         })
         .catch(function(e) {
           if (e && e.name === 'AbortError') return;   // uživatel sdílení zrušil
-          emailFallback(blob, filename, komu, predmet, telo, D);
+          return emailFallback(blob, filename, komu, predmet, telo, D);
         });
     }
-    // 2) Bez sdílení souborů — uložit PDF a otevřít rozepsaný e-mail
     return emailFallback(blob, filename, komu, predmet, telo, D);
   });
 }
@@ -8453,17 +8458,24 @@ function otevritMailto(url) {
   try { window.location.href = url; } catch(e) {}
 }
 
+// Cesta pro počítač (a pro Outlook Classic): uložit PDF a otevřít
+// rozepsaný e-mail ve výchozím poštovním klientovi. Přílohu musí technik
+// vložit sám — mailto: přílohy neumí a Outlook je z bezpečnostních důvodů
+// odmítá i tehdy, když je odkaz obsahuje.
 function emailFallback(blob, filename, komu, predmet, telo, D) {
-  ulozitSoubor(blob, filename);
-  // mailto: neumí přílohu (žádný prohlížeč to nedovolí) — tělo zkrátíme,
-  // ať se vejde do limitu délky odkazu na Windows (~2000 znaků).
-  var kratkeTelo = telo.length > 1200 ? telo.slice(0, 1200) : telo;
-  var url = 'mailto:' + encodeURIComponent(komu) +
-    '?subject=' + encodeURIComponent(predmet) +
-    '&body=' + encodeURIComponent(kratkeTelo);
-  otevritMailto(url);
-  oznacOdeslano(D);
-  showToast('📧 PDF uloženo a e-mail rozepsán — přiložte stažený soubor ' + filename, { timeout: 9000 });
+  return Promise.resolve(ulozitSoubor(blob, filename)).then(function(ulozeno) {
+    if (ulozeno === false) return;    // uživatel zrušil ukládání souboru
+    // Tělo zkrátíme, ať se vejde do limitu délky odkazu na Windows (~2000
+    // znaků). Konce řádků jako CRLF — Outlook si s holým \n neporadí.
+    var kratkeTelo = (telo.length > 1200 ? telo.slice(0, 1200) : telo).replace(/\r?\n/g, '\r\n');
+    var url = 'mailto:' + encodeURIComponent(komu) +
+      '?subject=' + encodeURIComponent(predmet) +
+      '&body=' + encodeURIComponent(kratkeTelo);
+    otevritMailto(url);
+    oznacOdeslano(D);
+    showToast('📧 E-mail rozepsán v poštovním klientovi. Přiložte k němu uložené PDF ' +
+      filename + ' (přetáhněte ho do zprávy nebo Vložit → Připojit soubor).', { timeout: 12000 });
+  });
 }
 
 // Do archivu si poznamenat, že zpráva šla ven (štítek 📧 v seznamu).
