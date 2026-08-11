@@ -663,7 +663,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.168<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.169<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2204,13 +2204,13 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 
 <div class="modal-overlay" id="modal-leave-form">
   <div class="modal" style="max-width:480px">
-    <div class="modal-title">⚠️ Rozepsaná zpráva</div>
-    <div style="font-size:.92rem;line-height:1.5;padding:.5rem 0 1rem">
+    <div class="modal-title" id="leave-form-title">⚠️ Rozepsaná zpráva</div>
+    <div style="font-size:.92rem;line-height:1.5;padding:.5rem 0 1rem" id="leave-form-text">
       Máte rozepsanou zprávu, která ještě nebyla uložena do archivu. Co chcete udělat?
     </div>
     <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="leaveFormStay">← Zůstat</button>
-      <button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="leaveFormDiscard">🗑 Zahodit</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="leaveFormDiscard" id="leave-form-discard">🗑 Zahodit</button>
       <button class="btn btn-gold" data-action="leaveFormSave">💾 Uložit a odejít</button>
     </div>
   </div>
@@ -9966,6 +9966,22 @@ function attemptLeaveForm(cb) {
   var D;
   try { D = getData(); } catch(e) { D = null; }
   if (!D || (!D.ev_cislo && !D.misto && !D.adresa)) { cb(); return; }
+  // Text dialogu podle toho, jestli je zpráva v archivu už uložená. U dřív
+  // uložené zprávy je „rozepsaná zpráva, která nebyla uložena" matoucí —
+  // uložená je, jen v ní jsou neuložené změny.
+  var vArchivu = !!(window.__openZpravaUid && archiv.some(function(z) {
+    return z.uid && z.uid === window.__openZpravaUid;
+  }));
+  var nadpis = document.getElementById('leave-form-title');
+  var text = document.getElementById('leave-form-text');
+  var zahodit = document.getElementById('leave-form-discard');
+  if (nadpis) nadpis.textContent = vArchivu ? '⚠️ Neuložené změny' : '⚠️ Rozepsaná zpráva';
+  if (text) {
+    text.textContent = vArchivu
+      ? ('Ve zprávě ' + (D.ev_cislo || D.misto) + ' jsou změny, které ještě nejsou uložené do archivu. Co chcete udělat?')
+      : 'Máte rozepsanou zprávu, která ještě nebyla uložena do archivu. Co chcete udělat?';
+  }
+  if (zahodit) zahodit.textContent = vArchivu ? '🗑 Zahodit změny' : '🗑 Zahodit zprávu';
   // Otevřít modal a pamatovat si callback pro async rozhodnutí uživatele
   window.__leaveFormCb = cb;
   var m = document.getElementById('modal-leave-form');
