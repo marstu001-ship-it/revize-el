@@ -667,7 +667,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.175<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.176<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2190,6 +2190,32 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closeAiPanelModal">Zrušit</button>
       <button class="btn btn-gold" id="ai-panel-pouzit-btn" data-action="pouzitAiPanel" disabled>✓ Vložit do tabulky</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-email">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">📧 Odeslat zprávu e-mailem</div>
+    <div style="font-size:.9rem;line-height:1.6;padding:.4rem 0 .8rem">
+      Prohlížeč neumí spustit Outlook sám, proto to jde na dva kroky:
+      <ol style="margin:.5rem 0 .2rem 1.3rem;padding:0">
+        <li>Program připraví <strong>celou zprávu i s přílohou</strong> a stáhne ji.</li>
+        <li>Prohlížeč se zeptá „Co chcete provést se souborem…" — zvolte <strong>Otevřít</strong>.
+          Outlook nato otevře <strong>rozepsaný e-mail s přiloženým PDF</strong>, kde jen dáte Odeslat.</li>
+      </ol>
+      <div style="font-size:.82rem;color:var(--muted);margin-top:.6rem">
+        Tip: v prohlížeči u staženého souboru zvolte <em>Vždy otevírat soubory tohoto typu</em> —
+        příště se Outlook spustí rovnou, bez ptaní.
+      </div>
+      <label style="display:flex;align-items:center;gap:.45rem;margin-top:.8rem;font-size:.82rem;cursor:pointer;font-family:var(--sans);letter-spacing:0;text-transform:none;color:var(--text)">
+        <input type="checkbox" id="email-neptat" style="width:15px;height:15px;padding:0;flex:0 0 15px"> Příště se neptat, rovnou připravit e-mail
+      </label>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritEmailModal">← Zrušit</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="emailBezPrilohy" title="Otevře prázdný e-mail s textem, PDF si přiložíte sami">✉️ Jen rozepsat (bez přílohy)</button>
+      <button class="btn btn-gold" data-action="emailSPrilohou">📎 Připravit e-mail s přílohou</button>
     </div>
   </div>
 </div>
@@ -8422,9 +8448,38 @@ function textEmailu(D) {
   return radky.join('\n');
 }
 
+// Na mobilu a tabletu se použije panel sdílení (příloha jde s sebou).
+// Na počítači se Outlook Classic v panelu sdílení neobjeví — není
+// registrovaný jako cíl sdílení — proto se připraví hotová zpráva .eml.
+// Než se tak stane, program vysvětlí, že se prohlížeč zeptá na otevření
+// souboru; jinak to vypadá, jako by šlo o otevírání uloženého souboru.
 function odeslatEmailem() {
+  var jeDotykove = ('ontouchstart' in window) ||
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+  if (jeDotykove) return provestOdeslani('sdileni');
+  var neptat = false;
+  try { neptat = localStorage.getItem('revize_el_email_neptat') === '1'; } catch(e) {}
+  if (neptat) return provestOdeslani('eml');
+  var m = document.getElementById('modal-email');
+  if (m) m.classList.add('open');
+  return Promise.resolve();
+}
+
+function zavritEmailModal() {
+  var m = document.getElementById('modal-email');
+  if (m) m.classList.remove('open');
+  var ch = document.getElementById('email-neptat');
+  if (ch && ch.checked) {
+    try { localStorage.setItem('revize_el_email_neptat', '1'); } catch(e) {}
+  }
+}
+
+function emailSPrilohou() { zavritEmailModal(); return provestOdeslani('eml'); }
+function emailBezPrilohy() { zavritEmailModal(); return provestOdeslani('mailto'); }
+
+function provestOdeslani(rezim) {
   var container = document.getElementById('pdf-pages');
-  if (!container) return;
+  if (!container) return Promise.resolve();
   var D = getData();
   var filename = nazevPdfZpravy(D);
   var predmet = predmetEmailu(D);
@@ -8433,24 +8488,20 @@ function odeslatEmailem() {
   var allPages = Array.prototype.slice.call(container.querySelectorAll('.a4'));
   return renderPagesToPDF(allPages, filename, { vratitBlob: true }).then(function(blob) {
     if (!blob) return;
-    var file = new File([blob], filename, { type: 'application/pdf' });
-    // Panel sdílení jen na mobilu a tabletu. Na Windows se v něm sice něco
-    // nabídne, ale Outlook Classic tam NENÍ — jako desktopová aplikace není
-    // registrovaný jako cíl sdílení, objeví se jen „nový" Outlook ze Storu.
-    // Na počítači proto jdeme rovnou přes mailto:, což otevře výchozího
-    // poštovního klienta (tedy i Outlook Classic) s vyplněnou hlavičkou.
-    var jeDotykove = ('ontouchstart' in window) ||
-      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
-    if (jeDotykove && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
-      return navigator.share({ files: [file], title: predmet, text: telo })
-        .then(function() {
-          oznacOdeslano(D);
-          showToast('📧 Zpráva předána k odeslání' + (komu ? ' — adresát: ' + komu : ''));
-        })
-        .catch(function(e) {
-          if (e && e.name === 'AbortError') return;   // uživatel sdílení zrušil
-          return odeslatPresEml(blob, filename, komu, predmet, telo, D);
-        });
+    if (rezim === 'mailto') return emailFallback(blob, filename, komu, predmet, telo, D);
+    if (rezim === 'sdileni') {
+      var file = new File([blob], filename, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+        return navigator.share({ files: [file], title: predmet, text: telo })
+          .then(function() {
+            oznacOdeslano(D);
+            showToast('📧 Zpráva předána k odeslání' + (komu ? ' — adresát: ' + komu : ''));
+          })
+          .catch(function(e) {
+            if (e && e.name === 'AbortError') return;   // uživatel sdílení zrušil
+            return odeslatPresEml(blob, filename, komu, predmet, telo, D);
+          });
+      }
     }
     return odeslatPresEml(blob, filename, komu, predmet, telo, D);
   });
@@ -8531,8 +8582,8 @@ function odeslatPresEml(blob, filename, komu, predmet, telo, D) {
     return Promise.resolve(ulozitSoubor(eml, emlNazev, { primoStazeni: true })).then(function(ok) {
       if (ok === false) return;
       oznacOdeslano(D);
-      showToast('📧 E-mail i s přílohou je připravený — otevřete stažený soubor ' + emlNazev +
-        ' a v Outlooku dejte Odeslat.', {
+      showToast('📧 Zpráva je připravená. Nahoře v prohlížeči u staženého souboru klepněte na ' +
+        'Otevřít — Outlook ukáže rozepsaný e-mail i s přílohou a vy dáte Odeslat.', {
         timeout: 15000,
         actionLabel: 'NEOTEVŘELO SE? ROZEPSAT BEZ PŘÍLOHY',
         action: function() { emailFallback(blob, filename, komu, predmet, telo, D); }
@@ -10656,6 +10707,9 @@ document.addEventListener('click', function(e) {
     case 'print': window.print(); break;
     case 'stahnoutPDF': stahnoutPDF(); break;
     case 'odeslatEmailem': odeslatEmailem(); break;
+    case 'zavritEmailModal': zavritEmailModal(); break;
+    case 'emailSPrilohou': emailSPrilohou(); break;
+    case 'emailBezPrilohy': emailBezPrilohy(); break;
     case 'stahnoutMereniPDF': stahnoutMereniPDF(); break;
     case 'tiskMereni': tiskMereni(); break;
     case 'tiskZpravuPrimo': tiskZpravuPrimo(); break;
