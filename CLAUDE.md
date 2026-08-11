@@ -33,6 +33,21 @@ jste nic neudělali.
    se automaticky odvozuje pulsování tlačítka 📰 Novinky (localStorage
    `revize_el_novinky_seen`) — bez data se uživatelé o novince nedozví.
 
+   **Do Novinek patří JEN nové funkce, ne opravy chyb.** Kdo chybu
+   nahlásil, ví o opravě; komu program fungoval, je informace o ní
+   k ničemu (rozhodnutí uživatele 2026-08-11 — bugfixové karty se
+   z Novinek smazaly). Tedy:
+   - **ANO:** nové pole, nové tlačítko, nový typ revize, nová nápověda,
+     nová volba v nastavení, změna chování, kterou musí uživatel znát,
+     aby program ovládal jinak než dřív.
+   - **NE:** „už se neořezává PDF", „vrácený smazaný seznam příloh se
+     už nevrací", „nadpis nezůstane viset na konci stránky", opravené
+     překlepy, opravená gramatika v generovaném textu, opravené
+     stránkování a podobné věci, které uživatel nijak neovládá.
+   - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
+   - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
+     `CACHE_NAME` bumpni normálně).
+
 ## AI funkce — stav
 
 AI funkce (rozpoznávání závad z fotky, skenování štítku rozváděče) jsou

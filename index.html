@@ -656,7 +656,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.164<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.165<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -751,39 +751,12 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   </div>
 
   <div class="scard" data-nov-datum="2026-08-11">
-    <div class="scard-title">✂️ Konec ořezávání obsahu v PDF <span class="nov-datum">11. 8. 2026</span></div>
-    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Stránky se při ukládání do PDF režou přesně na A4. Když se nějaká část zprávy nedala zalomit, přetekla přes okraj a v hotovém PDF se <strong>uřízla</strong> — v náhledu byla vidět, v souboru ne. Nikde to nebylo záměrné, teď se to nestane.</p>
+    <div class="scard-title">📌 Důvod mimořádné revize <span class="nov-datum">11. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Vyberete-li na titulní straně druh revize <strong>Mimořádná</strong>, objeví se nové pole <strong>„Důvod mimořádné revize je"</strong> — v elektro v tabu „A. Rozsah a popis", u LPS v tabu „2. Objekt &amp; LPS", vždy hned nad polem „Předmětem této revize je". U ostatních druhů revize se nezobrazuje.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Nejhorší případ byly závady s fotkami</strong> — celý seznam byl jeden nedělitelný blok, takže u 5 závad s fotkou chyběla v PDF zhruba polovina. Nově je každá závada samostatný blok a seznam se přes stránky rozloží.</li>
-        <li><strong>Dlouhý technický popis a závěr</strong> se teď lámou mezi odstavci. Text ani rozestupy se nemění, jen se odstavce mohou rozdělit na dvě stránky.</li>
-        <li>Pokud by přesto zbyl blok vyšší než stránka, program ho rozloží na menší části, místo aby ho ořízl.</li>
-        <li>Nic se nezmenšuje — velikost písma zůstává stejná jako dosud.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="scard" data-nov-datum="2026-08-11">
-    <div class="scard-title">📄 Nadpis sekce zůstává u své tabulky <span class="nov-datum">11. 8. 2026</span></div>
-    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Ve zprávě se stávalo, že nadpis kapitoly (např. „6. Měření zemních odporů" nebo „8. Závěr a vyhodnocení") zůstal viset úplně dole na stránce a jeho obsah — tabulka nebo text — začal až na další. Zlom se teď dělá <strong>před nadpisem</strong>, ne pod ním.</p>
-    <div style="font-size:.85rem;line-height:1.7">
-      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li>Platí pro elektro i LPS a pro všechny kapitoly zprávy.</li>
-        <li>Když se nadpis přesune, stránky se automaticky přečíslují a prázdná stránka po něm nezůstane.</li>
-        <li>Zbytek stránkování zůstává beze změny — nic se nezmenšuje ani nepřehazuje.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="scard" data-nov-datum="2026-08-11">
-    <div class="scard-title">📌 Mimořádná revize — nadpis a důvod <span class="nov-datum">11. 8. 2026</span></div>
-    <div style="font-size:.85rem;line-height:1.7">
-      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Nadpis zprávy teď říká, že jde o mimořádnou revizi.</strong> Dřív se u druhu „Mimořádná" tisklo jen obecné „ZPRÁVA O REVIZI…", u výchozí a pravidelné to bylo správně. Nově: <em>ZPRÁVA O MIMOŘÁDNÉ REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ</em> (a stejně tak u LPS).</li>
-        <li><strong>Nové pole „Důvod mimořádné revize je"</strong> — v elektro v tabu „A. Rozsah a popis", u LPS v tabu „2. Objekt &amp; LPS", vždy hned nad polem „Předmětem této revize je". Objeví se, jen když na titulní straně vyberete druh <strong>Mimořádná</strong>; u ostatních druhů nepřekáží.</li>
         <li>Do zprávy se důvod tiskne v kapitole 1 (Vymezení rozsahu revize) před vymezením předmětu.</li>
-        <li>Tlačítko <strong>📝 Typický text</strong> nabízí 8 hotových důvodů (po rekonstrukci, po zásahu bleskem, po požáru, na žádost pojišťovny, změna prostředí, po dlouhodobé odstávce a dva hromosvodové).</li>
-        <li>Opravena i věta v kapitole 1 — dřív tam stálo „Předmětem pravidelná revize bylo…", teď správně „Předmětem pravidelné revize bylo…".</li>
+        <li>Tlačítko <strong>📝 Typický text</strong> nabízí 8 hotových důvodů: po rekonstrukci, po zásahu bleskem, po požáru či havárii, na žádost pojišťovny nebo úřadu, změna prostředí, po dlouhodobé odstávce a dva hromosvodové.</li>
       </ul>
     </div>
   </div>
@@ -802,14 +775,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   </div>
 
   <div class="scard" data-nov-datum="2026-08-03">
-    <div class="scard-title">⛈ Opravy u LPS revizí <span class="nov-datum">3. 8. 2026</span></div>
-    <div style="font-size:.85rem;line-height:1.7">
-      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Smazaný seznam příloh se už nevrací.</strong> Když přílohy vymažete a zprávu uložíte, po znovuotevření zůstanou prázdné. (Týká se to i ostatních polí — vymazaný text zůstane vymazaný.)</li>
-        <li><strong>Předložená dokumentace i u LPS</strong> — tabulka je nově v tabu „2. Objekt &amp; LPS" a tiskne se do zprávy stejně jako u elektro revizí.</li>
-        <li><strong>V PDF se vypíšou všechny zvolené normy.</strong> V kapitole 2 dřív byla jen posuzovací norma LPS; teď je pod ní i celý seznam norem ze zprávy.</li>
-      </ul>
-    </div>
+    <div class="scard-title">⛈ Předložená dokumentace i u LPS revizí <span class="nov-datum">3. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6">Tabulka <strong>Předložená dokumentace</strong> je nově i u revizí hromosvodu — najdete ji v tabu „2. Objekt &amp; LPS" a do zprávy se tiskne stejně jako u elektro revizí.</p>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-03">
