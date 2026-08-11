@@ -667,7 +667,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.172<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.173<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2134,6 +2134,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
     <div class="pdf-actions">
       <button class="pbtn" data-action="form">← Zpět do formuláře</button>
       <button class="pbtn" data-action="stahnoutPDF" style="background:#2e7d32;border-color:#2e7d32" title="Kompletní zpráva v jednom PDF souboru">📄 Uložit zprávu PDF</button>
+      <button class="pbtn" data-action="odeslatEmailem" style="background:#2B579A;border-color:#2B579A" title="Vygeneruje PDF a nabídne odeslání e-mailem (příloha se vloží sama)">📧 Odeslat e-mailem</button>
       <button class="pbtn" data-action="stahnoutMereniPDF" style="background:#c8962a;border-color:#c8962a">📐 Uložit měření PDF</button>
       <button class="pbtn" data-action="tiskMereni" style="background:#5a4b8a;border-color:#5a4b8a" title="Otevře měření v novém okně na šířku — pro tisk z prohlížeče">🖨️ Tisk měření samostatně</button>
       <button class="pbtn" data-action="tiskZpravuPrimo" style="background:#b5291c;border-color:#b5291c" title="Tiskne přímo z prohlížeče bez uložení PDF">🖨️ Tisk zprávy přímo</button>
@@ -8264,7 +8265,10 @@ function pdfProgressHide() {
   if (ov) ov.style.display = 'none';
 }
 
-function renderPagesToPDF(pageEls, filename) {
+// opts.vratitBlob = true → místo uložení souboru vrátí hotový PDF blob
+// (používá odeslání e-mailem, které si přílohu předá do sdílení samo).
+function renderPagesToPDF(pageEls, filename, opts) {
+  opts = opts || {};
   if (!pageEls || pageEls.length === 0) {
     alert('Žádné stránky k vygenerování.');
     return Promise.resolve();
@@ -8352,6 +8356,7 @@ function renderPagesToPDF(pageEls, filename) {
     pdfProgressHide();
     window.__pdfRendering = false;
     var blob = pdf.output('blob');
+    if (opts.vratitBlob) return blob;
     ulozitSoubor(blob, filename);
   }).catch(function(err) {
     restoreStyles();
@@ -8360,6 +8365,117 @@ function renderPagesToPDF(pageEls, filename) {
     console.error(err);
     alert('Chyba při generování PDF: ' + (err && err.message || err));
   });
+}
+
+// ═══ ODESLÁNÍ ZPRÁVY E-MAILEM ══════════════════════════════════════════
+// Program nemá server, takže e-mail neodesílá sám. Vygeneruje PDF a předá
+// ho systému (Web Share API) — uživatel klepne na svou poštovní aplikaci
+// a zpráva se otevře i s přílohou. Kde sdílení souborů není (počítač,
+// Firefox), se PDF uloží a otevře se rozepsaný e-mail přes mailto:,
+// do kterého technik soubor přetáhne.
+function nazevPdfZpravy(D) {
+  var mistoSlug = (D.misto || '').replace(/[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/g, '_').replace(/^_|_$/g, '');
+  return 'RZ_' + (D.ev_cislo || 'zprava') + (mistoSlug ? '_' + mistoSlug : '') + '_' + (D.zahajeni || 'datum') + '.pdf';
+}
+
+// E-mail příjemce: nejdřív z knihovny odběratelů (zpráva má odberatel_id),
+// jinak se zkusí najít adresa v textu provozovatele nebo objednatele.
+function emailPrijemce(D) {
+  var mapa = odberateleByIdMap();
+  var od = mapa[D.odberatel_id || window.__aktualniOdberatelId || ''];
+  if (od && od.email) return od.email.trim();
+  var text = (D.provozovatel || '') + ' ' + (D.objednatel || '');
+  var m = text.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
+  return m ? m[0] : '';
+}
+
+function predmetEmailu(D) {
+  var druh = (D.typ === 'lps') ? 'Revizní zpráva LPS' : 'Revizní zpráva';
+  return druh + ' ' + (D.ev_cislo || '') + (D.misto ? ' — ' + D.misto.split('\n')[0] : '');
+}
+
+function textEmailu(D) {
+  var t = STORE.technik || {};
+  var radky = [
+    'Dobrý den,',
+    '',
+    'v příloze zasílám zprávu o revizi' +
+      (D.ev_cislo ? ' č. ' + D.ev_cislo : '') +
+      (D.misto ? ' — ' + D.misto.split('\n')[0] : '') + '.',
+    ''
+  ];
+  if (D.celkovy_vysledek) {
+    radky.push(D.celkovy_vysledek === 'schopno'
+      ? 'Revidované zařízení je z hlediska bezpečnosti schopno provozu.'
+      : 'Revidované zařízení NENÍ z hlediska bezpečnosti schopno provozu — zjištěné závady jsou uvedeny ve zprávě.');
+    radky.push('');
+  }
+  if (D.pristi) radky.push('Termín příští pravidelné revize: ' + fmtPristi(D.pristi), '');
+  radky.push('S pozdravem', t.jmeno || D.rt_jmeno || '');
+  if (t.osvedceni || D.rt_osvedceni) radky.push('revizní technik, ev. č. osvědčení ' + (t.osvedceni || D.rt_osvedceni));
+  if (t.mobil) radky.push('tel. ' + t.mobil);
+  if (t.email) radky.push(t.email);
+  return radky.join('\n');
+}
+
+function odeslatEmailem() {
+  var container = document.getElementById('pdf-pages');
+  if (!container) return;
+  var D = getData();
+  var filename = nazevPdfZpravy(D);
+  var predmet = predmetEmailu(D);
+  var telo = textEmailu(D);
+  var komu = emailPrijemce(D);
+  var allPages = Array.prototype.slice.call(container.querySelectorAll('.a4'));
+  return renderPagesToPDF(allPages, filename, { vratitBlob: true }).then(function(blob) {
+    if (!blob) return;
+    var file = new File([blob], filename, { type: 'application/pdf' });
+    // 1) Sdílení souboru — mobil, tablet, Chrome/Edge na Windows
+    if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], title: predmet, text: telo })
+        .then(function() {
+          oznacOdeslano(D);
+          showToast('📧 Zpráva předána k odeslání' + (komu ? ' — adresát: ' + komu : ''));
+        })
+        .catch(function(e) {
+          if (e && e.name === 'AbortError') return;   // uživatel sdílení zrušil
+          emailFallback(blob, filename, komu, predmet, telo, D);
+        });
+    }
+    // 2) Bez sdílení souborů — uložit PDF a otevřít rozepsaný e-mail
+    return emailFallback(blob, filename, komu, predmet, telo, D);
+  });
+}
+
+// Otevření rozepsaného e-mailu v poštovním klientovi (samostatná funkce,
+// ať jde chování ověřit testem bez skutečné navigace).
+function otevritMailto(url) {
+  try { window.location.href = url; } catch(e) {}
+}
+
+function emailFallback(blob, filename, komu, predmet, telo, D) {
+  ulozitSoubor(blob, filename);
+  // mailto: neumí přílohu (žádný prohlížeč to nedovolí) — tělo zkrátíme,
+  // ať se vejde do limitu délky odkazu na Windows (~2000 znaků).
+  var kratkeTelo = telo.length > 1200 ? telo.slice(0, 1200) : telo;
+  var url = 'mailto:' + encodeURIComponent(komu) +
+    '?subject=' + encodeURIComponent(predmet) +
+    '&body=' + encodeURIComponent(kratkeTelo);
+  otevritMailto(url);
+  oznacOdeslano(D);
+  showToast('📧 PDF uloženo a e-mail rozepsán — přiložte stažený soubor ' + filename, { timeout: 9000 });
+}
+
+// Do archivu si poznamenat, že zpráva šla ven (štítek 📧 v seznamu).
+function oznacOdeslano(D) {
+  var uid = window.__openZpravaUid;
+  var entry = null;
+  archiv.forEach(function(z) { if (!entry && z.uid && z.uid === uid) entry = z; });
+  if (!entry) return;
+  entry.odeslano_at = new Date().toISOString();
+  STORE.archiv = archiv;
+  saveStore();
+  renderArchiv();
 }
 
 function stahnoutPDF() {
@@ -8668,6 +8784,8 @@ function saveToArchiv() {
     stav: found >= 0 ? (archiv[found].stav || '') : 'aktivni',
     pinned: found >= 0 ? !!archiv[found].pinned : false,
     last_opened_at: found >= 0 ? (archiv[found].last_opened_at || '') : '',
+    // Kdy zpráva odešla e-mailem — musí přežít další uložení zprávy
+    odeslano_at: found >= 0 ? (archiv[found].odeslano_at || '') : '',
     // Řetěz revizí: odkaz na starší zprávu téhož objektu (přes Navázat
     // nebo ruční Připojit starší) + ruční ztlumení hlídání termínu
     predchudce_uid: found >= 0 ? (archiv[found].predchudce_uid || '') : (window.__predchudceUid || ''),
@@ -9770,7 +9888,11 @@ function renderArchiv() {
         ? '<span class="badge-konci" title="Doporučený termín příští revize: ' + fmtDate(konci.pristi) + '">⚠ po termínu</span> '
         : '<span class="badge-konci" title="Doporučený termín příští revize: ' + fmtDate(konci.pristi) + '">🟡 končí ' + konci.pristi.slice(5, 7) + '/' + konci.pristi.slice(0, 4) + '</span> ';
     }
-    html += '<td>' + (jeRozprac ? '<span class="badge-rozprac">🔨 rozprac.</span> ' : '') + konciBadge + (z.vysledek === 'schopno' ? '✅' : (z.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
+    // 📧 = zpráva už byla předána k odeslání e-mailem
+    var odeslanoBadge = z.odeslano_at
+      ? '<span title="Odesláno e-mailem ' + fmtDate(String(z.odeslano_at).slice(0, 10)) + '">📧</span> '
+      : '';
+    html += '<td>' + (jeRozprac ? '<span class="badge-rozprac">🔨 rozprac.</span> ' : '') + konciBadge + odeslanoBadge + (z.vysledek === 'schopno' ? '✅' : (z.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
     var pinIcon = z.pinned ? '📌' : '📍';
     var pinTitle = z.pinned ? 'Odepnout' : 'Připnout nahoru';
     var icoBtn = 'background:#fff;border:1px solid #999;border-radius:3px;font-size:.85rem;padding:.24rem .5rem;cursor:pointer;margin-left:3px;line-height:1';
@@ -10438,6 +10560,7 @@ document.addEventListener('click', function(e) {
     case 'closeRevize': closeModal('modal-revize'); break;
     case 'print': window.print(); break;
     case 'stahnoutPDF': stahnoutPDF(); break;
+    case 'odeslatEmailem': odeslatEmailem(); break;
     case 'stahnoutMereniPDF': stahnoutMereniPDF(); break;
     case 'tiskMereni': tiskMereni(); break;
     case 'tiskZpravuPrimo': tiskZpravuPrimo(); break;
