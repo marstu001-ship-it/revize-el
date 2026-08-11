@@ -656,7 +656,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.161<span class="ver-date"> · 2026-08-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.162<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -748,6 +748,19 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-11">
+    <div class="scard-title">📌 Mimořádná revize — nadpis a důvod <span class="nov-datum">11. 8. 2026</span></div>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Nadpis zprávy teď říká, že jde o mimořádnou revizi.</strong> Dřív se u druhu „Mimořádná" tisklo jen obecné „ZPRÁVA O REVIZI…", u výchozí a pravidelné to bylo správně. Nově: <em>ZPRÁVA O MIMOŘÁDNÉ REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ</em> (a stejně tak u LPS).</li>
+        <li><strong>Nové pole „Důvod mimořádné revize je"</strong> — v elektro v tabu „A. Rozsah a popis", u LPS v tabu „2. Objekt &amp; LPS", vždy hned nad polem „Předmětem této revize je". Objeví se, jen když na titulní straně vyberete druh <strong>Mimořádná</strong>; u ostatních druhů nepřekáží.</li>
+        <li>Do zprávy se důvod tiskne v kapitole 1 (Vymezení rozsahu revize) před vymezením předmětu.</li>
+        <li>Tlačítko <strong>📝 Typický text</strong> nabízí 8 hotových důvodů (po rekonstrukci, po zásahu bleskem, po požáru, na žádost pojišťovny, změna prostředí, po dlouhodobé odstávce a dva hromosvodové).</li>
+        <li>Opravena i věta v kapitole 1 — dřív tam stálo „Předmětem pravidelná revize bylo…", teď správně „Předmětem pravidelné revize bylo…".</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-10">
@@ -1683,6 +1696,15 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="scard">
     <div class="scard-title">A. Rozsah a popis elektrické instalace</div>
     <div class="g2">
+      <div class="f span2 duvod-mim-wrap" style="display:none">
+        <label>Důvod mimořádné revize je</label>
+        <textarea id="f_duvod_mimoradne" style="min-height:60px" placeholder="Např. po rekonstrukci elektroinstalace, po zásahu bleskem, na žádost pojišťovny, po požáru, změna prostředí…"></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_duvod_mimoradne">📝 Typický text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_duvod_mimoradne">💾 Uložit text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_duvod_mimoradne">📋 Z knihovny</button>
+        </div>
+      </div>
       <div class="f span2">
         <label>Předmětem této revize je</label>
         <textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea>
@@ -1912,6 +1934,15 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="scard">
     <div class="scard-title">Předmět revize LPS</div>
     <div class="g1">
+      <div class="f span2 duvod-mim-wrap" style="display:none">
+        <label>Důvod mimořádné revize je</label>
+        <textarea id="f_lps_duvod_mimoradne" style="min-height:60px" placeholder="Např. po zásahu bleskem, po rekonstrukci střechy, po opravě jímací soustavy, na žádost pojišťovny…"></textarea>
+        <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
+          <button class="magic-btn" data-action="typickyText" data-field="f_lps_duvod_mimoradne">📝 Typický text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_lps_duvod_mimoradne">💾 Uložit text</button>
+          <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_lps_duvod_mimoradne">📋 Z knihovny</button>
+        </div>
+      </div>
       <div class="f span2">
         <label>Předmětem této revize je</label>
         <textarea id="f_lps_predmet_je" style="min-height:80px" placeholder="Systém ochrany před bleskem (LPS) na objektu..."></textarea>
@@ -3381,6 +3412,7 @@ function novaZprava(typ) {
   window.__tabsVisited = {};
   refreshStepper();
   updateTabNav();
+  updateDuvodMimoradne();
   window.__formDirty = false;
   showScreen('form');
 }
@@ -5530,10 +5562,32 @@ function magicZaver() {
   el.value = opravKapitoluZavady(text, cisloKapitolyZavady());
 }
 
+// Pole „Důvod mimořádné revize" má smysl jen u mimořádné revize — u ostatních
+// druhů se schová, ať formulář zbytečně nezaplevelí. Vyplněný text se nemaže:
+// když technik druh přepne omylem, po návratu na Mimořádnou tam text zase je.
+// Do PDF se důvod tiskne rovněž jen u mimořádné revize.
+function updateDuvodMimoradne() {
+  var sel = document.getElementById('f_druh');
+  var zobrazit = !!sel && sel.value === 'Mimořádná';
+  document.querySelectorAll('.duvod-mim-wrap').forEach(function(el) {
+    el.style.display = zobrazit ? '' : 'none';
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // TYPICKÉ TEXTY — přednastavené vzory dle Macháček/Dolenský
 // ═══════════════════════════════════════════════════════════════════════
 var TYPY_TEXTU = {
+  f_duvod_mimoradne: [
+    { nazev: 'Po rekonstrukci / rozšíření instalace', text: 'Mimořádná revize byla provedena na žádost provozovatele po provedené rekonstrukci elektrické instalace, při které došlo k rozšíření stávajícího rozvodu o nové obvody a k výměně rozváděče.' },
+    { nazev: 'Po zásahu bleskem', text: 'Mimořádná revize byla provedena po zásahu bleskem do objektu za účelem ověření, zda nedošlo k poškození elektrické instalace a zda je zařízení nadále bezpečné pro provoz.' },
+    { nazev: 'Po požáru / havárii', text: 'Mimořádná revize byla provedena po mimořádné události (požár / zatopení objektu) za účelem posouzení stavu elektrické instalace zasažené části objektu a ověření bezpečnosti dalšího provozu.' },
+    { nazev: 'Na žádost pojišťovny / úřadu', text: 'Mimořádná revize byla provedena na žádost provozovatele pro potřeby pojišťovny (orgánu státního odborného dozoru) za účelem doložení stavu elektrického zařízení.' },
+    { nazev: 'Změna prostředí / užívání objektu', text: 'Mimořádná revize byla provedena z důvodu změny vnějších vlivů a způsobu užívání prostoru; elektrické zařízení bylo posouzeno vzhledem k nově stanoveným vnějším vlivům dle protokolu o určení vnějších vlivů.' },
+    { nazev: 'Po dlouhodobé odstávce', text: 'Mimořádná revize byla provedena před opětovným uvedením zařízení do provozu po dlouhodobé odstávce objektu, kdy elektrické zařízení nebylo užíváno.' },
+    { nazev: 'Po zásahu blesku do LPS (hromosvod)', text: 'Mimořádná revize systému ochrany před bleskem byla provedena po zásahu bleskem do objektu — byla ověřena celistvost jímací soustavy, svodů, uzemňovací soustavy a stav svodičů přepětí.' },
+    { nazev: 'Po opravě/rekonstrukci střechy (LPS)', text: 'Mimořádná revize systému ochrany před bleskem byla provedena po rekonstrukci střešního pláště, při které byla demontována a zpětně osazena jímací soustava.' }
+  ],
   f_predmet_je: [
     { nazev: 'Rodinný dům (elektro)', text: 'Elektrická instalace rodinného domu včetně přípojky od hlavního domovního vedení, elektroměrového rozváděče a rozvodů silnoproudé instalace v celém objektu.' },
     { nazev: 'Byt (elektro)', text: 'Elektrická instalace bytové jednotky od bytového rozváděče umístěného v chodbě bytu, veškeré rozvody silnoproudé instalace v prostorách bytu.' },
@@ -5570,6 +5624,9 @@ var TYPY_TEXTU = {
 // Filtry podle aktTyp/aktPodtyp — index odpovídá pořadí v TYPY_TEXTU.
 // Klíče: 'dum', 'byt', 'prumysl', 'lps'. Chybějící záznam = bez filtru (zobrazit vždy).
 var TYPY_TEXTU_FILTRY = {
+  // Prvních šest důvodů platí pro elektro i LPS (null = bez filtru),
+  // poslední dva jsou jen pro hromosvod.
+  f_duvod_mimoradne: [null, null, null, null, null, null, ['lps'], ['lps']],
   f_predmet_je:   [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps'], ['spolecne']],
   f_predmet_neni: [['dum','byt'], ['dum','byt','prumysl','spolecne'], ['prumysl'], ['lps'], ['spolecne']],
   f_popis:        [['dum'], ['byt'], ['prumysl'], ['lps'], ['lps'], ['spolecne']],
@@ -5578,7 +5635,8 @@ var TYPY_TEXTU_FILTRY = {
 
 var __typTextTargetId = '';
 
-var __lpsFieldMap = { f_lps_predmet_je: 'f_predmet_je', f_lps_predmet_neni: 'f_predmet_neni', f_lps_popis: 'f_popis' };
+var __lpsFieldMap = { f_lps_predmet_je: 'f_predmet_je', f_lps_predmet_neni: 'f_predmet_neni', f_lps_popis: 'f_popis',
+  f_lps_duvod_mimoradne: 'f_duvod_mimoradne' };
 
 function otevritTypickeTexty(fieldId) {
   __typTextTargetId = fieldId;
@@ -6758,6 +6816,7 @@ function getData() {
     predchozi: gv('f_predchozi'),
     prebira: gv('f_prebira'), vyhotoveni: gv('f_vyhotoveni'), rozdelovnik: gv('f_rozdelovnik'),
     prilohy: gv('f_prilohy'),
+    duvod_mimoradne: aktTyp === 'lps' ? gv('f_lps_duvod_mimoradne') : gv('f_duvod_mimoradne'),
     predmet_je: aktTyp === 'lps' ? gv('f_lps_predmet_je') : gv('f_predmet_je'),
     predmet_neni: aktTyp === 'lps' ? gv('f_lps_predmet_neni') : gv('f_predmet_neni'),
     popis: aktTyp === 'lps' ? gv('f_lps_popis') : gv('f_popis'),
@@ -7041,6 +7100,33 @@ function generujPDFPotvrzeno() {
   generujPDF();
 }
 
+// Druh revize v nadpisu zprávy — VELKÝMI a ve tvaru, který sedne do vazby
+// „ZPRÁVA O … REVIZI" (o výchozí / o pravidelné / o mimořádné revizi).
+// Neznámý nebo prázdný druh → obecné „ZPRÁVA O REVIZI".
+function druhVNadpisu(druh) {
+  var m = {
+    'Výchozí': 'VÝCHOZÍ ',
+    // Souhrnná zůstává v nadpisu jako „VÝCHOZÍ" (stav před v9.162) — slovo
+    // souhrnná se do nadpisu podle ČSN 33 1500 nepíše.
+    'Výchozí souhrnná': 'VÝCHOZÍ ',
+    'Pravidelná': 'PRAVIDELNÉ ',
+    'Mimořádná': 'MIMOŘÁDNÉ '
+  };
+  return m[druh] || '';
+}
+
+// Druh revize ve 2. pádu do věty „Předmětem … revize bylo…".
+function druhVeVete(druh) {
+  var m = {
+    'Výchozí': 'výchozí ',
+    'Výchozí souhrnná': 'výchozí souhrnné ',
+    // (ve větě dává smysl uvést i „souhrnné" — na rozdíl od nadpisu)
+    'Pravidelná': 'pravidelné ',
+    'Mimořádná': 'mimořádné '
+  };
+  return m[druh] || '';
+}
+
 function generujPDF() {
   var D = getData();
   var pdfOpts = window.__pdfOpts || { razitko: true, podpis: true };
@@ -7084,17 +7170,8 @@ function generujPDF() {
   var secZavady = isLpsPdf ? secBase + 2 : secBase + 3 + rcdOffset;
   var secZaver  = isLpsPdf ? secBase + 3 : secBase + 4 + rcdOffset;
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
-  var nadpis = isLpsPdf
-    ? (D.druh === 'Výchozí' || D.druh === 'Výchozí souhrnná'
-        ? 'ZPRÁVA O VÝCHOZÍ REVIZI OCHRANY PŘED BLESKEM (LPS)'
-        : D.druh === 'Pravidelná'
-          ? 'ZPRÁVA O PRAVIDELNÉ REVIZI OCHRANY PŘED BLESKEM (LPS)'
-          : 'ZPRÁVA O REVIZI OCHRANY PŘED BLESKEM (LPS)')
-    : (D.druh === 'Výchozí' || D.druh === 'Výchozí souhrnná'
-        ? 'ZPRÁVA O VÝCHOZÍ REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'
-        : D.druh === 'Pravidelná'
-          ? 'ZPRÁVA O PRAVIDELNÉ REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'
-          : 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ');
+  var nadpis = 'ZPRÁVA O ' + druhVNadpisu(D.druh) + 'REVIZI ' +
+    (isLpsPdf ? 'OCHRANY PŘED BLESKEM (LPS)' : 'VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ');
   var podnadpis = isLpsPdf
     ? (lpsNorma1390
         ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 34 1390 (starší LPS zřízené před r. 2004), ČSN 33 2000-5-54 ed.3'
@@ -7235,8 +7312,13 @@ function generujPDF() {
   // Návětí („Předmětem revize je:" apod.) tučně pro přehlednost;
   // uživatelský obsah zůstává escapovaný, \n zachovává white-space:pre-line.
   var vymHtml = esc(isLpsPdf
-    ? 'Předmětem ' + (D.druh || '').toLowerCase() + ' revize byl systém ochrany před bleskem (LPS) výslovně uvedený v této zprávě.'
-    : 'Předmětem ' + (D.druh || '').toLowerCase() + ' revize bylo VEZ výslovně uvedené v této zprávě.');
+    ? 'Předmětem ' + druhVeVete(D.druh) + 'revize byl systém ochrany před bleskem (LPS) výslovně uvedený v této zprávě.'
+    : 'Předmětem ' + druhVeVete(D.druh) + 'revize bylo VEZ výslovně uvedené v této zprávě.');
+  // Důvod se tiskne jen u mimořádné revize (ČSN 33 1500 čl. 2.5) a stojí
+  // před vymezením předmětu — čtenář musí hned vědět, proč revize vznikla.
+  if (D.druh === 'Mimořádná' && D.duvod_mimoradne) {
+    vymHtml += '<br><br><strong>Důvod mimořádné revize je:</strong> ' + esc(D.duvod_mimoradne);
+  }
   if (D.predmet_je) vymHtml += '<br><br><strong>Předmětem revize je:</strong> ' + esc(D.predmet_je);
   if (D.predmet_neni) vymHtml += '<br><br><strong>Předmětem revize není:</strong> ' + esc(D.predmet_neni);
   var zkouseniHtml = '<br><br><strong>Provedené zkoušky dle ČSN 33 2000-6 ed.2 čl. 6.4.3:</strong>' +
@@ -8534,6 +8616,7 @@ function nacistData(D) {
     'f_predano_misto': D.predano_misto, 'f_predano_datum': D.predano_datum,
     'f_prilohy': D.prilohy,
     'f_prebira': D.prebira, 'f_vyhotoveni': D.vyhotoveni, 'f_rozdelovnik': D.rozdelovnik,
+    'f_duvod_mimoradne': D.duvod_mimoradne, 'f_lps_duvod_mimoradne': D.duvod_mimoradne,
     'f_predmet_je': D.predmet_je, 'f_predmet_neni': D.predmet_neni,
     'f_lps_predmet_je': D.predmet_je, 'f_lps_predmet_neni': D.predmet_neni,
     'f_popis': D.popis, 'f_lps_popis': D.popis,
@@ -8746,6 +8829,8 @@ function nacistData(D) {
   restoreChecklistGroup('chk-', D.prohlidka_checks);
   restoreChecklistGroup('ns-', D.napetova_checks);
   restoreChecklistGroup('n-', D.normy_checks);
+  // Druh revize se načetl až teď — přepnout viditelnost pole s důvodem
+  updateDuvodMimoradne();
   // Načtení z archivu = výchozí stav, žádné neuložené změny
   window.__formDirty = false;
 }
@@ -10128,6 +10213,7 @@ document.addEventListener('change', function(e) {
   var action = el.getAttribute('data-action');
   if (action === 'updateLhuta') updateRevizeLhuta();
   if (action === 'updZavadaKod') updZavadaKod(el);
+  if (el.id === 'f_druh') updateDuvodMimoradne();
   // Auto-save + dirty flag při změně
   if (el.closest('#screen-form')) { autoSave(); window.__formDirty = true; }
 });
