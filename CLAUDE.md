@@ -33,10 +33,17 @@ jste nic neudělali.
    se automaticky odvozuje pulsování tlačítka 📰 Novinky (localStorage
    `revize_el_novinky_seen`) — bez data se uživatelé o novince nedozví.
 
+   **⚠️ VŽDY SE UŽIVATELE NEJDŘÍV ZEPTEJ, jestli kartu do Novinek
+   přidat** (pokyn uživatele 2026-08-11). Nikdy ji tam nedávej
+   automaticky — ani když ti to připadá jako zjevná nová funkce.
+   Napiš, co bys do karty napsal, a nech ho rozhodnout.
+
    **Do Novinek patří JEN nové funkce, ne opravy chyb.** Kdo chybu
    nahlásil, ví o opravě; komu program fungoval, je informace o ní
    k ničemu (rozhodnutí uživatele 2026-08-11 — bugfixové karty se
-   z Novinek smazaly). Tedy:
+   z Novinek smazaly). Pozor: „chybí popisek / ukazuje se špatný
+   text / špatně se to zalomilo" je **oprava chyby**, i když se to
+   týká něčeho, co uživatel vidí. Tedy:
    - **ANO:** nové pole, nové tlačítko, nový typ revize, nová nápověda,
      nová volba v nastavení, změna chování, kterou musí uživatel znát,
      aby program ovládal jinak než dřív.
