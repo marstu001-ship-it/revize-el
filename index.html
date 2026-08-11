@@ -667,7 +667,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.176<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.177<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2208,8 +2208,13 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
         Tip: v prohlížeči u staženého souboru zvolte <em>Vždy otevírat soubory tohoto typu</em> —
         příště se Outlook spustí rovnou, bez ptaní.
       </div>
+      <div class="warn-box" style="margin:.7rem 0 0;font-size:.8rem">
+        <strong>Píše prohlížeč u staženého souboru „Blokováno"?</strong> Pak vaše firemní nastavení
+        zakazuje stahování e-mailových souborů (.eml). Použijte <strong>Jen rozepsat</strong> —
+        Outlook se otevře s textem a PDF do něj přetáhnete.
+      </div>
       <label style="display:flex;align-items:center;gap:.45rem;margin-top:.8rem;font-size:.82rem;cursor:pointer;font-family:var(--sans);letter-spacing:0;text-transform:none;color:var(--text)">
-        <input type="checkbox" id="email-neptat" style="width:15px;height:15px;padding:0;flex:0 0 15px"> Příště se neptat, rovnou připravit e-mail
+        <input type="checkbox" id="email-neptat" style="width:15px;height:15px;padding:0;flex:0 0 15px"> Příště se neptat a odesílat vždy takto
       </label>
     </div>
     <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem">
@@ -8457,25 +8462,34 @@ function odeslatEmailem() {
   var jeDotykove = ('ontouchstart' in window) ||
     /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
   if (jeDotykove) return provestOdeslani('sdileni');
-  var neptat = false;
-  try { neptat = localStorage.getItem('revize_el_email_neptat') === '1'; } catch(e) {}
-  if (neptat) return provestOdeslani('eml');
+  var rezim = '';
+  try { rezim = localStorage.getItem('revize_el_email_rezim') || ''; } catch(e) {}
+  if (rezim === 'eml' || rezim === 'mailto') return provestOdeslani(rezim);
   var m = document.getElementById('modal-email');
   if (m) m.classList.add('open');
   return Promise.resolve();
 }
 
-function zavritEmailModal() {
+// rezim = 'eml' | 'mailto' | '' (zrušeno). Zaškrtnuté „příště se neptat"
+// si zapamatuje PRÁVĚ ZVOLENÝ způsob — komu firemní nastavení blokuje
+// stahování .eml, ať si natrvalo nastaví rozepsání bez přílohy.
+function zavritEmailModal(rezim) {
   var m = document.getElementById('modal-email');
   if (m) m.classList.remove('open');
   var ch = document.getElementById('email-neptat');
-  if (ch && ch.checked) {
-    try { localStorage.setItem('revize_el_email_neptat', '1'); } catch(e) {}
+  if (ch && ch.checked && rezim) {
+    try { localStorage.setItem('revize_el_email_rezim', rezim); } catch(e) {}
   }
 }
 
-function emailSPrilohou() { zavritEmailModal(); return provestOdeslani('eml'); }
-function emailBezPrilohy() { zavritEmailModal(); return provestOdeslani('mailto'); }
+// Vrátí program k dotazu, jak zprávu odeslat (z hlášky po odeslání).
+function zapomenoutZpusobEmailu() {
+  try { localStorage.removeItem('revize_el_email_rezim'); } catch(e) {}
+  showToast('Příště se program znovu zeptá, jak zprávu odeslat.');
+}
+
+function emailSPrilohou() { zavritEmailModal('eml'); return provestOdeslani('eml'); }
+function emailBezPrilohy() { zavritEmailModal('mailto'); return provestOdeslani('mailto'); }
 
 function provestOdeslani(rezim) {
   var container = document.getElementById('pdf-pages');
@@ -8585,8 +8599,12 @@ function odeslatPresEml(blob, filename, komu, predmet, telo, D) {
       showToast('📧 Zpráva je připravená. Nahoře v prohlížeči u staženého souboru klepněte na ' +
         'Otevřít — Outlook ukáže rozepsaný e-mail i s přílohou a vy dáte Odeslat.', {
         timeout: 15000,
-        actionLabel: 'NEOTEVŘELO SE? ROZEPSAT BEZ PŘÍLOHY',
-        action: function() { emailFallback(blob, filename, komu, predmet, telo, D); }
+        actionLabel: 'BLOKOVÁNO? ROZEPSAT BEZ PŘÍLOHY',
+        action: function() {
+          // Když tudy technik musel jít, bude to tak nejspíš i příště
+          try { localStorage.setItem('revize_el_email_rezim', 'mailto'); } catch(e) {}
+          emailFallback(blob, filename, komu, predmet, telo, D);
+        }
       });
     });
   });
@@ -8608,7 +8626,11 @@ function emailFallback(blob, filename, komu, predmet, telo, D) {
     otevritMailto(url);
     oznacOdeslano(D);
     showToast('📧 E-mail rozepsán v poštovním klientovi. Přiložte k němu uložené PDF ' +
-      filename + ' (přetáhněte ho do zprávy nebo Vložit → Připojit soubor).', { timeout: 12000 });
+      filename + ' (přetáhněte ho do zprávy nebo Vložit → Připojit soubor).', {
+      timeout: 12000,
+      actionLabel: 'ZMĚNIT ZPŮSOB ODESÍLÁNÍ',
+      action: zapomenoutZpusobEmailu
+    });
   });
 }
 
@@ -10707,7 +10729,7 @@ document.addEventListener('click', function(e) {
     case 'print': window.print(); break;
     case 'stahnoutPDF': stahnoutPDF(); break;
     case 'odeslatEmailem': odeslatEmailem(); break;
-    case 'zavritEmailModal': zavritEmailModal(); break;
+    case 'zavritEmailModal': zavritEmailModal(''); break;
     case 'emailSPrilohou': emailSPrilohou(); break;
     case 'emailBezPrilohy': emailBezPrilohy(); break;
     case 'stahnoutMereniPDF': stahnoutMereniPDF(); break;
