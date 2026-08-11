@@ -656,7 +656,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.163<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.164<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -748,6 +748,19 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-11">
+    <div class="scard-title">✂️ Konec ořezávání obsahu v PDF <span class="nov-datum">11. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Stránky se při ukládání do PDF režou přesně na A4. Když se nějaká část zprávy nedala zalomit, přetekla přes okraj a v hotovém PDF se <strong>uřízla</strong> — v náhledu byla vidět, v souboru ne. Nikde to nebylo záměrné, teď se to nestane.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Nejhorší případ byly závady s fotkami</strong> — celý seznam byl jeden nedělitelný blok, takže u 5 závad s fotkou chyběla v PDF zhruba polovina. Nově je každá závada samostatný blok a seznam se přes stránky rozloží.</li>
+        <li><strong>Dlouhý technický popis a závěr</strong> se teď lámou mezi odstavci. Text ani rozestupy se nemění, jen se odstavce mohou rozdělit na dvě stránky.</li>
+        <li>Pokud by přesto zbyl blok vyšší než stránka, program ho rozloží na menší části, místo aby ho ořízl.</li>
+        <li>Nic se nezmenšuje — velikost písma zůstává stejná jako dosud.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-11">
@@ -7028,6 +7041,21 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
+// Dlouhý text (popis instalace, závěr) rozdělí na samostatné bloky po
+// odstavcích. Vypadá to stejně jako jeden blok, ale stránkovač umí zlomit
+// MEZI odstavci — jeden nedělitelný blok delší než stránka se v PDF ořízne
+// (stránka se při exportu ořezává na přesných 297 mm).
+function odstavceHtml(text, styl) {
+  var t = String(text || '');
+  var casti = t.split(/\n[ \t]*\n/);
+  return casti.map(function(od, i) {
+    // Mezera mezi odstavci se dělá marginem, ať zlom stránky nezačíná
+    // prázdným řádkem.
+    var mb = (i < casti.length - 1) ? 'margin-bottom:3.6mm;' : '';
+    return '<div style="' + styl + mb + '">' + esc(od) + '</div>';
+  }).join('');
+}
+
 // Wrapper přes generujPDF — pokud má technik uložené razítko nebo
 // podpis, otevře modal s volbou, co do PDF vložit. Jinak rovnou generuje.
 // Zkontroluje nejdůležitější pole zprávy před generováním PDF. Vrací
@@ -7363,7 +7391,8 @@ function generujPDF() {
     '</div>' +
     '<div data-p2sec="3">' +
     '<div class="sec-head"><div class="sec-num">3.</div><div class="sec-name">Technický popis vyhrazeného elektrického zařízení</div></div>' +
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' + esc(D.popis || (isLpsPdf ? 'Doplňte v záložce 1. Objekt & LPS.' : 'Doplňte v záložce A.')) + '</div>' +
+    odstavceHtml(D.popis || (isLpsPdf ? 'Doplňte v záložce 1. Objekt & LPS.' : 'Doplňte v záložce A.'),
+      'font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line;') +
     '</div>' +
     (D.dokumentace && D.dokumentace.length > 0
       ? '<div data-p2sec="3b">' +
@@ -7679,7 +7708,10 @@ function generujPDF() {
               return '<img src="' + src + '" style="width:80mm;max-height:60mm;object-fit:contain;border:.5pt solid #999">';
             }).join('') + '</div>';
         }
-        return '<div style="margin-bottom:3mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + esc(z.popis) +
+        // Každá závada je samostatný blok přímo v .a4-content (ne ve
+        // společném obalu) — jinak by se seznam závad nedal zalomit
+        // a dlouhý seznam (hlavně s fotkami) by se v PDF ořízl.
+        return '<div style="margin-bottom:3mm;padding:0 2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + esc(z.popis) +
           (z.norma ? ' <em style="font-size:8.5pt;color:#444">(porušení: ' + esc(z.norma) + ')</em>' : '') +
           (z.dalsi ? '<br><em>Po odstranění: ' + esc(z.dalsi) + '</em>' : '') +
           fotkyHtml +
@@ -7695,12 +7727,12 @@ function generujPDF() {
   p5.innerHTML = hdr(5) +
     '<div class="a4-content">' +
     '<div class="sec-head"><div class="sec-num">' + secZavady + '.</div><div class="sec-name">Přehled zjištěných závad</div></div>' +
-    '<div style="padding:0 2mm;margin-bottom:4mm">' + zavadyHtml + '</div>' +
-    '<div class="sec-head"><div class="sec-num">' + secZaver + '.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
+    zavadyHtml +
+    '<div class="sec-head" style="margin-top:4mm"><div class="sec-num">' + secZaver + '.</div><div class="sec-name">Závěr a vyhodnocení</div></div>' +
     // Odkaz na kapitolu závad se srovná se skutečným číslováním této
     // zprávy — text mohl vzniknout dřív nebo v jiné sestavě kapitol.
-    '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line">' +
-    esc(String(D.zhodnoceni || 'Závěr nebyl vyplněn.').replace(/v kapitole\s+\d+/g, 'v kapitole ' + secZavady)) + '</div>' +
+    odstavceHtml(String(D.zhodnoceni || 'Závěr nebyl vyplněn.').replace(/v kapitole\s+\d+/g, 'v kapitole ' + secZavady),
+      'font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line;') +
     (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta provedení příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
     '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
     (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + esc(D.prilohy) + '</span></div>' : '') +
@@ -7936,6 +7968,23 @@ function generujPDF() {
       return zmena;
     }
 
+    // Stránka, která přetéká jediným blokem, se nedá zalomit — a při
+    // exportu se ořízne (stránky se režou přesně na 297 mm). Obal se proto
+    // rozbalí na své vnitřní bloky (sekce → nadpis + odstavce), mezi nimiž
+    // už zlomit lze. Vizuálně se nemění nic, jen zanoření v DOM.
+    function rozbalPrilisVysokyBlok(obsah, limitPx) {
+      for (var i = 0; i < obsah.children.length; i++) {
+        var ch = obsah.children[i];
+        if (ch.dataset && ch.dataset.fitWrap) continue;
+        if (ch.getBoundingClientRect().height <= limitPx) continue;
+        if (ch.children.length < 2) continue;   // nemá co rozbalit
+        while (ch.firstElementChild) obsah.insertBefore(ch.firstElementChild, ch);
+        obsah.removeChild(ch);
+        return true;
+      }
+      return false;
+    }
+
     function rozdelPortraitStranky() {
       var didPortraitSplit;
       var portSafety = 0;
@@ -7947,7 +7996,11 @@ function generujPDF() {
           if (pp.classList.contains('a4-titulni')) continue;  // titulka se nedělí
           if (!overflows(pp)) continue;
           var ppContent = pp.querySelector('.a4-content');
-          if (!ppContent || ppContent.children.length <= 1) continue;
+          if (!ppContent) continue;
+          // Jeden blok vyšší než použitelná výška stránky → rozbalit
+          var mimoObsah = pp.getBoundingClientRect().height - ppContent.getBoundingClientRect().height;
+          if (rozbalPrilisVysokyBlok(ppContent, maxA4Px - mimoObsah)) { didPortraitSplit = true; break; }
+          if (ppContent.children.length <= 1) continue;
           var npP = newA4('a4');
           var npPContent = npP.querySelector('.a4-content');
           var movedEls = [];
