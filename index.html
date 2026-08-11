@@ -656,7 +656,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.162<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.163<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -748,6 +748,18 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-08-11">
+    <div class="scard-title">📄 Nadpis sekce zůstává u své tabulky <span class="nov-datum">11. 8. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Ve zprávě se stávalo, že nadpis kapitoly (např. „6. Měření zemních odporů" nebo „8. Závěr a vyhodnocení") zůstal viset úplně dole na stránce a jeho obsah — tabulka nebo text — začal až na další. Zlom se teď dělá <strong>před nadpisem</strong>, ne pod ním.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li>Platí pro elektro i LPS a pro všechny kapitoly zprávy.</li>
+        <li>Když se nadpis přesune, stránky se automaticky přečíslují a prázdná stránka po něm nezůstane.</li>
+        <li>Zbytek stránkování zůstává beze změny — nic se nezmenšuje ani nepřehazuje.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-08-11">
@@ -7899,34 +7911,69 @@ function generujPDF() {
     var titulka = pages.querySelector('.a4-titulni');
     if (titulka) vejdiNaStranku(titulka, maxA4Px);
 
-    var didPortraitSplit;
-    var portSafety = 0;
-    do {
-      didPortraitSplit = false;
-      var allPortrait = Array.prototype.slice.call(pages.querySelectorAll('.a4:not(.a4-landscape)'));
-      for (var pi = 0; pi < allPortrait.length; pi++) {
-        var pp = allPortrait[pi];
-        if (pp.classList.contains('a4-titulni')) continue;  // titulka se nedělí
-        if (!overflows(pp)) continue;
-        var ppContent = pp.querySelector('.a4-content');
-        if (!ppContent || ppContent.children.length <= 1) continue;
-        var npP = newA4('a4');
-        var npPContent = npP.querySelector('.a4-content');
-        var movedEls = [];
-        while (overflows(pp) && ppContent.children.length > 1) {
-          var lastEl = ppContent.children[ppContent.children.length - 1];
-          movedEls.unshift(lastEl);
-          ppContent.removeChild(lastEl);
+    // Nadpis sekce nesmí zůstat viset sám na konci stránky, zatímco její
+    // obsah začíná až na další — zlom musí být PŘED nadpisem. Vrací true,
+    // pokud se něco přesunulo (pak je potřeba stránky znovu přerozdělit).
+    function jeNadpis(el) {
+      return !!el && el.classList && el.classList.contains('sec-head');
+    }
+    function presunOsireleNadpisy() {
+      var zmena = false;
+      var vsechny = Array.prototype.slice.call(pages.querySelectorAll('.a4:not(.a4-landscape)'));
+      for (var oi = 0; oi < vsechny.length - 1; oi++) {
+        var A = vsechny[oi], B = vsechny[oi + 1];
+        if (A.classList.contains('a4-titulni') || B.classList.contains('a4-titulni')) continue;
+        var ca = A.querySelector('.a4-content'), cb = B.querySelector('.a4-content');
+        if (!ca || !cb) continue;
+        // Stránky se zmenšeným obsahem (fit-wrapper) nechat být
+        if (ca.firstElementChild && ca.firstElementChild.dataset.fitWrap) continue;
+        while (jeNadpis(ca.lastElementChild)) {
+          cb.insertBefore(ca.lastElementChild, cb.firstChild);
+          zmena = true;
         }
-        if (movedEls.length > 0) {
-          movedEls.forEach(function(el) { npPContent.appendChild(el); });
-          pages.insertBefore(npP, pp.nextSibling);
-          didPortraitSplit = true;
-          break;
-        }
+        if (!ca.children.length) A.remove();
       }
-      portSafety++;
-    } while (didPortraitSplit && portSafety < 100);
+      return zmena;
+    }
+
+    function rozdelPortraitStranky() {
+      var didPortraitSplit;
+      var portSafety = 0;
+      do {
+        didPortraitSplit = false;
+        var allPortrait = Array.prototype.slice.call(pages.querySelectorAll('.a4:not(.a4-landscape)'));
+        for (var pi = 0; pi < allPortrait.length; pi++) {
+          var pp = allPortrait[pi];
+          if (pp.classList.contains('a4-titulni')) continue;  // titulka se nedělí
+          if (!overflows(pp)) continue;
+          var ppContent = pp.querySelector('.a4-content');
+          if (!ppContent || ppContent.children.length <= 1) continue;
+          var npP = newA4('a4');
+          var npPContent = npP.querySelector('.a4-content');
+          var movedEls = [];
+          while (overflows(pp) && ppContent.children.length > 1) {
+            var lastEl = ppContent.children[ppContent.children.length - 1];
+            movedEls.unshift(lastEl);
+            ppContent.removeChild(lastEl);
+          }
+          // Zůstal by na stránce viset samotný nadpis sekce? Vezmi ho s sebou.
+          while (movedEls.length && jeNadpis(ppContent.lastElementChild)) {
+            movedEls.unshift(ppContent.lastElementChild);
+            ppContent.removeChild(ppContent.lastElementChild);
+          }
+          if (movedEls.length > 0) {
+            movedEls.forEach(function(el) { npPContent.appendChild(el); });
+            pages.insertBefore(npP, pp.nextSibling);
+            if (!ppContent.children.length) pp.remove();  // stránka zbyla prázdná
+            didPortraitSplit = true;
+            break;
+          }
+        }
+        portSafety++;
+      } while (didPortraitSplit && portSafety < 100);
+    }
+
+    rozdelPortraitStranky();
 
     // LPS: kapitoly navazují na stejné stránce, pokud je na ní místo.
     // Sekce měření zemničů končila pár řádky poznámky a další kapitola
@@ -7952,11 +7999,22 @@ function generujPDF() {
             if (overflows(A)) { cb.insertBefore(blok, cb.firstChild); break; }
             presunuto++;
           }
+          // Nadpis sekce se nesmí přetáhnout nahoru bez svého obsahu —
+          // jinak visí sám na konci stránky a tabulka je až za zlomem.
+          while (presunuto > 0 && jeNadpis(ca.lastElementChild)) {
+            cb.insertBefore(ca.lastElementChild, cb.firstChild);
+            presunuto--;
+          }
           if (!cb.children.length) { B.remove(); spojeno = true; break; }
-          if (presunuto) { spojeno = true; break; }
+          if (presunuto > 0) { spojeno = true; break; }
         }
       }
     }
+
+    // Poslední kontrola: kdyby po slučování/dělení zůstal nadpis sekce
+    // osamocený na konci stránky, přesuň ho za zlom — a stránky, které
+    // tím mohly přetéct, znovu rozděl.
+    if (presunOsireleNadpisy()) rozdelPortraitStranky();
 
     // Přečíslování hlaviček a "Počet listů" podle skutečného počtu stran
     var ps = pages.querySelectorAll('.a4');
