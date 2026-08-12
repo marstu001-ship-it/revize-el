@@ -667,7 +667,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.179<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.180<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -7389,7 +7389,9 @@ function generujPDF() {
          (D.lps && D.lps.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) : '—') +
          (D.lps && D.lps.mrizka && mrizkaMaSmysl(D.lps.jimaci)
            ? '<br><strong>Velikost ok mřížové soustavy:</strong> ' + esc(D.lps.mrizka) : '') +
+         (D.lps && D.lps.vyska_jimace ? '<br><strong>Výška tyčového jímače:</strong> ' + esc(D.lps.vyska_jimace) + ' m' : '') +
          (D.lps && D.lps.material_strechy ? '<br><strong>Materiál střechy:</strong> ' + esc(D.lps.material_strechy) : '') +
+         (D.lps && D.lps.strecha_zarizeni ? '<br><strong>Zařízení na střeše:</strong> ' + esc(D.lps.strecha_zarizeni) : '') +
          '</div>' +
          '<div style="margin-top:1mm"><div class="pbox-label">Uzemňovací soustava:</div>' +
          '<div class="pbox" style="font-size:9pt">' +
