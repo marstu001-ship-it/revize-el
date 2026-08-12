@@ -667,7 +667,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.178<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.179<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5327,11 +5327,10 @@ function syncLps1390(source) {
 }
 
 // Velikost ok mřížové soustavy má smysl jen tehdy, když je jímací
-// soustava opravdu mřížová (nebo kombinovaná). U tyčí a závěsných lan
-// se nezadává ani netiskne. ČSN 34 1390 mřížky v této podobě neznala,
-// takže tam odpadá vždy.
-function mrizkaMaSmysl(jimaci, norma) {
-  if (norma === '1390') return false;
+// soustava opravdu mřížová (nebo kombinovaná) — u tyčí a závěsných lan
+// se nezadává ani netiskne. Na normě to nezáleží: mřížové (hřebenové)
+// vedení zná i ČSN 34 1390.
+function mrizkaMaSmysl(jimaci) {
   var j = String(jimaci || '');
   return j.indexOf('mřížové') !== -1 || j.indexOf('kombinace') !== -1;
 }
@@ -5341,8 +5340,7 @@ function updateLpsMrizka() {
   var wrap = document.getElementById('lps-mrizka-wrap');
   if (!wrap) return;
   var jimaci = (document.getElementById('lps_jimaci') || {}).value || '';
-  var norma = (document.getElementById('lps_prohlidka_norma') || {}).value || '62305';
-  wrap.style.display = mrizkaMaSmysl(jimaci, norma) ? '' : 'none';
+  wrap.style.display = mrizkaMaSmysl(jimaci) ? '' : 'none';
 }
 
 // Přepíše statické odkazy na normu v LPS tabech '2. Objekt & LPS'
@@ -7381,20 +7379,23 @@ function generujPDF() {
     '<div class="ptitle"><h1>' + nadpis + '</h1><p>' + podnadpis + '</p></div>' +
     (isLpsPdf
       ? ('<div class="r2" style="margin-bottom:2.5mm">' +
-         '<div><div class="pbox-label">Třída LPS:</div>' +
-         '<div class="pbox" style="min-height:12mm;font-size:9pt">' + esc((D.lps && D.lps.trida) ? ('Třída ' + D.lps.trida) : '—') +
+         '<div><div class="pbox-label">' + (lpsNorma1390 ? 'Kategorie hromosvodu:' : 'Třída LPS:') + '</div>' +
+         '<div class="pbox" style="min-height:12mm;font-size:9pt">' +
+         ((D.lps && D.lps.trida) ? esc((lpsNorma1390 ? '' : 'Třída ') + D.lps.trida) : '—') +
          (D.lps && D.lps.typ_objektu ? '<br><strong>Typ objektu:</strong> ' + esc(D.lps.typ_objektu) : '') +
          '</div></div>' +
          '<div><div class="pbox-label">Jímací soustava a střecha:</div>' +
          '<div class="pbox" style="min-height:8mm;font-size:9pt">' +
          (D.lps && D.lps.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) : '—') +
-         (D.lps && D.lps.mrizka ? '<br><strong>Mřížka:</strong> ' + esc(D.lps.mrizka) : '') +
+         (D.lps && D.lps.mrizka && mrizkaMaSmysl(D.lps.jimaci)
+           ? '<br><strong>Velikost ok mřížové soustavy:</strong> ' + esc(D.lps.mrizka) : '') +
          (D.lps && D.lps.material_strechy ? '<br><strong>Materiál střechy:</strong> ' + esc(D.lps.material_strechy) : '') +
          '</div>' +
          '<div style="margin-top:1mm"><div class="pbox-label">Uzemňovací soustava:</div>' +
          '<div class="pbox" style="font-size:9pt">' +
-         (D.lps && D.lps.zemneni_typ ? '<strong>Typ:</strong> ' + esc(D.lps.zemneni_typ) : '—') +
-         (D.lps && D.lps.zemina ? ', <strong>zemina:</strong> ' + esc(D.lps.zemina) : '') +
+         // Uspořádání typu A/B je pojem ČSN EN 62305 — u 1390 se netiskne
+         (!lpsNorma1390 && D.lps && D.lps.zemneni_typ ? '<strong>Typ:</strong> ' + esc(D.lps.zemneni_typ) + ', ' : '') +
+         (D.lps && D.lps.zemina ? '<strong>zemina:</strong> ' + esc(D.lps.zemina) : '—') +
          (D.lps && D.lps.stav_zeminy ? ' (' + esc(D.lps.stav_zeminy) + ')' : '') +
          '</div></div></div>' +
          '</div>')
@@ -7800,7 +7801,7 @@ function generujPDF() {
       '<div style="font-size:9pt;padding:0 2mm;margin-bottom:4mm;line-height:1.7">' +
       (L.trida ? '<strong>' + (lpsNorma1390 ? 'Kategorie hromosvodu' : 'Třída LPS') + ':</strong> ' + esc(L.trida) + '<br>' : '') +
       (L.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(L.jimaci) + '<br>' : '') +
-      (L.mrizka && mrizkaMaSmysl(L.jimaci, lpsNorma1390 ? '1390' : '62305')
+      (L.mrizka && mrizkaMaSmysl(L.jimaci)
         ? '<strong>Velikost ok mřížové soustavy:</strong> ' + esc(L.mrizka) + '<br>' : '') +
       (L.vyska_jimace ? '<strong>Výška tyčového jímače:</strong> ' + esc(L.vyska_jimace) + ' m<br>' : '') +
       (L.material_strechy ? '<strong>Materiál střechy:</strong> ' + esc(L.material_strechy) + '<br>' : '') +
