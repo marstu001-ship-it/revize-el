@@ -667,7 +667,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.177<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.178<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3445,6 +3445,7 @@ function novaZprava(typ) {
   if (typ === 'lps') {
     renderLpsLpz();
     renderLpsProhlidka();
+    updateLpsMrizka();   // výchozí jímací soustava rozhoduje o poli Velikost ok
     var lmb = document.getElementById('lps-mereni-body'); if (lmb) lmb.innerHTML = '';
     addLpsMereni();
     addLpsMereni();
@@ -5325,6 +5326,25 @@ function syncLps1390(source) {
   updateLpsMereniTexts();
 }
 
+// Velikost ok mřížové soustavy má smysl jen tehdy, když je jímací
+// soustava opravdu mřížová (nebo kombinovaná). U tyčí a závěsných lan
+// se nezadává ani netiskne. ČSN 34 1390 mřížky v této podobě neznala,
+// takže tam odpadá vždy.
+function mrizkaMaSmysl(jimaci, norma) {
+  if (norma === '1390') return false;
+  var j = String(jimaci || '');
+  return j.indexOf('mřížové') !== -1 || j.indexOf('kombinace') !== -1;
+}
+
+// Zobrazí/skryje pole Velikost ok podle zvolené jímací soustavy.
+function updateLpsMrizka() {
+  var wrap = document.getElementById('lps-mrizka-wrap');
+  if (!wrap) return;
+  var jimaci = (document.getElementById('lps_jimaci') || {}).value || '';
+  var norma = (document.getElementById('lps_prohlidka_norma') || {}).value || '62305';
+  wrap.style.display = mrizkaMaSmysl(jimaci, norma) ? '' : 'none';
+}
+
 // Přepíše statické odkazy na normu v LPS tabech '2. Objekt & LPS'
 // a '5. Měření zemničů' podle aktuální volby ('62305' vs '1390').
 function updateLpsMereniTexts() {
@@ -5338,13 +5358,14 @@ function updateLpsMereniTexts() {
     ? '(kategorie dle ČSN 34 1390)'
     : '(I–IV dle výpočtu rizika ČSN EN 62305-2)';
   // Skrýt 62305-specifické prvky pro 1390:
-  //  - lps_mrizka (velikost ok mřížky, 1390 mřížky v této formě neměla)
   //  - lps_zemneni_typ (Typ A/B je 62305 koncept)
   //  - celá scard 'Zóny LPZ a SPD' (LPZ ani SPD v 1390 neexistovaly)
-  ['lps-mrizka-wrap', 'lps-zemneni-typ-wrap', 'scard-lpz-spd'].forEach(function(id) {
+  ['lps-zemneni-typ-wrap', 'scard-lpz-spd'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.style.display = is1390 ? 'none' : '';
   });
+  // Velikost ok mřížky navíc závisí na zvolené jímací soustavě
+  updateLpsMrizka();
   var tridaSel = document.getElementById('lps_trida');
   if (tridaSel) {
     var wantMode = is1390 ? '1390' : '62305';
@@ -7104,6 +7125,7 @@ function restoreLpsData(lps) {
   if (rv) rv.checked = (lps.rozsah_vnejsi !== false);
   var rn = document.getElementById('lps_rozsah_vnitrni');
   if (rn) rn.checked = (lps.rozsah_vnitrni !== false);
+  updateLpsMrizka();
   // LPZ checkboxy — podle názvu zóny (data-lpz). Prázdný řetězec je platná
   // hodnota (technik odklikal všechny zóny), proto se testuje na undefined —
   // jinak by se odkliknuté zóny po znovuotevření vrátily.
@@ -7778,7 +7800,8 @@ function generujPDF() {
       '<div style="font-size:9pt;padding:0 2mm;margin-bottom:4mm;line-height:1.7">' +
       (L.trida ? '<strong>' + (lpsNorma1390 ? 'Kategorie hromosvodu' : 'Třída LPS') + ':</strong> ' + esc(L.trida) + '<br>' : '') +
       (L.jimaci ? '<strong>Typ jímací soustavy:</strong> ' + esc(L.jimaci) + '<br>' : '') +
-      (!lpsNorma1390 && L.mrizka ? '<strong>Velikost ok mřížové soustavy:</strong> ' + esc(L.mrizka) + '<br>' : '') +
+      (L.mrizka && mrizkaMaSmysl(L.jimaci, lpsNorma1390 ? '1390' : '62305')
+        ? '<strong>Velikost ok mřížové soustavy:</strong> ' + esc(L.mrizka) + '<br>' : '') +
       (L.vyska_jimace ? '<strong>Výška tyčového jímače:</strong> ' + esc(L.vyska_jimace) + ' m<br>' : '') +
       (L.material_strechy ? '<strong>Materiál střechy:</strong> ' + esc(L.material_strechy) + '<br>' : '') +
       (L.strecha_zarizeni ? '<strong>Zařízení na střeše:</strong> ' + esc(L.strecha_zarizeni) + '<br>' : '') +
@@ -10768,6 +10791,7 @@ document.addEventListener('change', function(e) {
   if (action === 'updateLhuta') updateRevizeLhuta();
   if (action === 'updZavadaKod') updZavadaKod(el);
   if (el.id === 'f_druh') updateDuvodMimoradne();
+  if (el.id === 'lps_jimaci') updateLpsMrizka();
   // Auto-save + dirty flag při změně
   if (el.closest('#screen-form')) { autoSave(); window.__formDirty = true; updateUlozitStav(); }
 });
