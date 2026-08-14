@@ -675,7 +675,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.183<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.184<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2093,6 +2093,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       <label>Revize prováděna podle normy <span style="font-size:.6rem;color:var(--muted)">(přepne kontrolní body i text v PDF)</span></label>
       <select id="lps_prohlidka_norma">
         <option value="62305" selected>ČSN EN 62305 ed.2 — LPS zřízené od 1. 2. 2009</option>
+        <option value="62305e3">ČSN EN IEC 62305 ed.3 — nové vydání (povinné od 1. 11. 2027)</option>
         <option value="1390">ČSN 34 1390 — starší LPS (zřízené do 1. 2. 2009)</option>
       </select>
       <div class="norma-napoveda">
@@ -2101,7 +2102,9 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
           <li><strong>do 30. 11. 2006</strong> — ČSN 34 1390 (platila od roku 1969)</li>
           <li><strong>12/2006 – 1. 2. 2009</strong> — obě normy platily <strong>souběžně</strong>;
             posuzujte podle té, podle které byl hromosvod projektován a zřízen</li>
-          <li><strong>od 1. 2. 2009</strong> — ČSN EN 62305 (tímto dnem byla ČSN 34 1390 zrušena)</li>
+          <li><strong>od 1. 2. 2009</strong> — ČSN EN 62305 ed.2 (tímto dnem byla ČSN 34 1390 zrušena)</li>
+          <li><strong>od 10/2025</strong> — vyšlo nové vydání <strong>ČSN EN IEC 62305 ed.3</strong>;
+            s ed.2 platí souběžně, <strong>od 1. 11. 2027</strong> už jen ono</li>
         </ul>
       </div>
     </div>
@@ -5152,7 +5155,7 @@ function addZavada() {
     if (isNaN(idx) || idx < 0 || idx >= src.length) return;
     var z = src[idx];
     ta.value = z.popis;
-    inp3.value = z.norma;
+    inp3.value = citaceNormy(z.norma);
     sel.value = z.kod;
     // Barevný rámeček + nabídka „Po odstranění" podle nové kategorie
     updZavadaKod(sel);
@@ -5335,6 +5338,25 @@ var LPS_PROHLIDKA_1390 = [
   ]}
 ];
 
+// ═══ VOLBA NORMY U LPS ══════════════════════════════════════════════════
+// Tři možnosti: '1390' (hromosvody do 1. 2. 2009), '62305' (ed.2) a
+// '62305e3' (ed.3 z r. 2025). Ed.2 a ed.3 mají stejné kontrolní body —
+// liší se jen označením normy v citacích.
+function lpsVolbaNormy() {
+  var sel = document.getElementById('lps_prohlidka_norma');
+  return (sel && sel.value) || '62305';
+}
+
+// Přepíše citaci ed.2 na ed.3. Čísla článků a tabulek se u ed.3 VYPOUŠTĚJÍ
+// (rozhodnutí uživatele 2026-08-11): číslování z ed.2 v novém vydání
+// nemusí platit, takže je poctivější citovat jen normu. Ostatních norem
+// (např. ČSN 33 2000-5-54 ed.3) se to nedotkne.
+var RE_CITACE_ED2 = /ČSN EN 62305-(\d)\s*ed\.\s*2((?:(?:,\s*|\s+)(?:čl\.|tab\.|tabulka)\s*\d+(?:\.\d+)*)*)/g;
+function citaceNormy(text, volba) {
+  if ((volba || lpsVolbaNormy()) !== '62305e3') return text;
+  return String(text || '').replace(RE_CITACE_ED2, 'ČSN EN IEC 62305-$1 ed.3');
+}
+
 // Vrátí aktuální sadu kontrolních bodů podle volby normy.
 function getLpsProhlidkaData() {
   var sel = document.getElementById('lps_prohlidka_norma');
@@ -5353,12 +5375,32 @@ function syncLps1390(source) {
   var sel = document.getElementById('lps_prohlidka_norma');
   if (!chk || !sel) return;
   if (source === 'checkbox') {
-    sel.value = chk.checked ? '1390' : '62305';
+    // Odškrtnutí vrátí naposledy zvolené vydání 62305 (ed.2 nebo ed.3)
+    sel.value = chk.checked ? '1390' : (window.__lpsPosledniEd || '62305');
     renderLpsProhlidka();
   } else if (source === 'dropdown') {
+    if (sel.value !== '1390') window.__lpsPosledniEd = sel.value;
     chk.checked = (sel.value === '1390');
   }
+  srovnatNormyLps();
   updateLpsMereniTexts();
+}
+
+// Zaškrtnutí norem na titulní straně podle zvoleného vydání — technik
+// vybere normu jednou v Prohlídce LPS a seznam norem se srovná sám.
+var LPS_NORMY_ED2 = ['csn623051', 'csn623052', 'csn623053', 'csn623054'];
+var LPS_NORMY_ED3 = ['csn623051e3', 'csn623052e3', 'csn623053e3', 'csn623054e3'];
+function srovnatNormyLps() {
+  if (typeof aktTyp !== 'undefined' && aktTyp !== 'lps') return;
+  var volba = lpsVolbaNormy();
+  LPS_NORMY_ED2.forEach(function(id) {
+    var c = document.getElementById('n-' + id);
+    if (c) c.checked = (volba === '62305');
+  });
+  LPS_NORMY_ED3.forEach(function(id) {
+    var c = document.getElementById('n-' + id);
+    if (c) c.checked = (volba === '62305e3');
+  });
 }
 
 // Velikost ok mřížové soustavy má smysl jen tehdy, když je jímací
@@ -5438,27 +5480,28 @@ function updateLpsMereniTexts() {
   var info = document.getElementById('lps-mereni-info');
   var metPrechod = document.getElementById('lps-metoda-prechod');
   var metZemni = document.getElementById('lps-metoda-zemni');
-  if (head) head.textContent = is1390 ? 'ČSN 34 1390, čl. 55' : 'ČSN EN 62305-3 ed.2, čl. 5.4.1';
+  if (head) head.textContent = is1390 ? 'ČSN 34 1390, čl. 55' : citaceNormy('ČSN EN 62305-3 ed.2, čl. 5.4.1');
   if (info) info.innerHTML = is1390
     ? 'Doporučená hodnota zemního odporu jednotlivých svodů ≤ 15 Ω.<br>ODPOVÍDÁ ČSN 34 1390, čl. 55'
-    : 'Minimální hodnota zemního odporu jednoho zemniče je menší rovna 10 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.4.1';
+    : citaceNormy('Minimální hodnota zemního odporu jednoho zemniče je menší rovna 10 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.4.1');
   if (metPrechod) metPrechod.innerHTML = is1390
     ? 'Naměřený přechodový odpor by měl být menší nebo roven 0,2 Ω.<br>ODPOVÍDÁ ČSN 34 1390, čl. 124'
-    : 'Naměřený odpor by měl být menší nebo roven 0,2 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.3.5';
+    : citaceNormy('Naměřený odpor by měl být menší nebo roven 0,2 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.3.5');
   if (metZemni) metZemni.innerHTML = is1390
     ? 'Doporučená hodnota zemního odporu jednoho svodu ≤ 15 Ω.<br>ODPOVÍDÁ ČSN 34 1390, čl. 55'
-    : 'Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.4.1';
+    : citaceNormy('Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω.<br>ODPOVÍDÁ ČSN EN 62305-3 ed.2, čl. 5.4.1');
   // Seznam příloh — výchozí text se liší podle zvolené normy
   // (platí jen pokud uživatel ještě nic ručně nenapsal)
   var pril = document.getElementById('f_prilohy');
   if (pril) {
-    var default62305 = '1. Projektová dokumentace LPS\n2. Výpočet rizika dle ČSN EN 62305-2 ed.2\n3. Protokol o měření zemního odporu\n4. Prohlášení o shodě jednotlivých částí';
+    var default62305 = citaceNormy('1. Projektová dokumentace LPS\n2. Výpočet rizika dle ČSN EN 62305-2 ed.2\n3. Protokol o měření zemního odporu\n4. Prohlášení o shodě jednotlivých částí');
+    var default62305ed2 = '1. Projektová dokumentace LPS\n2. Výpočet rizika dle ČSN EN 62305-2 ed.2\n3. Protokol o měření zemního odporu\n4. Prohlášení o shodě jednotlivých částí';
     var default1390 = '1. Projektová dokumentace hromosvodu (popř. provozní dokumentace)\n2. Protokol o měření zemního odporu\n3. Záznamy z předchozích revizí dle ČSN 34 1390';
     var cur = pril.value.trim();
     // Přepiš JEN když tam stojí druhý předvyplněný text (přepnutí normy).
     // Prázdné pole se nedoplňuje — uživatel přílohy záměrně smazal a po
     // uložení a znovuotevření by se mu jinak pořád vracely.
-    if (cur === default62305.trim() || cur === default1390.trim()) {
+    if (cur === default62305.trim() || cur === default62305ed2.trim() || cur === default1390.trim()) {
       pril.value = is1390 ? default1390 : default62305;
     }
   }
@@ -5517,7 +5560,7 @@ function renderLpsProhlidka() {
       html += '<select style="flex:0 0 100px;font-size:.75rem;padding:2px 4px" id="lps-p-' + si + '-' + ii + '">';
       html += '<option value="Odpovídá" selected>Odpovídá</option><option value="Neodpovídá">Neodpovídá</option><option value="—">—</option></select>';
       html += '<label style="font-size:.82rem;flex:1;line-height:1.4">' + item.t + '</label>';
-      html += '<span style="font-size:.68rem;color:#9a9488;flex:0 0 200px;text-align:right">' + item.csn + '</span>';
+      html += '<span style="font-size:.68rem;color:#9a9488;flex:0 0 200px;text-align:right">' + citaceNormy(item.csn) + '</span>';
       html += '</div>';
     });
     html += '</div>';
@@ -5610,6 +5653,10 @@ function magicPopis() {
   if (aktTyp === 'lps') {
     var lpsNorma = (document.getElementById('lps_prohlidka_norma') || {}).value || '62305';
     klic = (lpsNorma === '1390') ? 'lps1390' : 'lps';
+    // LPS má vlastní pole popisu; u ed.3 se citace přepíšou bez čísel článků
+    var cilLps = document.getElementById('f_lps_popis') || el;
+    cilLps.value = citaceNormy(texty[klic], lpsNorma);
+    return;
   } else {
     klic = aktPodtyp || 'dum';
   }
@@ -5704,8 +5751,8 @@ function magicZaver() {
     normyRef = 'ČSN 34 1390, ČSN 33 2000-5-54 ed.3';
     refNorma = 'ČSN 34 1390';
   } else {
-    normyRef = 'ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3';
-    refNorma = 'ČSN EN 62305-3 ed.2';
+    normyRef = citaceNormy('ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3', lpsProhlNorma);
+    refNorma = citaceNormy('ČSN EN 62305-3 ed.2', lpsProhlNorma);
   }
   // LPS — schopno (dle vzoru Macháček/Dolenský IMG_2525)
   var lpsSchopno = 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ' + normyRef + '.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací' +
@@ -5865,6 +5912,8 @@ function vlozitTypickyText(idx, mode) {
   var el = document.getElementById(__typTextTargetId);
   if (!el) return;
   var vkladany = opravKapitoluZavady(t.text, cisloKapitolyZavady());
+  // U LPS se citace srovnají se zvoleným vydáním (ed.2 / ed.3)
+  if (typeof aktTyp !== 'undefined' && aktTyp === 'lps') vkladany = citaceNormy(vkladany);
   if (mode === 'replace') {
     el.value = vkladany;
   } else {
@@ -7377,16 +7426,19 @@ function generujPDF() {
   var secZavady = isLpsPdf ? secBase + 2 : secBase + 3 + rcdOffset;
   var secZaver  = isLpsPdf ? secBase + 3 : secBase + 4 + rcdOffset;
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
+  // Vydání souboru 62305: '62305' = ed.2, '62305e3' = ed.3. citaceNormy()
+  // přepíše označení a u ed.3 vypustí čísla článků.
+  var lpsVolba = (isLpsPdf && D.lps && D.lps.prohlidka_norma) || '62305';
   var nadpis = 'ZPRÁVA O ' + druhVNadpisu(D.druh) + 'REVIZI ' +
     (isLpsPdf ? 'OCHRANY PŘED BLESKEM (LPS)' : 'VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ');
   var podnadpis = isLpsPdf
     ? (lpsNorma1390
         ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 34 1390 (LPS zřízené do 1. 2. 2009), ČSN 33 2000-5-54 ed.3'
-        : 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 62305-1 ed.2 až ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3')
+        : citaceNormy('Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 62305-1 ed.2 až ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3', lpsVolba))
     : 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 33 1500 (Z1–Z4), ČSN 33 2000-6 ed.2';
   var posudek = isLpsPdf
     ? (D.celkovy_vysledek === 'schopno'
-        ? ('Provedenou prohlídkou a měřením bylo zjištěno, že LPS je ve stavu způsobilém plnit požadovanou funkci a je v souladu s ' + (lpsNorma1390 ? 'ČSN 34 1390' : 'ČSN EN 62305-3 ed.2') + '.')
+        ? ('Provedenou prohlídkou a měřením bylo zjištěno, že LPS je ve stavu způsobilém plnit požadovanou funkci a je v souladu s ' + (lpsNorma1390 ? 'ČSN 34 1390' : citaceNormy('ČSN EN 62305-3 ed.2', lpsVolba)) + '.')
         : 'LPS NENÍ ve stavu způsobilém plnit požadovanou funkci. Zjištěné závady musí být odstraněny.')
     : (D.celkovy_vysledek === 'schopno'
         ? 'Provedenou prohlídkou a měřením bylo zjištěno, že revidovaná elektrická instalace je z hlediska bezpečnosti schopna provozu.'
@@ -7548,7 +7600,7 @@ function generujPDF() {
     (isLpsPdf
       ? ((D.lps && D.lps.trida) ? '<strong>Třída LPS:</strong> ' + esc(D.lps.trida) + '<br>' : '')
         + ((D.lps && D.lps.jimaci) ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) + '<br>' : '')
-        + ((D.lps && D.lps.prohlidka_norma) ? '<strong>Posouzeno dle:</strong> ' + (D.lps.prohlidka_norma === '1390' ? 'ČSN 34 1390' : 'ČSN EN 62305-3 ed.2') + '<br>' : '')
+        + ((D.lps && D.lps.prohlidka_norma) ? '<strong>Posouzeno dle:</strong> ' + (lpsNorma1390 ? 'ČSN 34 1390' : citaceNormy('ČSN EN 62305-3 ed.2', lpsVolba)) + '<br>' : '')
         + (D.normy ? '<strong>Revize provedena dle:</strong> ' + esc(D.normy) + '<br>' : '')
       : (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '')
         + (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '')
@@ -7591,7 +7643,7 @@ function generujPDF() {
           var is1390 = (D.lps && D.lps.prohlidka_norma === '1390');
           var head = is1390
             ? 'Prohlídky LPS (dle ČSN 34 1390)'
-            : 'Prohlídky LPS (dle ČSN EN 62305-3 ed.2)';
+            : citaceNormy('Prohlídky LPS (dle ČSN EN 62305-3 ed.2)', lpsVolba);
           var sada = is1390 ? LPS_PROHLIDKA_1390 : LPS_PROHLIDKA_62305;
           var checks = (D.lps && Array.isArray(D.lps.prohlidkaChecks)) ? D.lps.prohlidkaChecks : null;
           // Rozsah prohlídky
@@ -7611,7 +7663,7 @@ function generujPDF() {
               var bg = val === 'Odpovídá' ? '#f0faf3' : val === 'Neodpovídá' ? '#fdf2f0' : '#f9f9f9';
               tableRows += '<tr style="background:' + bg + '">' +
                 '<td style="border:1px solid #ccc;padding:1mm 2mm;font-size:7.5pt;width:55%">' + esc(item.t) + '</td>' +
-                '<td style="border:1px solid #ccc;padding:1mm 2mm;font-size:7pt;color:#666;width:30%">' + esc(item.csn) + '</td>' +
+                '<td style="border:1px solid #ccc;padding:1mm 2mm;font-size:7pt;color:#666;width:30%">' + esc(citaceNormy(item.csn, lpsVolba)) + '</td>' +
                 '<td style="border:1px solid #ccc;padding:1mm 2mm;font-size:7.5pt;font-weight:600;color:' + color + ';width:15%;text-align:center">' + esc(val) + '</td>' +
                 '</tr>';
             });
@@ -7849,7 +7901,7 @@ function generujPDF() {
       (!lpsNorma1390 && L.potencial ? '<strong>Potenciálové vyrovnání:</strong> ' + esc(L.potencial) + '<br>' : '') +
       (!lpsNorma1390 && L.spd ? '<strong>Osazené SPD:</strong> ' + esc(L.spd) : '') +
       '</div>' +
-      '<div class="sec-head"><div class="sec-num">' + (secBase + 1) + '.</div><div class="sec-name">Měření zemních odporů (dle ' + (lpsNorma1390 ? 'ČSN 34 1390, čl. 55' : 'ČSN EN 62305-3 ed.2, čl. 5.4.1') + ')</div></div>' +
+      '<div class="sec-head"><div class="sec-num">' + (secBase + 1) + '.</div><div class="sec-name">Měření zemních odporů (dle ' + (lpsNorma1390 ? 'ČSN 34 1390, čl. 55' : citaceNormy('ČSN EN 62305-3 ed.2, čl. 5.4.1', lpsVolba)) + ')</div></div>' +
       (L.celkovy_odpor
         ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0;"><strong>Celkový zemní odpor soustavy:</strong> ' + esc(L.celkovy_odpor) + ' Ω</div>'
         : '') +
@@ -7866,7 +7918,7 @@ function generujPDF() {
       '<div style="font-size:8pt;padding:0 2mm;margin-top:3mm;color:#444">' +
       (lpsNorma1390
         ? 'Doporučená hodnota zemního odporu jednotlivých svodů ≤ 15 Ω dle ČSN 34 1390, čl. 55.<br>Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN 34 1390, čl. 124.'
-        : 'Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω dle ČSN EN 62305-3 ed.2, čl. 5.4.1.<br>Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN EN 62305-3 ed.2, čl. 5.3.5.') +
+        : citaceNormy('Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω dle ČSN EN 62305-3 ed.2, čl. 5.4.1.<br>Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN EN 62305-3 ed.2, čl. 5.3.5.', lpsVolba)) +
       '</div>' +
       '</div>' + ftr();
     pages.appendChild(pLps);
