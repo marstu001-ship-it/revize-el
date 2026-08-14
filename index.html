@@ -210,6 +210,14 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .help-body dt{font-family:var(--mono);font-weight:500;margin-top:.6rem;color:var(--accent2)}
 .help-body dd{margin:.1rem 0 0;color:var(--text)}
 .help-body .lpz-priklad{color:var(--muted);font-size:.76rem}
+/* Nápověda k volbě normy u LPS — kterou normou se hromosvod posuzuje
+   podle data zřízení (souběžná platnost 12/2006 – 1. 2. 2009). */
+.norma-napoveda{margin-top:.55rem;padding:.6rem .85rem;background:var(--surface);
+  border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:3px;
+  font-family:var(--sans);font-size:.78rem;line-height:1.55;letter-spacing:normal;
+  text-transform:none;color:var(--text);font-weight:400}
+.norma-napoveda ul{margin:.35rem 0 0 1.1rem;padding:0}
+.norma-napoveda li{margin-bottom:.15rem}
 
 /* ═══ ARCHIV ═══ */
 #archiv-container,#odberatel-container{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -667,7 +675,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.181<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.182<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2087,6 +2095,15 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
         <option value="62305" selected>ČSN EN 62305 ed.2 — LPS zřízené od 1. 2. 2009</option>
         <option value="1390">ČSN 34 1390 — starší LPS (zřízené do 1. 2. 2009)</option>
       </select>
+      <div class="norma-napoveda">
+        <strong>Podle čeho vybrat:</strong> rozhoduje, kdy byl hromosvod zřízen.
+        <ul>
+          <li><strong>do 30. 11. 2006</strong> — ČSN 34 1390 (platila od roku 1969)</li>
+          <li><strong>12/2006 – 1. 2. 2009</strong> — obě normy platily <strong>souběžně</strong>;
+            posuzujte podle té, podle které byl hromosvod projektován a zřízen</li>
+          <li><strong>od 1. 2. 2009</strong> — ČSN EN 62305 (tímto dnem byla ČSN 34 1390 zrušena)</li>
+        </ul>
+      </div>
     </div>
     <div id="lps-prohlidka-container"></div>
   </div>
