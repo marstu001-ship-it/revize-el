@@ -675,7 +675,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.184<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.185<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2094,17 +2094,21 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       <select id="lps_prohlidka_norma">
         <option value="62305" selected>ČSN EN 62305 ed.2 — LPS zřízené od 1. 2. 2009</option>
         <option value="62305e3">ČSN EN IEC 62305 ed.3 — nové vydání (povinné od 1. 11. 2027)</option>
+        <option value="62305v1">ČSN EN 62305, 1. vydání (11/2006) — LPS zřízené zhruba 2009–2011</option>
         <option value="1390">ČSN 34 1390 — starší LPS (zřízené do 1. 2. 2009)</option>
       </select>
       <div class="norma-napoveda">
         <strong>Podle čeho vybrat:</strong> rozhoduje, kdy byl hromosvod zřízen.
         <ul>
           <li><strong>do 30. 11. 2006</strong> — ČSN 34 1390 (platila od roku 1969)</li>
-          <li><strong>12/2006 – 1. 2. 2009</strong> — obě normy platily <strong>souběžně</strong>;
-            posuzujte podle té, podle které byl hromosvod projektován a zřízen</li>
-          <li><strong>od 1. 2. 2009</strong> — ČSN EN 62305 ed.2 (tímto dnem byla ČSN 34 1390 zrušena)</li>
-          <li><strong>od 10/2025</strong> — vyšlo nové vydání <strong>ČSN EN IEC 62305 ed.3</strong>;
-            s ed.2 platí souběžně, <strong>od 1. 11. 2027</strong> už jen ono</li>
+          <li><strong>12/2006 – 1. 2. 2009</strong> — ČSN 34 1390 a <strong>ČSN EN 62305 (1. vydání)</strong>
+            platily <strong>souběžně</strong>; posuzujte podle té, podle které byl hromosvod projektován a zřízen</li>
+          <li><strong>2. 2. 2009 – 2011</strong> — jen <strong>ČSN EN 62305, 1. vydání</strong> z 11/2006
+            (ČSN 34 1390 byla 1. 2. 2009 zrušena, ed.2 ještě nebyla)</li>
+          <li><strong>od 09/2011</strong> (po částech do 02/2013) — <strong>ČSN EN 62305 ed.2</strong>;
+            s 1. vydáním souběžně do 13. 1. 2014</li>
+          <li><strong>od 10/2025</strong> — <strong>ČSN EN IEC 62305 ed.3</strong>; s ed.2 platí souběžně,
+            <strong>od 1. 11. 2027</strong> už jen ono</li>
         </ul>
       </div>
     </div>
@@ -3820,6 +3824,15 @@ var NORMY = {
     { s: 'Související ČSN', items: [
       { id: 'csn2000554', t: 'ČSN 33 2000-5-54 ed.3 — Uzemnění a ochranné vodiče', od: 'od 08/2012', c: true }
     ]},
+    // První vydání souboru — platilo 12/2006 až 13. 1. 2014 (od 1. 2. 2009
+    // samostatně, od 2011 souběžně s ed.2). Podle něj se stavěly hromosvody
+    // zhruba v letech 2009–2011.
+    { s: 'ČSN EN 62305 — 1. vydání (11/2006, zrušeno 13. 1. 2014)', items: [
+      { id: 'csn623051v1', t: 'ČSN EN 62305-1 — Obecné principy (1. vydání)', od: 'od 11/2006', c: false },
+      { id: 'csn623052v1', t: 'ČSN EN 62305-2 — Řízení rizika (1. vydání)', od: 'od 11/2006', c: false },
+      { id: 'csn623053v1', t: 'ČSN EN 62305-3 — Hmotné škody a nebezpečí života (1. vydání)', od: 'od 11/2006', c: false },
+      { id: 'csn623054v1', t: 'ČSN EN 62305-4 — Elektrické a elektronické systémy ve stavbách (1. vydání)', od: 'od 11/2006', c: false }
+    ]},
     { s: 'Starší instalace', items: [
       { id: 'csn341390', t: 'ČSN 34 1390 — Předpisy pro ochranu před bleskem (starší instalace)', od: '1969–2009', c: false }
     ]}
@@ -5347,14 +5360,17 @@ function lpsVolbaNormy() {
   return (sel && sel.value) || '62305';
 }
 
-// Přepíše citaci ed.2 na ed.3. Čísla článků a tabulek se u ed.3 VYPOUŠTĚJÍ
-// (rozhodnutí uživatele 2026-08-11): číslování z ed.2 v novém vydání
-// nemusí platit, takže je poctivější citovat jen normu. Ostatních norem
-// (např. ČSN 33 2000-5-54 ed.3) se to nedotkne.
+// Přepíše citaci z ed.2 na jiné vydání souboru 62305 (ed.3 nebo 1. vydání).
+// Čísla článků a tabulek se přitom VYPOUŠTĚJÍ (rozhodnutí uživatele
+// 2026-08-11): číslování z ed.2 v jiném vydání nemusí platit, takže je
+// poctivější citovat jen normu. Ostatních norem (např. ČSN 33 2000-5-54
+// ed.3 nebo ČSN 34 1390) se to nedotkne.
 var RE_CITACE_ED2 = /ČSN EN 62305-(\d)\s*ed\.\s*2((?:(?:,\s*|\s+)(?:čl\.|tab\.|tabulka)\s*\d+(?:\.\d+)*)*)/g;
+var CITACE_NAHRADA = { '62305e3': 'ČSN EN IEC 62305-$1 ed.3', '62305v1': 'ČSN EN 62305-$1 (1. vydání)' };
 function citaceNormy(text, volba) {
-  if ((volba || lpsVolbaNormy()) !== '62305e3') return text;
-  return String(text || '').replace(RE_CITACE_ED2, 'ČSN EN IEC 62305-$1 ed.3');
+  var nahrada = CITACE_NAHRADA[volba || lpsVolbaNormy()];
+  if (!nahrada) return text;              // ed.2 a ČSN 34 1390 zůstávají
+  return String(text || '').replace(RE_CITACE_ED2, nahrada);
 }
 
 // Vrátí aktuální sadu kontrolních bodů podle volby normy.
@@ -5388,18 +5404,19 @@ function syncLps1390(source) {
 
 // Zaškrtnutí norem na titulní straně podle zvoleného vydání — technik
 // vybere normu jednou v Prohlídce LPS a seznam norem se srovná sám.
-var LPS_NORMY_ED2 = ['csn623051', 'csn623052', 'csn623053', 'csn623054'];
-var LPS_NORMY_ED3 = ['csn623051e3', 'csn623052e3', 'csn623053e3', 'csn623054e3'];
+var LPS_NORMY_SKUPINY = {
+  '62305':   ['csn623051', 'csn623052', 'csn623053', 'csn623054'],
+  '62305e3': ['csn623051e3', 'csn623052e3', 'csn623053e3', 'csn623054e3'],
+  '62305v1': ['csn623051v1', 'csn623052v1', 'csn623053v1', 'csn623054v1']
+};
 function srovnatNormyLps() {
   if (typeof aktTyp !== 'undefined' && aktTyp !== 'lps') return;
   var volba = lpsVolbaNormy();
-  LPS_NORMY_ED2.forEach(function(id) {
-    var c = document.getElementById('n-' + id);
-    if (c) c.checked = (volba === '62305');
-  });
-  LPS_NORMY_ED3.forEach(function(id) {
-    var c = document.getElementById('n-' + id);
-    if (c) c.checked = (volba === '62305e3');
+  Object.keys(LPS_NORMY_SKUPINY).forEach(function(skupina) {
+    LPS_NORMY_SKUPINY[skupina].forEach(function(id) {
+      var c = document.getElementById('n-' + id);
+      if (c) c.checked = (volba === skupina);
+    });
   });
 }
 
