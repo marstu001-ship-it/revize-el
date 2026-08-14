@@ -675,7 +675,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.182<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.183<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3797,10 +3797,27 @@ var NORMY = {
     { s: 'Nařízení vlády', items: [
       { id: 'nv190lps', t: 'NV č. 190/2022 Sb. — vyhrazená technická elektrická zařízení', od: 'od 07/2022', c: true }
     ]},
-    { s: 'ČSN EN 62305 — Ochrana před bleskem', items: [
-      { id: 'csn623051', t: 'ČSN EN 62305-1 ed.2 — Obecné principy', od: 'od 03/2011', c: true },
+    // POZOR: id položek se nesmí měnit — normy_checks ukládá zaškrtnutí podle
+    // nich a syncLps1390() hledá checkbox 'n-csn341390'. Nová id se ve starých
+    // zprávách jen nezaškrtnou, migrace není potřeba.
+    { s: 'ČSN EN 62305 ed.2 — Ochrana před bleskem (platí do 31. 10. 2027)', items: [
+      { id: 'csn623051', t: 'ČSN EN 62305-1 ed.2 — Obecné principy', od: 'od 09/2011', c: true },
       { id: 'csn623052', t: 'ČSN EN 62305-2 ed.2 — Řízení rizika', od: 'od 02/2013', c: true },
-      { id: 'csn623053', t: 'ČSN EN 62305-3 ed.2 — Hmotné škody a ohrožení života', od: 'od 03/2012', c: true },
+      { id: 'csn623053', t: 'ČSN EN 62305-3 ed.2 — Hmotné škody a ohrožení života', od: 'od 01/2012', c: true },
+      { id: 'csn623054', t: 'ČSN EN 62305-4 ed.2 — Elektrické a elektronické systémy ve stavbách', od: 'od 09/2011', c: true }
+    ]},
+    // Nové vydání souboru — s ed.2 platí souběžně, od 1. 11. 2027 povinné.
+    // Texty závěru a podnadpis PDF zatím citují ed.2.
+    { s: 'ČSN EN IEC 62305 ed.3 — Ochrana před bleskem (povinná od 1. 11. 2027)', items: [
+      { id: 'csn623051e3', t: 'ČSN EN IEC 62305-1 ed.3 — Obecné principy', od: 'od 10/2025', c: false },
+      { id: 'csn623052e3', t: 'ČSN EN IEC 62305-2 ed.3 — Management rizika', od: 'od 10/2025', c: false },
+      { id: 'csn623053e3', t: 'ČSN EN IEC 62305-3 ed.3 — Hmotné škody na stavbách a ohrožení života', od: 'od 12/2025', c: false },
+      { id: 'csn623054e3', t: 'ČSN EN IEC 62305-4 ed.3 — Elektrické a elektronické systémy ve stavbách', od: 'od 12/2025', c: false }
+    ]},
+    { s: 'Související ČSN', items: [
+      { id: 'csn2000554', t: 'ČSN 33 2000-5-54 ed.3 — Uzemnění a ochranné vodiče', od: 'od 08/2012', c: true }
+    ]},
+    { s: 'Starší instalace', items: [
       { id: 'csn341390', t: 'ČSN 34 1390 — Předpisy pro ochranu před bleskem (starší instalace)', od: '1969–2009', c: false }
     ]}
   ]
