@@ -696,7 +696,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.187<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.188<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5895,11 +5895,11 @@ var TYPY_TEXTU = {
   ],
   f_zhodnoceni: [
     { nazev: 'Schopno provozu (elektro)', text: 'Na základě provedených úkonů bylo zjištěno, že naměřené hodnoty izolačních odporů vyhovují, protože převyšují nejmenší hodnoty stanovené normou. Naměřené hodnoty impedance vypínací smyčky vyhovují a jsou v souladu s dimenzemi předřazených jistících prvků. Výsledky měření proudových chráničů jsou v souladu s požadavky příslušných ČSN. Funkce kontrolního tlačítka proudového chrániče — vyhovuje.\n\nMěřením, prohlídkou a zkouškou bylo potvrzeno, že elektrické zařízení odpovídá svým provedením působení vnějších vlivů v místě provedené instalace a je provedeno v souladu s vypracovanou projektovou dokumentací.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.\n\nSeznámení se správným a bezpečným užíváním elektrické instalace ze strany předávajícího (zhotovitele, vlastníka, pronajímatele — fyzické nebo právnické osoby) může provádět pouze osoba s příslušnou odbornou elektrotechnickou kvalifikací — provedl revizní technik při předání zprávy o revizi. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním el. instalace (zařízení).' },
-    { nazev: 'Neschopno provozu (elektro)', text: 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole 9 této zprávy. Zjištěné závady kategorie C1 (nebezpečné) musí být neprodleně odstraněny; revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.\n\nU závad kategorie C2 (potenciálně nebezpečné) je nutné zajistit jejich odstranění v přiměřené lhůtě. U závad kategorie C3 (doporučení) je odstranění ponecháno na zvážení provozovatele.\n\nPo odstranění všech závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že zjištěné nedostatky byly odstraněny a el. zařízení je bezpečné pro provoz.\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.' },
+    { nazev: 'Neschopno provozu (elektro)', text: 'Na základě provedených úkonů byly zjištěny závady uvedené v kapitole 9 této zprávy.\n\n{{KATEGORIE}}\n\nPoučení a seznámení s obsluhou elektrického zařízení:\nPro obsluhu elektrického zařízení platí ČSN 33 1310 ed.2:2009 — Bezpečnostní požadavky na elektrické instalace a spotřebiče určené k užívání osobami bez elektrotechnické kvalifikace.' },
     { nazev: 'LPS schopno – ČSN EN 62305', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací a odpovídají třídě LPS stanovené pro objekt. Naměřené hodnoty zemního odporu vyhovují požadavkům ČSN EN 62305-3 ed.2.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
-    { nazev: 'LPS neschopno – ČSN EN 62305', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN EN 62305-3 ed.2 a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
+    { nazev: 'LPS neschopno – ČSN EN 62305', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN EN 62305-3 ed.2 a zjištěné závady musí být neprodleně odstraněny.\n\n{{KATEGORIE}}\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
     { nazev: 'LPS schopno – ČSN 34 1390', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN 34 1390, ČSN 33 2000-5-54 ed.3.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací. Naměřené hodnoty zemního odporu vyhovují požadavkům ČSN 34 1390.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
-    { nazev: 'LPS neschopno – ČSN 34 1390', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN 34 1390, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN 34 1390 a zjištěné závady musí být neprodleně odstraněny.\n\nPo odstranění závad kategorií C1 a C2 doporučujeme provést kontrolní revizi, která potvrdí, že LPS je ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' }
+    { nazev: 'LPS neschopno – ČSN 34 1390', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN 34 1390, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN 34 1390 a zjištěné závady musí být neprodleně odstraněny.\n\n{{KATEGORIE}}\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' }
   ]
 };
 
@@ -5933,7 +5933,8 @@ function otevritTypickeTexty(fieldId) {
     if (f && f.indexOf(currentKey) === -1) return; // skrýt pro jiný typ revize
     var div = document.createElement('div');
     div.style.cssText = 'background:var(--surface);border:1px solid var(--border);padding:.7rem .9rem;border-radius:3px';
-    var preview = t.text.length > 200 ? t.text.slice(0, 200) + '…' : t.text;
+    var nahled = doplnKategorieZavad(t.text, aktTyp === 'lps');
+    var preview = nahled.length > 200 ? nahled.slice(0, 200) + '…' : nahled;
     div.innerHTML =
       '<div style="font-weight:600;font-size:.82rem;color:var(--accent2);margin-bottom:.3rem">' + t.nazev + '</div>' +
       '<div style="font-size:.76rem;color:var(--muted);white-space:pre-wrap;max-height:4.5rem;overflow:hidden;margin-bottom:.5rem">' + preview + '</div>' +
@@ -5948,6 +5949,18 @@ function zavritTypickeTexty() {
   document.getElementById('modal-typicke-texty').classList.remove('open');
 }
 
+// Šablony závěrů obsahují značku {{KATEGORIE}} — při vložení se nahradí
+// větami o kategoriích, které jsou ve zprávě opravdu použité. Dřív měly
+// šablony natvrdo „Po odstranění závad kategorií C1 a C2…" a psalo se
+// tak o C1 i ve zprávě, kde žádná závada C1 nebyla.
+function doplnKategorieZavad(text, isLps) {
+  var t = String(text || '');
+  if (t.indexOf('{{KATEGORIE}}') === -1) return t;
+  var blok = textyKategoriiZavad(cisloKapitolyZavady(), !!isLps);
+  if (!blok) return t.replace(/\n*\{\{KATEGORIE\}\}\n*/g, '\n\n').trim();
+  return t.replace('{{KATEGORIE}}', blok);
+}
+
 function vlozitTypickyText(idx, mode) {
   var lookupKey = __lpsFieldMap[__typTextTargetId] || __typTextTargetId;
   var texty = TYPY_TEXTU[lookupKey] || [];
@@ -5955,7 +5968,8 @@ function vlozitTypickyText(idx, mode) {
   if (!t) return;
   var el = document.getElementById(__typTextTargetId);
   if (!el) return;
-  var vkladany = opravKapitoluZavady(t.text, cisloKapitolyZavady());
+  var jeLps = (typeof aktTyp !== 'undefined' && aktTyp === 'lps');
+  var vkladany = doplnKategorieZavad(opravKapitoluZavady(t.text, cisloKapitolyZavady()), jeLps);
   // U LPS se citace srovnají se zvoleným vydáním (ed.2 / ed.3)
   if (typeof aktTyp !== 'undefined' && aktTyp === 'lps') vkladany = citaceNormy(vkladany);
   if (mode === 'replace') {
