@@ -696,7 +696,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.186<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.187<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -8366,6 +8366,7 @@ async function ulozitSoubor(blob, filename, opts) {
   __ulozitSouborLock = ted;
   // 1. Zkus File System Access API (Chrome/Edge desktop)
   if (!opts.primoStazeni && 'showSaveFilePicker' in window) {
+    var souborVybran = false;
     try {
       var isJson = blob.type === 'application/json';
       var handle = await window.showSaveFilePicker({
@@ -8374,13 +8375,29 @@ async function ulozitSoubor(blob, filename, opts) {
           ? { description: 'JSON soubor', accept: { 'application/json': ['.json'] } }
           : { description: 'PDF soubor',  accept: { 'application/pdf':  ['.pdf']  } }]
       });
+      souborVybran = true;
       var writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
       return true;
     } catch(e) {
       if (e.name === 'AbortError') return false; // uživatel zrušil
-      // jiná chyba — pokračuj na další metodu
+      if (souborVybran) {
+        // Uživatel soubor vybral (a případně potvrdil přepsání), ale zápis
+        // selhal — nejčastěji je starý soubor otevřený v prohlížeči PDF,
+        // takže ho Windows zamknou. Dřív se tiše stáhl do Stažených a
+        // uživateli to připadalo, že se neuložilo nic a zůstala stará verze.
+        var duvod = (e.name === 'NoModificationAllowedError' || e.name === 'NotAllowedError')
+          ? 'Nejspíš je otevřený v jiném programu (typicky v prohlížeči PDF) — zavřete ho a uložte znovu.'
+          : 'Zápis se nezdařil (' + (e.name || 'chyba') + ').';
+        showToast('⚠️ Soubor ' + filename + ' se nepodařilo přepsat. ' + duvod, {
+          timeout: 15000,
+          actionLabel: 'ULOŽIT DO STAŽENÝCH',
+          action: function() { stahnoutSoubor(blob, filename); }
+        });
+        return false;
+      }
+      // dialog se ani neotevřel — pokračuj na další metodu
     }
   }
   // 2. Zkus Web Share API — ale JEN na dotykových zařízeních (iPhone/iPad/
@@ -8400,6 +8417,12 @@ async function ulozitSoubor(blob, filename, opts) {
     }
   }
   // 3. Fallback — klasické stažení do Stažených
+  stahnoutSoubor(blob, filename);
+  return true;
+}
+
+// Klasické stažení do složky Stažené soubory.
+function stahnoutSoubor(blob, filename) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
@@ -8408,7 +8431,6 @@ async function ulozitSoubor(blob, filename, opts) {
   a.click();
   document.body.removeChild(a);
   setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-  return true;
 }
 
 // Per-page render do PDF — každá .a4 zachycena samostatně do canvas
