@@ -183,6 +183,27 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .char-row input[type=text]{flex:0 0 140px;font-size:.8rem;padding:.25rem .5rem;
   border:1px solid var(--border);border-radius:2px;background:var(--surface)}
 
+/* ═══ SEZNAM NOREM ═══
+   Platnost vpravo ve sloupci a mono písmem, aby šly normy vybírat podle
+   data. Zvýraznění řádku pod myší je stejné jako v tabulce měření.
+   Neplatné normy jsou ztlumené — zůstávají volitelné pro starší instalace. */
+.norma-radek{display:flex;align-items:flex-start;gap:.6rem;padding:.32rem .45rem;
+  border-radius:2px;border-left:3px solid transparent}
+.norma-radek:hover{background:rgba(43,87,154,.09);border-left-color:var(--accent2)}
+html.dark .norma-radek:hover{background:rgba(122,163,216,.13)}
+.norma-radek input[type=checkbox]{margin-top:.15rem;flex-shrink:0}
+.norma-radek label{display:flex;flex:1;gap:.9rem;align-items:baseline;
+  font-size:.82rem;cursor:pointer;line-height:1.4}
+.norma-nazev{flex:1}
+.norma-platnost{flex:0 0 122px;text-align:right;font-family:var(--mono);
+  font-size:.7rem;font-weight:600;color:var(--text);white-space:nowrap}
+.norma-radek.neplatna .norma-nazev{color:var(--muted)}
+.norma-radek.neplatna .norma-platnost{color:var(--muted);font-weight:500}
+@media (max-width:700px){
+  .norma-radek label{flex-wrap:wrap;gap:.15rem}
+  .norma-platnost{flex:0 0 100%;text-align:left}
+}
+
 /* ═══ ROZBALOVACÍ NÁPOVĚDA (LPZ zóny) ═══
    Starší kolegové ČSN EN 62305 tak často nepoužívají a nevědí, kterou zónu
    zakliknout — u každé zóny je proto krátký popis a pod nimi rozklikávací
@@ -675,7 +696,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.185<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.186<span class="ver-date"> · 2026-08-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3784,16 +3805,16 @@ var NORMY = {
       { id: 'nv194', t: 'NV č. 194/2022 Sb. — technické požadavky na el. instalace', od: 'od 07/2022', c: true }
     ]},
     { s: 'ČSN — vyberte dle doby vzniku instalace', items: [
-      { id: 'csn331500', t: 'ČSN 33 1500 (Z1–Z4) — Revize elektrických zařízení', od: 'od 1990, Z4 od 2007', c: true },
+      { id: 'csn331500', t: 'ČSN 33 1500 (Z1–Z4) — Revize elektrických zařízení', od: 'od 1990 · Z4 2007', c: true },
       { id: 'csn332000641', t: 'ČSN 33 2000-4-41 ed.3 — Ochrana před úrazem el. proudem', od: 'od 02/2018', c: true },
       { id: 'csn3320006', t: 'ČSN 33 2000-6 ed.2 — Revize elektrických instalací', od: 'od 06/2017', c: true },
       { id: 'csn61140', t: 'ČSN EN 61140 ed.3 — Ochrana před úrazem elektrickým proudem', od: 'od 04/2016', c: true },
       { id: 'csn2130', t: 'ČSN 33 2130 ed.4 — Elektrický rozvod, instalační zóny', od: 'od 01/2023', c: false },
       { id: 'csn2000554', t: 'ČSN 33 2000-5-54 ed.3 — Uzemnění a ochranné vodiče', od: 'od 08/2012', c: false },
-      { id: 'csn2000551', t: 'ČSN 33 2000-5-51 ed.3 +Z1+Z2 — Výběr a stavba el. zařízení', od: 'od 2010, Z2 od 2016', c: false },
+      { id: 'csn2000551', t: 'ČSN 33 2000-5-51 ed.3 +Z1+Z2 — Výběr a stavba el. zařízení', od: 'od 2010 · Z2 2016', c: false },
       { id: 'csn2000552', t: 'ČSN 33 2000-5-52 ed.2 — Elektrické rozvody', od: 'od 06/2012', c: false },
       { id: 'csn2000701', t: 'ČSN 33 2000-7-701 ed.3 — Prostory s vanou nebo sprchou', od: 'od 02/2007', c: false },
-      { id: 'csn641z1', t: 'ČSN 33 2000-4-41 ed.2 + Z1 — starší instalace', od: 'od 2000, do 02/2018', c: false },
+      { id: 'csn641z1', t: 'ČSN 33 2000-4-41 ed.2 + Z1 — starší instalace', od: '2000 – 02/2018', c: false, neplatna: true },
       { id: 'csn50110', t: 'ČSN EN 50110-1 ed.3 — Obsluha a práce na el. zařízeních', od: 'od 06/2015', c: false },
       { id: 'csn60445', t: 'ČSN EN IEC 60445 ed.6 — Označování svorek a vodičů', od: 'od 11/2018', c: false },
       { id: 'csn60073', t: 'ČSN EN 60073 ed.2 — Kódování sdělovačů a ovládačů', od: 'od 2003', c: false },
@@ -3808,10 +3829,10 @@ var NORMY = {
     // nich a syncLps1390() hledá checkbox 'n-csn341390'. Nová id se ve starých
     // zprávách jen nezaškrtnou, migrace není potřeba.
     { s: 'ČSN EN 62305 ed.2 — Ochrana před bleskem (platí do 31. 10. 2027)', items: [
-      { id: 'csn623051', t: 'ČSN EN 62305-1 ed.2 — Obecné principy', od: 'od 09/2011', c: true },
-      { id: 'csn623052', t: 'ČSN EN 62305-2 ed.2 — Řízení rizika', od: 'od 02/2013', c: true },
-      { id: 'csn623053', t: 'ČSN EN 62305-3 ed.2 — Hmotné škody a ohrožení života', od: 'od 01/2012', c: true },
-      { id: 'csn623054', t: 'ČSN EN 62305-4 ed.2 — Elektrické a elektronické systémy ve stavbách', od: 'od 09/2011', c: true }
+      { id: 'csn623051', t: 'ČSN EN 62305-1 ed.2 — Obecné principy', od: '09/2011 – 10/2027', c: true },
+      { id: 'csn623052', t: 'ČSN EN 62305-2 ed.2 — Řízení rizika', od: '02/2013 – 10/2027', c: true },
+      { id: 'csn623053', t: 'ČSN EN 62305-3 ed.2 — Hmotné škody a ohrožení života', od: '01/2012 – 10/2027', c: true },
+      { id: 'csn623054', t: 'ČSN EN 62305-4 ed.2 — Elektrické a elektronické systémy ve stavbách', od: '09/2011 – 10/2027', c: true }
     ]},
     // Nové vydání souboru — s ed.2 platí souběžně, od 1. 11. 2027 povinné.
     // Texty závěru a podnadpis PDF zatím citují ed.2.
@@ -3828,16 +3849,30 @@ var NORMY = {
     // samostatně, od 2011 souběžně s ed.2). Podle něj se stavěly hromosvody
     // zhruba v letech 2009–2011.
     { s: 'ČSN EN 62305 — 1. vydání (11/2006, zrušeno 13. 1. 2014)', items: [
-      { id: 'csn623051v1', t: 'ČSN EN 62305-1 — Obecné principy (1. vydání)', od: 'od 11/2006', c: false },
-      { id: 'csn623052v1', t: 'ČSN EN 62305-2 — Řízení rizika (1. vydání)', od: 'od 11/2006', c: false },
-      { id: 'csn623053v1', t: 'ČSN EN 62305-3 — Hmotné škody a nebezpečí života (1. vydání)', od: 'od 11/2006', c: false },
-      { id: 'csn623054v1', t: 'ČSN EN 62305-4 — Elektrické a elektronické systémy ve stavbách (1. vydání)', od: 'od 11/2006', c: false }
+      { id: 'csn623051v1', t: 'ČSN EN 62305-1 — Obecné principy (1. vydání)', od: '11/2006 – 01/2014', c: false, neplatna: true },
+      { id: 'csn623052v1', t: 'ČSN EN 62305-2 — Řízení rizika (1. vydání)', od: '11/2006 – 01/2014', c: false, neplatna: true },
+      { id: 'csn623053v1', t: 'ČSN EN 62305-3 — Hmotné škody a nebezpečí života (1. vydání)', od: '11/2006 – 01/2014', c: false, neplatna: true },
+      { id: 'csn623054v1', t: 'ČSN EN 62305-4 — Elektrické a elektronické systémy ve stavbách (1. vydání)', od: '11/2006 – 01/2014', c: false, neplatna: true }
     ]},
     { s: 'Starší instalace', items: [
-      { id: 'csn341390', t: 'ČSN 34 1390 — Předpisy pro ochranu před bleskem (starší instalace)', od: '1969–2009', c: false }
+      { id: 'csn341390', t: 'ČSN 34 1390 — Předpisy pro ochranu před bleskem (starší instalace)', od: '1969 – 02/2009', c: false, neplatna: true }
     ]}
   ]
 };
+
+// Jeden řádek seznamu norem: zaškrtávátko, název a vpravo platnost.
+// n.neplatna = norma už neplatí (zůstává volitelná pro starší instalace).
+function radekNormy(n, checked) {
+  var titulek = n.neplatna
+    ? ' title="Norma už neplatí — vyberte ji jen u zařízení zřízeného za její platnosti"'
+    : '';
+  return '<div class="norma-radek' + (n.neplatna ? ' neplatna' : '') + '"' + titulek + '>' +
+    '<input type="checkbox" id="n-' + n.id + '"' + (checked ? ' checked' : '') + '>' +
+    '<label for="n-' + n.id + '">' +
+      '<span class="norma-nazev">' + n.t + '</span>' +
+      (n.od ? '<span class="norma-platnost">' + n.od + '</span>' : '') +
+    '</label></div>';
+}
 
 function renderNormy(typ) {
   var c = document.getElementById('normy-obsah');
@@ -3851,11 +3886,7 @@ function renderNormy(typ) {
     sk.items.forEach(function(n) {
       // Podtypový preset přebíjí výchozí hodnotu
       var checked = (podtypPreset[n.id] !== undefined) ? podtypPreset[n.id] : n.c;
-      var odHtml = n.od ? ' <span style="color:#9a9488;font-size:.72rem;font-style:italic">(' + n.od + ')</span>' : '';
-      html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
-      html += '<input type="checkbox" id="n-' + n.id + '"' + (checked ? ' checked' : '') + '>';
-      html += '<label for="n-' + n.id + '" style="font-size:.82rem;cursor:pointer">' + n.t + odHtml + '</label>';
-      html += '</div>';
+      html += radekNormy(n, checked);
     });
     html += '</div>';
   });
@@ -3865,11 +3896,7 @@ function renderNormy(typ) {
     html += '<div style="margin-bottom:1rem">';
     html += '<div style="font-family:monospace;font-size:.6rem;text-transform:uppercase;color:#6e6a60;margin-bottom:.4rem">Vlastní normy</div>';
     vlastni.forEach(function(n) {
-      var odHtml = n.od ? ' <span style="color:#9a9488;font-size:.72rem;font-style:italic">(' + n.od + ')</span>' : '';
-      html += '<div style="display:flex;align-items:flex-start;gap:.6rem;padding:.3rem .4rem">';
-      html += '<input type="checkbox" id="n-' + n.id + '">';
-      html += '<label for="n-' + n.id + '" style="font-size:.82rem;cursor:pointer">' + n.t + odHtml + '</label>';
-      html += '</div>';
+      html += radekNormy(n, false);
     });
     html += '</div>';
   }
@@ -3935,7 +3962,7 @@ function renderNormyEditor() {
   vlastni.forEach(function(n, idx) {
     html += '<div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.35rem">' +
       '<input type="text" class="normy-editor-t" data-idx="' + idx + '" value="' + esc(n.t) + '" placeholder="Název normy, např. ČSN EN 50549-1 ed.2" style="flex:1;font-size:.8rem;padding:.3rem .5rem;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text)">' +
-      '<input type="text" class="normy-editor-od" data-idx="' + idx + '" value="' + esc(n.od || '') + '" placeholder="od 2024" style="width:82px;font-size:.8rem;padding:.3rem .5rem;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text)">' +
+      '<input type="text" class="normy-editor-od" data-idx="' + idx + '" value="' + esc(n.od || '') + '" placeholder="od 2024 / 2010 – 2024" title="Platnost normy — např. „od 2024" nebo „2010 – 2024"" style="width:132px;font-size:.8rem;padding:.3rem .5rem;border:1px solid var(--border);border-radius:3px;background:var(--surface);color:var(--text)">' +
       '<button class="btn btn-ghost" style="padding:.2rem .45rem;font-size:.8rem" data-action="smazatVlastniNormu" data-idx="' + idx + '" title="Smazat">🗑️</button>' +
       '</div>';
   });
