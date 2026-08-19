@@ -696,7 +696,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.188<span class="ver-date"> · 2026-08-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.189<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -8501,15 +8501,26 @@ function renderPagesToPDF(pageEls, filename, opts) {
     alert('Žádné stránky k vygenerování.');
     return Promise.resolve();
   }
-  // Zámek proti opakovaným klikům během běžícího renderu
-  if (window.__pdfRendering) return Promise.resolve();
+  // Zámek proti opakovaným klikům během běžícího renderu. Kdyby render
+  // spadl nebo ho uživatel opustil, příznak by zůstal viset a program by
+  // pak už jen tiše nedělal nic — po minutě se proto sám uvolní.
+  if (window.__pdfRendering) {
+    if (Date.now() - (window.__pdfRenderingOd || 0) > 60000) {
+      window.__pdfRendering = false;          // zaseknutý příznak
+    } else {
+      showToast('⏳ Generování PDF ještě běží — počkejte, až doběhne.');
+      return Promise.resolve();
+    }
+  }
   window.__pdfRendering = true;
+  window.__pdfRenderingOd = Date.now();
   // Ověřit dostupnost knihoven (load přes script tags v hlavičce)
   var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
   var canvasFn = window.html2canvas;
   if (!jsPDFCtor || !canvasFn) {
     window.__pdfRendering = false;
-    alert('PDF knihovny se nenačetly. Zkuste obnovit stránku (Ctrl+F5).');
+    alert('PDF knihovny se nenačetly — bez připojení k internetu je program neumí stáhnout.\n\n' +
+          'Zkuste obnovit stránku (Ctrl+F5), případně se připojit k síti.');
     return Promise.resolve();
   }
   pdfProgressShow(pageEls.length);
@@ -8694,7 +8705,7 @@ function provestOdeslani(rezim) {
   var komu = emailPrijemce(D);
   var allPages = Array.prototype.slice.call(container.querySelectorAll('.a4'));
   return renderPagesToPDF(allPages, filename, { vratitBlob: true }).then(function(blob) {
-    if (!blob) return;
+    if (!blob) return;                       // důvod už oznámil renderPagesToPDF
     if (rezim === 'mailto') return emailFallback(blob, filename, komu, predmet, telo, D);
     if (rezim === 'sdileni') {
       var file = new File([blob], filename, { type: 'application/pdf' });
@@ -8787,7 +8798,15 @@ function odeslatPresEml(blob, filename, komu, predmet, telo, D) {
     var eml = vytvorEml(new Uint8Array(buf), filename, komu, predmet, telo);
     var emlNazev = filename.replace(/\.pdf$/i, '') + '.eml';
     return Promise.resolve(ulozitSoubor(eml, emlNazev, { primoStazeni: true })).then(function(ok) {
-      if (ok === false) return;
+      if (ok === false) {
+        // Stažení se nepovedlo (např. dvojklik na tlačítko) — neodcházet potichu
+        showToast('⚠️ Zprávu se nepodařilo připravit ke stažení. Zkuste to za chvíli znovu.', {
+          timeout: 12000,
+          actionLabel: 'ROZEPSAT BEZ PŘÍLOHY',
+          action: function() { emailFallback(blob, filename, komu, predmet, telo, D); }
+        });
+        return;
+      }
       oznacOdeslano(D);
       showToast('📧 Zpráva je připravená. Nahoře v prohlížeči u staženého souboru klepněte na ' +
         'Otevřít — Outlook ukáže rozepsaný e-mail i s přílohou a vy dáte Odeslat.', {
