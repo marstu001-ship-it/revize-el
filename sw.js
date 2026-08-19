@@ -1,8 +1,14 @@
-var CACHE_NAME = 'revize-el-v9.194-20260819';
+var CACHE_NAME = 'revize-el-v9.195-20260819';
+// Vlastní soubory — bez nich aplikace offline nefunguje.
 var URLS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json',
+  './manifest.json'
+];
+// Externí zdroje — uložit, když to jde. Když CDN nebo fonty nejdou stáhnout
+// (offline při první návštěvě, firemní proxy), instalace SW nesmí spadnout,
+// jinak by uživatel zůstal úplně bez service workeru.
+var URLS_OPTIONAL = [
   'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
@@ -17,7 +23,12 @@ self.addEventListener('install', function(e) {
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(URLS_TO_CACHE.map(function(url) {
         return new Request(url, { cache: 'reload' });
-      }));
+      })).then(function() {
+        return Promise.all(URLS_OPTIONAL.map(function(url) {
+          return cache.add(new Request(url, { cache: 'reload', mode: 'cors' }))
+                      .catch(function() { /* doplní se později přes fetch handler */ });
+        }));
+      });
     }).then(function() {
       return self.skipWaiting();
     })

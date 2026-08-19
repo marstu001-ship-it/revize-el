@@ -195,6 +195,7 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
   border:3px dashed var(--accent2);border-radius:6px;background:rgba(43,87,154,.1);
   cursor:grab;user-select:none;animation:dragPuls 2s ease-in-out infinite}
 .drag-dlazdice:hover{background:rgba(43,87,154,.18)}
+.drag-dlazdice.drag-ceka{cursor:progress;opacity:.6;animation:none}
 .drag-dlazdice:active{cursor:grabbing;background:rgba(43,87,154,.24);animation:none}
 @keyframes dragPuls{0%,100%{box-shadow:0 0 0 0 rgba(43,87,154,.35)}50%{box-shadow:0 0 0 7px rgba(43,87,154,0)}}
 @media (prefers-reduced-motion:reduce){.drag-dlazdice{animation:none}}
@@ -718,7 +719,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.194<span class="ver-date"> · 2026-08-19</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.195<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2337,12 +2338,17 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       <div class="warn-box" style="margin:.6rem 0 0;font-size:.8rem">
         Netáhněte tlačítka — přetahuje se <strong>jen ta modrá dlaždice s názvem souboru</strong>.
       </div>
+      <div class="warn-box" id="drag-varovani" style="margin:.6rem 0 0;font-size:.8rem;display:none;border-color:var(--accent);color:var(--accent)">
+        ⚠️ Tenhle prohlížeč zatím nemá připravenou offline část programu, přetažení
+        proto nemusí projít. Načtěte stránku znovu (F5) a zkuste to, nebo použijte
+        <strong>↩ Zkusit jinak</strong>.
+      </div>
     </div>
     <div class="drag-dlazdice" id="drag-dlazdice" draggable="true" title="Stiskněte a táhněte do okna e-mailu">
       <div class="drag-ikona">📄</div>
       <div>
         <div class="drag-nazev" id="drag-nazev">zpráva.pdf</div>
-        <div class="drag-pozn">⇱ chyťte myší a táhněte sem do e-mailu</div>
+        <div class="drag-pozn" id="drag-pozn">⇱ chyťte myší a táhněte sem do e-mailu</div>
       </div>
     </div>
     <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
@@ -8975,18 +8981,84 @@ function emailFallback(blob, filename, komu, predmet, telo, D) {
 // Classic, aniž by ho ukládal do počítače. Blob URL žije, dokud je okno
 // otevřené — po zavření se uvolní.
 var __dragStav = null;
+var CACHE_PRILOHY = 'revize-el-prilohy';
+
+// Adresa, ze které si prohlížeč přílohu vyzvedne ve chvíli puštění do jiné
+// aplikace. blob: adresu Chromium v tomhle případě nepřečte (soubor pak
+// nedorazí), proto se příloha uloží do cache service workeru a předá se
+// normální adresa na našem webu. Bez service workeru zbývá blob: jako
+// nouzová varianta.
+// Service worker nemusí být připravený hned po prvním načtení stránky —
+// počkat na něj (krátce), než se sáhne po nouzové blob: variantě.
+function pockatNaSw() {
+  if (!('caches' in window) || !navigator.serviceWorker) return Promise.resolve(false);
+  if (navigator.serviceWorker.controller) return Promise.resolve(true);
+  return Promise.race([
+    navigator.serviceWorker.ready.then(function() { return !!navigator.serviceWorker.controller; }),
+    new Promise(function(r) { setTimeout(function() { r(!!navigator.serviceWorker.controller); }, 4000); })
+  ]).catch(function() { return false; });
+}
+
+function pripravitOdkazPrilohy(blob, filename) {
+  var jmeno = asciiNazev(filename);
+  var cesta;
+  try { cesta = new URL('__priloha/' + jmeno, location.href).href; } catch (e) { cesta = null; }
+  if (!cesta) return Promise.resolve({ url: URL.createObjectURL(blob), zdroj: 'blob' });
+  return pockatNaSw().then(function(maSw) {
+    if (!maSw) return { url: URL.createObjectURL(blob), zdroj: 'blob' };
+    return ulozitPrilohuDoCache(blob, cesta, jmeno);
+  });
+}
+
+function ulozitPrilohuDoCache(blob, cesta, jmeno) {
+  return caches.open(CACHE_PRILOHY).then(function(c) {
+    return c.put(cesta, new Response(blob, { headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="' + jmeno + '"',
+      'Content-Length': String(blob.size)
+    } }));
+  }).then(function() {
+    return { url: cesta, zdroj: 'sw' };
+  }).catch(function() {
+    return { url: URL.createObjectURL(blob), zdroj: 'blob' };
+  });
+}
+
+function pripravenostDlazdice(hotovo) {
+  var dl = document.getElementById('drag-dlazdice');
+  var pozn = document.getElementById('drag-pozn');
+  if (dl) {
+    dl.setAttribute('draggable', hotovo ? 'true' : 'false');
+    dl.classList.toggle('drag-ceka', !hotovo);
+  }
+  if (pozn) pozn.textContent = hotovo ? '⇱ chyťte myší a táhněte sem do e-mailu' : '⏳ připravuji přílohu…';
+}
 
 function pripravitPretazeni(blob, filename, komu, predmet, telo, D) {
   zrusitPretazeni();
-  var url = URL.createObjectURL(blob);
-  __dragStav = { url: url, filename: filename, komu: komu, predmet: predmet, telo: telo, D: D };
+  __dragStav = { url: '', zdroj: '', filename: filename, komu: komu, predmet: predmet, telo: telo, D: D };
+  var varovani = document.getElementById('drag-varovani');
+  if (varovani) varovani.style.display = 'none';
+  // Dokud není příloha připravená, dlaždice se netváří jako uchopitelná —
+  // jinak by technik táhl myší a nic by se nestalo.
+  pripravenostDlazdice(false);
+  pripravitOdkazPrilohy(blob, filename).then(function(o) {
+    if (!__dragStav) return;
+    __dragStav.url = o.url;
+    __dragStav.zdroj = o.zdroj;
+    pripravenostDlazdice(true);
+    // Bez service workeru umí prohlížeč nabídnout jen blob: adresu, kterou si
+    // Outlook při puštění nevyzvedne — soubor by tiše nedorazil. Radši to
+    // technikovi rovnou říct, ať zbytečně netahá myší.
+    if (o.zdroj !== 'sw' && varovani) varovani.style.display = '';
+  });
   var nazev = document.getElementById('drag-nazev');
   if (nazev) nazev.textContent = filename;
   var dl = document.getElementById('drag-dlazdice');
   if (dl && !dl.dataset.wired) {
     dl.dataset.wired = '1';
     dl.addEventListener('dragstart', function(e) {
-      if (!__dragStav || !e.dataTransfer) return;
+      if (!__dragStav || !__dragStav.url || !e.dataTransfer) return;
       // 'typ:název:absolutní URL' — Chrome/Edge z toho udělají soubor
       var asciiJmeno = asciiNazev(__dragStav.filename);
       try {
@@ -9030,7 +9102,15 @@ function zavritPretazeni() {
 
 function zrusitPretazeni() {
   if (__dragStav && __dragStav.url) {
-    setTimeout(function(u) { return function() { URL.revokeObjectURL(u); }; }(__dragStav.url), 60000);
+    var u = __dragStav.url, zdroj = __dragStav.zdroj;
+    // Uklidit až s odstupem — prohlížeč si soubor vyzvedává až po puštění
+    setTimeout(function() {
+      if (zdroj === 'sw') {
+        try { caches.open(CACHE_PRILOHY).then(function(c) { c.delete(u); }); } catch (e) {}
+      } else {
+        try { URL.revokeObjectURL(u); } catch (e) {}
+      }
+    }, 120000);
   }
   __dragStav = null;
 }
