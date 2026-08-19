@@ -718,7 +718,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.193<span class="ver-date"> · 2026-08-19</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.194<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2330,8 +2330,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       <ol style="margin:.2rem 0 0 1.3rem;padding:0">
         <li>Program otevřel v Outlooku <strong>rozepsaný e-mail</strong>. Srovnejte si okna vedle sebe,
           ať vidíte současně tohle okno i zprávu.</li>
-        <li><strong>Stiskněte myš na modré dlaždici</strong> níže, držte a táhněte ji do okna zprávy —
-          teprve tam pusťte. PDF se vloží jako příloha.</li>
+        <li><strong>Stiskněte myš na modré dlaždici</strong> níže, držte a táhněte ji nad <strong>tělo
+          rozepsané zprávy</strong> — teprve tam pusťte. PDF se vloží jako příloha.</li>
         <li>V Outlooku dáte <strong>Odeslat</strong>.</li>
       </ol>
       <div class="warn-box" style="margin:.6rem 0 0;font-size:.8rem">
@@ -8992,7 +8992,8 @@ function pripravitPretazeni(blob, filename, komu, predmet, telo, D) {
       try {
         e.dataTransfer.setData('DownloadURL', 'application/pdf:' + asciiJmeno + ':' + __dragStav.url);
       } catch(err) {}
-      try { e.dataTransfer.setData('text/plain', __dragStav.filename); } catch(err) {}
+      // ŽÁDNÝ textový formát! Když je v nabídce i text/plain, Outlook si
+      // vybere jeho a do těla zprávy vloží název souboru místo přílohy.
       e.dataTransfer.effectAllowed = 'copy';
     });
     dl.addEventListener('dragend', function() {
