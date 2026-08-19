@@ -719,7 +719,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.196<span class="ver-date"> · 2026-08-19</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.197<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2269,17 +2269,17 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       Prohlížeč nesmí spustit poštovní program sám, takže si vyberte, jak zprávu předat:
     </div>
 
-    <div class="email-volba" id="email-volba-pretazeni">
-      <div class="email-volba-nadpis">⇱ Přetáhnout přílohu do Outlooku <span class="email-znacka">nic se neukládá</span></div>
+    <div class="email-volba">
+      <div class="email-volba-nadpis">📎 Hotová zpráva s přílohou <span class="email-znacka">pro Outlook Classic</span></div>
       <div class="email-volba-popis">
-        Pro <strong>Outlook Classic</strong>. Program otevře rozepsaný e-mail a nabídne dlaždici,
-        kterou <strong>myší přetáhnete do okna zprávy</strong> — příloha se vloží, aniž byste PDF
-        ukládal do počítače.
-        <br><span class="email-volba-pozn">Tlačítkem níže se jen otevře další okno —
-        <strong>dlaždici k přetažení uvidíte až tam</strong>. Funguje v Chrome a Edge (ve Firefoxu ne),
-        Outlook musí být otevřený vedle prohlížeče.</span>
+        <strong>Jediná cesta, kterou Outlook Classic přílohu spolehlivě převezme.</strong>
+        Prohlížeč stáhne soubor zprávy (.eml), klepnete na něj v liště stahování dole a Outlook
+        otevře <strong>hotový e-mail i s přiloženým PDF</strong> — vy jen dáte Odeslat.
+        <br><span class="email-volba-pozn">Do Stažených se uloží soubor zprávy, ne PDF; s odeslaným
+        e-mailem doslouží a můžete ho smazat. Píše-li prohlížeč „Blokováno", stahování .eml je
+        zakázané — pak zvolte jinou možnost.</span>
       </div>
-      <button class="btn btn-gold" data-action="emailPretazenim">⇱ Připravit k přetažení</button>
+      <button class="btn btn-gold" data-action="emailSPrilohou">📎 Připravit zprávu s přílohou</button>
     </div>
 
     <div class="email-volba" id="email-volba-sdileni">
@@ -2295,15 +2295,17 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       <button class="btn btn-gold" data-action="emailSdilenim">📤 Odeslat přes sdílení</button>
     </div>
 
-    <div class="email-volba">
-      <div class="email-volba-nadpis">📎 Hotová zpráva s přílohou (soubor .eml)</div>
+    <div class="email-volba" id="email-volba-pretazeni">
+      <div class="email-volba-nadpis">⇱ Přetáhnout přílohu myší <span class="email-znacka">nic se neukládá</span></div>
       <div class="email-volba-popis">
-        Pro <strong>Outlook Classic</strong>. Stáhne se soubor zprávy, klepnutím na něj se
-        Outlook otevře s rozepsaným e-mailem <strong>i s přiloženým PDF</strong> a vy dáte Odeslat.
-        <br><span class="email-volba-pozn">Nevýhoda: do Stažených souborů se uloží soubor zprávy.
-        Píše-li prohlížeč „Blokováno", stahování .eml je zakázané — pak zvolte jinou možnost.</span>
+        Program otevře rozepsaný e-mail a nabídne dlaždici, kterou <strong>myší přetáhnete
+        do okna zprávy</strong>.
+        <br><span class="email-volba-pozn"><strong>Pozor: Outlook Classic přílohu z prohlížeče
+        obvykle nepřevezme</strong> — bere jen skutečné soubory z disku, takže se často nestane nic.
+        Spolehlivě to funguje do <strong>webové pošty</strong> (Outlook na webu, Gmail, Seznam)
+        a do Průzkumníka. Chrome a Edge ano, Firefox ne.</span>
       </div>
-      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="emailSPrilohou">📎 Připravit zprávu s přílohou</button>
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="emailPretazenim">⇱ Připravit k přetažení</button>
     </div>
 
     <div class="email-volba">
@@ -2337,6 +2339,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       </ol>
       <div class="warn-box" style="margin:.6rem 0 0;font-size:.8rem">
         Netáhněte tlačítka — přetahuje se <strong>jen ta modrá dlaždice s názvem souboru</strong>.
+        <br>Nedorazí-li příloha do zprávy, <strong>Outlook ji z prohlížeče nepřebírá</strong> —
+        použijte <strong>↩ Zkusit jinak</strong> a zvolte „📎 Připravit zprávu s přílohou".
       </div>
       <div class="warn-box" id="drag-varovani" style="margin:.6rem 0 0;font-size:.8rem;display:none;border-color:var(--accent);color:var(--accent)">
         ⚠️ Přílohu se nepodařilo připravit k přetažení. Použijte
@@ -9003,6 +9007,18 @@ function pripravitOdkazPrilohy(blob, filename) {
     try { fr.readAsDataURL(blob); } catch (e) { resolve({ url: '', zdroj: 'chyba' }); }
   });
 }
+
+// Kdo si nechal zapamatovat přetažení, měl by dostat nabídku znovu — v Outlooku
+// Classic ta cesta neprojde a mlčky by ho vracela k tomu, co mu nefunguje.
+(function zapomenoutPretazeni() {
+  try {
+    if (localStorage.getItem('revize_el_email_migrace') === 'v9.197') return;
+    if (localStorage.getItem('revize_el_email_rezim') === 'pretazeni') {
+      localStorage.removeItem('revize_el_email_rezim');
+    }
+    localStorage.setItem('revize_el_email_migrace', 'v9.197');
+  } catch (e) {}
+})();
 
 function pripravenostDlazdice(hotovo) {
   var dl = document.getElementById('drag-dlazdice');
