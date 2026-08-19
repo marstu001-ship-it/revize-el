@@ -191,10 +191,13 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .email-volba-popis{font-size:.8rem;line-height:1.5;color:var(--text);margin-bottom:.55rem}
 .email-volba-pozn{color:var(--muted);font-size:.76rem}
 .email-volba button{width:100%}
-.drag-dlazdice{display:flex;align-items:center;gap:.9rem;padding:1rem 1.1rem;
-  border:2px dashed var(--accent2);border-radius:6px;background:rgba(43,87,154,.07);
-  cursor:grab;user-select:none}
-.drag-dlazdice:active{cursor:grabbing;background:rgba(43,87,154,.14)}
+.drag-dlazdice{display:flex;align-items:center;gap:.9rem;padding:1.3rem 1.2rem;
+  border:3px dashed var(--accent2);border-radius:6px;background:rgba(43,87,154,.1);
+  cursor:grab;user-select:none;animation:dragPuls 2s ease-in-out infinite}
+.drag-dlazdice:hover{background:rgba(43,87,154,.18)}
+.drag-dlazdice:active{cursor:grabbing;background:rgba(43,87,154,.24);animation:none}
+@keyframes dragPuls{0%,100%{box-shadow:0 0 0 0 rgba(43,87,154,.35)}50%{box-shadow:0 0 0 7px rgba(43,87,154,0)}}
+@media (prefers-reduced-motion:reduce){.drag-dlazdice{animation:none}}
 .drag-ikona{font-size:2rem;line-height:1}
 .drag-nazev{font-family:var(--mono);font-size:.82rem;font-weight:600;word-break:break-all}
 .drag-pozn{font-size:.75rem;color:var(--muted);margin-top:.15rem}
@@ -715,7 +718,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.192<span class="ver-date"> · 2026-08-19</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.193<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2271,8 +2274,9 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
         Pro <strong>Outlook Classic</strong>. Program otevře rozepsaný e-mail a nabídne dlaždici,
         kterou <strong>myší přetáhnete do okna zprávy</strong> — příloha se vloží, aniž byste PDF
         ukládal do počítače.
-        <br><span class="email-volba-pozn">Funguje v Chrome a Edge (ve Firefoxu ne). Outlook musí být
-        otevřený vedle prohlížeče.</span>
+        <br><span class="email-volba-pozn">Tlačítkem níže se jen otevře další okno —
+        <strong>dlaždici k přetažení uvidíte až tam</strong>. Funguje v Chrome a Edge (ve Firefoxu ne),
+        Outlook musí být otevřený vedle prohlížeče.</span>
       </div>
       <button class="btn btn-gold" data-action="emailPretazenim">⇱ Připravit k přetažení</button>
     </div>
@@ -2324,21 +2328,27 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
     <div class="modal-title">⇱ Přetáhněte přílohu do e-mailu</div>
     <div style="font-size:.88rem;line-height:1.6;padding:.3rem 0 .7rem">
       <ol style="margin:.2rem 0 0 1.3rem;padding:0">
-        <li>V Outlooku máte otevřený <strong>rozepsaný e-mail</strong> (program ho otevřel).</li>
-        <li>Chyťte myší dlaždici níže a <strong>pusťte ji do okna zprávy</strong> — PDF se vloží jako příloha.</li>
+        <li>Program otevřel v Outlooku <strong>rozepsaný e-mail</strong>. Srovnejte si okna vedle sebe,
+          ať vidíte současně tohle okno i zprávu.</li>
+        <li><strong>Stiskněte myš na modré dlaždici</strong> níže, držte a táhněte ji do okna zprávy —
+          teprve tam pusťte. PDF se vloží jako příloha.</li>
         <li>V Outlooku dáte <strong>Odeslat</strong>.</li>
       </ol>
+      <div class="warn-box" style="margin:.6rem 0 0;font-size:.8rem">
+        Netáhněte tlačítka — přetahuje se <strong>jen ta modrá dlaždice s názvem souboru</strong>.
+      </div>
     </div>
-    <div class="drag-dlazdice" id="drag-dlazdice" draggable="true">
+    <div class="drag-dlazdice" id="drag-dlazdice" draggable="true" title="Stiskněte a táhněte do okna e-mailu">
       <div class="drag-ikona">📄</div>
       <div>
         <div class="drag-nazev" id="drag-nazev">zpráva.pdf</div>
-        <div class="drag-pozn">chyťte a táhněte do okna e-mailu</div>
+        <div class="drag-pozn">⇱ chyťte myší a táhněte sem do e-mailu</div>
       </div>
     </div>
     <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritPretazeni">Hotovo</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="znovuRozepsat">✉️ Znovu otevřít rozepsaný e-mail</button>
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="jinaCestaEmailu" title="Přetažení nefunguje? Vyberte jiný způsob odeslání">↩ Zkusit jinak</button>
     </div>
   </div>
 </div>
@@ -8989,11 +8999,21 @@ function pripravitPretazeni(blob, filename, komu, predmet, telo, D) {
       if (__dragStav) oznacOdeslano(__dragStav.D);
     });
   }
-  // Rovnou otevřít rozepsaný e-mail, ať do něj má technik co pustit
-  otevritRozepsanyEmail(komu, predmet, telo);
+  // Okno s dlaždicí otevřít PRVNÍ. Kdyby se nejdřív spustil Outlook,
+  // převezme fokus a technik dlaždici vůbec neuvidí.
   var m = document.getElementById('modal-pretazeni');
   if (m) m.classList.add('open');
+  setTimeout(function() { otevritRozepsanyEmail(komu, predmet, telo); }, 400);
   return Promise.resolve();
+}
+
+// Přetažení nevyšlo → zpět na výběr způsobu odeslání
+function jinaCestaEmailu() {
+  var m = document.getElementById('modal-pretazeni');
+  if (m) m.classList.remove('open');
+  zrusitPretazeni();
+  try { localStorage.removeItem('revize_el_email_rezim'); } catch(e) {}
+  odeslatEmailem();
 }
 
 function znovuRozepsat() {
@@ -11114,6 +11134,7 @@ document.addEventListener('click', function(e) {
     case 'emailSdilenim': emailSdilenim(); break;
     case 'zavritPretazeni': zavritPretazeni(); break;
     case 'znovuRozepsat': znovuRozepsat(); break;
+    case 'jinaCestaEmailu': jinaCestaEmailu(); break;
     case 'emailSPrilohou': emailSPrilohou(); break;
     case 'emailBezPrilohy': emailBezPrilohy(); break;
     case 'stahnoutMereniPDF': stahnoutMereniPDF(); break;
