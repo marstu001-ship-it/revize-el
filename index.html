@@ -719,7 +719,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.195<span class="ver-date"> · 2026-08-19</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.196<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2339,9 +2339,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
         Netáhněte tlačítka — přetahuje se <strong>jen ta modrá dlaždice s názvem souboru</strong>.
       </div>
       <div class="warn-box" id="drag-varovani" style="margin:.6rem 0 0;font-size:.8rem;display:none;border-color:var(--accent);color:var(--accent)">
-        ⚠️ Tenhle prohlížeč zatím nemá připravenou offline část programu, přetažení
-        proto nemusí projít. Načtěte stránku znovu (F5) a zkuste to, nebo použijte
-        <strong>↩ Zkusit jinak</strong>.
+        ⚠️ Přílohu se nepodařilo připravit k přetažení. Použijte
+        <strong>↩ Zkusit jinak</strong> a vyberte jiný způsob odeslání.
       </div>
     </div>
     <div class="drag-dlazdice" id="drag-dlazdice" draggable="true" title="Stiskněte a táhněte do okna e-mailu">
@@ -8981,46 +8980,27 @@ function emailFallback(blob, filename, komu, predmet, telo, D) {
 // Classic, aniž by ho ukládal do počítače. Blob URL žije, dokud je okno
 // otevřené — po zavření se uvolní.
 var __dragStav = null;
-var CACHE_PRILOHY = 'revize-el-prilohy';
 
-// Adresa, ze které si prohlížeč přílohu vyzvedne ve chvíli puštění do jiné
-// aplikace. blob: adresu Chromium v tomhle případě nepřečte (soubor pak
-// nedorazí), proto se příloha uloží do cache service workeru a předá se
-// normální adresa na našem webu. Bez service workeru zbývá blob: jako
-// nouzová varianta.
-// Service worker nemusí být připravený hned po prvním načtení stránky —
-// počkat na něj (krátce), než se sáhne po nouzové blob: variantě.
-function pockatNaSw() {
-  if (!('caches' in window) || !navigator.serviceWorker) return Promise.resolve(false);
-  if (navigator.serviceWorker.controller) return Promise.resolve(true);
-  return Promise.race([
-    navigator.serviceWorker.ready.then(function() { return !!navigator.serviceWorker.controller; }),
-    new Promise(function(r) { setTimeout(function() { r(!!navigator.serviceWorker.controller); }, 4000); })
-  ]).catch(function() { return false; });
-}
-
+// Adresa, ze které si prohlížeč přílohu vyzvedne ve chvíli, kdy ji předává
+// jiné aplikaci (Outlooku). Pozor, tenhle přenos NEDĚLÁ stránka, ale
+// stahovací část prohlížeče — a ta:
+//   · neumí blob: adresu (soubor tiše nedorazí),
+//   · obchází service worker, takže ani adresa obsloužená jím nefunguje.
+// Projde jedině data: adresa — soubor je v ní obsažený celý, prohlížeč ho
+// nemusí nikde shánět. Proto se PDF zakóduje do base64.
 function pripravitOdkazPrilohy(blob, filename) {
-  var jmeno = asciiNazev(filename);
-  var cesta;
-  try { cesta = new URL('__priloha/' + jmeno, location.href).href; } catch (e) { cesta = null; }
-  if (!cesta) return Promise.resolve({ url: URL.createObjectURL(blob), zdroj: 'blob' });
-  return pockatNaSw().then(function(maSw) {
-    if (!maSw) return { url: URL.createObjectURL(blob), zdroj: 'blob' };
-    return ulozitPrilohuDoCache(blob, cesta, jmeno);
-  });
-}
-
-function ulozitPrilohuDoCache(blob, cesta, jmeno) {
-  return caches.open(CACHE_PRILOHY).then(function(c) {
-    return c.put(cesta, new Response(blob, { headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="' + jmeno + '"',
-      'Content-Length': String(blob.size)
-    } }));
-  }).then(function() {
-    return { url: cesta, zdroj: 'sw' };
-  }).catch(function() {
-    return { url: URL.createObjectURL(blob), zdroj: 'blob' };
+  return new Promise(function(resolve) {
+    var fr = new FileReader();
+    fr.onload = function() {
+      var url = String(fr.result || '');
+      // data: adresa musí mít správný typ, jinak Outlook uloží .txt
+      if (url.indexOf('data:application/pdf') !== 0) {
+        url = url.replace(/^data:[^;]*/, 'data:application/pdf');
+      }
+      resolve({ url: url, zdroj: 'data' });
+    };
+    fr.onerror = function() { resolve({ url: '', zdroj: 'chyba' }); };
+    try { fr.readAsDataURL(blob); } catch (e) { resolve({ url: '', zdroj: 'chyba' }); }
   });
 }
 
@@ -9046,11 +9026,8 @@ function pripravitPretazeni(blob, filename, komu, predmet, telo, D) {
     if (!__dragStav) return;
     __dragStav.url = o.url;
     __dragStav.zdroj = o.zdroj;
-    pripravenostDlazdice(true);
-    // Bez service workeru umí prohlížeč nabídnout jen blob: adresu, kterou si
-    // Outlook při puštění nevyzvedne — soubor by tiše nedorazil. Radši to
-    // technikovi rovnou říct, ať zbytečně netahá myší.
-    if (o.zdroj !== 'sw' && varovani) varovani.style.display = '';
+    pripravenostDlazdice(!!o.url);
+    if (!o.url && varovani) varovani.style.display = '';
   });
   var nazev = document.getElementById('drag-nazev');
   if (nazev) nazev.textContent = filename;
@@ -9101,17 +9078,7 @@ function zavritPretazeni() {
 }
 
 function zrusitPretazeni() {
-  if (__dragStav && __dragStav.url) {
-    var u = __dragStav.url, zdroj = __dragStav.zdroj;
-    // Uklidit až s odstupem — prohlížeč si soubor vyzvedává až po puštění
-    setTimeout(function() {
-      if (zdroj === 'sw') {
-        try { caches.open(CACHE_PRILOHY).then(function(c) { c.delete(u); }); } catch (e) {}
-      } else {
-        try { URL.revokeObjectURL(u); } catch (e) {}
-      }
-    }, 120000);
-  }
+  // data: adresa nic neblokuje ani neuklízí — zmizí s proměnnou
   __dragStav = null;
 }
 
