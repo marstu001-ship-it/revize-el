@@ -714,12 +714,58 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   .scard{padding:1rem}
   .podtyp-grid{grid-template-columns:1fr}
 }
+/* ═══ PLÁN REVIZÍ (zkušební, zatím schované v Nastavení) ═══ */
+.plan-wrap{max-width:1600px;margin:0 auto;padding:0 1rem 2rem}
+.plan-toolbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.8rem 0}
+.plan-toolbar input[type=text],.plan-toolbar select{padding:.45rem .6rem;font-size:.78rem;font-family:var(--sans);
+  border:1px solid var(--border);border-radius:4px;background:var(--card);color:var(--text)}
+.plan-scroll{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:6px;background:var(--card)}
+table.plan-tab{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:.72rem;font-family:var(--sans)}
+table.plan-tab th,table.plan-tab td{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:.3rem .4rem;vertical-align:middle}
+table.plan-tab thead th{position:sticky;top:0;z-index:3;background:#1F497D;color:#fff;font-weight:600;
+  text-align:center;letter-spacing:.02em;white-space:nowrap}
+table.plan-tab thead th.plan-rok-ted{background:var(--accent)}
+table.plan-tab td.plan-objekt,table.plan-tab th.plan-objekt{position:sticky;left:0;z-index:2;background:var(--card);
+  text-align:left;min-width:270px;max-width:340px}
+table.plan-tab thead th.plan-objekt{z-index:4;background:#1F497D}
+table.plan-tab tr:hover td{background:rgba(43,87,154,.10)}
+table.plan-tab tr:hover td.plan-objekt{background:rgba(43,87,154,.16)}
+.plan-skupina td{background:var(--bg);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.68rem;color:var(--muted)}
+.plan-cislo{display:inline-block;min-width:1.7rem;text-align:right;color:var(--muted);margin-right:.35rem}
+.plan-nazev{cursor:pointer}
+.plan-nazev:hover{text-decoration:underline}
+.plan-ex{display:inline-block;background:#c0392b;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;
+  padding:.05rem .28rem;border-radius:3px;margin-left:.3rem;vertical-align:middle}
+.plan-technik{display:inline-block;font-size:.6rem;color:#fff;padding:.05rem .3rem;border-radius:3px;margin-left:.3rem;vertical-align:middle}
+.plan-zdroj{font-size:.6rem;color:var(--muted);margin-left:.3rem}
+td.plan-bunka{text-align:center;min-width:74px;cursor:pointer;line-height:1.35}
+td.plan-bunka:hover{outline:2px solid var(--accent2);outline-offset:-2px}
+.plan-druhy{font-weight:700;letter-spacing:.03em}
+.plan-mesic{display:block;font-size:.62rem;color:var(--muted)}
+td.plan-hotovo{background:rgba(15,123,95,.14)}
+td.plan-hotovo .plan-druhy{color:#0f7b5f}
+td.plan-plan{background:rgba(240,190,40,.20)}
+td.plan-po{background:rgba(192,57,43,.18)}
+td.plan-po .plan-druhy{color:#c0392b}
+td.plan-zruseno{color:var(--muted);text-decoration:line-through}
+.plan-legenda{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin-top:.8rem;font-size:.72rem;font-family:var(--sans);align-items:center}
+.plan-legenda span.vzorek{display:inline-block;width:1rem;height:.75rem;border:1px solid var(--border);margin-right:.35rem;vertical-align:middle}
+.plan-prazdno{padding:2rem;text-align:center;color:var(--muted);font-size:.85rem;font-family:var(--sans)}
+/* Tisková podoba plánu na šířku A4 */
+.plan-pdf-tab{border-collapse:collapse;width:100%;font-size:7.2pt;font-family:Arial,Helvetica,sans-serif}
+.plan-pdf-tab th,.plan-pdf-tab td{border:.5pt solid #444;padding:1mm .8mm;text-align:center;vertical-align:middle}
+.plan-pdf-tab th{background:#1F497D;color:#fff;font-weight:bold}
+.plan-pdf-tab td.o{text-align:left;width:52mm}
+.plan-pdf-tab td.hotovo{background:#dff0e6}
+.plan-pdf-tab td.plan{background:#fdf3d0}
+.plan-pdf-tab td.po{background:#f7dad6}
+.plan-pdf-tab .m{display:block;font-size:6pt;color:#444}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.197<span class="ver-date"> · 2026-08-19</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.198<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1497,7 +1543,119 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
     </div>
     <div style="margin-top:.5rem;font-size:.72rem;color:var(--muted)">Funguje v Chrome a Edge na počítači. Na mobilu a v jiných prohlížečích zůstává ruční stažení.</div>
   </div>
+  <div class="scard">
+    <div class="scard-title">🗓 Plán revizí <span style="font-size:.6rem;color:var(--accent);letter-spacing:.08em">ZKUŠEBNÍ</span></div>
+    <div class="info-box">Víceletá tabulka objekt × rok, jakou si vedou správci areálů — kdy se kde dělala
+      revize elektroinstalace a hromosvodu a kdy je na řadě příště. <strong>Objekty a hotové revize se berou
+      z archivu zpráv</strong>, další objekty si přidáte ručně. Označíte prostory s nebezpečím výbuchu,
+      přidělíte revizního technika a celý plán vytisknete do PDF na šířku.
+      Funkce se teprve zkouší, proto je zatím jen tady.</div>
+    <div><button class="btn btn-gold" data-action="otevritPlan">🗓 Otevřít plán revizí</button></div>
+  </div>
 </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PLÁN REVIZÍ (zkušební — vstup zatím jen z Nastavení)
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-plan">
+<div class="breadcrumb"><a data-action="home">Hlavní</a> › <a data-action="nastaveni">Nastavení</a> › Plán revizí</div>
+<div class="plan-wrap">
+  <div class="scard" style="margin-bottom:.8rem">
+    <div class="scard-title">🗓 Plán revizí <span style="font-size:.6rem;color:var(--accent);letter-spacing:.08em">ZKUŠEBNÍ FUNKCE</span></div>
+    <div class="info-box">Přehled objektů a let, ve kterých se revize dělaly nebo mají dělat. <strong>Objekty i hotové
+      revize se berou z archivu zpráv</strong> (podle pole „Místo provádění revize"), příští termín se odhaduje
+      z doporučené lhůty ve zprávě. Objekty, na které zprávu nemáte, si přidejte tlačítkem níže.
+      Klepnutím na buňku roku termín upravíte, klepnutím na název objektu jeho údaje.</div>
+    <div class="plan-toolbar">
+      <button class="btn btn-gold" data-action="planPridatObjekt">+ Přidat objekt</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planTechnici">👷 Revizní technici</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExport">📄 Export do PDF</button>
+      <span style="flex:1"></span>
+      <input type="text" id="plan-hledat" placeholder="Hledat objekt…" autocomplete="off" style="min-width:180px">
+      <select id="plan-filtr" autocomplete="off">
+        <option value="">Všechny objekty</option>
+        <option value="ex">Jen s nebezpečím výbuchu</option>
+        <option value="nezadano">Jen nezadané technikovi</option>
+        <option value="po">Jen po termínu</option>
+      </select>
+      <select id="plan-rok-od" autocomplete="off" title="První zobrazený rok"></select>
+      <select id="plan-pocet-let" autocomplete="off" title="Kolik let zobrazit">
+        <option value="8">8 let</option><option value="10">10 let</option>
+        <option value="12">12 let</option><option value="15">15 let</option>
+      </select>
+    </div>
+  </div>
+  <div class="plan-scroll"><div id="plan-tabulka"></div></div>
+  <div class="plan-legenda" id="plan-legenda"></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="modal-plan-objekt">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title" id="plan-objekt-title">Objekt v plánu</div>
+    <div class="g2" style="gap:.7rem">
+      <div class="f span2"><label>Název objektu <span class="req">*</span></label><input type="text" id="plan-o-nazev" placeholder="Sklad hořlavin 20" autocomplete="off"></div>
+      <div class="f"><label>Číslo v plánu</label><input type="text" id="plan-o-cislo" placeholder="11" autocomplete="off"></div>
+      <div class="f"><label>Skupina (oddíl tabulky)</label><input type="text" id="plan-o-skupina" placeholder="např. Kotelny" list="dl-plan-skupiny" autocomplete="off"><datalist id="dl-plan-skupiny"></datalist></div>
+      <div class="f"><label>Přidělený technik</label><select id="plan-o-technik" autocomplete="off"></select></div>
+      <div class="f"><label>Lhůta elektroinstalace (roky)</label><input type="number" id="plan-o-cyklus-s" min="0" max="20" step="1" placeholder="5" autocomplete="off"></div>
+      <div class="f"><label>Lhůta hromosvodu (roky)</label><input type="number" id="plan-o-cyklus-h" min="0" max="20" step="1" placeholder="4" autocomplete="off"></div>
+      <div class="f"><label>Lhůta technologie (roky)</label><input type="number" id="plan-o-cyklus-t" min="0" max="20" step="1" placeholder="" autocomplete="off"></div>
+      <div class="f span2"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+        <input type="checkbox" id="plan-o-ex" style="width:16px;height:16px;padding:0;flex:0 0 16px">
+        Prostor s nebezpečím výbuchu — potřeba oprávnění pro prostředí Ex</label></div>
+      <div class="f span2"><label>Poznámka</label><textarea id="plan-o-poznamka" rows="2" placeholder="přístup přes vrátnici, klíče u mistra…"></textarea></div>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObjektZavrit">← Zrušit</button>
+      <button class="btn btn-ghost" id="plan-o-smazat" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="planObjektSmazat">🗑 Odebrat z plánu</button>
+      <button class="btn btn-gold" data-action="planObjektUlozit">💾 Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-plan-termin">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title" id="plan-termin-title">Termín revize</div>
+    <div id="plan-termin-zpravy" style="font-size:.8rem;line-height:1.6;padding:.2rem 0 .6rem"></div>
+    <div class="g2" style="gap:.7rem">
+      <div class="f span2"><label>Co se v tomto roce dělá</label>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.3rem;font-size:.8rem;font-family:var(--sans)">
+          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-s" style="width:15px;height:15px;padding:0;flex:0 0 15px"> S — elektroinstalace</label>
+          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-h" style="width:15px;height:15px;padding:0;flex:0 0 15px"> H — hromosvod</label>
+          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-t" style="width:15px;height:15px;padding:0;flex:0 0 15px"> T — technologie</label>
+        </div>
+      </div>
+      <div class="f"><label>Měsíc</label><select id="plan-t-mesic" autocomplete="off"></select></div>
+      <div class="f"><label>Stav</label><select id="plan-t-stav" autocomplete="off">
+        <option value="plan">Naplánováno</option>
+        <option value="hotovo">Hotovo</option>
+        <option value="zruseno">Zrušeno / neprovádí se</option>
+      </select></div>
+      <div class="f span2"><label>Poznámka k termínu</label><input type="text" id="plan-t-poznamka" placeholder="např. po odstávce" autocomplete="off"></div>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planTerminZavrit">← Zrušit</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="planTerminSmazat">🗑 Vymazat termín</button>
+      <button class="btn btn-gold" data-action="planTerminUlozit">💾 Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-plan-technici">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title">👷 Revizní technici</div>
+    <div style="font-size:.85rem;line-height:1.6;padding:.2rem 0 .7rem">
+      Komu revize zadáváte. Každý dostane barvu, kterou se pak v plánu označují jeho objekty —
+      jako když jste si je v Excelu podbarvoval.
+    </div>
+    <div id="plan-technici-list"></div>
+    <button class="add-row" data-action="planTechnikPridat">+ Přidat technika</button>
+    <div class="modal-actions" style="margin-top:.8rem">
+      <button class="btn btn-gold" data-action="planTechniciZavrit">Hotovo</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════
@@ -2519,7 +2677,7 @@ var IDB_VERSION = 1;
 var IDB_STORE = 'kv';
 var idb = null;
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
-                  'snippety', 'aiConfig', 'vlastniNormy',
+                  'snippety', 'aiConfig', 'vlastniNormy', 'plan',
                   'last_backup_at', 'archiv_count_at_last_backup',
                   'auto_cislovani', 'auto_zaloha_at', 'auto_zaloha_ver'];
 
@@ -2626,6 +2784,7 @@ async function loadStore() {
         STORE.archiv = d.archiv || [];
         STORE.odberatele = d.odberatele || [];
         STORE.snippety = d.snippety || [];
+        STORE.plan = d.plan || {};
         STORE.aiConfig = d.aiConfig || {};
         STORE.vlastniNormy = d.vlastniNormy || {};
         STORE.last_backup_at = d.last_backup_at || null;
@@ -11096,6 +11255,678 @@ async function init() {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// PLÁN REVIZÍ (zkušební funkce, vstup zatím jen z Nastavení)
+// Víceletá tabulka objekt × rok, jakou si vedou správci areálů v Excelu.
+// Hotové revize a odhad příštího termínu se berou z archivu zpráv,
+// objekty bez zprávy si uživatel přidá ručně.
+// ═══════════════════════════════════════════════════════════════════════
+var PLAN_MESICE = ['leden','únor','březen','duben','květen','červen',
+                   'červenec','srpen','září','říjen','listopad','prosinec'];
+var PLAN_MES_ZKR = ['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro'];
+var PLAN_DRUHY = ['S', 'H', 'T'];
+var PLAN_DRUH_NAZEV = { S: 'elektroinstalace', H: 'hromosvod', T: 'technologie' };
+var PLAN_BARVY = ['#2B579A', '#0f7b5f', '#8e44ad', '#c0651a', '#0d7d8f', '#7a4b2a', '#b5291c'];
+
+function planData() {
+  if (!STORE.plan || typeof STORE.plan !== 'object') STORE.plan = {};
+  var P = STORE.plan;
+  if (!Array.isArray(P.objekty)) P.objekty = [];
+  if (!Array.isArray(P.technici)) P.technici = [];
+  if (!P.nastaveni || typeof P.nastaveni !== 'object') P.nastaveni = {};
+  // Dokud si rozsah nenastaví uživatel sám, začíná plán tak, aby byla vidět
+  // i historie z archivu — jinak by nejstarší revize zůstaly za okrajem
+  // tabulky a vypadalo by to, že se nikdy nedělaly.
+  if (!P.nastaveni.rucne) {
+    P.nastaveni.rokOd = planNejstarsiRok();
+    P.nastaveni.pocetLet = P.nastaveni.pocetLet || 12;
+  }
+  if (!P.nastaveni.rokOd) P.nastaveni.rokOd = new Date().getFullYear() - 4;
+  if (!P.nastaveni.pocetLet) P.nastaveni.pocetLet = 12;
+  return P;
+}
+
+function planUlozit() { STORE.plan = planData(); saveStore(); }
+
+// Nejstarší rok, který má smysl ukazovat: nejstarší zpráva v archivu,
+// nejvýš však osm let zpátky, a vždycky aspoň dva roky do minulosti.
+function planNejstarsiRok() {
+  var ted = new Date().getFullYear();
+  var nej = ted - 2;
+  (archiv || []).forEach(function(z) {
+    var r = parseInt(String(z.datum || '').slice(0, 4), 10);
+    if (r && r < nej) nej = r;
+  });
+  return Math.max(nej, ted - 8);
+}
+
+function planNoveId() {
+  return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// Klíč objektu = místo provádění revize. U areálu je adresa u všech budov
+// stejná, kdežto „Místo provádění revize" je právě ten objekt (hala, kotelna).
+function planKlic(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function planKlicZpravy(z) {
+  var d = z.data || {};
+  return planKlic(z.misto || d.misto || d.adresa || '');
+}
+
+// Druh revize podle typu zprávy: elektro → S, LPS (hromosvod) → H
+function planDruhZpravy(z) { return z.typ === 'lps' ? 'H' : 'S'; }
+
+// Z doporučené lhůty ve zprávě („5 let – do 01/2031") vytáhnout příští termín.
+// Bez data v textu se zkusí počet let, jinak se termín neodhaduje.
+function planPristiTermin(z) {
+  var d = z.data || {};
+  var lhuta = String(d.lhuta || '');
+  var m = lhuta.match(/(\d{1,2})\s*\/\s*(20\d\d)/);
+  if (m) return { rok: parseInt(m[2], 10), mesic: parseInt(m[1], 10) - 1 };
+  var rok = parseInt(String(z.datum || '').slice(0, 4), 10);
+  if (!rok) return null;
+  var mLet = lhuta.match(/(\d{1,2})\s*(?:let|roky|rok)/i);
+  var mesic = parseInt(String(z.datum || '').slice(5, 7), 10) - 1;
+  if (mLet) return { rok: rok + parseInt(mLet[1], 10), mesic: mesic >= 0 ? mesic : 0 };
+  var m2 = lhuta.match(/do konce roku\s*(20\d\d)/i);
+  if (m2) return { rok: parseInt(m2[1], 10), mesic: 11 };
+  return null;
+}
+
+// Sestavení řádků: vlastní objekty + objekty odvozené z archivu.
+// Vlastní objekt navázaný na archiv (o.klic) archivní řádek pohltí, aby
+// se objekt neobjevil dvakrát.
+function planRadky() {
+  var P = planData();
+  var radky = [];
+  var podleKlice = {};
+  P.objekty.forEach(function(o) {
+    var r = { o: o, id: o.id, klic: o.klic || '', nazev: o.nazev || '', cislo: o.cislo || '',
+              ex: !!o.ex, technik: o.technik || '', skupina: o.skupina || '',
+              poznamka: o.poznamka || '', zpravy: [], roky: {}, vlastni: true };
+    if (r.klic) podleKlice[r.klic] = r;
+    radky.push(r);
+  });
+  (archiv || []).forEach(function(z, i) {
+    var klic = planKlicZpravy(z);
+    if (!klic) return;
+    var r = podleKlice[klic];
+    if (!r) {
+      r = { o: null, id: 'a:' + klic, klic: klic, nazev: (z.misto || (z.data || {}).adresa || '').trim(),
+            cislo: '', ex: false, technik: '', skupina: '', poznamka: '',
+            zpravy: [], roky: {}, vlastni: false };
+      podleKlice[klic] = r;
+      radky.push(r);
+    }
+    r.zpravy.push({ z: z, i: i });
+  });
+  // hotové revize a odhadnuté příští termíny z archivu
+  radky.forEach(function(r) {
+    r.zpravy.forEach(function(zi) {
+      var z = zi.z;
+      var rok = parseInt(String(z.datum || '').slice(0, 4), 10);
+      var mesic = parseInt(String(z.datum || '').slice(5, 7), 10) - 1;
+      var druh = planDruhZpravy(z);
+      if (rok) planZapisDoRoku(r, rok, druh, mesic, 'hotovo', z.uid || '');
+      var p = planPristiTermin(z);
+      if (p && p.rok) planZapisDoRoku(r, p.rok, druh, p.mesic, 'odhad', '');
+    });
+    // ruční termíny mají přednost před vším odvozeným
+    if (r.o && Array.isArray(r.o.terminy)) {
+      r.o.terminy.forEach(function(t) {
+        if (!t || !t.rok) return;
+        r.roky[t.rok] = { rucni: true, druhy: (t.druhy || '').split('+').filter(Boolean),
+                          mesic: (typeof t.mesic === 'number' ? t.mesic : null),
+                          stav: t.stav || 'plan', poznamka: t.poznamka || '', uidy: [] };
+      });
+    }
+  });
+  return radky;
+}
+
+function planZapisDoRoku(r, rok, druh, mesic, stav, uid) {
+  var b = r.roky[rok];
+  if (!b) { b = r.roky[rok] = { druhy: [], mesic: null, stav: stav, uidy: [], poznamka: '' }; }
+  if (b.rucni) return;
+  if (b.druhy.indexOf(druh) === -1) b.druhy.push(druh);
+  if (typeof mesic === 'number' && mesic >= 0 && (b.mesic === null || stav === 'hotovo')) b.mesic = mesic;
+  // hotová revize přebíjí odhad
+  if (stav === 'hotovo') b.stav = 'hotovo';
+  if (uid) b.uidy.push(uid);
+}
+
+function planTechnikById(id) {
+  var P = planData(), n = null;
+  P.technici.forEach(function(t) { if (t.id === id) n = t; });
+  return n;
+}
+
+// ═══ VYKRESLENÍ TABULKY ═════════════════════════════════════════════════
+function planRoky() {
+  var P = planData();
+  var od = parseInt(P.nastaveni.rokOd, 10) || (new Date().getFullYear() - 2);
+  var pocet = parseInt(P.nastaveni.pocetLet, 10) || 10;
+  var r = [];
+  for (var i = 0; i < pocet; i++) r.push(od + i);
+  return r;
+}
+
+function planFiltrovat(radky) {
+  var q = planKlic((document.getElementById('plan-hledat') || {}).value || '');
+  var f = ((document.getElementById('plan-filtr') || {}).value || '');
+  var ted = new Date().getFullYear();
+  return radky.filter(function(r) {
+    if (q && planKlic(r.nazev).indexOf(q) === -1 && planKlic(r.cislo).indexOf(q) === -1) return false;
+    if (f === 'ex' && !r.ex) return false;
+    if (f === 'nezadano' && r.technik) return false;
+    if (f === 'po') {
+      var po = false;
+      Object.keys(r.roky).forEach(function(rok) {
+        var b = r.roky[rok];
+        if (parseInt(rok, 10) < ted && b.stav !== 'hotovo' && b.stav !== 'zruseno') po = true;
+      });
+      if (!po) return false;
+    }
+    return true;
+  });
+}
+
+// Rok v minulosti, který se neodbavil, je po termínu — to je to hlavní,
+// co má správce z plánu na první pohled vidět.
+function planStavBunky(rok, b) {
+  if (!b || !b.druhy.length) return '';
+  if (b.stav === 'zruseno') return 'zruseno';
+  if (b.stav === 'hotovo') return 'hotovo';
+  return rok < new Date().getFullYear() ? 'po' : 'plan';
+}
+
+function renderPlan() {
+  var box = document.getElementById('plan-tabulka');
+  if (!box) return;
+  planNaplnitVolby();
+  var roky = planRoky();
+  var radky = planFiltrovat(planRadky());
+  if (!radky.length) {
+    box.innerHTML = '<div class="plan-prazdno">Zatím tu nic není. Objekty se vezmou z archivu zpráv ' +
+      '(podle „Místa provádění revize"), další si přidejte tlačítkem <strong>+ Přidat objekt</strong>.</div>';
+    planLegenda([]);
+    return;
+  }
+  // seřadit: skupiny v pořadí prvního výskytu, uvnitř podle čísla, pak názvu
+  var poradiSkupin = [];
+  radky.forEach(function(r) { if (poradiSkupin.indexOf(r.skupina) === -1) poradiSkupin.push(r.skupina); });
+  poradiSkupin.sort(function(a, b) { return (a === '' ? -1 : b === '' ? 1 : 0); });
+  radky.sort(function(a, b) {
+    var sa = poradiSkupin.indexOf(a.skupina), sb = poradiSkupin.indexOf(b.skupina);
+    if (sa !== sb) return sa - sb;
+    var ca = parseFloat(String(a.cislo).replace(',', '.')), cb = parseFloat(String(b.cislo).replace(',', '.'));
+    if (!isNaN(ca) && !isNaN(cb) && ca !== cb) return ca - cb;
+    if (!isNaN(ca) && isNaN(cb)) return -1;
+    if (isNaN(ca) && !isNaN(cb)) return 1;
+    return a.nazev.localeCompare(b.nazev, 'cs');
+  });
+
+  var ted = new Date().getFullYear();
+  var h = '<table class="plan-tab"><thead><tr><th class="plan-objekt">Objekt</th>';
+  roky.forEach(function(rok) {
+    h += '<th' + (rok === ted ? ' class="plan-rok-ted"' : '') + '>' + rok + '</th>';
+  });
+  h += '</tr></thead><tbody>';
+  var minulaSkupina = null;
+  radky.forEach(function(r) {
+    if (r.skupina !== minulaSkupina) {
+      minulaSkupina = r.skupina;
+      if (r.skupina) {
+        h += '<tr class="plan-skupina"><td class="plan-objekt" colspan="' + (roky.length + 1) + '">' +
+             esc(r.skupina) + '</td></tr>';
+      }
+    }
+    var t = r.technik ? planTechnikById(r.technik) : null;
+    h += '<tr><td class="plan-objekt">' +
+      (r.cislo ? '<span class="plan-cislo">' + esc(r.cislo) + '</span>' : '') +
+      '<span class="plan-nazev" data-action="planObjekt" data-id="' + esc(r.id) + '" title="Upravit údaje objektu">' +
+      esc(r.nazev || '(bez názvu)') + '</span>' +
+      (r.ex ? '<span class="plan-ex" title="Prostor s nebezpečím výbuchu — potřeba oprávnění pro Ex">EX</span>' : '') +
+      (t ? '<span class="plan-technik" style="background:' + esc(t.barva) + '" title="' + esc(t.jmeno) + '">' +
+           esc(planIniciala(t.jmeno)) + '</span>' : '') +
+      (r.zpravy.length ? '<span class="plan-zdroj" title="' + r.zpravy.length + ' zpráv v archivu">📁 ' + r.zpravy.length + '</span>' : '') +
+      '</td>';
+    roky.forEach(function(rok) {
+      var b = r.roky[rok];
+      var stav = planStavBunky(rok, b);
+      var obsah = '';
+      if (b && b.druhy.length) {
+        obsah = '<span class="plan-druhy">' + esc(b.druhy.join('+')) + '</span>' +
+                (typeof b.mesic === 'number' && b.mesic >= 0 ? '<span class="plan-mesic">' + PLAN_MES_ZKR[b.mesic] + '</span>' : '');
+      }
+      h += '<td class="plan-bunka' + (stav ? ' plan-' + stav : '') + '" data-action="planTermin" ' +
+           'data-id="' + esc(r.id) + '" data-rok="' + rok + '"' +
+           (b && b.poznamka ? ' title="' + esc(b.poznamka) + '"' : '') + '>' + obsah + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  box.innerHTML = h;
+  planLegenda(radky);
+}
+
+function planIniciala(jmeno) {
+  var c = String(jmeno || '').trim().split(/\s+/);
+  if (!c[0]) return '?';
+  return (c[0][0] + (c[1] ? c[1][0] : '')).toUpperCase();
+}
+
+function planLegenda(radky) {
+  var el = document.getElementById('plan-legenda');
+  if (!el) return;
+  var P = planData();
+  var h = '<span><span class="vzorek" style="background:rgba(15,123,95,.14)"></span>hotovo (ze zprávy v archivu)</span>' +
+          '<span><span class="vzorek" style="background:rgba(240,190,40,.20)"></span>naplánováno / odhad z lhůty</span>' +
+          '<span><span class="vzorek" style="background:rgba(192,57,43,.18)"></span>po termínu</span>' +
+          '<span><span class="plan-ex">EX</span> nutné oprávnění pro prostředí s nebezpečím výbuchu</span>' +
+          '<span><strong>S</strong> elektroinstalace · <strong>H</strong> hromosvod · <strong>T</strong> technologie</span>';
+  P.technici.forEach(function(t) {
+    h += '<span><span class="plan-technik" style="background:' + esc(t.barva) + '">' + esc(planIniciala(t.jmeno)) +
+         '</span> ' + esc(t.jmeno) + '</span>';
+  });
+  el.innerHTML = h;
+}
+
+function planNaplnitVolby() {
+  var P = planData();
+  var od = document.getElementById('plan-rok-od');
+  if (od && !od.options.length) {
+    var ted = new Date().getFullYear();
+    var h = '';
+    for (var r = ted - 12; r <= ted + 5; r++) h += '<option value="' + r + '">od ' + r + '</option>';
+    od.innerHTML = h;
+  }
+  if (od) od.value = String(P.nastaveni.rokOd);
+  var pl = document.getElementById('plan-pocet-let');
+  if (pl) pl.value = String(P.nastaveni.pocetLet);
+  var dl = document.getElementById('dl-plan-skupiny');
+  if (dl) {
+    var vid = {};
+    P.objekty.forEach(function(o) { if (o.skupina) vid[o.skupina] = 1; });
+    dl.innerHTML = Object.keys(vid).map(function(s) { return '<option value="' + esc(s) + '">'; }).join('');
+  }
+}
+
+function planZmenaRozsahu() {
+  var P = planData();
+  var od = document.getElementById('plan-rok-od');
+  var pl = document.getElementById('plan-pocet-let');
+  P.nastaveni.rokOd = parseInt(od.value, 10) || P.nastaveni.rokOd;
+  P.nastaveni.pocetLet = parseInt(pl.value, 10) || P.nastaveni.pocetLet;
+  P.nastaveni.rucne = true;   // od teď rozhoduje uživatel, ne archiv
+  planUlozit();
+  renderPlan();
+}
+
+function otevritPlan() {
+  showScreen('plan');
+  renderPlan();
+  var h = document.getElementById('plan-hledat');
+  var f = document.getElementById('plan-filtr');
+  var od = document.getElementById('plan-rok-od');
+  var pl = document.getElementById('plan-pocet-let');
+  if (h && !h.dataset.wired) { h.dataset.wired = '1'; h.addEventListener('input', renderPlan); }
+  if (f && !f.dataset.wired) { f.dataset.wired = '1'; f.addEventListener('change', renderPlan); }
+  if (od && !od.dataset.wired) { od.dataset.wired = '1'; od.addEventListener('change', planZmenaRozsahu); }
+  if (pl && !pl.dataset.wired) { pl.dataset.wired = '1'; pl.addEventListener('change', planZmenaRozsahu); }
+}
+
+// ═══ ÚPRAVY OBJEKTŮ A TERMÍNŮ ═══════════════════════════════════════════
+var __planObjektId = null;   // upravovaný objekt ('a:klic' = zatím jen z archivu)
+var __planTermin = null;     // {id, rok}
+
+function planRadekById(id) {
+  var n = null;
+  planRadky().forEach(function(r) { if (r.id === id) n = r; });
+  return n;
+}
+
+// Archivní řádek se stane vlastním objektem teprve ve chvíli, kdy k němu
+// uživatel něco doplní — jinak by se plán zaplnil prázdnými záznamy.
+function planZajistitObjekt(id) {
+  var P = planData();
+  var o = null;
+  P.objekty.forEach(function(x) { if (x.id === id) o = x; });
+  if (o) return o;
+  var r = planRadekById(id);
+  o = { id: planNoveId(), klic: r ? r.klic : '', nazev: r ? r.nazev : '', cislo: '', skupina: '',
+        ex: false, technik: '', poznamka: '', cyklus: {}, terminy: [] };
+  P.objekty.push(o);
+  return o;
+}
+
+function planPridatObjekt() { planOtevritObjekt(null); }
+
+function planObjekt(el) { planOtevritObjekt(el.getAttribute('data-id')); }
+
+function planOtevritObjekt(id) {
+  var P = planData();
+  __planObjektId = id;
+  var o = null, r = null;
+  if (id) {
+    P.objekty.forEach(function(x) { if (x.id === id) o = x; });
+    r = planRadekById(id);
+  }
+  var g = function(x) { return document.getElementById(x); };
+  g('plan-objekt-title').textContent = id ? 'Objekt v plánu' : 'Nový objekt v plánu';
+  g('plan-o-nazev').value = o ? (o.nazev || '') : (r ? r.nazev : '');
+  g('plan-o-cislo').value = o ? (o.cislo || '') : '';
+  g('plan-o-skupina').value = o ? (o.skupina || '') : '';
+  g('plan-o-ex').checked = o ? !!o.ex : false;
+  g('plan-o-poznamka').value = o ? (o.poznamka || '') : '';
+  var c = (o && o.cyklus) || {};
+  g('plan-o-cyklus-s').value = c.S || '';
+  g('plan-o-cyklus-h').value = c.H || '';
+  g('plan-o-cyklus-t').value = c.T || '';
+  var sel = g('plan-o-technik');
+  sel.innerHTML = '<option value="">— nezadáno —</option>' + P.technici.map(function(t) {
+    return '<option value="' + esc(t.id) + '">' + esc(t.jmeno) + '</option>';
+  }).join('');
+  sel.value = o ? (o.technik || '') : '';
+  // Objekt, který existuje jen v archivu, se nedá „odebrat z plánu" —
+  // vrátil by se hned zpátky podle zpráv, kterých se to netýká.
+  g('plan-o-smazat').style.display = (o && !o.klic) ? '' : 'none';
+  planNaplnitVolby();
+  g('modal-plan-objekt').classList.add('open');
+  setTimeout(function() { g('plan-o-nazev').focus(); }, 60);
+}
+
+function planObjektUlozit() {
+  var g = function(x) { return document.getElementById(x); };
+  var nazev = g('plan-o-nazev').value.trim();
+  if (!nazev) { alert('Vyplňte název objektu.'); g('plan-o-nazev').focus(); return; }
+  var P = planData();
+  var o;
+  if (__planObjektId) {
+    o = planZajistitObjekt(__planObjektId);
+  } else {
+    o = { id: planNoveId(), klic: '', nazev: '', cislo: '', skupina: '', ex: false,
+          technik: '', poznamka: '', cyklus: {}, terminy: [] };
+    P.objekty.push(o);
+  }
+  o.nazev = nazev;
+  o.cislo = g('plan-o-cislo').value.trim();
+  o.skupina = g('plan-o-skupina').value.trim();
+  o.ex = g('plan-o-ex').checked;
+  o.technik = g('plan-o-technik').value;
+  o.poznamka = g('plan-o-poznamka').value.trim();
+  o.cyklus = {};
+  PLAN_DRUHY.forEach(function(d) {
+    var v = parseInt(g('plan-o-cyklus-' + d.toLowerCase()).value, 10);
+    if (v > 0) o.cyklus[d] = v;
+  });
+  planUlozit();
+  planObjektZavrit();
+  renderPlan();
+  showToast('💾 Objekt uložen do plánu.');
+}
+
+function planObjektSmazat() {
+  var P = planData();
+  var o = null;
+  P.objekty.forEach(function(x) { if (x.id === __planObjektId) o = x; });
+  if (!o) { planObjektZavrit(); return; }
+  if (!confirm('Odebrat „' + (o.nazev || '') + '" z plánu revizí?\n\nZprávy v archivu zůstanou nedotčené.')) return;
+  P.objekty = P.objekty.filter(function(x) { return x !== o; });
+  planUlozit();
+  planObjektZavrit();
+  renderPlan();
+  showToast('🗑 Objekt odebrán z plánu.');
+}
+
+function planObjektZavrit() {
+  __planObjektId = null;
+  document.getElementById('modal-plan-objekt').classList.remove('open');
+}
+
+function planTermin(el) {
+  var id = el.getAttribute('data-id');
+  var rok = parseInt(el.getAttribute('data-rok'), 10);
+  var r = planRadekById(id);
+  if (!r) return;
+  __planTermin = { id: id, rok: rok };
+  var b = r.roky[rok] || { druhy: [], mesic: null, stav: 'plan', poznamka: '' };
+  var g = function(x) { return document.getElementById(x); };
+  g('plan-termin-title').textContent = (r.nazev || 'Objekt') + ' — rok ' + rok;
+  PLAN_DRUHY.forEach(function(d) { g('plan-t-' + d.toLowerCase()).checked = b.druhy.indexOf(d) !== -1; });
+  var ms = g('plan-t-mesic');
+  ms.innerHTML = '<option value="">— neurčeno —</option>' + PLAN_MESICE.map(function(m, i) {
+    return '<option value="' + i + '">' + m + '</option>';
+  }).join('');
+  ms.value = (typeof b.mesic === 'number' && b.mesic >= 0) ? String(b.mesic) : '';
+  g('plan-t-stav').value = b.stav === 'hotovo' ? 'hotovo' : (b.stav === 'zruseno' ? 'zruseno' : 'plan');
+  g('plan-t-poznamka').value = b.poznamka || '';
+  // odkaz na zprávy z archivu, které do toho roku patří
+  var zpravy = r.zpravy.filter(function(zi) { return String(zi.z.datum || '').slice(0, 4) === String(rok); });
+  g('plan-termin-zpravy').innerHTML = zpravy.length
+    ? '<div class="info-box" style="margin:0">V archivu: ' + zpravy.map(function(zi) {
+        return esc((zi.z.ev_cislo || 'bez čísla') + ' — ' + (zi.z.typ === 'lps' ? 'hromosvod' : 'elektro') +
+                   ', ' + fmtDate(zi.z.datum));
+      }).join('; ') + '</div>'
+    : '';
+  g('modal-plan-termin').classList.add('open');
+}
+
+function planTerminUlozit() {
+  if (!__planTermin) return;
+  var g = function(x) { return document.getElementById(x); };
+  var druhy = PLAN_DRUHY.filter(function(d) { return g('plan-t-' + d.toLowerCase()).checked; });
+  if (!druhy.length) { alert('Zaškrtněte aspoň jednu revizi (S / H / T), nebo termín vymažte.'); return; }
+  var o = planZajistitObjekt(__planTermin.id);
+  if (!Array.isArray(o.terminy)) o.terminy = [];
+  o.terminy = o.terminy.filter(function(t) { return t.rok !== __planTermin.rok; });
+  var mesic = g('plan-t-mesic').value;
+  o.terminy.push({
+    rok: __planTermin.rok,
+    druhy: druhy.join('+'),
+    mesic: mesic === '' ? null : parseInt(mesic, 10),
+    stav: g('plan-t-stav').value,
+    poznamka: g('plan-t-poznamka').value.trim()
+  });
+  planUlozit();
+  planTerminZavrit();
+  renderPlan();
+}
+
+// Vymazání ručního termínu vrátí buňku k tomu, co plyne z archivu.
+function planTerminSmazat() {
+  if (!__planTermin) return;
+  var P = planData(), o = null;
+  P.objekty.forEach(function(x) { if (x.id === __planTermin.id) o = x; });
+  if (o && Array.isArray(o.terminy)) {
+    o.terminy = o.terminy.filter(function(t) { return t.rok !== __planTermin.rok; });
+    planUlozit();
+  }
+  planTerminZavrit();
+  renderPlan();
+}
+
+function planTerminZavrit() {
+  __planTermin = null;
+  document.getElementById('modal-plan-termin').classList.remove('open');
+}
+
+// ═══ TECHNICI ═══════════════════════════════════════════════════════════
+function planTechnici() {
+  renderPlanTechnici();
+  document.getElementById('modal-plan-technici').classList.add('open');
+}
+
+function renderPlanTechnici() {
+  var P = planData();
+  var box = document.getElementById('plan-technici-list');
+  if (!box) return;
+  box.innerHTML = P.technici.map(function(t, i) {
+    return '<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">' +
+      '<input type="color" value="' + esc(t.barva) + '" data-plan-technik="' + i + '" data-pole="barva" ' +
+      'style="width:38px;height:32px;padding:2px;flex:0 0 38px;border:1px solid var(--border);border-radius:4px">' +
+      '<input type="text" value="' + esc(t.jmeno) + '" data-plan-technik="' + i + '" data-pole="jmeno" ' +
+      'placeholder="Jméno technika" autocomplete="off" style="flex:1">' +
+      '<button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent);font-size:.65rem" ' +
+      'data-action="planTechnikSmazat" data-idx="' + i + '">🗑</button></div>';
+  }).join('') || '<div style="font-size:.8rem;color:var(--muted);padding:.3rem 0">Zatím žádný technik.</div>';
+}
+
+function planTechnikPridat() {
+  var P = planData();
+  P.technici.push({ id: planNoveId(), jmeno: '', barva: PLAN_BARVY[P.technici.length % PLAN_BARVY.length] });
+  planUlozit();
+  renderPlanTechnici();
+}
+
+function planTechnikSmazat(el) {
+  var P = planData();
+  var i = parseInt(el.getAttribute('data-idx'), 10);
+  var t = P.technici[i];
+  if (!t) return;
+  if (!confirm('Smazat technika „' + (t.jmeno || 'bez jména') + '"?\n\nU objektů, které měl přidělené, zůstane pole prázdné.')) return;
+  P.objekty.forEach(function(o) { if (o.technik === t.id) o.technik = ''; });
+  P.technici.splice(i, 1);
+  planUlozit();
+  renderPlanTechnici();
+  renderPlan();
+}
+
+function planTechniciZavrit() {
+  document.getElementById('modal-plan-technici').classList.remove('open');
+  renderPlan();
+}
+
+// ═══ EXPORT PLÁNU DO PDF ════════════════════════════════════════════════
+// Tabulka jde na šířku A4, po stránkách à 26 řádků. Stránky se staví
+// do skrytého kontejneru — html2canvas potřebuje skutečné rozměry, proto
+// se odsouvají mimo obrazovku, ne skrývají přes display:none.
+var PLAN_RADKU_NA_STRANU = 26;
+
+function planExport() {
+  var radky = planFiltrovat(planRadky());
+  if (!radky.length) { showToast('⚠️ Plán je prázdný, není co exportovat.'); return; }
+  var roky = planRoky();
+  // stejné řazení jako na obrazovce
+  renderPlan();
+  var box = document.createElement('div');
+  box.id = 'plan-pdf-box';
+  box.style.cssText = 'position:absolute;left:-10000px;top:0;width:297mm';
+  document.body.appendChild(box);
+
+  var tab = document.querySelector('#plan-tabulka table.plan-tab');
+  var poradi = [];
+  if (tab) {
+    // převzít pořadí řádků z vykreslené tabulky, ať papír odpovídá obrazovce
+    tab.querySelectorAll('tbody tr').forEach(function(tr) {
+      var bunka = tr.querySelector('td.plan-bunka');
+      if (bunka) poradi.push(bunka.getAttribute('data-id'));
+      else poradi.push('#' + (tr.textContent || '').trim());  // hlavička skupiny
+    });
+  }
+  var mapa = {};
+  radky.forEach(function(r) { mapa[r.id] = r; });
+  var sekvence = poradi.length ? poradi : radky.map(function(r) { return r.id; });
+
+  // Výška řádku závisí na obsahu (dvouřádkové buňky s měsícem, dlouhé názvy),
+  // proto se počet řádků na stranu nehádá — stránky se postaví, změří
+  // a když přetečou, postaví se znovu s méně řádky.
+  var naStranu = PLAN_RADKU_NA_STRANU;
+  var pokusu = 14;
+  var mmNaPx = 96 / 25.4;
+  for (var pokus = 0; pokus < pokusu; pokus++) {
+    box.innerHTML = '';
+    var stranky = [];
+    for (var i = 0; i < sekvence.length; i += naStranu) {
+      stranky.push(sekvence.slice(i, i + naStranu));
+    }
+    stranky.forEach(function(cast, idx) {
+      box.appendChild(planPdfStranka(cast, mapa, roky, idx + 1, stranky.length));
+    });
+    var prilis = false;
+    Array.prototype.forEach.call(box.querySelectorAll('.a4'), function(el) {
+      if (el.getBoundingClientRect().height / mmNaPx > 203) prilis = true;
+    });
+    if (!prilis || naStranu <= 8) break;
+    naStranu -= 2;
+  }
+  var pageEls = Array.prototype.slice.call(box.querySelectorAll('.a4'));
+  var nazev = 'Plan_revizi_' + roky[0] + '-' + roky[roky.length - 1] + '.pdf';
+  return renderPagesToPDF(pageEls, nazev).then(function() {
+    box.remove();
+  }).catch(function() { box.remove(); });
+}
+
+function planPdfStranka(cast, mapa, roky, cislo, celkem) {
+  var t = STORE.technik || {};
+  var ted = new Date().getFullYear();
+  var p = document.createElement('div');
+  p.className = 'a4 a4-landscape';
+  // min-height:0 — stránka se má při měření chovat podle obsahu; do PDF
+  // ji stejně renderPagesToPDF natvrdo roztáhne na 297×210 mm.
+  p.style.cssText = 'padding:10mm 8mm;background:#fff;color:#000;min-height:0';
+  var h = '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.2pt solid #1F497D;padding-bottom:2mm;margin-bottom:3mm">' +
+    '<div><div style="font-size:13pt;font-weight:bold;color:#1F497D">Plán revizí elektrických zařízení a hromosvodů</div>' +
+    '<div style="font-size:8pt;color:#444;margin-top:1mm">' + esc(t.firma || t.jmeno || '') + '</div></div>' +
+    '<div style="font-size:8pt;text-align:right;color:#444">Zpracováno ' + fmtDate(new Date().toISOString().slice(0, 10)) +
+    '<br>strana ' + cislo + ' / ' + celkem + '</div></div>';
+  h += '<table class="plan-pdf-tab"><thead><tr><th class="o" style="text-align:left">Objekt</th>';
+  roky.forEach(function(rok) {
+    h += '<th' + (rok === ted ? ' style="background:#b5291c"' : '') + '>' + rok + '</th>';
+  });
+  h += '</tr></thead><tbody>';
+  cast.forEach(function(id) {
+    if (id && id.charAt(0) === '#') {
+      h += '<tr><td class="o" colspan="' + (roky.length + 1) + '" style="background:#e8eaf0;font-weight:bold;text-align:left">' +
+           esc(id.slice(1)) + '</td></tr>';
+      return;
+    }
+    var r = mapa[id];
+    if (!r) return;
+    var tech = r.technik ? planTechnikById(r.technik) : null;
+    h += '<tr><td class="o">' + (r.cislo ? '<b>' + esc(r.cislo) + '.</b> ' : '') + esc(r.nazev) +
+      (r.ex ? ' <span style="background:#c0392b;color:#fff;padding:0 .8mm;font-size:6pt;font-weight:bold">EX</span>' : '') +
+      (tech ? ' <span style="background:' + esc(tech.barva) + ';color:#fff;padding:0 .8mm;font-size:6pt">' +
+              esc(planIniciala(tech.jmeno)) + '</span>' : '') + '</td>';
+    roky.forEach(function(rok) {
+      var b = r.roky[rok];
+      var stav = planStavBunky(rok, b);
+      var obsah = '';
+      if (b && b.druhy.length) {
+        obsah = '<b>' + esc(b.druhy.join('+')) + '</b>' +
+                (typeof b.mesic === 'number' && b.mesic >= 0 ? '<span class="m">' + PLAN_MESICE[b.mesic] + '</span>' : '');
+      }
+      h += '<td' + (stav ? ' class="' + stav + '"' : '') + '>' + obsah + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  if (cislo === celkem) h += planPdfLegenda();
+  p.innerHTML = h;
+  return p;
+}
+
+function planPdfLegenda() {
+  var P = planData();
+  var h = '<div style="margin-top:3mm;font-size:7pt;line-height:1.6;color:#222">' +
+    '<b>Vysvětlivky:</b> <b>S</b> = revize elektrické instalace · <b>H</b> = revize hromosvodu · ' +
+    '<b>T</b> = revize technologie &nbsp;|&nbsp; ' +
+    '<span style="background:#dff0e6;padding:0 1.5mm">hotovo</span> ' +
+    '<span style="background:#fdf3d0;padding:0 1.5mm">naplánováno</span> ' +
+    '<span style="background:#f7dad6;padding:0 1.5mm">po termínu</span> &nbsp;|&nbsp; ' +
+    '<span style="background:#c0392b;color:#fff;padding:0 1mm;font-weight:bold">EX</span> ' +
+    'prostor s nebezpečím výbuchu — vyžaduje oprávnění pro prostředí Ex';
+  if (P.technici.length) {
+    h += '<div style="margin-top:1.5mm"><b>Přiděleno:</b> ' + P.technici.map(function(t) {
+      return '<span style="background:' + esc(t.barva) + ';color:#fff;padding:0 1mm">' +
+             esc(planIniciala(t.jmeno)) + '</span> ' + esc(t.jmeno);
+    }).join(' &nbsp; ') + '</div>';
+  }
+  return h + '</div>';
+}
+
 document.addEventListener('click', function(e) {
   var el = e.target.closest('[data-action],[data-tab]');
   if (!el) return;
@@ -11107,6 +11938,21 @@ document.addEventListener('click', function(e) {
     case 'toggleTheme': toggleTheme(); break;
     case 'home': attemptLeaveForm(function() { showScreen('home'); }); break;
     case 'nastaveni': showScreen('nastaveni'); break;
+    case 'otevritPlan': attemptLeaveForm(function() { otevritPlan(); }); break;
+    case 'planPridatObjekt': planPridatObjekt(); break;
+    case 'planObjekt': planObjekt(el); break;
+    case 'planObjektUlozit': planObjektUlozit(); break;
+    case 'planObjektSmazat': planObjektSmazat(); break;
+    case 'planObjektZavrit': planObjektZavrit(); break;
+    case 'planTermin': planTermin(el); break;
+    case 'planTerminUlozit': planTerminUlozit(); break;
+    case 'planTerminSmazat': planTerminSmazat(); break;
+    case 'planTerminZavrit': planTerminZavrit(); break;
+    case 'planTechnici': planTechnici(); break;
+    case 'planTechnikPridat': planTechnikPridat(); break;
+    case 'planTechnikSmazat': planTechnikSmazat(el); break;
+    case 'planTechniciZavrit': planTechniciZavrit(); break;
+    case 'planExport': planExport(); break;
     case 'novinky': showScreen('novinky'); break;
     case 'toggleAutoCislovani': toggleAutoCislovani(el); break;
     case 'lpzTypickyDum': lpzTypickyDum(); break;

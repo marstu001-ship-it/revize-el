@@ -152,6 +152,30 @@ k zapamatování 2026-07-15, uživatel se k němu vrátí):
    převzatá se vnoří do řetězu (predchudce_uid, už funguje).
 7. Štítek 📥 v archivu půjde přepnout (překlik při importu).
 
+## 📌 ZAPAMATOVÁNO NA POZDĚJI — Správa budov (karta objektu)
+
+Návrh z 2026-08-19, uživatel si ho nechal odložit ve prospěch **Plánu revizí**
+(ten je hotový, viz níže). Až na to dojde, detail budovy měl obsahovat:
+
+1. **Hlavička** — název, adresa, typ objektu, odběratel z knihovny, foto.
+2. **Kontakt na místo** — kdo pouští dovnitř, telefon, kde je hlavní rozvaděč
+   (nejcennější a nejlevnější položka celého seznamu).
+3. **Revize k budově** — časová osa zpráv + „Nová revize této budovy"
+   (použije stávající `navazatZpravu`).
+4. **Termíny** — elektro / hromosvod / vnější vlivy + *cizí* termíny, které
+   technik nedělá (plyn, komín, hasicí přístroje) jen pro přehled.
+5. **Závady, které se táhnou** — neodstraněné závady napříč zprávami budovy.
+6. **Technická karta** — síť, hlavní jistič, uzemnění, EAN/EIC, distributor,
+   LPS a třída, rok instalace. Smysl: **předvyplnění nové zprávy**.
+7. **Rozváděče** — seznam přenositelný do nové zprávy (schůdek k hierarchii
+   měřicích míst a NFC štítkům).
+8. **Dokumentace** — projekt, schémata, protokoly. Past: kam soubory uložit
+   (databáze poroste vs. odkaz na složku nefunguje na mobilu). Řešit nakonec.
+9. **Protokoly** — hlavně protokol o určení vnějších vlivů.
+10. **Deník budovy** — datované poznámky.
+
+Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
+
 ## Už implementované (neřešit jako nový nápad)
 
 - ✅ **Odběratelé (zákaznická knihovna)** — scard na hlavní straně,
@@ -193,6 +217,18 @@ k zapamatování 2026-07-15, uživatel se k němu vrátí):
   (I–IV vs kategorie obyčejný/zesílený/zvláštní), skrytí
   62305-specifických polí (mřížka, Typ A/B, LPZ zóny, SPD)
   pro 1390, dynamický PDF obsah dle volby normy.
+- ✅ **Plán revizí** (zkušební, vstup zatím jen z Nastavení dole) —
+  víceletá tabulka objekt × rok podle Excelu, který si uživatel vede jako
+  správce areálu (MPBP příloha 7). Objekty se odvozují z archivu podle
+  **„Místa provádění revize"** (`planKlicZpravy`), hotové revize se plní
+  z data zprávy (elektro → S, LPS → H), příští termín se odhaduje z pole
+  `f_lhuta` (`planPristiTermin`). Vlastní objekty se přidávají ručně;
+  archivní objekt se stane vlastním záznamem, teprve když se u něj něco
+  vyplní (`planZajistitObjekt`). Umí: označení **EX** (nutné oprávnění pro
+  prostředí s nebezpečím výbuchu), přidělení technika s barvou, skupiny
+  (oddíly jako „Kotelny"), ruční termíny, filtry, hledání a **export do PDF
+  na šířku** (`planExport` — dělení stránek podle naměřené výšky, ne podle
+  počtu řádků). Data v `STORE.plan` (v STORE_KEYS i v záloze).
 - ✅ **PWA auto-reload po update** — network-first pro HTML,
   listener `controllerchange` → `location.reload()`. Uživatel
   nemusí hard-reloadovat; cache bump v sw.js stačí.
