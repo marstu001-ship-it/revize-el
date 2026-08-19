@@ -191,6 +191,13 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .email-volba-popis{font-size:.8rem;line-height:1.5;color:var(--text);margin-bottom:.55rem}
 .email-volba-pozn{color:var(--muted);font-size:.76rem}
 .email-volba button{width:100%}
+.drag-dlazdice{display:flex;align-items:center;gap:.9rem;padding:1rem 1.1rem;
+  border:2px dashed var(--accent2);border-radius:6px;background:rgba(43,87,154,.07);
+  cursor:grab;user-select:none}
+.drag-dlazdice:active{cursor:grabbing;background:rgba(43,87,154,.14)}
+.drag-ikona{font-size:2rem;line-height:1}
+.drag-nazev{font-family:var(--mono);font-size:.82rem;font-weight:600;word-break:break-all}
+.drag-pozn{font-size:.75rem;color:var(--muted);margin-top:.15rem}
 .email-znacka{font-family:var(--mono);font-size:.6rem;font-weight:600;letter-spacing:.05em;
   text-transform:uppercase;background:var(--gold);color:#fff;padding:.1rem .4rem;
   border-radius:2px;margin-left:.4rem;vertical-align:middle}
@@ -708,7 +715,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.191<span class="ver-date"> · 2026-08-19</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.192<span class="ver-date"> · 2026-08-19</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2258,6 +2265,18 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
       Prohlížeč nesmí spustit poštovní program sám, takže si vyberte, jak zprávu předat:
     </div>
 
+    <div class="email-volba" id="email-volba-pretazeni">
+      <div class="email-volba-nadpis">⇱ Přetáhnout přílohu do Outlooku <span class="email-znacka">nic se neukládá</span></div>
+      <div class="email-volba-popis">
+        Pro <strong>Outlook Classic</strong>. Program otevře rozepsaný e-mail a nabídne dlaždici,
+        kterou <strong>myší přetáhnete do okna zprávy</strong> — příloha se vloží, aniž byste PDF
+        ukládal do počítače.
+        <br><span class="email-volba-pozn">Funguje v Chrome a Edge (ve Firefoxu ne). Outlook musí být
+        otevřený vedle prohlížeče.</span>
+      </div>
+      <button class="btn btn-gold" data-action="emailPretazenim">⇱ Připravit k přetažení</button>
+    </div>
+
     <div class="email-volba" id="email-volba-sdileni">
       <div class="email-volba-nadpis">📤 Odeslat přes sdílení <span class="email-znacka">nic se neukládá</span></div>
       <div class="email-volba-popis">
@@ -2296,6 +2315,30 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
     </label>
     <div class="modal-actions" style="margin-top:.6rem">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritEmailModal">← Zrušit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-pretazeni">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">⇱ Přetáhněte přílohu do e-mailu</div>
+    <div style="font-size:.88rem;line-height:1.6;padding:.3rem 0 .7rem">
+      <ol style="margin:.2rem 0 0 1.3rem;padding:0">
+        <li>V Outlooku máte otevřený <strong>rozepsaný e-mail</strong> (program ho otevřel).</li>
+        <li>Chyťte myší dlaždici níže a <strong>pusťte ji do okna zprávy</strong> — PDF se vloží jako příloha.</li>
+        <li>V Outlooku dáte <strong>Odeslat</strong>.</li>
+      </ol>
+    </div>
+    <div class="drag-dlazdice" id="drag-dlazdice" draggable="true">
+      <div class="drag-ikona">📄</div>
+      <div>
+        <div class="drag-nazev" id="drag-nazev">zpráva.pdf</div>
+        <div class="drag-pozn">chyťte a táhněte do okna e-mailu</div>
+      </div>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritPretazeni">Hotovo</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="znovuRozepsat">✉️ Znovu otevřít rozepsaný e-mail</button>
     </div>
   </div>
 </div>
@@ -8698,7 +8741,9 @@ function odeslatEmailem() {
   if (jeDotykove) return provestOdeslani('sdileni');
   var rezim = '';
   try { rezim = localStorage.getItem('revize_el_email_rezim') || ''; } catch(e) {}
-  if (rezim === 'sdileni' || rezim === 'eml' || rezim === 'mailto') return provestOdeslani(rezim);
+  if (rezim === 'pretazeni' || rezim === 'sdileni' || rezim === 'eml' || rezim === 'mailto') {
+    return provestOdeslani(rezim);
+  }
   var volbaSdileni = document.getElementById('email-volba-sdileni');
   if (volbaSdileni) volbaSdileni.style.display = umiSdiletSoubor() ? '' : 'none';
   var m = document.getElementById('modal-email');
@@ -8735,6 +8780,7 @@ function zapomenoutZpusobEmailu() {
   showToast('Příště se program znovu zeptá, jak zprávu odeslat.');
 }
 
+function emailPretazenim() { zavritEmailModal('pretazeni'); return provestOdeslani('pretazeni'); }
 function emailSdilenim() { zavritEmailModal('sdileni'); return provestOdeslani('sdileni'); }
 function emailSPrilohou() { zavritEmailModal('eml'); return provestOdeslani('eml'); }
 function emailBezPrilohy() { zavritEmailModal('mailto'); return provestOdeslani('mailto'); }
@@ -8751,6 +8797,7 @@ function provestOdeslani(rezim) {
   return renderPagesToPDF(allPages, filename, { vratitBlob: true }).then(function(blob) {
     if (!blob) return;                       // důvod už oznámil renderPagesToPDF
     if (rezim === 'mailto') return emailFallback(blob, filename, komu, predmet, telo, D);
+    if (rezim === 'pretazeni') return pripravitPretazeni(blob, filename, komu, predmet, telo, D);
     if (rezim === 'sdileni') {
       var file = new File([blob], filename, { type: 'application/pdf' });
       // Sdílení je jediná cesta, kde se do počítače nic neuloží — proto se
@@ -8781,6 +8828,18 @@ function provestOdeslani(rezim) {
     }
     return odeslatPresEml(blob, filename, komu, predmet, telo, D);
   });
+}
+
+// Sestaví mailto: a otevře rozepsaný e-mail ve výchozím poštovním
+// programu (u techniků typicky Outlook Classic). Tělo se zkrátí, ať se
+// vejde do limitu délky odkazu na Windows (~2000 znaků), konce řádků
+// jako CRLF — Outlook si s holým \n neporadí.
+function otevritRozepsanyEmail(komu, predmet, telo) {
+  var kratkeTelo = (String(telo || '').length > 1200 ? telo.slice(0, 1200) : (telo || ''))
+    .replace(/\r?\n/g, '\r\n');
+  otevritMailto('mailto:' + encodeURIComponent(komu || '') +
+    '?subject=' + encodeURIComponent(predmet || '') +
+    '&body=' + encodeURIComponent(kratkeTelo));
 }
 
 // Otevření rozepsaného e-mailu v poštovním klientovi (samostatná funkce,
@@ -8889,11 +8948,7 @@ function emailFallback(blob, filename, komu, predmet, telo, D) {
     if (ulozeno === false) return;    // uživatel zrušil ukládání souboru
     // Tělo zkrátíme, ať se vejde do limitu délky odkazu na Windows (~2000
     // znaků). Konce řádků jako CRLF — Outlook si s holým \n neporadí.
-    var kratkeTelo = (telo.length > 1200 ? telo.slice(0, 1200) : telo).replace(/\r?\n/g, '\r\n');
-    var url = 'mailto:' + encodeURIComponent(komu) +
-      '?subject=' + encodeURIComponent(predmet) +
-      '&body=' + encodeURIComponent(kratkeTelo);
-    otevritMailto(url);
+    otevritRozepsanyEmail(komu, predmet, telo);
     oznacOdeslano(D);
     showToast('📧 E-mail rozepsán v poštovním klientovi. Přiložte k němu uložené PDF ' +
       filename + ' (přetáhněte ho do zprávy nebo Vložit → Připojit soubor).', {
@@ -8902,6 +8957,61 @@ function emailFallback(blob, filename, komu, predmet, telo, D) {
       action: zapomenoutZpusobEmailu
     });
   });
+}
+
+// ═══ PŘETAŽENÍ PŘÍLOHY DO OUTLOOKU ═════════════════════════════════════
+// Prohlížeč umí předat soubor přetažením myší (DataTransfer 'DownloadURL',
+// Chrome/Edge). Technik tak vloží PDF do rozepsané zprávy v Outlooku
+// Classic, aniž by ho ukládal do počítače. Blob URL žije, dokud je okno
+// otevřené — po zavření se uvolní.
+var __dragStav = null;
+
+function pripravitPretazeni(blob, filename, komu, predmet, telo, D) {
+  zrusitPretazeni();
+  var url = URL.createObjectURL(blob);
+  __dragStav = { url: url, filename: filename, komu: komu, predmet: predmet, telo: telo, D: D };
+  var nazev = document.getElementById('drag-nazev');
+  if (nazev) nazev.textContent = filename;
+  var dl = document.getElementById('drag-dlazdice');
+  if (dl && !dl.dataset.wired) {
+    dl.dataset.wired = '1';
+    dl.addEventListener('dragstart', function(e) {
+      if (!__dragStav || !e.dataTransfer) return;
+      // 'typ:název:absolutní URL' — Chrome/Edge z toho udělají soubor
+      var asciiJmeno = asciiNazev(__dragStav.filename);
+      try {
+        e.dataTransfer.setData('DownloadURL', 'application/pdf:' + asciiJmeno + ':' + __dragStav.url);
+      } catch(err) {}
+      try { e.dataTransfer.setData('text/plain', __dragStav.filename); } catch(err) {}
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+    dl.addEventListener('dragend', function() {
+      if (__dragStav) oznacOdeslano(__dragStav.D);
+    });
+  }
+  // Rovnou otevřít rozepsaný e-mail, ať do něj má technik co pustit
+  otevritRozepsanyEmail(komu, predmet, telo);
+  var m = document.getElementById('modal-pretazeni');
+  if (m) m.classList.add('open');
+  return Promise.resolve();
+}
+
+function znovuRozepsat() {
+  if (__dragStav) otevritRozepsanyEmail(__dragStav.komu, __dragStav.predmet, __dragStav.telo);
+}
+
+function zavritPretazeni() {
+  var m = document.getElementById('modal-pretazeni');
+  if (m) m.classList.remove('open');
+  if (__dragStav) oznacOdeslano(__dragStav.D);
+  zrusitPretazeni();
+}
+
+function zrusitPretazeni() {
+  if (__dragStav && __dragStav.url) {
+    setTimeout(function(u) { return function() { URL.revokeObjectURL(u); }; }(__dragStav.url), 60000);
+  }
+  __dragStav = null;
 }
 
 // Do archivu si poznamenat, že zpráva šla ven (štítek 📧 v seznamu).
@@ -11000,7 +11110,10 @@ document.addEventListener('click', function(e) {
     case 'stahnoutPDF': stahnoutPDF(); break;
     case 'odeslatEmailem': odeslatEmailem(); break;
     case 'zavritEmailModal': zavritEmailModal(''); break;
+    case 'emailPretazenim': emailPretazenim(); break;
     case 'emailSdilenim': emailSdilenim(); break;
+    case 'zavritPretazeni': zavritPretazeni(); break;
+    case 'znovuRozepsat': znovuRozepsat(); break;
     case 'emailSPrilohou': emailSPrilohou(); break;
     case 'emailBezPrilohy': emailBezPrilohy(); break;
     case 'stahnoutMereniPDF': stahnoutMereniPDF(); break;
