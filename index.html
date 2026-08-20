@@ -779,6 +779,10 @@ td.plan-bunka-slozka{text-align:center;min-width:74px;vertical-align:middle;padd
   margin-left:.3rem;vertical-align:middle;letter-spacing:.02em;white-space:nowrap}
 .plan-stitek-volba{display:flex;align-items:center;gap:.3rem;cursor:pointer;font-size:.75rem;font-family:var(--sans)}
 .plan-stitek-volba input{width:15px;height:15px;padding:0;flex:0 0 15px}
+.plan-chybi-stitek{display:inline-block;background:#c0392b;color:#fff;font-size:.6rem;font-weight:700;
+  letter-spacing:.04em;padding:.05rem .3rem;border-radius:3px;margin-left:.3rem;vertical-align:middle;white-space:nowrap}
+td.plan-chybi{box-shadow:inset 0 0 0 2px #c0392b}
+.plan-chybi-znak{display:block;font-size:.62rem;font-weight:700;color:#c0392b}
 .plan-ex{display:inline-block;background:#c0392b;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;
   padding:.05rem .28rem;border-radius:3px;margin-left:.3rem;vertical-align:middle}
 .plan-technik{display:inline-block;font-size:.6rem;color:#fff;padding:.05rem .3rem;border-radius:3px;margin-left:.3rem;vertical-align:middle}
@@ -815,7 +819,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.208<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.209<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1615,8 +1619,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title">🗓 Plán revizí <span style="font-size:.6rem;color:var(--accent);letter-spacing:.08em">ZKUŠEBNÍ FUNKCE</span></div>
     <div class="info-box">Přehled objektů a let, ve kterých se revize dělaly nebo mají dělat. <strong>Objekty i hotové
       revize se berou z archivu zpráv</strong> (podle pole „Místo provádění revize"), příští termín z pole
-      <strong>„Termín příští revize"</strong> ve zprávě — a když ve zprávě není, z doporučené lhůty,
-      případně z lhůty nastavené u objektu (⏱ Lhůty).
+      <strong>„Termín příští revize"</strong> ve zprávě. <strong>Když ve zprávě chybí, plán si ho nedomýšlí</strong> —
+      označí to červeně, ať ho odpovědný člověk doplní podle skutečnosti (ve zprávě, nebo klepnutím do buňky roku).
+      Vlastní řadu dopředu si můžete nechat dopočítat z lhůty u objektu (⏱ Lhůty).
       <br>Uspořádání je jako složky ve Windows: <strong>🏢 provozovatel → 🏠 budova → 📄 objekty</strong>.
       Rozbaluje se tlačítkem <strong>+</strong> u složky, <strong>složky i objekty se přesouvají myší</strong>
       (chytit řádek a pustit na složku). Objekty ve složce jsou seřazené <strong>podle data příští revize</strong>.
@@ -1650,6 +1655,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <option value="ex">Jen s nebezpečím výbuchu</option>
         <option value="nezadano">Jen nezadané technikovi</option>
         <option value="po">Jen po termínu</option>
+        <option value="chybi">Jen s chybějícím termínem příští revize</option>
       </select>
       <select id="plan-rok-od" autocomplete="off" title="První zobrazený rok"></select>
       <select id="plan-pocet-let" autocomplete="off" title="Kolik let zobrazit">
@@ -1658,6 +1664,8 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       </select>
     </div>
   </div>
+  <div class="warn-box" id="plan-varovani" style="display:none;margin-bottom:.5rem;font-size:.8rem;
+    border-color:var(--accent);color:var(--accent)"></div>
   <div class="plan-hromadne plan-hromadne-skryta" id="plan-hromadne">
     <strong id="plan-vybrano-pocet">0 objektů</strong>
     <span style="color:var(--muted);font-size:.72rem">označeno</span>
@@ -11673,25 +11681,15 @@ function planDruhZpravy(z) { return z.typ === 'lps' ? 'LPS' : 'EL'; }
 // Bez data v textu se zkusí počet let, jinak se termín neodhaduje.
 function planPristiTermin(z) {
   var d = z.data || {};
-  // Nejdřív pole „Termín příští revize" (datum na titulní straně) — to je
-  // to nejpřesnější, co ve zprávě je. Teprve když chybí, luští se text
-  // doporučené lhůty.
+  // Termín příští revize se bere VÝHRADNĚ z pole „Termín příští revize"
+  // ve zprávě. Dřív se dal odhadnout i z textu doporučené lhůty, jenže
+  // odhad v plánu vypadá jako fakt — a plán, podle kterého se objíždí
+  // areál, si domýšlení nesmí dovolit. Když datum chybí, plán to nahlásí
+  // (červeně) a odpovědný člověk ho doplní podle skutečnosti.
   var pristi = String(d.pristi || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (pristi) {
-    var mesicPristi = parseInt(pristi[2], 10) - 1;
-    return { rok: parseInt(pristi[1], 10), mesic: planMesicPlatny(mesicPristi) ? mesicPristi : null };
-  }
-  var lhuta = String(d.lhuta || '');
-  var m = lhuta.match(/(\d{1,2})\s*\/\s*(20\d\d)/);
-  if (m) return { rok: parseInt(m[2], 10), mesic: parseInt(m[1], 10) - 1 };
-  var rok = parseInt(String(z.datum || '').slice(0, 4), 10);
-  if (!rok) return null;
-  var mLet = lhuta.match(/(\d{1,2})\s*(?:let|roky|rok)/i);
-  var mesic = parseInt(String(z.datum || '').slice(5, 7), 10) - 1;
-  if (mLet) return { rok: rok + parseInt(mLet[1], 10), mesic: planMesicPlatny(mesic) ? mesic : null };
-  var m2 = lhuta.match(/do konce roku\s*(20\d\d)/i);
-  if (m2) return { rok: parseInt(m2[1], 10), mesic: 11 };
-  return null;
+  if (!pristi) return null;
+  var mesicPristi = parseInt(pristi[2], 10) - 1;
+  return { rok: parseInt(pristi[1], 10), mesic: planMesicPlatny(mesicPristi) ? mesicPristi : null };
 }
 
 // Sestavení řádků: vlastní objekty + objekty odvozené z archivu.
@@ -11704,7 +11702,7 @@ function planRadky() {
   P.objekty.forEach(function(o) {
     var r = { o: o, id: o.id, klic: o.klic || '', nazev: o.nazev || '', cislo: o.cislo || '',
               ex: !!o.ex, technik: o.technik || '', skupina: o.skupina || '', rodic: o.rodic || '',
-              poznamka: o.poznamka || '', zpravy: [], roky: {}, vlastni: true };
+              poznamka: o.poznamka || '', zpravy: [], roky: {}, bezTerminu: [], vlastni: true };
     if (r.klic) podleKlice[r.klic] = r;
     radky.push(r);
   });
@@ -11717,7 +11715,7 @@ function planRadky() {
     if (!r) {
       r = { o: null, id: 'a:' + klic, klic: klic, nazev: (z.misto || (z.data || {}).adresa || '').trim(),
             cislo: '', ex: false, technik: '', skupina: '', rodic: '', poznamka: '',
-            zpravy: [], roky: {}, vlastni: false };
+            zpravy: [], roky: {}, bezTerminu: [], vlastni: false };
       podleKlice[klic] = r;
       radky.push(r);
     }
@@ -11733,6 +11731,11 @@ function planRadky() {
       if (rok) planZapisDoRoku(r, rok, druh, mesic, 'hotovo', z.uid || '');
       var p = planPristiTermin(z);
       if (p && p.rok) planZapisDoRoku(r, p.rok, druh, p.mesic, 'odhad', '');
+      else if (rok) {
+        // zpráva je hotová, ale neříká, kdy má být příští revize
+        r.bezTerminu.push({ ev_cislo: z.ev_cislo || 'bez čísla', rok: rok, druh: druh });
+        if (r.roky[rok]) r.roky[rok].chybiTermin = true;
+      }
     });
     // Zpráva nemusí mít vyplněnou doporučenou lhůtu — pak plán nemá z čeho
     // příští termín spočítat a rok by zůstal prázdný. Proto se řada dopočítá
@@ -11850,6 +11853,7 @@ function planFiltrovat(radky) {
     if (q && planKlic(r.nazev).indexOf(q) === -1 && planKlic(r.cislo).indexOf(q) === -1) return false;
     if (f === 'ex' && !r.ex) return false;
     if (f === 'nezadano' && r.technik) return false;
+    if (f === 'chybi' && !(r.bezTerminu && r.bezTerminu.length)) return false;
     if (f.indexOf('stitek:') === 0) {
       var chtenyStitek = f.slice(7);
       var ma = (r.o && Array.isArray(r.o.stitky)) ? r.o.stitky.indexOf(chtenyStitek) !== -1 : false;
@@ -12058,6 +12062,7 @@ function renderPlan() {
   planLegenda();
   planZapojitTazeni();
   planListaVyberu();
+  planVarovaniTerminy(radky);
   var skryte = document.getElementById('plan-btn-skryte');
   if (skryte) {
     var pocetSkrytych = (planData().skryte || []).length;
@@ -12128,6 +12133,9 @@ function planRadekObjektu(r, uroven, roky, odsazeni) {
     (t ? '<span class="plan-technik" style="background:' + esc(t.barva) + '" title="' + esc(t.jmeno) + '">' +
          esc(planIniciala(t.jmeno)) + '</span>' : '') +
     planStitkyHtml(r) +
+    (r.bezTerminu.length ? '<span class="plan-chybi-stitek" title="' +
+      esc(r.bezTerminu.map(function(x) { return x.ev_cislo + ' (' + x.rok + ', ' + x.druh + ')'; }).join(', ')) +
+      ' — ve zprávě není vyplněný termín příští revize. Doplňte ho ve zprávě podle skutečnosti.">⚠ CHYBÍ TERMÍN</span>' : '') +
     (r.zpravy.length ? '<span class="plan-zdroj" title="' + r.zpravy.length + ' zpráv v archivu">📁 ' + r.zpravy.length + '</span>' : '') +
     '</td>';
   roky.forEach(function(rok) {
@@ -12139,9 +12147,12 @@ function planRadekObjektu(r, uroven, roky, odsazeni) {
         (planMesicPlatny(g.mesic) ? '<span class="plan-mesic">' + planZkratkaMesice(g.mesic) + '</span>' : '') +
         '</span>';
     }).join('');
-    h += '<td class="plan-bunka' + (stav ? ' plan-' + stav : '') + '" data-action="planTermin" ' +
-         'data-id="' + esc(r.id) + '" data-rok="' + rok + '"' +
-         (b && b.poznamka ? ' title="' + esc(b.poznamka) + '"' : '') + '>' + obsah + '</td>';
+    var chybi = b && b.chybiTermin;
+    h += '<td class="plan-bunka' + (stav ? ' plan-' + stav : '') + (chybi ? ' plan-chybi' : '') +
+         '" data-action="planTermin" data-id="' + esc(r.id) + '" data-rok="' + rok + '"' +
+         (chybi ? ' title="Zpráva z tohoto roku nemá vyplněný termín příští revize — doplňte ho ve zprávě."'
+                : (b && b.poznamka ? ' title="' + esc(b.poznamka) + '"' : '')) + '>' + obsah +
+         (chybi ? '<span class="plan-chybi-znak" title="Chybí termín příští revize">?</span>' : '') + '</td>';
   });
   return h + '</tr>';
 }
@@ -12326,6 +12337,32 @@ function planRozbalitVse(otevrit) {
 }
 
 
+// Kolik zpráv v plánu nemá vyplněný termín příští revize. Plán se podle
+// toho objíždí, takže tohle musí být vidět, ne schované v řádku.
+function planVarovaniTerminy(radky) {
+  var box = document.getElementById('plan-varovani');
+  if (!box) return;
+  var objektu = 0, zprav = 0;
+  radky.forEach(function(r) {
+    if (r.bezTerminu && r.bezTerminu.length) { objektu++; zprav += r.bezTerminu.length; }
+  });
+  if (!objektu) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = '⚠️ <strong>' + zprav + '×</strong> chybí ve zprávě <strong>termín příští revize</strong> ' +
+    '(' + objektu + (objektu === 1 ? ' objekt' : (objektu < 5 ? ' objekty' : ' objektů')) + '). ' +
+    'Plán si termín nedomýšlí — otevřete zprávu a doplňte ho podle skutečnosti, nebo ho zadejte ' +
+    'klepnutím do buňky roku. ' +
+    '<button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent);' +
+    'font-size:.68rem;margin-left:.4rem;padding:.25rem .5rem" data-action="planFiltrChybi">Ukázat jen tyto</button>';
+}
+
+function planFiltrChybi() {
+  var f = document.getElementById('plan-filtr');
+  if (!f) return;
+  f.value = f.value === 'chybi' ? '' : 'chybi';
+  renderPlan();
+}
+
 function planSlozkaVybrana(u) {
   var vse = true, nasel = false;
   (function projit(x) {
@@ -12352,7 +12389,8 @@ function planLegenda() {
           '<span><span class="vzorek" style="background:rgba(192,57,43,.18)"></span>po termínu</span>' +
           '<span><span class="plan-ex">EX</span> nutné oprávnění pro prostředí s nebezpečím výbuchu</span>' +
           '<span><strong>EL</strong> elektroinstalace · <strong>LPS</strong> hromosvod · <strong>T</strong> technologie, zařízení</span>' +
-          '<span><span class="vzorek" style="background:rgba(142,68,173,.35)"></span>objekt bez zprávy v programu (vedený jen v plánu)</span>';
+          '<span><span class="vzorek" style="background:rgba(142,68,173,.35)"></span>objekt bez zprávy v programu (vedený jen v plánu)</span>' +
+          '<span><span class="plan-chybi-stitek">⚠ CHYBÍ TERMÍN</span> zpráva nemá vyplněný termín příští revize — doplňte ho ve zprávě</span>';
   P.technici.forEach(function(t) {
     h += '<span><span class="plan-technik" style="background:' + esc(t.barva) + '">' + esc(planIniciala(t.jmeno)) +
          '</span> ' + esc(t.jmeno) + '</span>';
@@ -12378,7 +12416,8 @@ function planNaplnitVolby() {
     var zaklad = '<option value="">Všechny objekty</option>' +
       '<option value="ex">Jen s nebezpečím výbuchu</option>' +
       '<option value="nezadano">Jen nezadané technikovi</option>' +
-      '<option value="po">Jen po termínu</option>';
+      '<option value="po">Jen po termínu</option>' +
+      '<option value="chybi">Jen s chybějícím termínem příští revize</option>';
     var stitky = planStitky().filter(function(x) { return x.nazev; });
     if (stitky.length) {
       zaklad += '<optgroup label="Podle přívlastku">' + stitky.map(function(x) {
@@ -13785,6 +13824,7 @@ document.addEventListener('click', function(e) {
     case 'planHromadnaPotvrdit': planHromadnaPotvrdit(); break;
     case 'planHromadnaZavrit': planHromadnaZavrit(); break;
     case 'planObnovitSkryte': planObnovitSkryte(); break;
+    case 'planFiltrChybi': planFiltrChybi(); break;
     case 'planVlozitRozebrat': planVlozitRozebrat(); break;
     case 'planVlozitPotvrdit': planVlozitPotvrdit(); break;
     case 'planVlozitZavrit': planVlozitZavrit(); break;
