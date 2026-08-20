@@ -723,6 +723,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .plan-hromadne{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .7rem;margin-bottom:.5rem;
   border:1px solid var(--accent2);border-radius:6px;background:rgba(43,87,154,.10);font-family:var(--sans);font-size:.78rem}
 .plan-hromadne .btn{font-size:.7rem;padding:.35rem .6rem}
+.plan-hromadne-skryta{visibility:hidden}
 .plan-check{width:15px;height:15px;padding:0;margin:0 .4rem 0 0;flex:0 0 15px;vertical-align:middle;cursor:pointer}
 tr.plan-vybrany td{background:rgba(43,87,154,.14)}
 tr.plan-vybrany td.plan-objekt{background:rgba(43,87,154,.20)}
@@ -797,7 +798,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.204<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.205<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1636,7 +1637,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       </select>
     </div>
   </div>
-  <div class="plan-hromadne" id="plan-hromadne" style="display:none">
+  <div class="plan-hromadne plan-hromadne-skryta" id="plan-hromadne">
     <strong id="plan-vybrano-pocet">0 objektů</strong>
     <span style="color:var(--muted);font-size:.72rem">označeno</span>
     <span style="flex:1"></span>
@@ -11539,6 +11540,20 @@ function planMigraceZnacek(P) {
       delete t.druhy; delete t.mesic; delete t.stav;
     });
   });
+  // Neplatný měsíc (jiné číslo než 0–11) se v tabulce ukazoval jako
+  // „undefined" — vyčistit na „neurčeno".
+  (P.objekty || []).forEach(function(o) {
+    (o.terminy || []).forEach(function(t) {
+      (t.polozky || []).forEach(function(p) {
+        if (!planMesicPlatny(p.mesic)) p.mesic = null;
+      });
+    });
+    if (o.posledni) {
+      Object.keys(o.posledni).forEach(function(d) {
+        if (o.posledni[d] && !planMesicPlatny(o.posledni[d].mesic)) o.posledni[d].mesic = null;
+      });
+    }
+  });
   if (P.migraceZnacek) return;
   var prevod = { S: 'EL', H: 'LPS', T: 'T' };
   (P.objekty || []).forEach(function(o) {
@@ -11603,7 +11618,7 @@ function planPristiTermin(z) {
   if (!rok) return null;
   var mLet = lhuta.match(/(\d{1,2})\s*(?:let|roky|rok)/i);
   var mesic = parseInt(String(z.datum || '').slice(5, 7), 10) - 1;
-  if (mLet) return { rok: rok + parseInt(mLet[1], 10), mesic: mesic >= 0 ? mesic : 0 };
+  if (mLet) return { rok: rok + parseInt(mLet[1], 10), mesic: planMesicPlatny(mesic) ? mesic : null };
   var m2 = lhuta.match(/do konce roku\s*(20\d\d)/i);
   if (m2) return { rok: parseInt(m2[1], 10), mesic: 11 };
   return null;
@@ -11981,7 +11996,7 @@ function planRadekStromu(u, uroven, roky, ted) {
       var polozky = (souhrn && souhrn[rok]) || [];
       var obsah = polozky.slice(0, 4).map(function(p) {
         return '<span class="plan-souhrn plan-s-' + (p.stav || 'plan') + '" title="' + esc(p.nazev) + '">' + esc(p.druhy) +
-               (typeof p.mesic === 'number' && p.mesic >= 0 ? ' ' + PLAN_MES_ZKR[p.mesic] : '') + '</span>';
+               (planMesicPlatny(p.mesic) ? ' ' + planZkratkaMesice(p.mesic) : '') + '</span>';
       }).join('');
       if (polozky.length > 4) obsah += '<span class="plan-souhrn plan-s-vic">+' + (polozky.length - 4) + '</span>';
       h += '<td class="plan-bunka-slozka">' + obsah + '</td>';
@@ -12017,7 +12032,7 @@ function planRadekObjektu(r, uroven, roky, odsazeni) {
     var obsah = planSkupinyBunky(rok, b).map(function(g) {
       return '<span class="plan-skupina-bunky plan-b-' + g.stav + '">' +
         '<span class="plan-druhy">' + esc(g.popis) + '</span>' +
-        (typeof g.mesic === 'number' && g.mesic >= 0 ? '<span class="plan-mesic">' + PLAN_MES_ZKR[g.mesic] + '</span>' : '') +
+        (planMesicPlatny(g.mesic) ? '<span class="plan-mesic">' + planZkratkaMesice(g.mesic) + '</span>' : '') +
         '</span>';
     }).join('');
     h += '<td class="plan-bunka' + (stav ? ' plan-' + stav : '') + '" data-action="planTermin" ' +
@@ -12395,7 +12410,7 @@ function planDopocitat() {
     return;
   }
   var popis = navrh.map(function(n) {
-    return '  ' + n.rok + (typeof n.mesic === 'number' ? ' / ' + PLAN_MESICE[n.mesic] : '') + ' — ' + n.druh +
+    return '  ' + n.rok + (planMesicPlatny(n.mesic) ? ' / ' + planNazevMesice(n.mesic) : '') + ' — ' + n.druh +
            (n.stav === 'hotovo' ? '  (hotovo)' : '');
   }).join('\n');
   if (!confirm('Zapsat do plánu tyhle termíny?\n\n' + popis +
@@ -12730,7 +12745,7 @@ function planPdfStranka(cast, roky, cislo, celkem) {
           var stav = x.stav || 'plan';
           var barva = stav === 'hotovo' ? '#dff0e6' : (stav === 'po' ? '#f7dad6' : (stav === 'plan' ? '#fdf3d0' : '#fff'));
           return '<div style="background:' + barva + ';font-size:6pt;font-weight:bold;line-height:1.5">' + esc(x.druhy) +
-                 (typeof x.mesic === 'number' && x.mesic >= 0 ? ' ' + PLAN_MES_ZKR[x.mesic] : '') + '</div>';
+                 (planMesicPlatny(x.mesic) ? ' ' + planZkratkaMesice(x.mesic) : '') + '</div>';
         }).join('');
         h += '<td style="background:' + (polozka.uroven === 0 ? '#e8eaf0' : '#f2f3f7') + '">' + obsah + '</td>';
       });
@@ -12748,7 +12763,7 @@ function planPdfStranka(cast, roky, cislo, celkem) {
       var stav = planStavBunky(rok, b);
       var obsah = planSkupinyBunky(rok, b).map(function(g) {
         return '<div><b>' + esc(g.popis) + '</b>' +
-               (typeof g.mesic === 'number' && g.mesic >= 0 ? '<span class="m">' + PLAN_MESICE[g.mesic] + '</span>' : '') + '</div>';
+               (planMesicPlatny(g.mesic) ? '<span class="m">' + planNazevMesice(g.mesic) + '</span>' : '') + '</div>';
       }).join('');
       h += '<td' + (stav ? ' class="' + stav + '"' : '') + '>' + obsah + '</td>';
     });
@@ -12802,6 +12817,16 @@ var PLAN_MESICE_SEZNAM = (function() {
   ven.sort(function(a, b) { return b.text.length - a.text.length; });
   return ven;
 })();
+
+// Měsíc se zobrazí, jen když je to opravdu měsíc 1–12. Kdyby se do dat
+// dostalo něco jiného (starší verze, ruční zásah do zálohy), napsalo by
+// se do tabulky „undefined" místo zkratky.
+function planMesicPlatny(m) {
+  return typeof m === 'number' && isFinite(m) && m >= 0 && m <= 11 && Math.floor(m) === m;
+}
+
+function planZkratkaMesice(m) { return planMesicPlatny(m) ? PLAN_MES_ZKR[m] : ''; }
+function planNazevMesice(m) { return planMesicPlatny(m) ? PLAN_MESICE[m] : ''; }
 
 function planMesicZTextu(text) {
   var t = String(text || '').toLowerCase().trim();
@@ -13031,7 +13056,7 @@ function planVlozitRozebrat() {
     var popis = Object.keys(o.terminy).sort().map(function(rok) {
       var t = o.terminy[rok];
       if (t.zruseno) return rok + ' zrušeno';
-      return rok + ' ' + t.druhy.join('+') + (t.mesice.length ? ' (' + t.mesice.map(function(m) { return PLAN_MES_ZKR[m]; }).join(', ') + ')' : '');
+      return rok + ' ' + t.druhy.join('+') + (t.mesice.length ? ' (' + t.mesice.map(planZkratkaMesice).join(', ') + ')' : '');
     }).join(' · ');
     h += '<tr style="border-bottom:1px solid var(--border)"><td style="padding:.25rem .4rem">' +
       (o.cislo ? '<strong>' + esc(o.cislo) + '.</strong> ' : '') + esc(o.nazev) +
@@ -13200,8 +13225,10 @@ function planListaVyberu() {
   var lista = document.getElementById('plan-hromadne');
   if (!lista) return;
   var ids = planVybranoIds();
-  if (!ids.length) { lista.style.display = 'none'; return; }
-  lista.style.display = '';
+  // Lišta se neschovává přes display — tabulka by se o její výšku posunula
+  // a technik by ztratil řádek, na kterém zrovna je. Místo si drží pořád.
+  lista.classList.toggle('plan-hromadne-skryta', !ids.length);
+  if (!ids.length) return;
   var pocet = document.getElementById('plan-vybrano-pocet');
   if (pocet) pocet.textContent = ids.length + (ids.length === 1 ? ' objekt' : (ids.length < 5 ? ' objekty' : ' objektů'));
   var slouc = document.getElementById('plan-btn-sloucit');
