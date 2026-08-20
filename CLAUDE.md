@@ -217,6 +217,21 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (I–IV vs kategorie obyčejný/zesílený/zvláštní), skrytí
   62305-specifických polí (mřížka, Typ A/B, LPZ zóny, SPD)
   pro 1390, dynamický PDF obsah dle volby normy.
+- ✅ **Plán revizí — přívlastky, sdílení, vlastní nadpis PDF** (2026-08-20):
+  `STORE.plan.stitky` = vlastní kategorie objektů (kotelna, rozvodna nn,
+  výbušný prostor), objekt má `stitky: [id]`, filtr má volbu `stitek:<id>`
+  a lišta hromadné přidělení. Objekt bez zprávy v archivu = **fialový řádek**
+  (`tr.plan-rucni`). U provozovatele se počítají budovy i objekty.
+  **Naplánované termíny** se dopočítají z `objekt.cyklus`, když zpráva nemá
+  vyplněnou doporučenou lhůtu (dřív u takových objektů nebylo žluté nic).
+  Plán jde uložit jako `_format: 'revize-el-plan'` (📤 Soubor pro kolegu)
+  a načíst zpátky (📥) — načtení vždy **přepíše** plán a ptá se.
+  `buildZalohaBlob()` **nově obsahuje `plan`** — dřív se plán do zálohy
+  vůbec nedostal. Ve zprávě přibyla pole `f_nadpis_vlastni`
+  a `f_nadpis_doplnek` pro použití zprávy jako přílohy.
+  **Pozor na CSS:** program používá `var(--surface)` a `html.dark`,
+  ne `var(--card)` / `[data-theme="dark"]` — na tom se první verze stylů
+  plánu tiše rozbila.
 - ✅ **Plán revizí — hromadné úpravy** (2026-08-20): zaškrtávátko na začátku
   řádku (`__planVybrane`, Shift označí úsek podle `__planPoradi`, checkbox
   u složky označí vše uvnitř). Lišta `#plan-hromadne` umí: do složky, technik,
