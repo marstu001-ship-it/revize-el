@@ -217,6 +217,19 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (I–IV vs kategorie obyčejný/zesílený/zvláštní), skrytí
   62305-specifických polí (mřížka, Typ A/B, LPZ zóny, SPD)
   pro 1390, dynamický PDF obsah dle volby normy.
+- ✅ **Plán revizí — doplnění historie mimo program** (2026-08-20): tři cesty,
+  jak do plánu dostat revize, které nejsou v archivu.
+  **📋 Vložit z Excelu** (`planRozborVlozeni` + `planVlozitPotvrdit`) rozebere
+  TSV ze schránky: hlavička s roky, značky S/H/T i EL/LPS/T, měsíce z řádku
+  pod objektem, dvojice „leden+září" (každý druh svůj měsíc), „zrušeno"
+  a pomlčky, oddíly (KOTELNY) volitelně jako budovy, pokračovací řádky názvu,
+  zopakované hlavičky se přeskočí. Barvy schránka nepřenáší → EX a technik
+  ručně. **Ruční termín** klepnutím na buňku. **🔢 Dopočítat řadu**
+  (`planDopocitat`) z poslední revize a lhůty — **vždy se ptá a ukazuje,
+  co zapíše** (pokyn uživatele: předchozí technik mohl mít termíny jinak),
+  a nikdy nepřepíše už vyplněný rok.
+  Buňka roku drží položky po druzích (`polozky: [{druh, mesic, stav}]`), takže
+  EL může být v lednu a LPS v září — `planSkupinyBunky` je pro zobrazení spojí.
 - ✅ **Plán revizí — značky druhů**: **EL** = elektroinstalace,
   **LPS** = hromosvod, **T** = technologie a zařízení (rozhodnutí uživatele
   2026-08-20; původní S/H se převádí přes `planMigraceZnacek`).
