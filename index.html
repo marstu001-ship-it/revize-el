@@ -786,7 +786,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.199<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.200<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1567,7 +1567,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="scard">
     <div class="scard-title">🗓 Plán revizí <span style="font-size:.6rem;color:var(--accent);letter-spacing:.08em">ZKUŠEBNÍ</span></div>
     <div class="info-box">Víceletá tabulka objekt × rok, jakou si vedou správci areálů — kdy se kde dělala
-      revize elektroinstalace a hromosvodu a kdy je na řadě příště. <strong>Objekty a hotové revize se berou
+      revize elektroinstalace (EL) a hromosvodu (LPS) a kdy je na řadě příště. <strong>Objekty a hotové revize se berou
       z archivu zpráv</strong>, další objekty si přidáte ručně. Označíte prostory s nebezpečím výbuchu,
       přidělíte revizního technika a celý plán vytisknete do PDF na šířku.
       Funkce se teprve zkouší, proto je zatím jen tady.</div>
@@ -1628,9 +1628,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <div class="f"><label>Číslo v plánu</label><input type="text" id="plan-o-cislo" placeholder="11" autocomplete="off"></div>
       <div class="f"><label>Zařadit do složky</label><select id="plan-o-rodic" autocomplete="off"></select></div>
       <div class="f"><label>Přidělený technik</label><select id="plan-o-technik" autocomplete="off"></select></div>
-      <div class="f"><label>Lhůta elektroinstalace (roky)</label><input type="number" id="plan-o-cyklus-s" min="0" max="20" step="1" placeholder="5" autocomplete="off"></div>
-      <div class="f"><label>Lhůta hromosvodu (roky)</label><input type="number" id="plan-o-cyklus-h" min="0" max="20" step="1" placeholder="4" autocomplete="off"></div>
-      <div class="f"><label>Lhůta technologie (roky)</label><input type="number" id="plan-o-cyklus-t" min="0" max="20" step="1" placeholder="" autocomplete="off"></div>
+      <div class="f"><label>Lhůta EL — elektroinstalace (roky)</label><input type="number" id="plan-o-cyklus-el" min="0" max="20" step="1" placeholder="5" autocomplete="off"></div>
+      <div class="f"><label>Lhůta LPS — hromosvod (roky)</label><input type="number" id="plan-o-cyklus-lps" min="0" max="20" step="1" placeholder="4" autocomplete="off"></div>
+      <div class="f"><label>Lhůta T — technologie (roky)</label><input type="number" id="plan-o-cyklus-t" min="0" max="20" step="1" placeholder="" autocomplete="off"></div>
       <div class="f span2"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
         <input type="checkbox" id="plan-o-ex" style="width:16px;height:16px;padding:0;flex:0 0 16px">
         Prostor s nebezpečím výbuchu — potřeba oprávnění pro prostředí Ex</label></div>
@@ -1670,9 +1670,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="g2" style="gap:.7rem">
       <div class="f span2"><label>Co se v tomto roce dělá</label>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.3rem;font-size:.8rem;font-family:var(--sans)">
-          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-s" style="width:15px;height:15px;padding:0;flex:0 0 15px"> S — elektroinstalace</label>
-          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-h" style="width:15px;height:15px;padding:0;flex:0 0 15px"> H — hromosvod</label>
-          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-t" style="width:15px;height:15px;padding:0;flex:0 0 15px"> T — technologie</label>
+          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-el" style="width:15px;height:15px;padding:0;flex:0 0 15px"> EL — elektroinstalace</label>
+          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-lps" style="width:15px;height:15px;padding:0;flex:0 0 15px"> LPS — hromosvod</label>
+          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer"><input type="checkbox" id="plan-t-t" style="width:15px;height:15px;padding:0;flex:0 0 15px"> T — technologie, zařízení</label>
         </div>
       </div>
       <div class="f"><label>Měsíc</label><select id="plan-t-mesic" autocomplete="off"></select></div>
@@ -11312,8 +11312,8 @@ async function init() {
 var PLAN_MESICE = ['leden','únor','březen','duben','květen','červen',
                    'červenec','srpen','září','říjen','listopad','prosinec'];
 var PLAN_MES_ZKR = ['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro'];
-var PLAN_DRUHY = ['S', 'H', 'T'];
-var PLAN_DRUH_NAZEV = { S: 'elektroinstalace', H: 'hromosvod', T: 'technologie' };
+var PLAN_DRUHY = ['EL', 'LPS', 'T'];
+var PLAN_DRUH_NAZEV = { EL: 'elektroinstalace', LPS: 'hromosvod', T: 'technologie a zařízení' };
 var PLAN_BARVY = ['#2B579A', '#0f7b5f', '#8e44ad', '#c0651a', '#0d7d8f', '#7a4b2a', '#b5291c'];
 
 function planData() {
@@ -11331,10 +11331,30 @@ function planData() {
   }
   if (!P.nastaveni.rokOd) P.nastaveni.rokOd = new Date().getFullYear() - 4;
   if (!P.nastaveni.pocetLet) P.nastaveni.pocetLet = 12;
+  planMigraceZnacek(P);
   return P;
 }
 
 function planUlozit() { STORE.plan = planData(); saveStore(); }
+
+// Plán původně značil revize S (stavba) a H (hromosvod). Uživatel to chtěl
+// srozumitelnější — EL a LPS. Ručně zadané termíny a lhůty se převedou.
+function planMigraceZnacek(P) {
+  if (P.migraceZnacek) return;
+  var prevod = { S: 'EL', H: 'LPS', T: 'T' };
+  (P.objekty || []).forEach(function(o) {
+    (o.terminy || []).forEach(function(t) {
+      if (!t || !t.druhy) return;
+      t.druhy = String(t.druhy).split('+').map(function(d) { return prevod[d] || d; }).join('+');
+    });
+    if (o.cyklus) {
+      var novy = {};
+      Object.keys(o.cyklus).forEach(function(k) { novy[prevod[k] || k] = o.cyklus[k]; });
+      o.cyklus = novy;
+    }
+  });
+  P.migraceZnacek = true;
+}
 
 // Nejstarší rok, který má smysl ukazovat: nejstarší zpráva v archivu,
 // nejvýš však osm let zpátky, a vždycky aspoň dva roky do minulosti.
@@ -11364,7 +11384,7 @@ function planKlicZpravy(z) {
 }
 
 // Druh revize podle typu zprávy: elektro → S, LPS (hromosvod) → H
-function planDruhZpravy(z) { return z.typ === 'lps' ? 'H' : 'S'; }
+function planDruhZpravy(z) { return z.typ === 'lps' ? 'LPS' : 'EL'; }
 
 // Z doporučené lhůty ve zprávě („5 let – do 01/2031") vytáhnout příští termín.
 // Bez data v textu se zkusí počet let, jinak se termín neodhaduje.
@@ -11923,7 +11943,7 @@ function planLegenda() {
           '<span><span class="vzorek" style="background:rgba(240,190,40,.20)"></span>naplánováno / odhad z lhůty</span>' +
           '<span><span class="vzorek" style="background:rgba(192,57,43,.18)"></span>po termínu</span>' +
           '<span><span class="plan-ex">EX</span> nutné oprávnění pro prostředí s nebezpečím výbuchu</span>' +
-          '<span><strong>S</strong> elektroinstalace · <strong>H</strong> hromosvod · <strong>T</strong> technologie</span>';
+          '<span><strong>EL</strong> elektroinstalace · <strong>LPS</strong> hromosvod · <strong>T</strong> technologie, zařízení</span>';
   P.technici.forEach(function(t) {
     h += '<span><span class="plan-technik" style="background:' + esc(t.barva) + '">' + esc(planIniciala(t.jmeno)) +
          '</span> ' + esc(t.jmeno) + '</span>';
@@ -12019,9 +12039,7 @@ function planOtevritObjekt(id) {
   g('plan-o-ex').checked = o ? !!o.ex : false;
   g('plan-o-poznamka').value = o ? (o.poznamka || '') : '';
   var c = (o && o.cyklus) || {};
-  g('plan-o-cyklus-s').value = c.S || '';
-  g('plan-o-cyklus-h').value = c.H || '';
-  g('plan-o-cyklus-t').value = c.T || '';
+  PLAN_DRUHY.forEach(function(d) { g('plan-o-cyklus-' + d.toLowerCase()).value = c[d] || ''; });
   var sel = g('plan-o-technik');
   sel.innerHTML = '<option value="">— nezadáno —</option>' + P.technici.map(function(t) {
     return '<option value="' + esc(t.id) + '">' + esc(t.jmeno) + '</option>';
@@ -12115,7 +12133,7 @@ function planTerminUlozit() {
   if (!__planTermin) return;
   var g = function(x) { return document.getElementById(x); };
   var druhy = PLAN_DRUHY.filter(function(d) { return g('plan-t-' + d.toLowerCase()).checked; });
-  if (!druhy.length) { alert('Zaškrtněte aspoň jednu revizi (S / H / T), nebo termín vymažte.'); return; }
+  if (!druhy.length) { alert('Zaškrtněte aspoň jednu revizi (EL / LPS / T), nebo termín vymažte.'); return; }
   var o = planZajistitObjekt(__planTermin.id);
   if (!Array.isArray(o.terminy)) o.terminy = [];
   o.terminy = o.terminy.filter(function(t) { return t.rok !== __planTermin.rok; });
@@ -12325,8 +12343,8 @@ function planPdfStranka(cast, roky, cislo, celkem) {
 function planPdfLegenda() {
   var P = planData();
   var h = '<div style="margin-top:3mm;font-size:7pt;line-height:1.6;color:#222">' +
-    '<b>Vysvětlivky:</b> <b>S</b> = revize elektrické instalace · <b>H</b> = revize hromosvodu · ' +
-    '<b>T</b> = revize technologie &nbsp;|&nbsp; ' +
+    '<b>Vysvětlivky:</b> <b>EL</b> = revize elektrické instalace · <b>LPS</b> = revize hromosvodu · ' +
+    '<b>T</b> = revize technologie a zařízení &nbsp;|&nbsp; ' +
     '<span style="background:#dff0e6;padding:0 1.5mm">hotovo</span> ' +
     '<span style="background:#fdf3d0;padding:0 1.5mm">naplánováno</span> ' +
     '<span style="background:#f7dad6;padding:0 1.5mm">po termínu</span> &nbsp;|&nbsp; ' +

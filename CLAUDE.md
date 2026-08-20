@@ -217,6 +217,10 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (I–IV vs kategorie obyčejný/zesílený/zvláštní), skrytí
   62305-specifických polí (mřížka, Typ A/B, LPZ zóny, SPD)
   pro 1390, dynamický PDF obsah dle volby normy.
+- ✅ **Plán revizí — značky druhů**: **EL** = elektroinstalace,
+  **LPS** = hromosvod, **T** = technologie a zařízení (rozhodnutí uživatele
+  2026-08-20; původní S/H se převádí přes `planMigraceZnacek`).
+  Plán je **jen pro uživatele a jednoho kolegu — do Novinek nepatří**.
 - ✅ **Plán revizí — strom složek** (2026-08-20): uspořádání
   **🏢 provozovatel → 🏠 budova → 📄 objekt** jako v Průzkumníku, tlačítko
   `+`/`−` u složky, přesouvání myší (`planPresunout`, pravidla i pro tažení
