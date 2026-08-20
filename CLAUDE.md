@@ -257,6 +257,14 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (oddíly jako „Kotelny"), ruční termíny, filtry, hledání a **export do PDF
   na šířku** (`planExport` — dělení stránek podle naměřené výšky, ne podle
   počtu řádků). Data v `STORE.plan` (v STORE_KEYS i v záloze).
+- ✅ **Automatické rolování při přetahování** (2026-08-20) — táhne-li se řádek
+  měření, rozváděč nebo objekt v plánu k okraji, posouvá se samo: nejdřív
+  posouvatelný rámeček pod kurzorem (`.plan-scroll`), a když je na konci,
+  celá stránka. Past, na kterou jsme narazili: **`dragover` se během
+  skutečného tažení skoro nespouští** (v testu 1× za celé tažení), kdežto
+  událost `drag` chodí spolehlivě — polohu proto bereme z obou. rAF během
+  nativního tažení běží normálně. Konec tažení hlásí prohlížeč jako (0,0),
+  což se musí ignorovat, jinak seznam vystřelí nahoru.
 - ✅ **PWA auto-reload po update** — network-first pro HTML,
   listener `controllerchange` → `location.reload()`. Uživatel
   nemusí hard-reloadovat; cache bump v sw.js stačí.
