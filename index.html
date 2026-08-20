@@ -815,7 +815,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.206<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.207<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1639,7 +1639,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" id="plan-btn-skryte" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObnovitSkryte" title="Vrátit do plánu objekty, které jste z něj odebral">🚫 Skryté</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planTechnici">👷 Revizní technici</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExport">📄 Export do PDF</button>
-      <button class="btn btn-gold" data-action="planUlozitDoZalohy" title="Uloží plán do databáze programu a do zálohy">💾 Uložit plán</button>
+      <button class="btn btn-gold" data-action="planUlozitDoZalohy" title="Uloží plán do databáze programu — veze se pak v každé záloze">💾 Uložit plán</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExportSoubor" title="Soubor .json jen s plánem — pro kolegu">📤 Soubor pro kolegu</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planImportSoubor" title="Načíst plán, který vám poslal kolega">📥 Načíst plán</button>
       <span style="flex:1"></span>
@@ -12770,14 +12770,12 @@ function planTechniciZavrit() {
 // tak stalo — a hlavně ho dostat do zálohy celé databáze.
 function planUlozitDoZalohy() {
   planUlozit();
-  var hlaska = '💾 Plán uložen do databáze programu — je i v záloze.';
-  try {
-    if (typeof autoZaloha === 'function' && typeof autoZalohaSupported === 'function' && autoZalohaSupported()) {
-      autoZaloha(true);
-      hlaska = '💾 Plán uložen a zapsán do složky se zálohami.';
-    }
-  } catch (e) {}
-  showToast(hlaska);
+  // Plán je součástí databáze programu, takže se veze v každé záloze —
+  // nedělá si vlastní soubor. Automatická záloha do složky se přitom
+  // nechává na svém obvyklém režimu (nejvýš jednou za deset minut),
+  // ať klepnutí na Uložit nezaplaví složku novými soubory.
+  try { if (typeof autoZaloha === 'function') autoZaloha(false); } catch (e) {}
+  showToast('💾 Plán uložen do databáze programu — je součástí zálohy celé databáze.');
 }
 
 // Soubor jen s plánem — pošle se kolegovi, ten si ho prohlédne a když
