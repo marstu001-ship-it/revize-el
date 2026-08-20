@@ -720,6 +720,12 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .plan-toolbar input[type=text],.plan-toolbar select{padding:.45rem .6rem;font-size:.78rem;font-family:var(--sans);
   border:1px solid var(--border);border-radius:4px;background:var(--card);color:var(--text)}
 .plan-scroll{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:6px;background:var(--card)}
+.plan-hromadne{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .7rem;margin-bottom:.5rem;
+  border:1px solid var(--accent2);border-radius:6px;background:rgba(43,87,154,.10);font-family:var(--sans);font-size:.78rem}
+.plan-hromadne .btn{font-size:.7rem;padding:.35rem .6rem}
+.plan-check{width:15px;height:15px;padding:0;margin:0 .4rem 0 0;flex:0 0 15px;vertical-align:middle;cursor:pointer}
+tr.plan-vybrany td{background:rgba(43,87,154,.14)}
+tr.plan-vybrany td.plan-objekt{background:rgba(43,87,154,.20)}
 table.plan-tab{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:.72rem;font-family:var(--sans)}
 table.plan-tab th,table.plan-tab td{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:.3rem .4rem;vertical-align:middle}
 table.plan-tab thead th{position:sticky;top:0;z-index:3;background:#1F497D;color:#fff;font-weight:600;
@@ -791,7 +797,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.203<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.204<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1600,7 +1606,11 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <br><strong>Revize, které nevznikly v programu</strong> (dělal je někdo před vámi, máte je jen na papíře),
       doplníte třemi způsoby: <strong>📋 Vložit z Excelu</strong> nahraje celou vaši tabulku najednou,
       klepnutím na buňku roku zadáte jeden termín ručně, a v okně objektu je <strong>🔢 Dopočítat řadu</strong>
-      z poslední revize a lhůty (napřed ukáže, co by zapsal — nic nepřepíše bez potvrzení).</div>
+      z poslední revize a lhůty (napřed ukáže, co by zapsal — nic nepřepíše bez potvrzení).
+      <br><strong>Rychlé úpravy po vložení:</strong> čtverečkem na začátku řádku označíte objekty
+      (se <strong>Shiftem</strong> celý úsek, čtvereček u složky označí vše v ní) a lišta nad tabulkou
+      je pak hromadně zařadí do složky, přidělí technikovi, označí EX, nastaví lhůty,
+      <strong>sloučí duplicity</strong> do jednoho objektu nebo je odebere z plánu.</div>
     <div class="plan-toolbar">
       <button class="btn btn-gold" data-action="planPridatProvozovatele">🏢 + Provozovatel</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planPridatBudovu">🏠 + Budova</button>
@@ -1608,6 +1618,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planVlozitZExcelu" title="Zkopírovat tabulku v Excelu a vložit sem">📋 Vložit z Excelu</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planRozbalitVse" title="Rozbalit všechny složky">⊞</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planSbalitVse" title="Sbalit všechny složky">⊟</button>
+      <button class="btn btn-ghost" id="plan-btn-skryte" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObnovitSkryte" title="Vrátit do plánu objekty, které jste z něj odebral">🚫 Skryté</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planTechnici">👷 Revizní technici</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExport">📄 Export do PDF</button>
       <span style="flex:1"></span>
@@ -1624,6 +1635,18 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <option value="12">12 let</option><option value="15">15 let</option>
       </select>
     </div>
+  </div>
+  <div class="plan-hromadne" id="plan-hromadne" style="display:none">
+    <strong id="plan-vybrano-pocet">0 objektů</strong>
+    <span style="color:var(--muted);font-size:.72rem">označeno</span>
+    <span style="flex:1"></span>
+    <button class="btn btn-ghost" data-action="planVybranePresunout" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)">📂 Do složky</button>
+    <button class="btn btn-ghost" data-action="planVybraneTechnik" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)">👷 Technik</button>
+    <button class="btn btn-ghost" data-action="planVybraneEx" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)">⚠️ EX</button>
+    <button class="btn btn-ghost" data-action="planVybraneLhuty" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)">⏱ Lhůty</button>
+    <button class="btn btn-ghost" id="plan-btn-sloucit" data-action="planVybraneSloucit" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)">🔗 Sloučit</button>
+    <button class="btn btn-ghost" data-action="planVybraneSmazat" style="background:#fff;color:var(--accent);border:1px solid var(--accent)">🗑 Odebrat z plánu</button>
+    <button class="btn btn-ghost" data-action="planZrusitVyber" style="background:var(--bg);color:var(--text);border:1px solid var(--border)">✕ Zrušit výběr</button>
   </div>
   <div class="plan-scroll"><div id="plan-tabulka"></div></div>
   <div class="plan-legenda" id="plan-legenda"></div>
@@ -1676,6 +1699,25 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObjektZavrit">← Zrušit</button>
       <button class="btn btn-ghost" id="plan-o-smazat" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="planObjektSmazat">🗑 Odebrat z plánu</button>
       <button class="btn btn-gold" data-action="planObjektUlozit">💾 Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-plan-hv">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title" id="plan-hv-title">Hromadná úprava</div>
+    <div style="font-size:.85rem;line-height:1.6;padding:.2rem 0 .6rem" id="plan-hv-popis"></div>
+    <div class="f"><select id="plan-hv-select" autocomplete="off"></select></div>
+    <div id="plan-hv-lhuty" style="display:none">
+      <div class="g2" style="gap:.6rem">
+        <div class="f"><label>EL (roky)</label><input type="number" id="plan-hv-cyklus-el" min="0" max="20" step="1" placeholder="5" autocomplete="off"></div>
+        <div class="f"><label>LPS (roky)</label><input type="number" id="plan-hv-cyklus-lps" min="0" max="20" step="1" placeholder="4" autocomplete="off"></div>
+        <div class="f"><label>T (roky)</label><input type="number" id="plan-hv-cyklus-t" min="0" max="20" step="1" placeholder="" autocomplete="off"></div>
+      </div>
+    </div>
+    <div class="modal-actions" style="gap:.5rem;margin-top:.8rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planHromadnaZavrit">← Zrušit</button>
+      <button class="btn btn-gold" data-action="planHromadnaPotvrdit">💾 Použít</button>
     </div>
   </div>
 </div>
@@ -11581,9 +11623,11 @@ function planRadky() {
     if (r.klic) podleKlice[r.klic] = r;
     radky.push(r);
   });
+  var skryte = {};
+  (P.skryte || []).forEach(function(k) { skryte[k] = true; });
   (archiv || []).forEach(function(z, i) {
     var klic = planKlicZpravy(z);
-    if (!klic) return;
+    if (!klic || skryte[klic]) return;
     var r = podleKlice[klic];
     if (!r) {
       r = { o: null, id: 'a:' + klic, klic: klic, nazev: (z.misto || (z.data || {}).adresa || '').trim(),
@@ -11881,7 +11925,15 @@ function renderPlan() {
     return;
   }
   var ted = new Date().getFullYear();
-  var h = '<table class="plan-tab"><thead><tr><th class="plan-objekt">Objekt</th>';
+  __planPoradi = [];
+  (function poradi(seznam) {
+    seznam.forEach(function(u) {
+      if (u.typ === 'objekt') __planPoradi.push(u.id);
+      else if (planOtevrena(u.id)) poradi(u.deti);
+    });
+  })(strom);
+  var h = '<table class="plan-tab"><thead><tr><th class="plan-objekt">' +
+    '<input type="checkbox" class="plan-check" data-action="planVyberVse" title="Označit / odznačit vše">Objekt</th>';
   roky.forEach(function(rok) {
     h += '<th' + (rok === ted ? ' class="plan-rok-ted"' : '') + '>' + rok + '</th>';
   });
@@ -11891,6 +11943,13 @@ function renderPlan() {
   box.innerHTML = h;
   planLegenda();
   planZapojitTazeni();
+  planListaVyberu();
+  var skryte = document.getElementById('plan-btn-skryte');
+  if (skryte) {
+    var pocetSkrytych = (planData().skryte || []).length;
+    skryte.style.display = pocetSkrytych ? '' : 'none';
+    skryte.textContent = '🚫 Skryté (' + pocetSkrytych + ')';
+  }
 }
 
 function planRadekStromu(u, uroven, roky, ted) {
@@ -11906,6 +11965,8 @@ function planRadekStromu(u, uroven, roky, ted) {
     h += '<tr class="plan-slozka plan-uroven-' + uroven + '" data-uzel="' + u.typ + ':' + esc(u.id) + '" ' +
       (u.typ === 'nezarazene' ? '' : 'draggable="true" ') + 'data-cil="' + esc(u.id) + '">' +
       '<td class="plan-objekt" style="' + odsazeni + '">' +
+      '<input type="checkbox" class="plan-check" data-action="planVyberSlozku" data-id="' + esc(u.id) + '"' +
+      (planSlozkaVybrana(u) ? ' checked' : '') + ' title="Označit všechny objekty ve složce">' +
       '<span class="plan-plus" ' + (maDeti ? 'data-action="planPrepnoutSlozku" data-id="' + esc(u.id) + '"' : 'style="visibility:hidden"') +
       ' title="' + (otevrena ? 'Sbalit' : 'Rozbalit') + '">' + (maDeti ? (otevrena ? '−' : '+') : '·') + '</span>' +
       '<span class="plan-ikona">' + ikona + '</span>' +
@@ -11935,8 +11996,11 @@ function planRadekStromu(u, uroven, roky, ted) {
 
 function planRadekObjektu(r, uroven, roky, odsazeni) {
   var t = r.technik ? planTechnikById(r.technik) : null;
-  var h = '<tr class="plan-objekt-radek" draggable="true" data-uzel="objekt:' + esc(r.id) + '">' +
+  var h = '<tr class="plan-objekt-radek' + (__planVybrane[r.id] ? ' plan-vybrany' : '') +
+    '" draggable="true" data-uzel="objekt:' + esc(r.id) + '">' +
     '<td class="plan-objekt" style="' + odsazeni + '">' +
+    '<input type="checkbox" class="plan-check" data-action="planPrepnoutVyber" data-id="' + esc(r.id) + '"' +
+    (__planVybrane[r.id] ? ' checked' : '') + ' title="Označit řádek (se Shiftem celý úsek)">' +
     '<span class="plan-plus" style="visibility:hidden">·</span>' +
     '<span class="plan-ikona">📄</span>' +
     (r.cislo ? '<span class="plan-cislo">' + esc(r.cislo) + '</span>' : '') +
@@ -12142,6 +12206,17 @@ function planRozbalitVse(otevrit) {
   renderPlan();
 }
 
+
+function planSlozkaVybrana(u) {
+  var vse = true, nasel = false;
+  (function projit(x) {
+    x.deti.forEach(function(d) {
+      if (d.typ === 'objekt') { nasel = true; if (!__planVybrane[d.id]) vse = false; }
+      else projit(d);
+    });
+  })(u);
+  return nasel && vse;
+}
 
 function planIniciala(jmeno) {
   var c = String(jmeno || '').trim().split(/\s+/);
@@ -13051,6 +13126,260 @@ function planVlozitZavrit() {
   document.getElementById('modal-plan-vlozit').classList.remove('open');
 }
 
+
+// ═══ HROMADNÉ ÚPRAVY PLÁNU ══════════════════════════════════════════════
+// Po vložení Excelu je v plánu spousta objektů, které je potřeba rychle
+// zařadit, přidělit, označit nebo vyhodit. Zaškrtávátko na začátku řádku
+// + lišta s akcemi. Výběr se nikam neukládá, žije jen do zavření plánu.
+var __planVybrane = {};
+var __planPoradi = [];        // pořadí řádků na obrazovce (pro výběr s Shiftem)
+var __planPosledniVyber = null;
+
+function planVybranoIds() {
+  return Object.keys(__planVybrane).filter(function(id) { return __planVybrane[id]; });
+}
+
+function planVybranoRadky() {
+  var vybrane = {};
+  planVybranoIds().forEach(function(id) { vybrane[id] = true; });
+  return planRadky().filter(function(r) { return vybrane[r.id]; });
+}
+
+function planPrepnoutVyber(el, e) {
+  var id = el.getAttribute('data-id');
+  var zapnout = el.checked;
+  // Shift + klepnutí označí celý úsek od minule vybraného řádku
+  if (e && e.shiftKey && __planPosledniVyber && __planPosledniVyber !== id) {
+    var od = __planPoradi.indexOf(__planPosledniVyber);
+    var kam = __planPoradi.indexOf(id);
+    if (od >= 0 && kam >= 0) {
+      var a = Math.min(od, kam), b = Math.max(od, kam);
+      for (var i = a; i <= b; i++) __planVybrane[__planPoradi[i]] = zapnout;
+    }
+  } else {
+    __planVybrane[id] = zapnout;
+  }
+  __planPosledniVyber = id;
+  renderPlan();
+}
+
+// Zaškrtnutí u složky označí všechno, co je v ní (i v podsložkách).
+function planVyberSlozku(el) {
+  var id = el.getAttribute('data-id');
+  var zapnout = el.checked;
+  var strom = planStrom(planFiltrovat(planRadky()));
+  (function najit(seznam) {
+    seznam.forEach(function(u) {
+      if (u.id === id) {
+        (function oznacit(x) {
+          x.deti.forEach(function(d) {
+            if (d.typ === 'objekt') __planVybrane[d.id] = zapnout;
+            else oznacit(d);
+          });
+        })(u);
+      } else if (u.deti.length) najit(u.deti);
+    });
+  })(strom);
+  renderPlan();
+}
+
+function planVyberVse() {
+  var vsechny = planFiltrovat(planRadky());
+  var uzVse = vsechny.length && vsechny.every(function(r) { return __planVybrane[r.id]; });
+  vsechny.forEach(function(r) { __planVybrane[r.id] = !uzVse; });
+  renderPlan();
+}
+
+function planZrusitVyber() {
+  __planVybrane = {};
+  __planPosledniVyber = null;
+  renderPlan();
+}
+
+function planListaVyberu() {
+  var lista = document.getElementById('plan-hromadne');
+  if (!lista) return;
+  var ids = planVybranoIds();
+  if (!ids.length) { lista.style.display = 'none'; return; }
+  lista.style.display = '';
+  var pocet = document.getElementById('plan-vybrano-pocet');
+  if (pocet) pocet.textContent = ids.length + (ids.length === 1 ? ' objekt' : (ids.length < 5 ? ' objekty' : ' objektů'));
+  var slouc = document.getElementById('plan-btn-sloucit');
+  if (slouc) slouc.style.display = ids.length > 1 ? '' : 'none';
+}
+
+// ═══ HROMADNÉ AKCE ══════════════════════════════════════════════════════
+function planVybraneSmazat() {
+  var radky = planVybranoRadky();
+  if (!radky.length) return;
+  var nazvy = radky.slice(0, 12).map(function(r) { return '  • ' + (r.nazev || '(bez názvu)'); }).join('\n');
+  if (radky.length > 12) nazvy += '\n  … a dalších ' + (radky.length - 12);
+  var zArchivu = radky.filter(function(r) { return r.zpravy.length; }).length;
+  var text = 'Opravdu odebrat z plánu ' + radky.length + ' objektů?\n\n' + nazvy + '\n\n' +
+    'Revizní zprávy v archivu zůstanou nedotčené.';
+  if (zArchivu) {
+    text += '\n\nPozor: ' + zArchivu + ' z nich se odvozuje z archivu — ty se z plánu jen skryjí ' +
+      '(půjde je vrátit tlačítkem „Skryté").';
+  }
+  if (!confirm(text)) return;
+  var P = planData();
+  if (!Array.isArray(P.skryte)) P.skryte = [];
+  radky.forEach(function(r) {
+    if (r.klic && P.skryte.indexOf(r.klic) === -1) P.skryte.push(r.klic);
+    P.objekty = P.objekty.filter(function(o) { return o.id !== r.id; });
+  });
+  __planVybrane = {};
+  planUlozit();
+  renderPlan();
+  showToast('🗑 Z plánu odebráno ' + radky.length + ' objektů.');
+}
+
+function planObnovitSkryte() {
+  var P = planData();
+  var pocet = (P.skryte || []).length;
+  if (!pocet) return;
+  if (!confirm('Vrátit do plánu ' + pocet + ' skrytých objektů z archivu?')) return;
+  P.skryte = [];
+  planUlozit();
+  renderPlan();
+  showToast('↩ Skryté objekty jsou zpátky v plánu.');
+}
+
+function planVybranePresunout() { planHromadnaVolba('slozka'); }
+function planVybraneTechnik() { planHromadnaVolba('technik'); }
+
+function planVybraneEx() {
+  var radky = planVybranoRadky();
+  if (!radky.length) return;
+  var vsechnyMaji = radky.every(function(r) { return r.ex; });
+  var zapnout = !vsechnyMaji;
+  if (!confirm((zapnout ? 'Označit ' : 'Zrušit označení u ') + radky.length +
+      ' objektů jako prostor s nebezpečím výbuchu (EX)?')) return;
+  radky.forEach(function(r) { planZajistitObjekt(r.id).ex = zapnout; });
+  planUlozit();
+  renderPlan();
+  showToast(zapnout ? '⚠️ Objekty označeny jako EX.' : 'Označení EX zrušeno.');
+}
+
+// Sloučení: druhý a další objekt se vlije do prvního (termíny, číslo,
+// technik, EX) a zanikne. Používá se po vložení Excelu, když se stejný
+// objekt jmenuje jinak v archivu a jinak v tabulce.
+function planVybraneSloucit() {
+  var radky = planVybranoRadky();
+  if (radky.length < 2) return;
+  var cilNazev = radky[0].nazev || '(bez názvu)';
+  if (!confirm('Sloučit ' + radky.length + ' objektů do jednoho?\n\n' +
+      'Zůstane „' + cilNazev + '" a převezme termíny ostatních:\n' +
+      radky.slice(1).map(function(r) { return '  • ' + r.nazev; }).join('\n') +
+      '\n\nTermíny, které si odporují, zůstanou po prvním objektu.')) return;
+  var P = planData();
+  var cil = planZajistitObjekt(radky[0].id);
+  if (!Array.isArray(cil.terminy)) cil.terminy = [];
+  radky.slice(1).forEach(function(r) {
+    // termíny odvozené z archivu i ruční — vezmeme vše, co je v řádku vidět
+    Object.keys(r.roky).forEach(function(rok) {
+      var b = r.roky[rok];
+      var t = null;
+      cil.terminy.forEach(function(x) { if (x.rok === parseInt(rok, 10)) t = x; });
+      if (!t) { t = { rok: parseInt(rok, 10), polozky: [], poznamka: '' }; cil.terminy.push(t); }
+      (b.polozky || []).forEach(function(p) {
+        var uz = false;
+        t.polozky.forEach(function(x) { if (x.druh === p.druh) uz = true; });
+        if (!uz) t.polozky.push({ druh: p.druh, mesic: p.mesic, stav: p.stav === 'odhad' ? 'plan' : p.stav });
+      });
+    });
+    if (!cil.cislo && r.cislo) cil.cislo = r.cislo;
+    if (!cil.technik && r.technik) cil.technik = r.technik;
+    if (r.ex) cil.ex = true;
+    // objekt odvozený z archivu se skryje, vlastní záznam zmizí
+    if (r.klic && r.klic !== cil.klic) {
+      if (!Array.isArray(P.skryte)) P.skryte = [];
+      if (P.skryte.indexOf(r.klic) === -1) P.skryte.push(r.klic);
+    }
+    P.objekty = P.objekty.filter(function(o) { return o.id !== r.id; });
+  });
+  __planVybrane = {};
+  planUlozit();
+  renderPlan();
+  showToast('🔗 Sloučeno do „' + cilNazev + '".');
+}
+
+// Malé okno pro hromadnou volbu (složka / technik / lhůta)
+var __planHromadna = null;
+
+function planHromadnaVolba(co) {
+  var radky = planVybranoRadky();
+  if (!radky.length) return;
+  __planHromadna = co;
+  var g = function(x) { return document.getElementById(x); };
+  var sel = g('plan-hv-select');
+  if (co === 'slozka') {
+    g('plan-hv-title').textContent = '📂 Přesunout do složky';
+    g('plan-hv-popis').textContent = 'Kam zařadit vybraných ' + radky.length + ' objektů?';
+    sel.innerHTML = '<option value="">— nezařazeno —</option>' + planSlozky().map(function(x) {
+      var predek = x.rodic ? planSlozkaById(x.rodic) : null;
+      return '<option value="' + esc(x.id) + '">' + (x.typ === 'provozovatel' ? '🏢 ' : '🏠 ') +
+             (predek ? esc(predek.nazev) + ' › ' : '') + esc(x.nazev) + '</option>';
+    }).join('');
+    g('plan-hv-lhuty').style.display = 'none';
+    sel.parentNode.style.display = '';
+  } else if (co === 'technik') {
+    g('plan-hv-title').textContent = '👷 Přidělit technika';
+    g('plan-hv-popis').textContent = 'Komu zadat vybraných ' + radky.length + ' objektů?';
+    sel.innerHTML = '<option value="">— nezadáno —</option>' + planData().technici.map(function(t) {
+      return '<option value="' + esc(t.id) + '">' + esc(t.jmeno || '(bez jména)') + '</option>';
+    }).join('');
+    g('plan-hv-lhuty').style.display = 'none';
+    sel.parentNode.style.display = '';
+  } else {
+    g('plan-hv-title').textContent = '⏱ Nastavit lhůty';
+    g('plan-hv-popis').textContent = 'Lhůty pro vybraných ' + radky.length + ' objektů. Prázdné pole se nezmění.';
+    sel.parentNode.style.display = 'none';
+    g('plan-hv-lhuty').style.display = '';
+    PLAN_DRUHY.forEach(function(d) { g('plan-hv-cyklus-' + d.toLowerCase()).value = ''; });
+  }
+  g('modal-plan-hv').classList.add('open');
+}
+
+function planHromadnaPotvrdit() {
+  var radky = planVybranoRadky();
+  var g = function(x) { return document.getElementById(x); };
+  if (!radky.length) { planHromadnaZavrit(); return; }
+  if (__planHromadna === 'slozka') {
+    var cil = g('plan-hv-select').value;
+    radky.forEach(function(r) { planZajistitObjekt(r.id).rodic = cil; });
+    if (cil) planData().otevrene[cil] = true;
+    showToast('📂 Přesunuto ' + radky.length + ' objektů.');
+  } else if (__planHromadna === 'technik') {
+    var t = g('plan-hv-select').value;
+    radky.forEach(function(r) { planZajistitObjekt(r.id).technik = t; });
+    showToast('👷 Technik přidělen ' + radky.length + ' objektům.');
+  } else {
+    var zmena = {};
+    PLAN_DRUHY.forEach(function(d) {
+      var v = parseInt(g('plan-hv-cyklus-' + d.toLowerCase()).value, 10);
+      if (v > 0) zmena[d] = v;
+    });
+    if (!Object.keys(zmena).length) { planHromadnaZavrit(); return; }
+    radky.forEach(function(r) {
+      var o = planZajistitObjekt(r.id);
+      if (!o.cyklus) o.cyklus = {};
+      Object.keys(zmena).forEach(function(d) { o.cyklus[d] = zmena[d]; });
+    });
+    showToast('⏱ Lhůty nastaveny ' + radky.length + ' objektům.');
+  }
+  planUlozit();
+  planHromadnaZavrit();
+  renderPlan();
+}
+
+function planHromadnaZavrit() {
+  __planHromadna = null;
+  document.getElementById('modal-plan-hv').classList.remove('open');
+}
+
+function planVybraneLhuty() { planHromadnaVolba('lhuty'); }
+
 document.addEventListener('click', function(e) {
   var el = e.target.closest('[data-action],[data-tab]');
   if (!el) return;
@@ -13066,6 +13395,19 @@ document.addEventListener('click', function(e) {
     case 'planPridatObjekt': planPridatObjekt(); break;
     case 'planDopocitat': planDopocitat(); break;
     case 'planVlozitZExcelu': planVlozitZExcelu(); break;
+    case 'planPrepnoutVyber': planPrepnoutVyber(el, e); break;
+    case 'planVyberSlozku': planVyberSlozku(el); break;
+    case 'planVyberVse': planVyberVse(); break;
+    case 'planZrusitVyber': planZrusitVyber(); break;
+    case 'planVybraneSmazat': planVybraneSmazat(); break;
+    case 'planVybranePresunout': planVybranePresunout(); break;
+    case 'planVybraneTechnik': planVybraneTechnik(); break;
+    case 'planVybraneEx': planVybraneEx(); break;
+    case 'planVybraneLhuty': planVybraneLhuty(); break;
+    case 'planVybraneSloucit': planVybraneSloucit(); break;
+    case 'planHromadnaPotvrdit': planHromadnaPotvrdit(); break;
+    case 'planHromadnaZavrit': planHromadnaZavrit(); break;
+    case 'planObnovitSkryte': planObnovitSkryte(); break;
     case 'planVlozitRozebrat': planVlozitRozebrat(); break;
     case 'planVlozitPotvrdit': planVlozitPotvrdit(); break;
     case 'planVlozitZavrit': planVlozitZavrit(); break;

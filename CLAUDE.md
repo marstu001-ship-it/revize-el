@@ -217,6 +217,12 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (I–IV vs kategorie obyčejný/zesílený/zvláštní), skrytí
   62305-specifických polí (mřížka, Typ A/B, LPZ zóny, SPD)
   pro 1390, dynamický PDF obsah dle volby normy.
+- ✅ **Plán revizí — hromadné úpravy** (2026-08-20): zaškrtávátko na začátku
+  řádku (`__planVybrane`, Shift označí úsek podle `__planPoradi`, checkbox
+  u složky označí vše uvnitř). Lišta `#plan-hromadne` umí: do složky, technik,
+  EX, lhůty, **sloučit** duplicity (`planVybraneSloucit` — termíny se vlijí
+  do prvního objektu) a **odebrat z plánu** (ptá se; objekty odvozené
+  z archivu se jen skryjí do `STORE.plan.skryte`, tlačítko 🚫 Skryté je vrátí).
 - ✅ **Plán revizí — doplnění historie mimo program** (2026-08-20): tři cesty,
   jak do plánu dostat revize, které nejsou v archivu.
   **📋 Vložit z Excelu** (`planRozborVlozeni` + `planVlozitPotvrdit`) rozebere
