@@ -815,7 +815,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.207<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.208<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1614,8 +1614,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="scard" style="margin-bottom:.8rem">
     <div class="scard-title">🗓 Plán revizí <span style="font-size:.6rem;color:var(--accent);letter-spacing:.08em">ZKUŠEBNÍ FUNKCE</span></div>
     <div class="info-box">Přehled objektů a let, ve kterých se revize dělaly nebo mají dělat. <strong>Objekty i hotové
-      revize se berou z archivu zpráv</strong> (podle pole „Místo provádění revize"), příští termín se odhaduje
-      z doporučené lhůty ve zprávě.
+      revize se berou z archivu zpráv</strong> (podle pole „Místo provádění revize"), příští termín z pole
+      <strong>„Termín příští revize"</strong> ve zprávě — a když ve zprávě není, z doporučené lhůty,
+      případně z lhůty nastavené u objektu (⏱ Lhůty).
       <br>Uspořádání je jako složky ve Windows: <strong>🏢 provozovatel → 🏠 budova → 📄 objekty</strong>.
       Rozbaluje se tlačítkem <strong>+</strong> u složky, <strong>složky i objekty se přesouvají myší</strong>
       (chytit řádek a pustit na složku). Objekty ve složce jsou seřazené <strong>podle data příští revize</strong>.
@@ -11672,6 +11673,14 @@ function planDruhZpravy(z) { return z.typ === 'lps' ? 'LPS' : 'EL'; }
 // Bez data v textu se zkusí počet let, jinak se termín neodhaduje.
 function planPristiTermin(z) {
   var d = z.data || {};
+  // Nejdřív pole „Termín příští revize" (datum na titulní straně) — to je
+  // to nejpřesnější, co ve zprávě je. Teprve když chybí, luští se text
+  // doporučené lhůty.
+  var pristi = String(d.pristi || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (pristi) {
+    var mesicPristi = parseInt(pristi[2], 10) - 1;
+    return { rok: parseInt(pristi[1], 10), mesic: planMesicPlatny(mesicPristi) ? mesicPristi : null };
+  }
   var lhuta = String(d.lhuta || '');
   var m = lhuta.match(/(\d{1,2})\s*\/\s*(20\d\d)/);
   if (m) return { rok: parseInt(m[2], 10), mesic: parseInt(m[1], 10) - 1 };

@@ -270,8 +270,9 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   víceletá tabulka objekt × rok podle Excelu, který si uživatel vede jako
   správce areálu (MPBP příloha 7). Objekty se odvozují z archivu podle
   **„Místa provádění revize"** (`planKlicZpravy`), hotové revize se plní
-  z data zprávy (elektro → S, LPS → H), příští termín se odhaduje z pole
-  `f_lhuta` (`planPristiTermin`). Vlastní objekty se přidávají ručně;
+  z data zprávy (elektro → S, LPS → H), příští termín se bere z `D.pristi`
+  (pole „Termín příští revize" na titulní straně), a když chybí, z textu
+  `f_lhuta`, případně z `objekt.cyklus` (`planPristiTermin`). Vlastní objekty se přidávají ručně;
   archivní objekt se stane vlastním záznamem, teprve když se u něj něco
   vyplní (`planZajistitObjekt`). Umí: označení **EX** (nutné oprávnění pro
   prostředí s nebezpečím výbuchu), přidělení technika s barvou, skupiny
