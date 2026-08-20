@@ -217,6 +217,17 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (I–IV vs kategorie obyčejný/zesílený/zvláštní), skrytí
   62305-specifických polí (mřížka, Typ A/B, LPZ zóny, SPD)
   pro 1390, dynamický PDF obsah dle volby normy.
+- ✅ **Plán revizí — strom složek** (2026-08-20): uspořádání
+  **🏢 provozovatel → 🏠 budova → 📄 objekt** jako v Průzkumníku, tlačítko
+  `+`/`−` u složky, přesouvání myší (`planPresunout`, pravidla i pro tažení
+  i pro okno objektu), provozovatel se vybírá z knihovny odběratelů.
+  Objekty se ve složce řadí **podle data příští revize** (`planPristiRadku`),
+  ne podle data provedení. **Sbalená složka shrne termíny všech objektů uvnitř
+  do sloupců podle roku** (`planSouhrnSlozky`) — to je ten pohled „vidím celou
+  budovu najednou". Do PDF jde přesně to, co je vidět (`planTiskoveRadky`).
+  Nezařazené objekty spadnou do složky „📦 Nezařazené objekty".
+  Data: `STORE.plan.slozky`, `objekt.rodic`, `STORE.plan.otevrene`.
+  Původní ploché „skupiny" se jednorázově převedly na budovy (`planMigraceSkupin`).
 - ✅ **Plán revizí** (zkušební, vstup zatím jen z Nastavení dole) —
   víceletá tabulka objekt × rok podle Excelu, který si uživatel vede jako
   správce areálu (MPBP příloha 7). Objekty se odvozují z archivu podle
