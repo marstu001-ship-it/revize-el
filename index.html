@@ -786,7 +786,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.200<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.201<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -12178,6 +12178,13 @@ function renderPlanTechnici() {
   var P = planData();
   var box = document.getElementById('plan-technici-list');
   if (!box) return;
+  // Jméno a barva se zapisují rovnou při psaní — dřív se políčka jen
+  // vykreslila a nikdo je nečetl zpátky, takže se zadaný technik ztratil.
+  if (!box.dataset.wired) {
+    box.dataset.wired = '1';
+    box.addEventListener('input', planTechnikZmena);
+    box.addEventListener('change', planTechnikZmena);
+  }
   box.innerHTML = P.technici.map(function(t, i) {
     return '<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">' +
       '<input type="color" value="' + esc(t.barva) + '" data-plan-technik="' + i + '" data-pole="barva" ' +
@@ -12187,6 +12194,19 @@ function renderPlanTechnici() {
       '<button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent);font-size:.65rem" ' +
       'data-action="planTechnikSmazat" data-idx="' + i + '">🗑</button></div>';
   }).join('') || '<div style="font-size:.8rem;color:var(--muted);padding:.3rem 0">Zatím žádný technik.</div>';
+}
+
+function planTechnikZmena(e) {
+  var el = e.target;
+  if (!el || !el.hasAttribute('data-plan-technik')) return;
+  var P = planData();
+  var t = P.technici[parseInt(el.getAttribute('data-plan-technik'), 10)];
+  if (!t) return;
+  var pole = el.getAttribute('data-pole');
+  if (pole === 'jmeno') t.jmeno = el.value;
+  else if (pole === 'barva') t.barva = el.value;
+  planUlozit();
+  renderPlan();          // štítek u objektů se přebarví/přejmenuje hned
 }
 
 function planTechnikPridat() {
