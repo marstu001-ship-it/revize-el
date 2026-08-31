@@ -847,7 +847,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.213<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.214<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -947,9 +947,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Nad polem, do kterého zrovna píšete, se objeví <strong>lištička</strong>. Vloží symboly, které se z klávesnice špatně píšou, a v delších textech umí písmo zvýraznit. <strong>Ve vygenerovaném PDF se to projeví přesně tak, jak jste text upravil.</strong></p>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Symboly Ω µ ° ± × ² ³ Δ →</strong> se vloží tam, kde máte kurzor. Fungují ve všech polích, kde se píše text — i v jednořádkových, jako je název obvodu nebo poznámka.</li>
+        <li><strong>Symboly Ω µ ° ± ² Δ</strong> se vloží tam, kde máte kurzor. Fungují v polích, kde se píše text — i v jednořádkových, jako je název obvodu nebo poznámka. (Na titulní straně lišta není, tam se vyplňují jen údaje.)</li>
         <li><strong>Tučné, kurzíva, přeškrtnuté a barva písma</strong> (červená, oranžová, zelená, modrá) u víceřádkových polí: popis instalace, závěr, předmět revize, důvod mimořádné revize, popis závady i seznam příloh. Označte text a klepněte na tlačítko — nebo klepněte a rovnou pište.</li>
-        <li>Tlačítkem <strong>✕</strong> formátování z označeného textu zase sundáte.</li>
+        <li>Tlačítkem <strong>✕</strong> formátování z označeného textu zase sundáte, <strong>černým kolečkem</strong> vrátíte barvu na obyčejnou.</li>
         <li><strong>Text se změní rovnou v poli</strong>, jak jste zvyklý z Wordu — a přesně tak vyjde i v PDF. Vkládání ze schránky se vloží jako čistý text, aby se z jiných programů netahalo cizí formátování.</li>
         <li>Starší zprávy se nijak nemění a zálohy, archiv i posílání zpráv kolegům fungují stejně jako dosud.</li>
       </ul>
@@ -8049,6 +8049,9 @@ function richUklidUzly(uzel) {
     if (tag === 'span') {
       // <font color="…"> vyrábějí starší prohlížeče při obarvení textu
       var barva = (n.style && n.style.color) || n.getAttribute('color') || '';
+      // černá = výchozí barva písma, do zprávy se nezapisuje
+      if (/^(#0{3,8}|#111111|black|rgba?\(\s*(0|17)\s*,\s*(0|17)\s*,\s*(0|17)\s*[,)])/i.test(barva.replace(/\s/g, ''))
+          || /^rgb\(0,0,0\)$|^rgb\(17,17,17\)$/.test(barva.replace(/\s/g, ''))) barva = '';
       var vnitrekS = richUklidUzly(n);
       // některé prohlížeče zapisují i tučné a kurzívu stylem — převést zpět
       var st = n.style || {};
@@ -8142,6 +8145,50 @@ function richVyberHtml(rozsah, editor) {
     uzel = uzel.parentNode;
   }
   return html;
+}
+
+// Kde je výběr, počítáno ve znacích textu — aby se po překreslení pole
+// dal kurzor vrátit na stejné místo.
+function richPoziceVyberu(ed) {
+  var v = window.getSelection();
+  if (!v || !v.rangeCount || !ed.contains(v.anchorNode)) return null;
+  var r = v.getRangeAt(0);
+  var pred = r.cloneRange();
+  pred.selectNodeContents(ed);
+  pred.setEnd(r.startContainer, r.startOffset);
+  var od = pred.toString().length;
+  return { od: od, kam: od + r.toString().length };
+}
+
+function richObnovVyber(ed, poz) {
+  if (!poz) { ed.focus(); return; }
+  var najdi = function(cil) {
+    var stack = [ed], zbyva = cil;
+    var chod = function(uzel) {
+      for (var i = 0; i < uzel.childNodes.length; i++) {
+        var n = uzel.childNodes[i];
+        if (n.nodeType === 3) {
+          if (zbyva <= n.nodeValue.length) return { uzel: n, offset: zbyva };
+          zbyva -= n.nodeValue.length;
+        } else {
+          var v = chod(n);
+          if (v) return v;
+        }
+      }
+      return null;
+    };
+    return chod(ed) || { uzel: ed, offset: 0 };
+  };
+  try {
+    var a = najdi(poz.od), b = najdi(poz.kam);
+    var r = document.createRange();
+    r.setStart(a.uzel, a.offset);
+    r.setEnd(b.uzel, b.offset);
+    var v = window.getSelection();
+    v.removeAllRanges();
+    v.addRange(r);
+  } catch (e) {}
+  ed.focus();
 }
 
 function richZapniVse() {
@@ -14082,12 +14129,12 @@ function planVybraneStitek() { planHromadnaVolba('stitek'); }
 // PDF promění v tučné, kurzívu, přeškrtnuté a barvu.
 var TXT_SYMBOLY = [
   { z: 'Ω', popis: 'ohm' }, { z: 'µ', popis: 'mikro' }, { z: '°', popis: 'stupeň' },
-  { z: '±', popis: 'plus minus' }, { z: '×', popis: 'krát' }, { z: '²', popis: 'na druhou' },
-  { z: '³', popis: 'na třetí' }, { z: 'Δ', popis: 'delta' }, { z: '→', popis: 'šipka' }
+  { z: '±', popis: 'plus minus' }, { z: '²', popis: 'na druhou' }, { z: 'Δ', popis: 'delta' }
 ];
 var TXT_BARVY = [
   { b: '#c0392b', n: 'červená' }, { b: '#b8860b', n: 'oranžová' },
-  { b: '#0f7b5f', n: 'zelená' }, { b: '#2B579A', n: 'modrá' }
+  { b: '#0f7b5f', n: 'zelená' }, { b: '#2B579A', n: 'modrá' },
+  { b: '#111111', n: 'Zpátky na obyčejnou (černou) barvu', zrusit: true }
 ];
 var __txtPole = null;        // pole, ke kterému lišta patří
 var __txtSkryt = null;
@@ -14105,7 +14152,8 @@ function txtListaPrvek() {
       '<button type="button" class="txt-btn" data-txt="strike" title="Přeškrtnuté (~~text~~)"><s>S</s></button>' +
       TXT_BARVY.map(function(x) {
         return '<button type="button" class="txt-btn txt-barva" data-txt="barva" data-barva="' + x.b +
-               '" title="Barva: ' + x.n + '" style="background:' + x.b + '"></button>';
+               '"' + (x.zrusit ? ' data-zrusit="1"' : '') +
+               ' title="' + (x.zrusit ? x.n : 'Barva: ' + x.n) + '" style="background:' + x.b + '"></button>';
       }).join('') +
       '<button type="button" class="txt-btn" data-txt="cisto" title="Zrušit formátování v označeném textu">✕</button>' +
       '<span class="txt-oddel"></span>' +
@@ -14114,7 +14162,7 @@ function txtListaPrvek() {
       return '<button type="button" class="txt-btn txt-symbol" data-txt="symbol" data-znak="' + x.z +
              '" title="Vložit ' + x.popis + ' (' + x.z + ')">' + x.z + '</button>';
     }).join('') +
-    '<button type="button" class="txt-btn txt-napoveda" data-txt="napoveda" title="Jak se formátování projeví v PDF">?</button>';
+    '';
   document.body.appendChild(el);
   // mousedown místo click — jinak by pole ztratilo označení textu dřív,
   // než se stihne zjistit, co je označené
@@ -14210,6 +14258,17 @@ function txtAkce(co, tlacitko) {
     else if (co === 'barva') document.execCommand('foreColor', false, tlacitko.getAttribute('data-barva'));
     else if (co === 'cisto') document.execCommand('removeFormat');
     try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+    // Zrušení barvy: prohlížeč nechá v textu obarvení načerno, kdežto my
+    // chceme, aby tam žádná barva nezůstala — proto se pole překreslí
+    // z uložené hodnoty, kde už černá není.
+    if ((co === 'barva' && tlacitko.getAttribute('data-zrusit')) || co === 'cisto') {
+      var ta = pole.__richTa;
+      if (ta) {
+        var poz = richPoziceVyberu(pole);
+        pole.innerHTML = richDoEditoru(ta.value);
+        richObnovVyber(pole, poz);
+      }
+    }
     return;
   }
   if (co === 'symbol') { txtVloz(pole, tlacitko.getAttribute('data-znak')); return; }
@@ -14218,6 +14277,9 @@ function txtAkce(co, tlacitko) {
 // Lišta se ukazuje u polí s textem — ne u dat, čísel, výběrů a zaškrtávátek.
 function txtPoleVhodne(el) {
   if (!el) return false;
+  // Na titulní straně se lišta neukazuje — jsou tam samé údaje (čísla,
+  // adresy, data), kde symboly ani zvýraznění nedávají smysl.
+  if (el.closest && el.closest('#tab-titulni')) return false;
   if (el.classList && el.classList.contains('rich-edit')) return true;
   if (el.tagName === 'TEXTAREA') return true;
   if (el.tagName !== 'INPUT') return false;

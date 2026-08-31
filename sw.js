@@ -1,4 +1,4 @@
-var CACHE_NAME = 'revize-el-v9.213-20260831';
+var CACHE_NAME = 'revize-el-v9.214-20260831';
 // Vlastní soubory — bez nich aplikace offline nefunguje.
 var URLS_TO_CACHE = [
   './',
