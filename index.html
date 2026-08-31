@@ -851,7 +851,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.219<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.220<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1686,7 +1686,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planSbalitVse" title="Sbalit všechny složky">⊟</button>
       <button class="btn btn-ghost" id="plan-btn-skryte" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObnovitSkryte" title="Vrátit do plánu objekty, které jste z něj odebral">🚫 Skryté</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planTechnici">👷 Revizní technici</button>
-      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExport">📄 Export do PDF</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExport">📄 Tisk / PDF</button>
       <button class="btn btn-gold" data-action="planUlozitDoZalohy" title="Uloží plán do databáze programu — veze se pak v každé záloze">💾 Uložit plán</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExportSoubor" title="Soubor .json jen s plánem — pro kolegu">📤 Soubor pro kolegu</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planImportSoubor" title="Načíst plán, který vám poslal kolega">📥 Načíst plán</button>
@@ -1813,6 +1813,42 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="modal-actions" style="gap:.5rem;margin-top:.8rem">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planHromadnaZavrit">← Zrušit</button>
       <button class="btn btn-gold" data-action="planHromadnaPotvrdit">💾 Použít</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="screen-plan-pdf">
+  <div class="pdf-toolbar">
+    <div class="pdf-title">🗓 Náhled plánu — <span id="plan-pdf-info"></span></div>
+    <div class="pdf-actions">
+      <button class="pbtn" data-action="planNahledZpet" style="background:#555;border-color:#555">← Zpět do plánu</button>
+      <button class="pbtn" data-action="planNahledTisk" style="background:#b5291c;border-color:#b5291c" title="Vytiskne rovnou, nic se do počítače neukládá">🖨️ Tisk přímo</button>
+      <button class="pbtn" data-action="planNahledUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
+      <button class="pbtn" data-action="planExport" style="background:var(--accent2);border-color:var(--accent2)" title="Změnit nadpis dokumentu">✏️ Nadpis dokumentu</button>
+    </div>
+  </div>
+  <div class="pdf-pages" id="plan-pdf-pages"></div>
+</div>
+
+<div class="modal-overlay" id="modal-plan-tisk">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">📄 Tisk plánu revizí</div>
+    <div style="font-size:.85rem;line-height:1.6;padding:.2rem 0 .6rem">
+      Nadpis se propíše do záhlaví každé strany. Hodí se, když plán přikládáte
+      k místnímu provozně bezpečnostnímu předpisu — nemusí tam být vaše jméno.
+    </div>
+    <div class="g2" style="gap:.7rem">
+      <div class="f span2"><label>Nadpis dokumentu</label>
+        <input type="text" id="plan-tisk-nadpis" placeholder="Plán revizí elektrických zařízení a hromosvodů" autocomplete="off"></div>
+      <div class="f span2"><label>Řádek pod nadpisem <span style="font-size:.6rem;color:var(--muted);text-transform:none;letter-spacing:0">— firma, číslo přílohy… prázdné = nic</span></label>
+        <input type="text" id="plan-tisk-podnadpis" placeholder="Příloha č. 7 MPBP — MESIT Facility Management, s.r.o." autocomplete="off"></div>
+      <div class="f span2"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+        <input type="checkbox" id="plan-tisk-datum" checked style="width:16px;height:16px;padding:0;flex:0 0 16px">
+        Uvést v záhlaví datum zpracování</label></div>
+    </div>
+    <div class="modal-actions" style="gap:.5rem;margin-top:.8rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planTiskZavrit">← Zrušit</button>
+      <button class="btn btn-gold" data-action="planTiskNahled">👁 Náhled</button>
     </div>
   </div>
 </div>
@@ -13305,27 +13341,75 @@ function planTiskoveRadky() {
   return vystup;
 }
 
-function planExport() {
-  var sekvence = planTiskoveRadky();
-  if (!sekvence.length) { showToast('⚠️ Plán je prázdný, není co exportovat.'); return; }
-  var roky = planRoky();
-  var box = document.createElement('div');
-  box.id = 'plan-pdf-box';
-  box.style.cssText = 'position:absolute;left:-10000px;top:0;width:297mm';
-  document.body.appendChild(box);
+// ═══ NÁHLED A TISK PLÁNU ════════════════════════════════════════════════
+// Plán se nepoužívá jen jako vlastní pomůcka — chodí i do místního
+// provozně bezpečnostního předpisu jako příloha. Proto si jde nadpis
+// dokumentu přepsat a před uložením PDF se ukáže náhled, odkud se dá
+// rovnou tisknout, aniž by se soubor ukládal do počítače.
+function planTiskNastaveni() {
+  var P = planData();
+  if (!P.tisk || typeof P.tisk !== 'object') P.tisk = {};
+  if (typeof P.tisk.nadpis !== 'string') P.tisk.nadpis = 'Plán revizí elektrických zařízení a hromosvodů';
+  if (typeof P.tisk.podnadpis !== 'string') {
+    var t = STORE.technik || {};
+    P.tisk.podnadpis = t.firma || t.jmeno || '';
+  }
+  return P.tisk;
+}
 
-  // Výška řádku závisí na obsahu (dvouřádkové buňky s měsícem, dlouhé názvy),
-  // proto se počet řádků na stranu nehádá — stránky se postaví, změří
-  // a když přetečou, postaví se znovu s méně řádky.
+function planNazevSouboru() {
+  var roky = planRoky();
+  var zaklad = (planTiskNastaveni().nadpis || 'Plan revizi').replace(/[^\w\dáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ ]+/g, ' ')
+    .replace(/\s+/g, '_').replace(/^_|_$/g, '');
+  return (zaklad || 'Plan_revizi') + '_' + roky[0] + '-' + roky[roky.length - 1] + '.pdf';
+}
+
+// Okno s nastavením nadpisu — otevře se místo přímého generování
+function planExport() {
+  var t = planTiskNastaveni();
+  var g = function(x) { return document.getElementById(x); };
+  g('plan-tisk-nadpis').value = t.nadpis;
+  g('plan-tisk-podnadpis').value = t.podnadpis;
+  g('plan-tisk-datum').checked = t.bezDatumu !== true;
+  g('modal-plan-tisk').classList.add('open');
+  setTimeout(function() { g('plan-tisk-nadpis').focus(); }, 60);
+}
+
+function planTiskZavrit() {
+  document.getElementById('modal-plan-tisk').classList.remove('open');
+}
+
+function planTiskNahled() {
+  var P = planData();
+  var g = function(x) { return document.getElementById(x); };
+  P.tisk = {
+    nadpis: g('plan-tisk-nadpis').value.trim() || 'Plán revizí',
+    podnadpis: g('plan-tisk-podnadpis').value.trim(),
+    bezDatumu: !g('plan-tisk-datum').checked
+  };
+  planUlozit();
+  planTiskZavrit();
+  planVykreslitNahled();
+}
+
+function planVykreslitNahled() {
+  var sekvence = planTiskoveRadky();
+  if (!sekvence.length) { showToast('⚠️ Plán je prázdný, není co tisknout.'); return; }
+  var roky = planRoky();
+  var box = document.getElementById('plan-pdf-pages');
+  if (!box) return;
+  box.innerHTML = '';
+  // Obrazovku náhledu je nutné ukázat DŘÍV, než se měří výška stránek —
+  // ve skryté obrazovce mají všechny prvky nulovou velikost a dělení
+  // stránek by vyšlo úplně mimo.
+  showScreen('plan-pdf');
+  // Stránky se dělí podle naměřené výšky, ne podle odhadu počtu řádků
   var naStranu = PLAN_RADKU_NA_STRANU;
-  var pokusu = 14;
   var mmNaPx = 96 / 25.4;
-  for (var pokus = 0; pokus < pokusu; pokus++) {
+  for (var pokus = 0; pokus < 14; pokus++) {
     box.innerHTML = '';
     var stranky = [];
-    for (var i = 0; i < sekvence.length; i += naStranu) {
-      stranky.push(sekvence.slice(i, i + naStranu));
-    }
+    for (var i = 0; i < sekvence.length; i += naStranu) stranky.push(sekvence.slice(i, i + naStranu));
     stranky.forEach(function(cast, idx) {
       box.appendChild(planPdfStranka(cast, roky, idx + 1, stranky.length));
     });
@@ -13336,11 +13420,45 @@ function planExport() {
     if (!prilis || naStranu <= 8) break;
     naStranu -= 2;
   }
-  var pageEls = Array.prototype.slice.call(box.querySelectorAll('.a4'));
-  var nazev = 'Plan_revizi_' + roky[0] + '-' + roky[roky.length - 1] + '.pdf';
-  return renderPagesToPDF(pageEls, nazev).then(function() {
-    box.remove();
-  }).catch(function() { box.remove(); });
+  var pocet = box.querySelectorAll('.a4').length;
+  var info = document.getElementById('plan-pdf-info');
+  if (info) info.textContent = pocet + (pocet === 1 ? ' strana' : (pocet < 5 ? ' strany' : ' stran')) +
+    ' · ' + planTiskNastaveni().nadpis;
+  window.scrollTo(0, 0);
+}
+
+function planNahledZpet() { showScreen('plan'); renderPlan(); }
+
+function planNahledUlozit() {
+  var els = Array.prototype.slice.call(document.querySelectorAll('#plan-pdf-pages .a4'));
+  if (!els.length) return;
+  renderPagesToPDF(els, planNazevSouboru());
+}
+
+// Tisk bez ukládání do počítače — PDF se pošle rovnou do tiskového okna.
+// Okno se musí otevřít hned při klepnutí, jinak ho prohlížeč zablokuje.
+function planNahledTisk() {
+  var els = Array.prototype.slice.call(document.querySelectorAll('#plan-pdf-pages .a4'));
+  if (!els.length) return;
+  var w = window.open('', '_blank');
+  if (!w) { alert('Prosím povolte vyskakovací okna — bez nich se tiskové okno neotevře.'); return; }
+  w.document.write('<!DOCTYPE html><html><body style="margin:0;background:#f5f5f5;font-family:sans-serif;' +
+    'display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px">' +
+    '<p style="font-size:1.1rem;color:#333">⏳ Připravuji plán k tisku…</p>' +
+    '<p style="font-size:.85rem;color:#888">Může to pár vteřin trvat</p></body></html>');
+  w.document.close();
+  Promise.resolve(renderPagesToPDF(els, planNazevSouboru(), { vratitBlob: true })).then(function(blob) {
+    if (!blob) { try { w.close(); } catch (e) {} return; }
+    var url = URL.createObjectURL(blob);
+    w.location.href = url;
+    setTimeout(function() {
+      try { w.print(); } catch (e) {}
+      setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+    }, 2500);
+  }).catch(function(err) {
+    try { w.close(); } catch (e) {}
+    alert('Chyba při přípravě tisku: ' + ((err && err.message) || err));
+  });
 }
 
 function planPdfStranka(cast, roky, cislo, celkem) {
@@ -13351,11 +13469,13 @@ function planPdfStranka(cast, roky, cislo, celkem) {
   // min-height:0 — stránka se má při měření chovat podle obsahu; do PDF
   // ji stejně renderPagesToPDF natvrdo roztáhne na 297×210 mm.
   p.style.cssText = 'padding:10mm 8mm;background:#fff;color:#000;min-height:0';
+  var tisk = planTiskNastaveni();
   var h = '<div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.2pt solid #1F497D;padding-bottom:2mm;margin-bottom:3mm">' +
-    '<div><div style="font-size:13pt;font-weight:bold;color:#1F497D">Plán revizí elektrických zařízení a hromosvodů</div>' +
-    '<div style="font-size:8pt;color:#444;margin-top:1mm">' + esc(t.firma || t.jmeno || '') + '</div></div>' +
-    '<div style="font-size:8pt;text-align:right;color:#444">Zpracováno ' + fmtDate(new Date().toISOString().slice(0, 10)) +
-    '<br>strana ' + cislo + ' / ' + celkem + '</div></div>';
+    '<div><div style="font-size:13pt;font-weight:bold;color:#1F497D">' + esc(tisk.nadpis) + '</div>' +
+    (tisk.podnadpis ? '<div style="font-size:8pt;color:#444;margin-top:1mm">' + esc(tisk.podnadpis) + '</div>' : '') + '</div>' +
+    '<div style="font-size:8pt;text-align:right;color:#444">' +
+    (tisk.bezDatumu ? '' : 'Zpracováno ' + fmtDate(new Date().toISOString().slice(0, 10)) + '<br>') +
+    'strana ' + cislo + ' / ' + celkem + '</div></div>';
   h += '<table class="plan-pdf-tab"><thead><tr><th class="o" style="text-align:left">Objekt</th>';
   roky.forEach(function(rok) {
     h += '<th' + (rok === ted ? ' style="background:#b5291c"' : '') + '>' + rok + '</th>';
@@ -14443,6 +14563,11 @@ document.addEventListener('click', function(e) {
     case 'planTechnikSmazat': planTechnikSmazat(el); break;
     case 'planTechniciZavrit': planTechniciZavrit(); break;
     case 'planExport': planExport(); break;
+    case 'planTiskNahled': planTiskNahled(); break;
+    case 'planTiskZavrit': planTiskZavrit(); break;
+    case 'planNahledZpet': planNahledZpet(); break;
+    case 'planNahledUlozit': planNahledUlozit(); break;
+    case 'planNahledTisk': planNahledTisk(); break;
     case 'planUlozitDoZalohy': planUlozitDoZalohy(); break;
     case 'planExportSoubor': planExportSoubor(); break;
     case 'planImportSoubor': planImportSoubor(); break;

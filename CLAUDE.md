@@ -282,8 +282,12 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   vyplní (`planZajistitObjekt`). Umí: označení **EX** (nutné oprávnění pro
   prostředí s nebezpečím výbuchu), přidělení technika s barvou, skupiny
   (oddíly jako „Kotelny"), ruční termíny, filtry, hledání a **export do PDF
-  na šířku** (`planExport` — dělení stránek podle naměřené výšky, ne podle
-  počtu řádků). Data v `STORE.plan` (v STORE_KEYS i v záloze).
+  na šířku**: `planExport` otevře okno s nadpisem dokumentu
+  (`STORE.plan.tisk` = nadpis, podnadpis, bezDatumu — kvůli použití plánu
+  jako přílohy MPBP), pak se ukáže **náhled** (`screen-plan-pdf`) s tlačítky
+  Tisk přímo / Uložit PDF / Nadpis dokumentu. Dělení stránek podle naměřené
+  výšky — **obrazovka náhledu se musí ukázat dřív, než se měří**, jinak mají
+  prvky nulovou velikost. Data v `STORE.plan` (v STORE_KEYS i v záloze).
 - ✅ **Automatické rolování při přetahování** (2026-08-20) — táhne-li se řádek
   měření, rozváděč nebo objekt v plánu k okraji, posouvá se samo: nejdřív
   posouvatelný rámeček pod kurzorem (`.plan-scroll`), a když je na konci,
