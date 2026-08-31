@@ -819,7 +819,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.209<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.210<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2752,7 +2752,10 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="modal" style="max-width:680px">
     <div class="modal-title">📋 Knihovna textů</div>
     <div style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">
-      Vaše uložené texty. <strong>Vložit</strong> přidá text na konec aktuálního pole; <strong>Nahradit</strong> přepíše jeho obsah.
+      Vaše uložené texty. <strong>Na konec</strong> je připojí na konec pole, <strong>Na kurzor</strong> vloží text
+      přesně tam, kde jste v poli nechal kurzor (a mezery kolem doplní sám), <strong>Nahradit</strong> přepíše celý obsah.
+      <br>Uložit si můžete i <strong>jednu větu</strong> — v poli ji myší označte a teprve pak dejte „💾 Uložit text";
+      takové kousky mají v seznamu štítek <strong>ČÁST</strong>.
     </div>
     <input type="text" id="snippety-search" placeholder="🔍 Hledat podle názvu nebo obsahu…" style="width:100%;padding:.5rem .7rem;border:1px solid #ccc;border-radius:2px;font-size:.88rem;margin-bottom:.75rem" autocomplete="off">
     <div id="snippety-list" style="max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
@@ -6545,10 +6548,19 @@ var __snipTargetId = null; // pole, do kterého má vkládat picker
 function ulozitDoKnihovny(targetId) {
   var el = document.getElementById(targetId);
   if (!el) return;
-  var text = (el.value || '').trim();
+  // Když je v poli myší označená část textu, uloží se JEN ona — technik si
+  // tak odloží jednu větu, ne celý odstavec. Výběr v poli zůstává zapsaný
+  // i po klepnutí na tlačítko, takže se dá přečíst tady.
+  var cely = el.value || '';
+  var od = typeof el.selectionStart === 'number' ? el.selectionStart : 0;
+  var kam = typeof el.selectionEnd === 'number' ? el.selectionEnd : 0;
+  var vybrano = (kam > od) ? cely.slice(od, kam).trim() : '';
+  var text = (vybrano || cely).trim();
   if (!text) { alert('Pole je prázdné — není co uložit.'); return; }
-  var nazev = prompt('Pojmenuj tento text (např. „Popis – RD novostavba"):',
-                     text.slice(0, 40).replace(/\n/g, ' ') + (text.length > 40 ? '…' : ''));
+  var uvod = vybrano
+    ? 'Ukládá se jen označená část (' + text.length + ' znaků).\n\nPojmenuj ji (např. „Věta – doplněno RCD"):'
+    : 'Ukládá se celý text pole.\n\nPojmenuj ho (např. „Popis – RD novostavba"):';
+  var nazev = prompt(uvod, text.slice(0, 40).replace(/\n/g, ' ') + (text.length > 40 ? '…' : ''));
   if (nazev === null) return; // zrušeno
   nazev = nazev.trim();
   if (!nazev) { alert('Název nemůže být prázdný.'); return; }
@@ -6556,16 +6568,25 @@ function ulozitDoKnihovny(targetId) {
   STORE.snippety.unshift({
     id: 'sn-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     nazev: nazev,
-    text: el.value,
+    text: text,
+    cast: !!vybrano,
     kdy: new Date().toISOString()
   });
   saveStore();
+  showToast(vybrano ? '💾 Uložena označená část textu jako „' + nazev + '".'
+                    : '💾 Uložen celý text jako „' + nazev + '".');
   // Mírná vizuální zpětná vazba — flash pole
   flashElement(el);
 }
 
+var __snipPozice = {};
+
 function otevritKnihovnuTextu(targetId) {
   __snipTargetId = targetId;
+  // Kde technik stál kurzorem, než knihovnu otevřel — podle toho se pak
+  // umí vložit text přesně na to místo.
+  var cil = document.getElementById(targetId);
+  __snipPozice = cil ? { od: cil.selectionStart, kam: cil.selectionEnd } : {};
   var m = document.getElementById('modal-snippety');
   if (m) m.classList.add('open');
   renderSnippetyList();
@@ -6585,6 +6606,19 @@ function vlozitSnippet(id, mode) {
   if (!el) return;
   if (mode === 'replace') {
     el.value = sn.text;
+  } else if (mode === 'kurzor') {
+    // Vložení tam, kde technik nechal kurzor (nebo přes označený úsek).
+    // Mezery kolem se doplní samy, ať nevznikne „…provozu.Dále bylo…".
+    var t = el.value || '';
+    var od = typeof __snipPozice.od === 'number' ? __snipPozice.od : t.length;
+    var kam = typeof __snipPozice.kam === 'number' ? __snipPozice.kam : od;
+    var pred = t.slice(0, od), za = t.slice(kam);
+    var vlozit = sn.text;
+    if (pred && !/[\s(„"']$/.test(pred)) vlozit = (/[.!?:;]\s*$/.test(pred) ? ' ' : ' ') + vlozit;
+    if (za && !/^[\s.,;:!?)"']/.test(za)) vlozit = vlozit + ' ';
+    el.value = pred + vlozit + za;
+    var novaPozice = (pred + vlozit).length;
+    setTimeout(function() { try { el.setSelectionRange(novaPozice, novaPozice); } catch (e) {} }, 0);
   } else {
     var current = el.value || '';
     var sep = current && !current.endsWith('\n') ? '\n\n' : '';
@@ -6627,8 +6661,10 @@ function renderSnippetyList() {
     if ((s.text || '').length > 180) preview += '…';
     html += '<div style="border:1px solid var(--border);border-radius:3px;padding:.65rem .85rem;margin-bottom:.6rem;background:var(--surface)">' +
       '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;flex-wrap:wrap">' +
-      '<strong style="font-size:.88rem;color:var(--accent2);flex:1 1 200px">' + esc(s.nazev) + '</strong>' +
-      '<button class="btn btn-gold" style="font-size:.65rem;padding:.3rem .6rem" data-action="vlozitSnippetAppend" data-id="' + esc(s.id) + '" title="Přidat na konec">📋 Vložit</button>' +
+      '<strong style="font-size:.88rem;color:var(--accent2);flex:1 1 200px">' + esc(s.nazev) +
+      (s.cast ? ' <span style="font-size:.6rem;background:var(--accent2);color:#fff;padding:.05rem .3rem;border-radius:3px;vertical-align:middle">ČÁST</span>' : '') + '</strong>' +
+      '<button class="btn btn-gold" style="font-size:.65rem;padding:.3rem .6rem" data-action="vlozitSnippetAppend" data-id="' + esc(s.id) + '" title="Přidat na konec textu">📋 Na konec</button>' +
+      '<button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippetKurzor" data-id="' + esc(s.id) + '" title="Vložit tam, kde jste nechal kurzor">⤵ Na kurzor</button>' +
       '<button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippetReplace" data-id="' + esc(s.id) + '" title="Nahradit obsah pole">↺ Nahradit</button>' +
       '<button class="del-btn" style="font-size:.7rem" data-action="smazatSnippet" data-id="' + esc(s.id) + '" title="Smazat">✕</button>' +
       '</div>' +
@@ -13867,6 +13903,7 @@ document.addEventListener('click', function(e) {
     case 'ulozitSnippet': ulozitDoKnihovny(el.getAttribute('data-target')); break;
     case 'vlozitSnippet': otevritKnihovnuTextu(el.getAttribute('data-target')); break;
     case 'vlozitSnippetAppend': vlozitSnippet(el.getAttribute('data-id'), 'append'); break;
+    case 'vlozitSnippetKurzor': vlozitSnippet(el.getAttribute('data-id'), 'kurzor'); break;
     case 'vlozitSnippetReplace': vlozitSnippet(el.getAttribute('data-id'), 'replace'); break;
     case 'smazatSnippet': smazatSnippet(el.getAttribute('data-id')); break;
     case 'zavritKnihovnu': zavritKnihovnu(); break;

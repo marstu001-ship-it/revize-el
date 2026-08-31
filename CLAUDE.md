@@ -296,6 +296,13 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   listener `controllerchange` → `location.reload()`. Uživatel
   nemusí hard-reloadovat; cache bump v sw.js stačí.
 
+- ✅ **Knihovna textů — ukládání části a vkládání na kurzor** (2026-08-20):
+  `ulozitDoKnihovny` uloží **jen označený úsek** textarey, když v ní nějaký
+  je (jinak celé pole); takový snippet má `cast: true` a v seznamu štítek
+  ČÁST. `vlozitSnippet` má tři režimy: `append` (na konec), **`kurzor`**
+  (na pozici zapamatovanou v `__snipPozice` při otevření knihovny, doplní
+  mezery kolem) a `replace`.
+
 ## Roadmapa — co zbývá udělat (wishlist z DM Revize)
 
 Uživatel má placený program **DM Revize** (https://elektro.dmrevize.cz)
