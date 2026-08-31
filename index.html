@@ -714,6 +714,17 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   .scard{padding:1rem}
   .podtyp-grid{grid-template-columns:1fr}
 }
+/* Pole s formátovaným textem — vypadá a chová se jako běžné pole */
+.rich-edit{font-family:var(--sans);font-size:.88rem;padding:.5rem .7rem;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:2px;
+  transition:border-color .15s;width:100%;min-height:72px;overflow-y:auto;
+  white-space:pre-wrap;word-wrap:break-word;line-height:1.55;cursor:text}
+.rich-edit:focus{outline:none;border-color:var(--accent2);background:#fff}
+html.dark .rich-edit:focus{background:var(--surface)}
+.rich-edit:empty:before{content:attr(data-placeholder);color:#9a9488;font-style:italic;opacity:.75}
+.rich-edit s{text-decoration:line-through}
+html.view-mobile .rich-edit{min-height:38px;font-size:1rem}
+
 /* Plovoucí lišta nad textovým polem — symboly (Ω) a formátování */
 .txt-lista{position:fixed;z-index:4000;display:none;gap:.15rem;align-items:center;
   background:var(--surface);border:1px solid var(--border-dark);border-radius:5px;
@@ -836,7 +847,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.212<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.213<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -939,7 +950,8 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <li><strong>Symboly Ω µ ° ± × ² ³ Δ →</strong> se vloží tam, kde máte kurzor. Fungují ve všech polích, kde se píše text — i v jednořádkových, jako je název obvodu nebo poznámka.</li>
         <li><strong>Tučné, kurzíva, přeškrtnuté a barva písma</strong> (červená, oranžová, zelená, modrá) u víceřádkových polí: popis instalace, závěr, předmět revize, důvod mimořádné revize, popis závady i seznam příloh. Označte text a klepněte na tlačítko — nebo klepněte a rovnou pište.</li>
         <li>Tlačítkem <strong>✕</strong> formátování z označeného textu zase sundáte.</li>
-        <li>V poli uvidíte značky (<em>**tučně**</em>, <em>__kurzíva__</em>, <em>~~přeškrtnuté~~</em>), v PDF už jen výsledek. Díky tomu zůstávají zprávy obyčejným textem — archiv, zálohy i posílání zpráv kolegům fungují úplně stejně jako dosud a starší zprávy vypadají beze změny.</li>
+        <li><strong>Text se změní rovnou v poli</strong>, jak jste zvyklý z Wordu — a přesně tak vyjde i v PDF. Vkládání ze schránky se vloží jako čistý text, aby se z jiných programů netahalo cizí formátování.</li>
+        <li>Starší zprávy se nijak nemění a zálohy, archiv i posílání zpráv kolegům fungují stejně jako dosud.</li>
       </ul>
     </div>
   </div>
@@ -2146,7 +2158,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     </div>
     <div class="f" style="margin-top:.75rem">
       <label>Seznam příloh</label>
-      <textarea id="f_prilohy" style="min-height:50px" placeholder="1. Protokol o určení vnějších vlivů&#10;2. Prohlášení o shodě jednotlivých zařízení">1. Protokol o určení vnějších vlivů
+      <textarea data-rich="1" id="f_prilohy" style="min-height:50px" placeholder="1. Protokol o určení vnějších vlivů&#10;2. Prohlášení o shodě jednotlivých zařízení">1. Protokol o určení vnějších vlivů
 2. Prohlášení o shodě jednotlivých zařízení</textarea>
     </div>
   </div>
@@ -2163,7 +2175,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="g2">
       <div class="f span2 duvod-mim-wrap" style="display:none">
         <label>Důvod mimořádné revize je</label>
-        <textarea id="f_duvod_mimoradne" style="min-height:60px" placeholder="Např. po rekonstrukci elektroinstalace, po zásahu bleskem, na žádost pojišťovny, po požáru, změna prostředí…"></textarea>
+        <textarea data-rich="1" id="f_duvod_mimoradne" style="min-height:60px" placeholder="Např. po rekonstrukci elektroinstalace, po zásahu bleskem, na žádost pojišťovny, po požáru, změna prostředí…"></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_duvod_mimoradne">📝 Typický text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_duvod_mimoradne">💾 Uložit text</button>
@@ -2172,7 +2184,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       </div>
       <div class="f span2">
         <label>Předmětem této revize je</label>
-        <textarea id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea>
+        <textarea data-rich="1" id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_predmet_je">📝 Typický text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_predmet_je">💾 Uložit text</button>
@@ -2181,7 +2193,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       </div>
       <div class="f span2">
         <label>Předmětem této revize není</label>
-        <textarea id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea>
+        <textarea data-rich="1" id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_predmet_neni">📝 Typický text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_predmet_neni">💾 Uložit text</button>
@@ -2190,7 +2202,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       </div>
       <div class="f span2">
         <label>Popis revidované elektroinstalace</label>
-        <textarea id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea>
+        <textarea data-rich="1" id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_popis">📝 Typický text</button>
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_popis">💾 Uložit text</button>
@@ -2363,7 +2375,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title">F. Zhodnocení a závěr revizní zprávy</div>
     <div class="f" style="margin-top:.75rem">
       <label>Slovní zhodnocení</label>
-      <textarea id="f_zhodnoceni" style="min-height:180px" placeholder="Způsob a provedení elektroinstalace je v souladu s platnými ČSN..."></textarea>
+      <textarea data-rich="1" id="f_zhodnoceni" style="min-height:180px" placeholder="Způsob a provedení elektroinstalace je v souladu s platnými ČSN..."></textarea>
       <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
         <button class="magic-btn" data-action="typickyText" data-field="f_zhodnoceni">📝 Typický text</button>
         <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="ulozitSnippet" data-target="f_zhodnoceni">💾 Uložit text</button>
@@ -3727,6 +3739,7 @@ window.addEventListener('drop', function(e) {
 });
 
 function switchTab(id, btn) {
+  richZapniVse();
   // Krok, ze kterého se odchází, se počítá jako prošlý (zelená fajfka)
   window.__tabsVisited = window.__tabsVisited || {};
   document.querySelectorAll('.tab-btn.active').forEach(function(b) {
@@ -5688,6 +5701,7 @@ function addZavada() {
   var ta = document.createElement('textarea');
   ta.style.minHeight = '55px';
   ta.placeholder = 'Popis...';
+  ta.setAttribute('data-rich', '1');   // popis závady jde do PDF formátovaný
   f1.appendChild(l1);
   f1.appendChild(ta);
   body.appendChild(f1);
@@ -5783,6 +5797,7 @@ function addZavada() {
     updZavadaKod(sel);
     // Nechej dropdown viditelný pro případ další změny
   });
+  richZapniVse();   // popis nové závady umí formátovaný text
 }
 
 // Co následuje po odstranění závady — řídí se kategorií. C1 znamená, že
@@ -6582,15 +6597,25 @@ function ulozitDoKnihovny(targetId) {
   // tak odloží jednu větu, ne celý odstavec. Výběr v poli zůstává zapsaný
   // i po klepnutí na tlačítko, takže se dá přečíst tady.
   var cely = el.value || '';
-  var od = typeof el.selectionStart === 'number' ? el.selectionStart : 0;
-  var kam = typeof el.selectionEnd === 'number' ? el.selectionEnd : 0;
-  var vybrano = (kam > od) ? cely.slice(od, kam).trim() : '';
+  var vybrano = '';
+  if (el.__richEd) {
+    // pole s formátovaným textem — co je označené, ví prohlížeč
+    var vyber = window.getSelection();
+    if (vyber && vyber.rangeCount && el.__richEd.contains(vyber.anchorNode)) {
+      vybrano = richSanitizuj(richVyberHtml(vyber.getRangeAt(0), el.__richEd)).trim();
+    }
+  } else {
+    var od = typeof el.selectionStart === 'number' ? el.selectionStart : 0;
+    var kam = typeof el.selectionEnd === 'number' ? el.selectionEnd : 0;
+    if (kam > od) vybrano = cely.slice(od, kam).trim();
+  }
   var text = (vybrano || cely).trim();
   if (!text) { alert('Pole je prázdné — není co uložit.'); return; }
   var uvod = vybrano
-    ? 'Ukládá se jen označená část (' + text.length + ' znaků).\n\nPojmenuj ji (např. „Věta – doplněno RCD"):'
+    ? 'Ukládá se jen označená část (' + richText(text).length + ' znaků).\n\nPojmenuj ji (např. „Věta – doplněno RCD"):'
     : 'Ukládá se celý text pole.\n\nPojmenuj ho (např. „Popis – RD novostavba"):';
-  var nazev = prompt(uvod, text.slice(0, 40).replace(/\n/g, ' ') + (text.length > 40 ? '…' : ''));
+  var ukazka = richText(text);
+  var nazev = prompt(uvod, ukazka.slice(0, 40).replace(/\n/g, ' ') + (ukazka.length > 40 ? '…' : ''));
   if (nazev === null) return; // zrušeno
   nazev = nazev.trim();
   if (!nazev) { alert('Název nemůže být prázdný.'); return; }
@@ -6605,11 +6630,12 @@ function ulozitDoKnihovny(targetId) {
   saveStore();
   showToast(vybrano ? '💾 Uložena označená část textu jako „' + nazev + '".'
                     : '💾 Uložen celý text jako „' + nazev + '".');
-  // Mírná vizuální zpětná vazba — flash pole
-  flashElement(el);
+  // Mírná vizuální zpětná vazba — flash pole (u formátovaných polí editoru)
+  flashElement(el.__richEd || el);
 }
 
 var __snipPozice = {};
+var __snipRozsah = null;
 
 function otevritKnihovnuTextu(targetId) {
   __snipTargetId = targetId;
@@ -6617,6 +6643,12 @@ function otevritKnihovnuTextu(targetId) {
   // umí vložit text přesně na to místo.
   var cil = document.getElementById(targetId);
   __snipPozice = cil ? { od: cil.selectionStart, kam: cil.selectionEnd } : {};
+  // u pole s formátovaným textem si schovat rozsah výběru z prohlížeče
+  __snipRozsah = null;
+  if (cil && cil.__richEd) {
+    var v = window.getSelection();
+    if (v && v.rangeCount && cil.__richEd.contains(v.anchorNode)) __snipRozsah = v.getRangeAt(0).cloneRange();
+  }
   var m = document.getElementById('modal-snippety');
   if (m) m.classList.add('open');
   renderSnippetyList();
@@ -6636,6 +6668,18 @@ function vlozitSnippet(id, mode) {
   if (!el) return;
   if (mode === 'replace') {
     el.value = sn.text;
+  } else if (mode === 'kurzor' && el.__richEd) {
+    var ed = el.__richEd;
+    ed.focus();
+    if (__snipRozsah) {
+      var v2 = window.getSelection();
+      v2.removeAllRanges();
+      v2.addRange(__snipRozsah);
+    }
+    document.execCommand('insertHTML', false, richDoEditoru(sn.text));
+    try { ed.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+    zavritKnihovnu();
+    return;
   } else if (mode === 'kurzor') {
     // Vložení tam, kde technik nechal kurzor (nebo přes označený úsek).
     // Mezery kolem se doplní samy, ať nevznikne „…provozu.Dále bylo…".
@@ -7949,18 +7993,164 @@ var RICH_ZNACKY = [
 ];
 
 function richHtml(text) {
-  var t = esc(String(text || ''));
+  var t = String(text || '');
+  // starší zprávy mohou mít značky **tučně** z první podoby formátování
   RICH_ZNACKY.forEach(function(z) { t = t.replace(z.re, z.html); });
-  return t;
+  // projde jen povolenými značkami; všechno ostatní se zneškodní
+  return richSanitizuj(t);
 }
 
-// Text bez značek — kde se počítá délka nebo se text porovnává
+// Čistý text bez formátování — kde se počítá délka nebo se text porovnává
 function richText(text) {
   var t = String(text || '');
-  t = t.replace(/\{\{#[0-9a-fA-F]{3,8}\|([\s\S]*?)\}\}/g, '$1');
-  return t.replace(/\*\*([\s\S]+?)\*\*/g, '$1')
-          .replace(/__([\s\S]+?)__/g, '$1')
-          .replace(/~~([\s\S]+?)~~/g, '$1');
+  t = t.replace(/\{\{#[0-9a-fA-F]{3,8}\|([\s\S]*?)\}\}/g, '$1')
+       .replace(/\*\*([\s\S]+?)\*\*/g, '$1')
+       .replace(/__([\s\S]+?)__/g, '$1')
+       .replace(/~~([\s\S]+?)~~/g, '$1');
+  var kos = document.createElement('div');
+  kos.innerHTML = t.replace(/<br\s*\/?>/gi, '\n');
+  return kos.textContent || '';
+}
+
+
+// ═══ FORMÁTOVANÝ TEXT (jako ve Wordu) ═══════════════════════════════════
+// Pole, kde má smysl text zvýraznit, se tváří jako obyčejné pole, ale píše
+// se do nich formátovaně — tučně, kurzívou, přeškrtnutě, barevně. Vedle
+// editoru zůstává původní <textarea> jako držitel hodnoty, takže zbytek
+// programu (ukládání, archiv, zálohy, knihovna textů, diktování, AI)
+// pracuje pořád stejně jako dřív.
+//
+// Uloží se text s několika povolenými značkami: <strong> <em> <s> <u>
+// <span style="color:…"> a normální konce řádků. Nic jiného dovnitř
+// nepustíme — do PDF se pak vkládá bez obav.
+var RICH_TAGY = { STRONG: 'strong', B: 'strong', EM: 'em', I: 'em', S: 's',
+                  STRIKE: 's', DEL: 's', U: 'u', SPAN: 'span', FONT: 'span' };
+
+function richSanitizuj(html) {
+  var kos = document.createElement('div');
+  kos.innerHTML = String(html || '');
+  return richUklidUzly(kos);
+}
+
+function richUklidUzly(uzel) {
+  var ven = '';
+  for (var i = 0; i < uzel.childNodes.length; i++) {
+    var n = uzel.childNodes[i];
+    if (n.nodeType === 3) { ven += esc(n.nodeValue); continue; }
+    if (n.nodeType !== 1) continue;
+    var tag = RICH_TAGY[n.tagName];
+    if (n.tagName === 'BR') { ven += '\n'; continue; }
+    if (n.tagName === 'DIV' || n.tagName === 'P') {
+      var vnitrek = richUklidUzly(n);
+      ven += (ven && !/\n$/.test(ven) ? '\n' : '') + vnitrek;
+      continue;
+    }
+    if (!tag) { ven += richUklidUzly(n); continue; }   // neznámý obal zahodit, text nechat
+    if (tag === 'span') {
+      // <font color="…"> vyrábějí starší prohlížeče při obarvení textu
+      var barva = (n.style && n.style.color) || n.getAttribute('color') || '';
+      var vnitrekS = richUklidUzly(n);
+      // některé prohlížeče zapisují i tučné a kurzívu stylem — převést zpět
+      var st = n.style || {};
+      if (/bold|[6-9]00/.test(st.fontWeight || '')) vnitrekS = '<strong>' + vnitrekS + '</strong>';
+      if (/italic/.test(st.fontStyle || '')) vnitrekS = '<em>' + vnitrekS + '</em>';
+      if (/line-through/.test(st.textDecoration || st.textDecorationLine || '')) vnitrekS = '<s>' + vnitrekS + '</s>';
+      if (/underline/.test(st.textDecoration || st.textDecorationLine || '')) vnitrekS = '<u>' + vnitrekS + '</u>';
+      ven += barva ? '<span style="color:' + esc(barva) + '">' + vnitrekS + '</span>' : vnitrekS;
+      continue;
+    }
+    ven += '<' + tag + '>' + richUklidUzly(n) + '</' + tag + '>';
+  }
+  return ven;
+}
+
+// Uložený text → HTML do editoru (konce řádků na <br>)
+function richDoEditoru(text) {
+  var t = String(text || '');
+  // starší zprávy mohou mít značky **tučně** z první verze formátování
+  RICH_ZNACKY.forEach(function(z) { t = t.replace(z.re, z.html); });
+  return t.replace(/\n/g, '<br>');
+}
+
+function richZapniPole(ta) {
+  if (!ta || ta.dataset.richInit === '1') return;
+  ta.dataset.richInit = '1';
+  var ed = document.createElement('div');
+  ed.className = 'rich-edit';
+  ed.contentEditable = 'true';
+  ed.spellcheck = true;
+  ed.setAttribute('data-rich-pro', ta.id || '');
+  if (ta.placeholder) ed.setAttribute('data-placeholder', ta.placeholder);
+  ed.style.minHeight = ta.style.minHeight || '';
+  ta.style.display = 'none';
+  ta.parentNode.insertBefore(ed, ta.nextSibling);
+  ta.__richEd = ed;
+  ed.__richTa = ta;
+  ed.innerHTML = richDoEditoru(ta.value);
+
+  // Když hodnotu nastaví program (obnovení zprávy, typický text, knihovna,
+  // diktování, AI), musí se to objevit i v editoru — proto se hlídá zápis
+  // do .value.
+  var popis = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+  try {
+    Object.defineProperty(ta, 'value', {
+      configurable: true,
+      get: function() { return popis.get.call(this); },
+      set: function(v) {
+        popis.set.call(this, v);
+        if (!this.__richZapis) ed.innerHTML = richDoEditoru(v);
+      }
+    });
+  } catch (e) {}
+
+  var doTextarey = function() {
+    ta.__richZapis = true;
+    ta.value = richSanitizuj(ed.innerHTML);
+    ta.__richZapis = false;
+    try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  };
+  ed.addEventListener('input', doTextarey);
+  ed.addEventListener('blur', doTextarey);
+  // Vložení ze schránky jen jako text — z Wordu by jinak přišly nesmysly
+  ed.addEventListener('paste', function(e) {
+    e.preventDefault();
+    var t = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, t);
+  });
+  ed.addEventListener('focus', function() { txtListaUkaz(ed); });
+  ed.addEventListener('keyup', function() { txtListaUmisti(); });
+}
+
+// Zapnout na všech polích, která to mají mít (i na nově přidaných závadách)
+// Označený úsek i s formátováním, které ho obklopuje. Když technik označí
+// větu uvnitř tučného odstavce, ať se uloží tučná — ne holý text.
+function richVyberHtml(rozsah, editor) {
+  var obal = document.createElement('div');
+  obal.appendChild(rozsah.cloneContents());
+  var html = obal.innerHTML;
+  var uzel = rozsah.commonAncestorContainer;
+  if (uzel.nodeType === 3) uzel = uzel.parentNode;
+  var pojistka = 0;
+  while (uzel && uzel !== editor && pojistka++ < 20) {
+    var tag = RICH_TAGY[uzel.tagName];
+    if (tag === 'span') {
+      var barva = (uzel.style && uzel.style.color) || uzel.getAttribute('color') || '';
+      if (barva) html = '<span style="color:' + esc(barva) + '">' + html + '</span>';
+    } else if (tag) {
+      html = '<' + tag + '>' + html + '</' + tag + '>';
+    }
+    uzel = uzel.parentNode;
+  }
+  return html;
+}
+
+function richZapniVse() {
+  document.querySelectorAll('textarea[data-rich]').forEach(richZapniPole);
+}
+
+// Do PDF: uložený text obsahuje povolené značky, projde tedy jen kontrolou
+function richHtmlZTextu(text) {
+  return richSanitizuj(String(text || '').replace(/\n/g, '<br>')).replace(/\n/g, '<br>');
 }
 
 function odstavceHtml(text, styl) {
@@ -13941,9 +14131,11 @@ function txtListaUkaz(pole) {
   if (!pole) return;
   __txtPole = pole;
   var el = txtListaPrvek();
-  var jeTextarea = pole.tagName === 'TEXTAREA';
+  // Formátování se nabízí jen tam, kde ho program umí i vytisknout —
+  // v polích s formátovaným textem. Jinde zůstanou jen symboly (Ω…),
+  // ať nikdo nezvýrazňuje text, který se stejně vytiskne obyčejně.
   var fmt = document.getElementById('txt-format');
-  if (fmt) fmt.style.display = jeTextarea ? '' : 'none';
+  if (fmt) fmt.style.display = pole.classList && pole.classList.contains('rich-edit') ? '' : 'none';
   el.classList.add('open');
   txtListaUmisti();
 }
@@ -13995,37 +14187,38 @@ function txtVloz(pole, znak) {
 function txtAkce(co, tlacitko) {
   var pole = __txtPole;
   if (!pole) return;
-  if (co === 'symbol') { txtVloz(pole, tlacitko.getAttribute('data-znak')); return; }
+  var jeEditor = pole.classList && pole.classList.contains('rich-edit');
   if (co === 'napoveda') {
-    alert('Formátování textu\n\n' +
-      'Lišta zapisuje do textu značky, které se při generování PDF promění:\n\n' +
-      '  **text**            → tučně\n' +
-      '  __text__            → kurzíva\n' +
-      '  ~~text~~            → přeškrtnuté\n' +
-      '  {{#c0392b|text}}    → barevně\n\n' +
-      'V poli tedy uvidíte značky, ve vygenerovaném PDF už jen výsledek.\n' +
-      'Označte text a klepněte na tlačítko, nebo klepněte a pak pište.');
+    alert('Úprava textu\n\n' +
+      'Označte text a klepněte na B (tučně), I (kurzíva), S (přeškrtnuté) nebo na barevné\n' +
+      'kolečko. Text se změní rovnou v poli a přesně tak vyjde i ve vygenerovaném PDF.\n' +
+      'Tlačítko ✕ formátování z označeného textu zase sundá.\n\n' +
+      'Symboly (Ω, µ, °, ±, ×, ², ³, Δ, →) se vloží tam, kde máte kurzor — ty fungují\n' +
+      've všech polích, kde se píše text.');
     return;
   }
-  if (co === 'bold') return txtObal(pole, '**', '**');
-  if (co === 'italic') return txtObal(pole, '__', '__');
-  if (co === 'strike') return txtObal(pole, '~~', '~~');
-  if (co === 'barva') return txtObal(pole, '{{' + tlacitko.getAttribute('data-barva') + '|', '}}');
-  if (co === 'cisto') {
-    var t = pole.value || '';
-    var od = pole.selectionStart, kam = pole.selectionEnd;
-    if (od === kam) { alert('Nejdřív označte text, ze kterého se má formátování zrušit.'); return; }
-    var ciste = richText(t.slice(od, kam));
-    pole.value = t.slice(0, od) + ciste + t.slice(kam);
-    try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  if (jeEditor) {
     pole.focus();
-    try { pole.setSelectionRange(od, od + ciste.length); } catch (e) {}
+    // Barvu ať prohlížeč zapíše stylem (ne zastaralou značkou <font>),
+    // ale tučné a kurzívu naopak značkami — jinak by z nich udělal
+    // <span style="font-weight:bold">, což je zbytečně křehké.
+    try { document.execCommand('styleWithCSS', false, co === 'barva'); } catch (e) {}
+    if (co === 'symbol') { document.execCommand('insertText', false, tlacitko.getAttribute('data-znak')); }
+    else if (co === 'bold') document.execCommand('bold');
+    else if (co === 'italic') document.execCommand('italic');
+    else if (co === 'strike') document.execCommand('strikeThrough');
+    else if (co === 'barva') document.execCommand('foreColor', false, tlacitko.getAttribute('data-barva'));
+    else if (co === 'cisto') document.execCommand('removeFormat');
+    try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+    return;
   }
+  if (co === 'symbol') { txtVloz(pole, tlacitko.getAttribute('data-znak')); return; }
 }
 
 // Lišta se ukazuje u polí s textem — ne u dat, čísel, výběrů a zaškrtávátek.
 function txtPoleVhodne(el) {
   if (!el) return false;
+  if (el.classList && el.classList.contains('rich-edit')) return true;
   if (el.tagName === 'TEXTAREA') return true;
   if (el.tagName !== 'INPUT') return false;
   var typ = (el.getAttribute('type') || 'text').toLowerCase();
@@ -14050,6 +14243,10 @@ document.addEventListener('focusout', function(e) {
 });
 window.addEventListener('scroll', txtListaUmisti, true);
 window.addEventListener('resize', txtListaUmisti);
+
+// Editory formátovaného textu se zapnou hned, jak je stránka připravená
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', richZapniVse);
+else setTimeout(richZapniVse, 0);
 
 document.addEventListener('click', function(e) {
   var el = e.target.closest('[data-action],[data-tab]');

@@ -303,6 +303,19 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (na pozici zapamatovanou v `__snipPozice` při otevření knihovny, doplní
   mezery kolem) a `replace`.
 
+- ✅ **Formátovaný text jako ve Wordu** (2026-08-31): pole s prózou
+  (`textarea[data-rich]`: popis, závěr, předmět je/není, důvod mimořádné,
+  seznam příloh, popis závady) se doplní o `div.rich-edit`
+  (`contenteditable`), původní textarea zůstane skrytá jako držitel hodnoty
+  — proto ukládání, archiv, zálohy, diktování i AI fungují beze změny.
+  Zápis do `.value` je odchycený přes `Object.defineProperty`, takže
+  programové nastavení hodnoty se hned projeví v editoru. Ukládá se text
+  s povolenými značkami (`<strong> <em> <s> <u> <span style="color">`),
+  `richSanitizuj()` nic jiného nepustí, `richHtml()` ho vkládá do PDF.
+  Formátování dělá `document.execCommand` (styleWithCSS jen pro barvu).
+  **První podoba s textovými značkami (`**tučně**`) byla špatně** —
+  uživatel to odmítl („nemůže to fungovat jako ve Wordu?"), převod starých
+  značek ale zůstal kvůli zprávám uloženým ve v9.211.
 - ✅ **Lišta nad textovým polem — Ω a formátování** (2026-08-20):
   plovoucí `#txt-lista` se ukáže nad polem, do kterého se píše (`focusin`
   na `textarea` a `input[type=text]`). Symboly Ω µ ° ± × ² ³ Δ → se vloží
