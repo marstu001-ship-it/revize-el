@@ -850,7 +850,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.216<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.217<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -8842,13 +8842,16 @@ function generujPDF() {
     (hasRcd ?
       '<div class="sec-head"><div class="sec-num">' + (secBase + 3) + '.</div><div class="sec-name">Proudové chrániče</div></div>' +
       '<div style="font-size:9.5pt;line-height:1.7;padding:0 2mm">' +
-      'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla provedena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2 a přílohy NA.' +
+      // Odkaz na „přílohu NA" tady mátl — v revizní zprávě si ho lidé pletli
+      // s přílohou zprávy. Kapitola místo toho ukazuje, KDE hodnoty jsou:
+      // v naměřených hodnotách (tabulka měření).
+      'Účinnost doplňkové ochrany proudovým chráničem nebo doplňujícím ochranným pospojováním byla ověřena dle čl. 6.4.3.8 ČSN 33 2000-6 ed.2. Naměřené hodnoty proudových chráničů jsou uvedeny v kapitole ' + secBase + '. — Naměřené hodnoty.' +
       '<br>Bylo provedeno měření přechodových odporů a kontrola průřezu vodičů doplňujícího ochranného pospojování — ČSN 33 2000-4-41 ed.3, čl. 415.2, ČSN 33 2000-5-54 ed.3 čl. 544, ČSN EN 61140 ed.3 čl. 5.5.2.' +
       '<br><br><strong>Měření a zkoušení proudových chráničů bylo provedeno následujícím postupem:</strong>' +
       '<br>— Ověření mezních hodnot reziduálních proudů a časů proudových chráničů.' +
       '<br>— Měření dotykového napětí Ut na ochranném vodiči způsobené průchodem proudu IΔn.' +
       '<br>— Ověření funkce kontrolního tlačítka na chráničích.' +
-      '<br><br>Výsledky vyhověly požadavkům norem a jsou uvedeny v tabulce měření této zprávy o revizi.' +
+      '<br><br>Výsledky měření vyhověly požadavkům norem.' +
       '</div>'
     : '') +
     '</div>' + ftr();
