@@ -303,6 +303,18 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   (na pozici zapamatovanou v `__snipPozice` při otevření knihovny, doplní
   mezery kolem) a `replace`.
 
+- ✅ **Lišta nad textovým polem — Ω a formátování** (2026-08-20):
+  plovoucí `#txt-lista` se ukáže nad polem, do kterého se píše (`focusin`
+  na `textarea` a `input[type=text]`). Symboly Ω µ ° ± × ² ³ Δ → se vloží
+  na kurzor; u víceřádkových polí navíc **B / I / S̶ / barva / zrušit**.
+  Formátování se do textu zapisuje **značkami** (`**tučné**`, `__kurzíva__`,
+  `~~škrtnuté~~`, `{{#c0392b|barevné}}`) — data zůstávají obyčejný text,
+  takže archiv, zálohy i staré zprávy fungují beze změny. Do PDF to
+  převádí `richHtml()` (použité v `odstavceHtml`, u předmětu revize,
+  důvodu mimořádné, závad a seznamu příloh), `richText()` značky odstraní.
+  Tlačítka reagují na `mousedown` s `preventDefault` — na `click` by pole
+  ztratilo označený text dřív, než se stihne přečíst.
+
 ## Roadmapa — co zbývá udělat (wishlist z DM Revize)
 
 Uživatel má placený program **DM Revize** (https://elektro.dmrevize.cz)

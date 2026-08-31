@@ -714,6 +714,23 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   .scard{padding:1rem}
   .podtyp-grid{grid-template-columns:1fr}
 }
+/* Plovoucí lišta nad textovým polem — symboly (Ω) a formátování */
+.txt-lista{position:fixed;z-index:4000;display:none;gap:.15rem;align-items:center;
+  background:var(--surface);border:1px solid var(--border-dark);border-radius:5px;
+  padding:.25rem .3rem;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+.txt-lista.open{display:flex}
+.txt-skupina{display:flex;gap:.15rem;align-items:center}
+.txt-btn{min-width:1.55rem;height:1.55rem;padding:0 .28rem;font-size:.82rem;line-height:1;
+  border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);
+  cursor:pointer;font-family:var(--sans);display:inline-flex;align-items:center;justify-content:center}
+.txt-btn:hover{border-color:var(--accent2);color:var(--accent2);background:#fff}
+.txt-btn.txt-symbol{font-family:var(--mono);font-size:.9rem}
+.txt-btn.txt-barva{width:1.1rem;min-width:1.1rem;height:1.1rem;border-radius:50%;border:1px solid rgba(0,0,0,.25)}
+.txt-btn.txt-napoveda{font-weight:700;color:var(--muted)}
+.txt-oddel{display:inline-block;width:1px;height:1.1rem;background:var(--border);margin:0 .2rem}
+html.dark .txt-btn:hover{background:var(--surface)}
+@media print{.txt-lista{display:none!important}}
+
 /* ═══ PLÁN REVIZÍ (zkušební, zatím schované v Nastavení) ═══ */
 .plan-wrap{max-width:1600px;margin:0 auto;padding:0 1rem 2rem}
 .plan-toolbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.8rem 0}
@@ -819,7 +836,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.210<span class="ver-date"> · 2026-08-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.211<span class="ver-date"> · 2026-08-20</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -7905,6 +7922,34 @@ function esc(s) {
 // odstavcích. Vypadá to stejně jako jeden blok, ale stránkovač umí zlomit
 // MEZI odstavci — jeden nedělitelný blok delší než stránka se v PDF ořízne
 // (stránka se při exportu ořezává na přesných 297 mm).
+// ═══ JEDNODUCHÉ FORMÁTOVÁNÍ TEXTU ══════════════════════════════════════
+// Texty se ukládají jako obyčejný text — formátování se do nich píše
+// značkami, které umí vložit lišta nad polem. Do PDF se značky promění
+// v tučné / kurzívu / přeškrtnuté / barevné. Text bez značek projde úplně
+// stejně jako dřív, takže staré zprávy vypadají beze změny.
+//   **tučné**   __kurzíva__   ~~přeškrtnuté~~   {{#c0392b|barevné}}
+var RICH_ZNACKY = [
+  { re: /\{\{(#[0-9a-fA-F]{3,8})\|([\s\S]*?)\}\}/g, html: '<span style="color:$1">$2</span>' },
+  { re: /\*\*([\s\S]+?)\*\*/g, html: '<strong>$1</strong>' },
+  { re: /__([\s\S]+?)__/g, html: '<em>$1</em>' },
+  { re: /~~([\s\S]+?)~~/g, html: '<s>$1</s>' }
+];
+
+function richHtml(text) {
+  var t = esc(String(text || ''));
+  RICH_ZNACKY.forEach(function(z) { t = t.replace(z.re, z.html); });
+  return t;
+}
+
+// Text bez značek — kde se počítá délka nebo se text porovnává
+function richText(text) {
+  var t = String(text || '');
+  t = t.replace(/\{\{#[0-9a-fA-F]{3,8}\|([\s\S]*?)\}\}/g, '$1');
+  return t.replace(/\*\*([\s\S]+?)\*\*/g, '$1')
+          .replace(/__([\s\S]+?)__/g, '$1')
+          .replace(/~~([\s\S]+?)~~/g, '$1');
+}
+
 function odstavceHtml(text, styl) {
   var t = String(text || '');
   var casti = t.split(/\n[ \t]*\n/);
@@ -7912,7 +7957,7 @@ function odstavceHtml(text, styl) {
     // Mezera mezi odstavci se dělá marginem, ať zlom stránky nezačíná
     // prázdným řádkem.
     var mb = (i < casti.length - 1) ? 'margin-bottom:3.6mm;' : '';
-    return '<div style="' + styl + mb + '">' + esc(od) + '</div>';
+    return '<div style="' + styl + mb + '">' + richHtml(od) + '</div>';
   }).join('');
 }
 
@@ -8229,10 +8274,10 @@ function generujPDF() {
   // Důvod se tiskne jen u mimořádné revize (ČSN 33 1500 čl. 2.5) a stojí
   // před vymezením předmětu — čtenář musí hned vědět, proč revize vznikla.
   if (D.druh === 'Mimořádná' && D.duvod_mimoradne) {
-    vymHtml += '<br><br><strong>Důvod mimořádné revize je:</strong> ' + esc(D.duvod_mimoradne);
+    vymHtml += '<br><br><strong>Důvod mimořádné revize je:</strong> ' + richHtml(D.duvod_mimoradne);
   }
-  if (D.predmet_je) vymHtml += '<br><br><strong>Předmětem revize je:</strong> ' + esc(D.predmet_je);
-  if (D.predmet_neni) vymHtml += '<br><br><strong>Předmětem revize není:</strong> ' + esc(D.predmet_neni);
+  if (D.predmet_je) vymHtml += '<br><br><strong>Předmětem revize je:</strong> ' + richHtml(D.predmet_je);
+  if (D.predmet_neni) vymHtml += '<br><br><strong>Předmětem revize není:</strong> ' + richHtml(D.predmet_neni);
   var zkouseniHtml = '<br><br><strong>Provedené zkoušky dle ČSN 33 2000-6 ed.2 čl. 6.4.3:</strong>' +
     esc('\na) spojitost ochranných vodičů (viz 6.4.3.2)\nb) izolační odpor elektrické instalace (viz 6.4.3.3)\nc) zkoušení izolačních odporů pro potvrzení účinnosti ochrany pomocí SELV, PELV nebo elektrickým oddělením (viz 6.4.3.4)\nd) zkoušení pro potvrzení účinnosti automatického odpojení od zdroje (viz 6.4.3.7)\ne) zkoušení pro potvrzení účinnosti doplňkové ochrany (viz 6.4.3.8)\nf) zkouška pořadí fází (viz 6.4.3.9)\ng) funkční a provozní zkoušky (viz 6.4.3.10)\nh) ověření úbytků napětí (viz 6.4.3.11)');
   if (!isLpsPdf) vymHtml += zkouseniHtml;
@@ -8584,8 +8629,8 @@ function generujPDF() {
         // Každá závada je samostatný blok přímo v .a4-content (ne ve
         // společném obalu) — jinak by se seznam závad nedal zalomit
         // a dlouhý seznam (hlavně s fotkami) by se v PDF ořízl.
-        return '<div style="margin-bottom:3mm;padding:0 2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + esc(z.popis) +
-          (z.norma ? ' <em style="font-size:8.5pt;color:#444">(porušení: ' + esc(z.norma) + ')</em>' : '') +
+        return '<div style="margin-bottom:3mm;padding:0 2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + richHtml(z.popis) +
+          (z.norma ? ' <em style="font-size:8.5pt;color:#444">(porušení: ' + richHtml(z.norma) + ')</em>' : '') +
           (z.dalsi ? '<br><em>Po odstranění závady: ' + esc(textPoOdstraneni(z.dalsi, z.kod)) + '</em>' : '') +
           fotkyHtml +
           '</div>';
@@ -8608,7 +8653,7 @@ function generujPDF() {
       'font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line;') +
     (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta provedení příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
     '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
-    (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + esc(D.prilohy) + '</span></div>' : '') +
+    (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + richHtml(D.prilohy) + '</span></div>' : '') +
     '</div>' + ftr();
   pages.appendChild(p5);
 
@@ -13825,6 +13870,173 @@ function planStitkyZavrit() {
 
 // hromadné přidělení přívlastku vybraným objektům
 function planVybraneStitek() { planHromadnaVolba('stitek'); }
+
+
+// ═══ LIŠTA NAD TEXTOVÝM POLEM (Ω a formátování) ═════════════════════════
+// Plovoucí lišta, která vyskočí nad polem, do kterého se zrovna píše.
+// U jednořádkových políček nabízí jen symboly (Ω, °C, …), u víceřádkových
+// i formátování — to se do textu zapíše značkami, které se při generování
+// PDF promění v tučné, kurzívu, přeškrtnuté a barvu.
+var TXT_SYMBOLY = [
+  { z: 'Ω', popis: 'ohm' }, { z: 'µ', popis: 'mikro' }, { z: '°', popis: 'stupeň' },
+  { z: '±', popis: 'plus minus' }, { z: '×', popis: 'krát' }, { z: '²', popis: 'na druhou' },
+  { z: '³', popis: 'na třetí' }, { z: 'Δ', popis: 'delta' }, { z: '→', popis: 'šipka' }
+];
+var TXT_BARVY = [
+  { b: '#c0392b', n: 'červená' }, { b: '#b8860b', n: 'oranžová' },
+  { b: '#0f7b5f', n: 'zelená' }, { b: '#2B579A', n: 'modrá' }
+];
+var __txtPole = null;        // pole, ke kterému lišta patří
+var __txtSkryt = null;
+
+function txtListaPrvek() {
+  var el = document.getElementById('txt-lista');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'txt-lista';
+  el.className = 'txt-lista';
+  el.innerHTML =
+    '<span class="txt-skupina" id="txt-format">' +
+      '<button type="button" class="txt-btn" data-txt="bold" title="Tučně (**text**)"><strong>B</strong></button>' +
+      '<button type="button" class="txt-btn" data-txt="italic" title="Kurzíva (__text__)"><em>I</em></button>' +
+      '<button type="button" class="txt-btn" data-txt="strike" title="Přeškrtnuté (~~text~~)"><s>S</s></button>' +
+      TXT_BARVY.map(function(x) {
+        return '<button type="button" class="txt-btn txt-barva" data-txt="barva" data-barva="' + x.b +
+               '" title="Barva: ' + x.n + '" style="background:' + x.b + '"></button>';
+      }).join('') +
+      '<button type="button" class="txt-btn" data-txt="cisto" title="Zrušit formátování v označeném textu">✕</button>' +
+      '<span class="txt-oddel"></span>' +
+    '</span>' +
+    TXT_SYMBOLY.map(function(x) {
+      return '<button type="button" class="txt-btn txt-symbol" data-txt="symbol" data-znak="' + x.z +
+             '" title="Vložit ' + x.popis + ' (' + x.z + ')">' + x.z + '</button>';
+    }).join('') +
+    '<button type="button" class="txt-btn txt-napoveda" data-txt="napoveda" title="Jak se formátování projeví v PDF">?</button>';
+  document.body.appendChild(el);
+  // mousedown místo click — jinak by pole ztratilo označení textu dřív,
+  // než se stihne zjistit, co je označené
+  el.addEventListener('mousedown', function(e) {
+    var b = e.target.closest('.txt-btn');
+    if (!b) return;
+    e.preventDefault();
+    txtAkce(b.getAttribute('data-txt'), b);
+  });
+  return el;
+}
+
+function txtListaUkaz(pole) {
+  if (!pole) return;
+  __txtPole = pole;
+  var el = txtListaPrvek();
+  var jeTextarea = pole.tagName === 'TEXTAREA';
+  var fmt = document.getElementById('txt-format');
+  if (fmt) fmt.style.display = jeTextarea ? '' : 'none';
+  el.classList.add('open');
+  txtListaUmisti();
+}
+
+function txtListaUmisti() {
+  var el = document.getElementById('txt-lista');
+  if (!el || !__txtPole || !el.classList.contains('open')) return;
+  var r = __txtPole.getBoundingClientRect();
+  var v = el.getBoundingClientRect();
+  var top = r.top - v.height - 6;
+  if (top < 6) top = Math.min(r.bottom + 6, window.innerHeight - v.height - 6);
+  var left = Math.max(6, Math.min(r.left, window.innerWidth - v.width - 6));
+  el.style.top = Math.round(top) + 'px';
+  el.style.left = Math.round(left) + 'px';
+}
+
+function txtListaSkryj() {
+  var el = document.getElementById('txt-lista');
+  if (el) el.classList.remove('open');
+  __txtPole = null;
+}
+
+// Obalení označeného textu značkou; bez označení se značka vloží prázdná
+// a kurzor se postaví doprostřed, ať se rovnou píše.
+function txtObal(pole, pred, za) {
+  var t = pole.value || '';
+  var od = pole.selectionStart, kam = pole.selectionEnd;
+  if (typeof od !== 'number') { od = t.length; kam = t.length; }
+  var vybrano = t.slice(od, kam);
+  pole.value = t.slice(0, od) + pred + vybrano + za + t.slice(kam);
+  var novaOd = od + pred.length;
+  var novaKam = novaOd + vybrano.length;
+  try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  pole.focus();
+  try { pole.setSelectionRange(novaOd, novaKam); } catch (e) {}
+}
+
+function txtVloz(pole, znak) {
+  var t = pole.value || '';
+  var od = typeof pole.selectionStart === 'number' ? pole.selectionStart : t.length;
+  var kam = typeof pole.selectionEnd === 'number' ? pole.selectionEnd : od;
+  pole.value = t.slice(0, od) + znak + t.slice(kam);
+  var poz = od + znak.length;
+  try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  pole.focus();
+  try { pole.setSelectionRange(poz, poz); } catch (e) {}
+}
+
+function txtAkce(co, tlacitko) {
+  var pole = __txtPole;
+  if (!pole) return;
+  if (co === 'symbol') { txtVloz(pole, tlacitko.getAttribute('data-znak')); return; }
+  if (co === 'napoveda') {
+    alert('Formátování textu\n\n' +
+      'Lišta zapisuje do textu značky, které se při generování PDF promění:\n\n' +
+      '  **text**            → tučně\n' +
+      '  __text__            → kurzíva\n' +
+      '  ~~text~~            → přeškrtnuté\n' +
+      '  {{#c0392b|text}}    → barevně\n\n' +
+      'V poli tedy uvidíte značky, ve vygenerovaném PDF už jen výsledek.\n' +
+      'Označte text a klepněte na tlačítko, nebo klepněte a pak pište.');
+    return;
+  }
+  if (co === 'bold') return txtObal(pole, '**', '**');
+  if (co === 'italic') return txtObal(pole, '__', '__');
+  if (co === 'strike') return txtObal(pole, '~~', '~~');
+  if (co === 'barva') return txtObal(pole, '{{' + tlacitko.getAttribute('data-barva') + '|', '}}');
+  if (co === 'cisto') {
+    var t = pole.value || '';
+    var od = pole.selectionStart, kam = pole.selectionEnd;
+    if (od === kam) { alert('Nejdřív označte text, ze kterého se má formátování zrušit.'); return; }
+    var ciste = richText(t.slice(od, kam));
+    pole.value = t.slice(0, od) + ciste + t.slice(kam);
+    try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+    pole.focus();
+    try { pole.setSelectionRange(od, od + ciste.length); } catch (e) {}
+  }
+}
+
+// Lišta se ukazuje u polí s textem — ne u dat, čísel, výběrů a zaškrtávátek.
+function txtPoleVhodne(el) {
+  if (!el) return false;
+  if (el.tagName === 'TEXTAREA') return true;
+  if (el.tagName !== 'INPUT') return false;
+  var typ = (el.getAttribute('type') || 'text').toLowerCase();
+  return typ === 'text' || typ === 'search';
+}
+
+document.addEventListener('focusin', function(e) {
+  if (e.target && e.target.closest && e.target.closest('#txt-lista')) return;
+  if (txtPoleVhodne(e.target)) {
+    clearTimeout(__txtSkryt);
+    txtListaUkaz(e.target);
+  }
+});
+document.addEventListener('focusout', function(e) {
+  if (!txtPoleVhodne(e.target)) return;
+  clearTimeout(__txtSkryt);
+  __txtSkryt = setTimeout(function() {
+    var a = document.activeElement;
+    if (a && (txtPoleVhodne(a) || (a.closest && a.closest('#txt-lista')))) return;
+    txtListaSkryj();
+  }, 180);
+});
+window.addEventListener('scroll', txtListaUmisti, true);
+window.addEventListener('resize', txtListaUmisti);
 
 document.addEventListener('click', function(e) {
   var el = e.target.closest('[data-action],[data-tab]');
