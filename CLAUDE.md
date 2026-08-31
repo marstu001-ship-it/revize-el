@@ -321,9 +321,11 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   uživatel to odmítl („nemůže to fungovat jako ve Wordu?"), převod starých
   značek ale zůstal kvůli zprávám uloženým ve v9.211.
 - ✅ **Lišta nad textovým polem — Ω a formátování** (2026-08-20):
-  plovoucí `#txt-lista` se ukáže nad polem, do kterého se píše (`focusin`
-  na `textarea` a `input[type=text]`). Symboly Ω µ ° ± × ² ³ Δ → se vloží
-  na kurzor; u víceřádkových polí navíc **B / I / S̶ / barva / zrušit**.
+  plovoucí `#txt-lista` se ukáže **jen nad poli `.rich-edit`** (souvislý text).
+  V tabulce měření, v dialozích, v nastavení ani v jednořádkových polích se
+  neukazuje — uživatel to výslovně odmítl (2026-08-31: „zobrazuje se to skoro
+  všude a pěkně mě to štve"). Symboly Ω µ ° ± ² Δ + **B / I / S̶ / barva /
+  zrušit**; lišta mizí na `focusin` jinam i na `mousedown` mimo pole.
   Formátování se do textu zapisuje **značkami** (`**tučné**`, `__kurzíva__`,
   `~~škrtnuté~~`, `{{#c0392b|barevné}}`) — data zůstávají obyčejný text,
   takže archiv, zálohy i staré zprávy fungují beze změny. Do PDF to

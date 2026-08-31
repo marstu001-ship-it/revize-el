@@ -851,7 +851,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.220<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.221<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -953,11 +953,11 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 
   <div class="scard" data-nov-datum="2026-08-31">
     <div class="scard-title">Ω Vkládání symbolů a jednoduché formátování textu <span class="nov-datum">31. 8. 2026</span></div>
-    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Nad polem, do kterého zrovna píšete, se objeví <strong>lištička</strong>. Vloží symboly, které se z klávesnice špatně píšou, a v delších textech umí písmo zvýraznit. <strong>Ve vygenerovaném PDF se to projeví přesně tak, jak jste text upravil.</strong></p>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V polích, kde se píše souvislý text (popis instalace, závěr, předmět revize, důvod mimořádné revize, popis závady, seznam příloh), se nad polem objeví <strong>lištička</strong>. Vloží symboly, které se z klávesnice špatně píšou, a umí písmo zvýraznit. <strong>Ve vygenerovaném PDF se to projeví přesně tak, jak jste text upravil.</strong> Do tabulky měření ani do ostatních políček lišta neleze — tam se píšou jen hodnoty.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Symboly Ω µ ° ± ² Δ</strong> se vloží tam, kde máte kurzor. Fungují v polích, kde se píše text — i v jednořádkových, jako je název obvodu nebo poznámka. (Na titulní straně lišta není, tam se vyplňují jen údaje.)</li>
-        <li><strong>Tučné, kurzíva, přeškrtnuté a barva písma</strong> (červená, oranžová, zelená, modrá) u víceřádkových polí: popis instalace, závěr, předmět revize, důvod mimořádné revize, popis závady i seznam příloh. Označte text a klepněte na tlačítko — nebo klepněte a rovnou pište.</li>
+        <li><strong>Symboly Ω µ ° ± ² Δ</strong> se vloží tam, kde máte kurzor.</li>
+        <li><strong>Tučné, kurzíva, přeškrtnuté a barva písma</strong> (červená, oranžová, zelená, modrá). Označte text a klepněte na tlačítko — nebo klepněte a rovnou pište.</li>
         <li>Tlačítkem <strong>✕</strong> formátování z označeného textu zase sundáte, <strong>černým kolečkem</strong> vrátíte barvu na obyčejnou.</li>
         <li><strong>Text se změní rovnou v poli</strong>, jak jste zvyklý z Wordu — a přesně tak vyjde i v PDF. Vkládání ze schránky se vloží jako čistý text, aby se z jiných programů netahalo cizí formátování.</li>
         <li>Starší zprávy se nijak nemění a zálohy, archiv i posílání zpráv kolegům fungují stejně jako dosud.</li>
@@ -14362,11 +14362,8 @@ function txtListaUkaz(pole) {
   if (!pole) return;
   __txtPole = pole;
   var el = txtListaPrvek();
-  // Formátování se nabízí jen tam, kde ho program umí i vytisknout —
-  // v polích s formátovaným textem. Jinde zůstanou jen symboly (Ω…),
-  // ať nikdo nezvýrazňuje text, který se stejně vytiskne obyčejně.
   var fmt = document.getElementById('txt-format');
-  if (fmt) fmt.style.display = pole.classList && pole.classList.contains('rich-edit') ? '' : 'none';
+  if (fmt) fmt.style.display = '';
   el.classList.add('open');
   txtListaUmisti();
 }
@@ -14402,17 +14399,6 @@ function txtObal(pole, pred, za) {
   try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
   pole.focus();
   try { pole.setSelectionRange(novaOd, novaKam); } catch (e) {}
-}
-
-function txtVloz(pole, znak) {
-  var t = pole.value || '';
-  var od = typeof pole.selectionStart === 'number' ? pole.selectionStart : t.length;
-  var kam = typeof pole.selectionEnd === 'number' ? pole.selectionEnd : od;
-  pole.value = t.slice(0, od) + znak + t.slice(kam);
-  var poz = od + znak.length;
-  try { pole.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
-  pole.focus();
-  try { pole.setSelectionRange(poz, poz); } catch (e) {}
 }
 
 function txtAkce(co, tlacitko) {
@@ -14464,27 +14450,26 @@ function txtAkce(co, tlacitko) {
     }
     return;
   }
-  if (co === 'symbol') { txtVloz(pole, tlacitko.getAttribute('data-znak')); return; }
 }
 
-// Lišta se ukazuje u polí s textem — ne u dat, čísel, výběrů a zaškrtávátek.
+// Lišta patří jen k polím se souvislým textem (popis instalace, závěr,
+// předmět revize, závady…). V tabulce měření, v dialozích ani v číselných
+// políčkách nemá co dělat — tam se píšou hodnoty, ne věty.
 function txtPoleVhodne(el) {
-  if (!el) return false;
-  // Na titulní straně se lišta neukazuje — jsou tam samé údaje (čísla,
-  // adresy, data), kde symboly ani zvýraznění nedávají smysl.
-  if (el.closest && el.closest('#tab-titulni')) return false;
-  if (el.classList && el.classList.contains('rich-edit')) return true;
-  if (el.tagName === 'TEXTAREA') return true;
-  if (el.tagName !== 'INPUT') return false;
-  var typ = (el.getAttribute('type') || 'text').toLowerCase();
-  return typ === 'text' || typ === 'search';
+  return !!(el && el.classList && el.classList.contains('rich-edit'));
 }
 
 document.addEventListener('focusin', function(e) {
-  if (e.target && e.target.closest && e.target.closest('#txt-lista')) return;
-  if (txtPoleVhodne(e.target)) {
+  var cil = e.target;
+  if (cil && cil.closest && cil.closest('#txt-lista')) return;   // klepnutí do lišty
+  if (txtPoleVhodne(cil)) {
     clearTimeout(__txtSkryt);
-    txtListaUkaz(e.target);
+    txtListaUkaz(cil);
+  } else {
+    // Kamkoli jinam — do tabulky měření, do dialogu, do nastavení —
+    // lišta hned mizí, ať nepřekáží.
+    clearTimeout(__txtSkryt);
+    txtListaSkryj();
   }
 });
 document.addEventListener('focusout', function(e) {
@@ -14496,6 +14481,13 @@ document.addEventListener('focusout', function(e) {
     txtListaSkryj();
   }, 180);
 });
+// Klepnutí mimo pole (na plochu, na tlačítko, do jiné obrazovky) lištu zavře taky
+document.addEventListener('mousedown', function(e) {
+  if (!__txtPole) return;
+  var cil = e.target;
+  if (cil && cil.closest && (cil.closest('#txt-lista') || cil.closest('.rich-edit'))) return;
+  txtListaSkryj();
+}, true);
 window.addEventListener('scroll', txtListaUmisti, true);
 window.addEventListener('resize', txtListaUmisti);
 
