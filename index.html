@@ -594,7 +594,10 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   box-shadow:0 4px 20px rgba(0,0,0,.35);
   display:flex;flex-direction:column;
   font-family:'Courier Prime','Courier New',Courier,monospace;
-  font-size:10pt;color:#000;position:relative}
+  font-size:10pt;color:#000;position:relative;
+  /* Dlouhé slovo bez mezer (třeba slepené kódy nebo překlep) se musí
+     zalomit, jinak uteče mimo stránku a v PDF se uřízne. */
+  overflow-wrap:break-word;word-wrap:break-word}
 /* Landscape A4 stránka — 297×210mm. Bez tohoto pravidla má dědičnou
    width:210mm z .a4 (portrait) a html2canvas zachytí portrait canvas,
    pak addImage rozpláclo měřicí tabulku. Wide stránka může na úzkém
@@ -847,7 +850,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.215<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.216<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
