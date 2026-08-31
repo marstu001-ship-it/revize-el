@@ -266,7 +266,7 @@ Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
   Nezařazené objekty spadnou do složky „📦 Nezařazené objekty".
   Data: `STORE.plan.slozky`, `objekt.rodic`, `STORE.plan.otevrene`.
   Původní ploché „skupiny" se jednorázově převedly na budovy (`planMigraceSkupin`).
-- ✅ **Plán revizí** (zkušební, vstup zatím jen z Nastavení dole) —
+- ✅ **Plán revizí** (vstup: třetí karta na hlavní straně) —
   víceletá tabulka objekt × rok podle Excelu, který si uživatel vede jako
   správce areálu (MPBP příloha 7). Objekty se odvozují z archivu podle
   **„Místa provádění revize"** (`planKlicZpravy`), hotové revize se plní
