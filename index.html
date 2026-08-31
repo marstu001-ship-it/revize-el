@@ -850,7 +850,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.217<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.218<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2389,7 +2389,15 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="g2">
       <div class="f"><label>Celkový výsledek <span class="req">*</span></label>
         <select id="f_celkovy_vysledek"><option value="schopno">✅ Schopno provozu</option><option value="neschopno">❌ Neschopno provozu</option></select></div>
-      <div class="f"><label>Doporučená lhůta provedení příští revize <span style="font-size:.5rem;color:var(--accent);display:block">dle NV 190/2022 Sb. §10 písm. n)</span></label><input type="text" id="f_lhuta" placeholder="5 let – do 01/2031"></div>
+      <!-- Doporučená lhůta se počítá z „Termínu příští revize" na titulní
+           straně a do PDF se propíše sama — pole se proto nevyplňuje ručně
+           a je schované. Zůstává v dokumentu jako držitel hodnoty, aby
+           ukládání, archiv i zálohy fungovaly beze změny. -->
+      <div class="f" style="display:none"><label>Doporučená lhůta provedení příští revize</label><input type="text" id="f_lhuta" placeholder="5 let – do 01/2031"></div>
+      <div class="f" id="lhuta-info-box" style="display:none">
+        <label>Doporučená lhůta provedení příští revize <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">počítá se z termínu na titulní straně, do zprávy se propíše sama</span></label>
+        <div id="lhuta-info" style="font-size:.85rem;font-family:var(--sans);padding:.5rem .7rem;border:1px dashed var(--border);border-radius:2px;color:var(--text);background:var(--bg)"></div>
+      </div>
     </div>
     <div class="sep"></div>
     <div class="g2">
@@ -3741,8 +3749,19 @@ window.addEventListener('drop', function(e) {
   reader.readAsText(f);
 });
 
+function updateLhutaInfo() {
+  var fl = document.getElementById('f_lhuta');
+  var box = document.getElementById('lhuta-info-box');
+  var out = document.getElementById('lhuta-info');
+  if (!fl || !box || !out) return;
+  var t = (fl.value || '').trim();
+  box.style.display = t ? '' : 'none';
+  out.textContent = t;
+}
+
 function switchTab(id, btn) {
   richZapniVse();
+  updateLhutaInfo();
   // Krok, ze kterého se odchází, se počítá jako prošlý (zelená fajfka)
   window.__tabsVisited = window.__tabsVisited || {};
   document.querySelectorAll('.tab-btn.active').forEach(function(b) {
@@ -7639,6 +7658,7 @@ function potvrditRevize() {
   if (fl) {
     fl.value = lhutaText;
     fl.dispatchEvent(new Event('input', { bubbles: true }));
+    updateLhutaInfo();
   }
   closeModal('modal-revize');
 }
@@ -10421,6 +10441,7 @@ function nacistData(D) {
     // Chybí-li klíč úplně (starší zprávy), předvyplnění zůstane.
     if (fields[id] !== undefined && fields[id] !== null) el.value = fields[id];
   });
+  updateLhutaInfo();   // doporučená lhůta je jen ke čtení, ukázat ji
   // Vždy přepsat pole revizního technika z vlastního profilu uživatele
   if (STORE.technik && STORE.technik.jmeno) propsatTechnika();
   // Restore zkousky
