@@ -628,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .pdf-pages{padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem}
 
 /* ═══ STRÁNKY A4 ═══ */
-.a4{width:210mm;min-height:297mm;background:var(--pdf-bg,#fff);
+.a4{width:210mm;min-height:297mm;background:#fff;
   padding:10mm 12mm 8mm 12mm;
   box-shadow:0 4px 20px rgba(0,0,0,.35);
   display:flex;flex-direction:column;
@@ -649,6 +649,10 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .a4-footer{margin-top:auto;padding-top:2mm;border-top:.5pt solid #000;
   display:flex;justify-content:space-between;font-size:7pt;color:#444}
 .a4-content{flex:1}
+/* Barevný podklad titulní strany — jen pod obsahem, papír kolem zůstává
+   bílý. Kdyby barva tekla až k okraji, vypadá to jako obarvený papír,
+   ne jako zvýrazněná titulní strana. */
+.a4-titulni .a4-content{background:var(--pdf-bg,transparent);padding:3mm;border-radius:1mm}
 
 /* BLOKY */
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
@@ -891,7 +895,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.225<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.226<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -996,7 +1000,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V náhledu PDF je <strong>vlevo panel s nastavením tisku</strong>. Co v něm přepnete, <strong>je hned vidět na stránce</strong> — žádné potvrzovací okno, ve kterém byste výsledek uviděl až potom.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Barva stránek</strong> — klepnutím na vzorek se obarví <strong>celá zpráva</strong>, ne jen titulní strana. První vzorek je bílá, poslední je vlastní barva podle chuti.</li>
+        <li><strong>Barva titulní strany</strong> — klepnutím na vzorek se podbarví blok s obsahem titulky, papír kolem zůstane bílý. První vzorek je bílá (bez barvy), poslední je vlastní barva podle chuti.</li>
         <li><strong>Podbarvení kolonek</strong> — rámečky dostanou jemný odstín odvozený z barvy pozadí, aby to spolu ladilo. Je zapnuté rovnou; kdo to nechce, odškrtne.</li>
         <li><strong>Každá závada na vlastní stránku</strong> — hodí se, když se závady předávají po jedné k odstranění.</li>
         <li><strong>Fotek závady na řádek: 0 / 1 / 2 / 3</strong> — šířka fotek se dopočítá sama. Volba <em>netisknout</em> fotky vynechá (kratší zpráva, menší soubor).</li>
@@ -8439,16 +8443,17 @@ var VYCHOZI_TISK = {
   podpis: true
 };
 
-// Podbarvení kolonek: o stupínek sytější odstín než pozadí strany.
-// Když je pozadí bílé, použije se decentní modrošedá.
+// Podbarvení kolonek: světlejší odstín téže barvy, aby pole na barevném
+// bloku titulní strany vynikla (tmavší odstín tam vypadá zašle).
+// Bez zvolené barvy zůstává decentní modrošedá.
 function pboxOdstin(pozadi) {
   var m = String(pozadi || '').match(/^#([0-9a-f]{6})$/i);
   if (!m) return '#eef2f8';
   var c = parseInt(m[1], 16);
   var r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
-  // ztmavit o 6 % — na světlých podkladech dobře čitelné i po vytisknutí
-  var tmav = function(x) { return Math.max(0, Math.round(x * 0.94)); };
-  return 'rgb(' + tmav(r) + ',' + tmav(g) + ',' + tmav(b) + ')';
+  // přimíchat bílou — 55 % bílé, zbytek zvolená barva
+  var svet = function(x) { return Math.min(255, Math.round(x + (255 - x) * 0.55)); };
+  return 'rgb(' + svet(r) + ',' + svet(g) + ',' + svet(b) + ')';
 }
 
 function tiskNastaveni(D) {
@@ -14617,7 +14622,7 @@ function renderTiskPanel() {
     '<div class="tisk-pozn">Změny je vidět hned v náhledu. Platí pro tuhle zprávu; ' +
     'tlačítkem dole je uložíte jako výchozí pro všechny.</div>' +
 
-    '<div class="tisk-skupina">Barva stránek</div>' +
+    '<div class="tisk-skupina">Titulní strana</div>' +
     '<div class="tisk-palety">' +
       TISK_BARVY.map(function(b) {
         var vybrana = (t.pozadiTisku || '') === b.h;
@@ -14629,6 +14634,7 @@ function renderTiskPanel() {
         '<input type="color" id="tisk-pozadi" value="' + esc(t.pozadiTisku || '#ffffff') + '">' +
       '</label>' +
     '</div>' +
+    '<div class="tisk-pozn2" style="margin:-.2rem 0 .5rem">Obarví se jen titulní strana, papír kolem zůstane bílý.</div>' +
     '<label class="tisk-check"><input type="checkbox" id="tisk-kolonky"' + (t.barevneKolonky ? ' checked' : '') +
       '> Podbarvit kolonky</label>' +
 

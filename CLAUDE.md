@@ -567,13 +567,16 @@ Berte jako **inspirační seznam**, ne plán k automatické realizaci.
 ## Nastavení tisku — živý panel v náhledu (2026-08-31)
 
 Panel `#pdf-nastaveni` je **stálý** (nesbaluje se) vlevo v `#screen-pdf`,
-`position:sticky`; na úzkém okně se přesune nad stránky. Volby: **barva všech
-stránek** — paleta šesti vzorků (`TISK_BARVY`) + vlastní barva; nastavuje se
-jako `--pdf-bg` na `#pdf-pages`, takže ji podědí i stránky vzniklé při
-přelamování. **Vlastní barva překresluje až na `change`** (puštění myši) —
+`position:sticky`; na úzkém okně se přesune nad stránky. Volby: **barva
+titulní strany** — paleta šesti vzorků (`TISK_BARVY`) + vlastní barva; ukládá
+se jako `--pdf-bg` na `#pdf-pages`, ale používá ji **jen `.a4-titulni
+.a4-content`** — tedy blok s obsahem, ne celý papír. (v9.225 barvila všechny
+strany od kraje ke kraji, uživatel to po porovnání s konkurencí odmítl:
+„vypadá líp, když není ta stránka celá obarvená"). **Vlastní barva překresluje až na `change`** (puštění myši) —
 při `input` se tažení ignoruje, jinak náhled poskakuje. Kapátko v systémovém
 dialogu uživatele mátlo, proto ta paleta. Podbarvení kolonek je **zapnuté
-ve výchozím stavu** (`pbox-tint` na kontejneru, odstín z `pboxOdstin()`), každá
+ve výchozím stavu** (`pbox-tint` na kontejneru, odstín z `pboxOdstin()` —
+**světlejší** než barva bloku, aby pole vynikla), každá
 závada na vlastní stránku (`rozdelZavadyNaStranky()` běží před
 `rozdelPortraitStranky()`), fotek na řádek 0–3 (0 = netisknout), razítko
 a podpis (přesunuty ze starého modalu).
