@@ -851,7 +851,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.221<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.222<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -9506,6 +9506,12 @@ function renderPagesToPDF(pageEls, filename, opts) {
           'Zkuste obnovit stránku (Ctrl+F5), případně se připojit k síti.');
     return Promise.resolve();
   }
+  // Uložené PDF má být malé (archiv, e-maily, zálohy) — proto scale 1.5
+  // a JPEG 0.85. Při tisku se ale soubor nikam neukládá, jde rovnou do
+  // tiskárny, takže se jede na vyšší kvalitu: ostřejší písmo i fotky závad.
+  var proTisk = opts.kvalita === 'tisk';
+  var kvalitaScale = proTisk ? 2.6 : 1.5;
+  var kvalitaJpeg = proTisk ? 0.95 : 0.85;
   pdfProgressShow(pageEls.length);
   // Force-fit .a4 na přesné rozměry — bez tohoto může html2canvas captures
   // canvas o 0.5mm vyšší než A4 (kvůli rounding s padding), addImage
@@ -9557,7 +9563,7 @@ function renderPagesToPDF(pageEls, filename, opts) {
     chain = chain.then(function() {
       var isLandEl = p.classList.contains('a4-landscape');
       return canvasFn(p, {
-        scale: 1.5,
+        scale: kvalitaScale,
         useCORS: true,
         letterRendering: true,
         logging: false,
@@ -9568,7 +9574,7 @@ function renderPagesToPDF(pageEls, filename, opts) {
         var finalCanvas = isLandEl ? rotateCCW90(canvas) : canvas;
         var pageW = pdf.internal.pageSize.getWidth();
         var pageH = pdf.internal.pageSize.getHeight();
-        pdf.addImage(finalCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pageW, pageH);
+        pdf.addImage(finalCanvas.toDataURL('image/jpeg', kvalitaJpeg), 'JPEG', 0, 0, pageW, pageH);
         pdfProgressUpdate(idx + 1, pageEls.length);
       });
     });
@@ -10224,12 +10230,14 @@ function tiskZpravuPrimo() {
   pageEls.forEach(function(p, idx) {
     chain = chain.then(function() {
       var isLandEl = p.classList.contains('a4-landscape');
-      return canvasFn(p, { scale: 1.5, useCORS: true, letterRendering: true, logging: false, backgroundColor: '#ffffff', windowWidth: isLandEl ? 1300 : 900 }).then(function(canvas) {
+      // Tisk jde rovnou do tiskárny, nic se neukládá — proto vyšší kvalita
+      // než u PDF do archivu (tam se drží malá velikost souboru).
+      return canvasFn(p, { scale: 2.6, useCORS: true, letterRendering: true, logging: false, backgroundColor: '#ffffff', windowWidth: isLandEl ? 1300 : 900 }).then(function(canvas) {
         if (idx > 0) pdf.addPage('a4', 'portrait');
         var finalCanvas = p.classList.contains('a4-landscape') ? rotateCCW90(canvas) : canvas;
         var pw = pdf.internal.pageSize.getWidth();
         var ph = pdf.internal.pageSize.getHeight();
-        pdf.addImage(finalCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pw, ph);
+        pdf.addImage(finalCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ph);
       });
     });
   });
@@ -13447,7 +13455,7 @@ function planNahledTisk() {
     '<p style="font-size:1.1rem;color:#333">⏳ Připravuji plán k tisku…</p>' +
     '<p style="font-size:.85rem;color:#888">Může to pár vteřin trvat</p></body></html>');
   w.document.close();
-  Promise.resolve(renderPagesToPDF(els, planNazevSouboru(), { vratitBlob: true })).then(function(blob) {
+  Promise.resolve(renderPagesToPDF(els, planNazevSouboru(), { vratitBlob: true, kvalita: 'tisk' })).then(function(blob) {
     if (!blob) { try { w.close(); } catch (e) {} return; }
     var url = URL.createObjectURL(blob);
     w.location.href = url;

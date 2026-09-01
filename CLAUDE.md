@@ -564,6 +564,15 @@ Berte jako **inspirační seznam**, ne plán k automatické realizaci.
 | 39 Bluetooth měřidla | Vysoký | Vysoká (per-device) |
 | 48 Cloud sync | Velmi vysoký | Střední (backend) |
 
+## Kvalita PDF — dvě různá nastavení
+
+- **Uložené PDF** (Uložit zprávu PDF, e-mail, plán do souboru):
+  `scale: 1.5`, JPEG `0.85` — kvůli velikosti souboru (archiv, přílohy mailů,
+  zálohy). Tohle se **nezvyšuje**, bylo to vědomé rozhodnutí uživatele.
+- **Tisk přímo** (`tiskZpravuPrimo`, `planNahledTisk` → `opts.kvalita: 'tisk'`):
+  `scale: 2.6`, JPEG `0.95`. Soubor se nikam neukládá, jde rovnou do tiskárny,
+  takže velikost nevadí a písmo i fotky závad jsou ostřejší (2026-08-31).
+
 ## Technické principy pro další Claude session
 
 - **Je to PWA, nikoli web s backendem.** Vše ukládat do
