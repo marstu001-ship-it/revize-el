@@ -564,6 +564,26 @@ Berte jako **inspirační seznam**, ne plán k automatické realizaci.
 | 39 Bluetooth měřidla | Vysoký | Vysoká (per-device) |
 | 48 Cloud sync | Velmi vysoký | Střední (backend) |
 
+## Nastavení tisku — živý panel v náhledu (2026-08-31)
+
+Panel `#pdf-nastaveni` je **stálý** (nesbaluje se) vlevo v `#screen-pdf`,
+`position:sticky`; na úzkém okně se přesune nad stránky. Volby: barva pozadí
+titulní strany (`input[type=color]`, **živý náhled**, debounce 140 ms),
+podbarvení kolonek (odstín se počítá z pozadí přes `pboxOdstin()`), každá
+závada na vlastní stránku (`rozdelZavadyNaStranky()` běží před
+`rozdelPortraitStranky()`), fotek na řádek 0–3 (0 = netisknout), razítko
+a podpis (přesunuty ze starého modalu).
+
+Dvě úrovně: `STORE.tisk` = výchozí v profilu (v STORE_KEYS i v záloze),
+`D.tisk` / `window.__tiskZpravy` = odchylka konkrétní zprávy (ukládá se
+s ní do archivu). Slévá je `tiskNastaveni(D)`. Tlačítka „Uložit jako
+výchozí" a „Zpět na výchozí".
+
+**Konkurence (DM Revize) vybírá barvu ve vyskakovacím okně — uživatel to
+odmítl** („až pak uvidím jak to vypadá je dost divný"), proto živý náhled.
+Pozor: `generujPDF()` volá `saveToArchiv()`, takže každé překreslení náhledu
+zprávu uloží — testy nesmí předpokládat pořadí v archivu.
+
 ## Kvalita PDF — dvě různá nastavení
 
 - **Uložené PDF** (Uložit zprávu PDF, e-mail, plán do souboru):

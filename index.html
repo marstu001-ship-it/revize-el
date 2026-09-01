@@ -581,6 +581,38 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   position:sticky;top:54px;z-index:200}
 .pdf-toolbar-title{font-family:var(--mono);font-size:.8rem;letter-spacing:.1em}
 .pdf-actions{display:flex;gap:.5rem}
+/* Náhled PDF: vlevo stálý panel s nastavením tisku, vpravo stránky */
+.pdf-plocha{display:flex;align-items:flex-start;gap:1rem}
+.pdf-plocha .pdf-pages{flex:1;min-width:0}
+.pdf-nastaveni{flex:0 0 250px;position:sticky;top:104px;margin:1.5rem 0 0 1.5rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:.8rem .9rem;font-family:var(--sans);font-size:.8rem;color:var(--text);
+  max-height:calc(100vh - 130px);overflow:auto}
+.tisk-nadpis{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--accent2);margin-bottom:.35rem}
+.tisk-pozn{font-size:.7rem;color:var(--muted);line-height:1.5;margin-bottom:.6rem}
+.tisk-pozn2{font-size:.65rem;color:var(--muted)}
+.tisk-skupina{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+  border-top:1px solid var(--border);padding-top:.5rem;margin:.6rem 0 .35rem}
+.tisk-radek{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem}
+.tisk-radek input[type=color]{width:44px;height:26px;padding:1px;border:1px solid var(--border);
+  border-radius:3px;background:var(--bg);cursor:pointer}
+.tisk-radek select{padding:.25rem .4rem;font-size:.78rem;font-family:var(--sans);
+  border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text)}
+.tisk-check{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.4rem;cursor:pointer;line-height:1.4}
+.tisk-check input{width:15px;height:15px;padding:0;flex:0 0 15px;margin-top:.1rem}
+.tisk-nedostupne{opacity:.55;cursor:default}
+.tisk-btn{width:100%;margin-bottom:.35rem;padding:.35rem .5rem;font-size:.72rem;font-family:var(--sans);
+  border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);cursor:pointer}
+.tisk-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.tisk-btn-hlavni{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.tisk-btn-hlavni:hover{color:#fff;opacity:.9}
+.tisk-akce{border-top:1px solid var(--border);padding-top:.6rem;margin-top:.6rem}
+@media (max-width:1000px){
+  .pdf-plocha{flex-direction:column}
+  .pdf-nastaveni{position:static;flex:1 1 auto;width:calc(100% - 3rem);margin:1rem 1.5rem 0}
+}
+@media print{.pdf-nastaveni{display:none!important}.pdf-plocha{display:block}}
 .pbtn{font-family:var(--mono);font-size:.68rem;padding:.4rem .9rem;
   border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;
   cursor:pointer;border-radius:2px;transition:all .15s}
@@ -616,6 +648,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
 .pbox{border:.75pt solid #000;padding:1.5mm 2mm;min-height:8mm;font-size:10.5pt;line-height:1.45}
+/* Volitelné podbarvení kolonek na titulní straně (nastavení tisku) */
+.a4.pbox-tint .pbox{background:var(--pbox-tint,#eef2f8)}
 .pbox-label{font-size:7.5pt;font-weight:bold;margin-bottom:.75mm;display:block}
 .dtgrid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:10pt;align-items:baseline}
 .dtlabel{font-size:7.5pt;white-space:nowrap}
@@ -851,7 +885,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.222<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.223<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2666,7 +2700,10 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="pbtn" data-action="tiskZpravuPrimo" style="background:#b5291c;border-color:#b5291c" title="Tiskne přímo z prohlížeče ve vyšší kvalitě, bez uložení PDF">🖨️ Tisk zprávy přímo</button>
     </div>
   </div>
-  <div class="pdf-pages" id="pdf-pages"></div>
+  <div class="pdf-plocha">
+    <aside class="pdf-nastaveni" id="pdf-nastaveni"></aside>
+    <div class="pdf-pages" id="pdf-pages"></div>
+  </div>
 </div>
 
 <!-- MODAL VÝPOČET REVIZE -->
@@ -2881,18 +2918,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <div class="modal-overlay" id="modal-pdf-options">
   <div class="modal">
     <div class="modal-title">📄 Generovat PDF</div>
-    <div id="pdf-podpis-intro" style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">U podpisu revizního technika v PDF můžete vložit uložené razítko a/nebo podpis. Vyberte, co se má použít:</div>
-    <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.25rem">
-      <div class="char-row" id="pdf-razitko-row" style="display:none">
-        <input type="checkbox" id="pdf_use_razitko" checked>
-        <label for="pdf_use_razitko">Vložit <strong>razítko</strong> technika</label>
-        <img id="pdf-razitko-nahled" alt="" style="max-height:34px;max-width:70px;margin-left:auto;border:1px solid var(--border);border-radius:2px;background:#fff;padding:2px">
-      </div>
-      <div class="char-row" id="pdf-podpis-row" style="display:none">
-        <input type="checkbox" id="pdf_use_podpis" checked>
-        <label for="pdf_use_podpis">Vložit <strong>podpis</strong> technika</label>
-      </div>
-    </div>
+    <div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">Razítko, podpis, barvy i sazbu závad nastavíte přímo v náhledu — v panelu vlevo, kde je hned vidět, jak to bude vypadat.</div>
     <div id="pdf-warnings" style="display:none;margin-bottom:1.25rem;padding:.6rem .8rem;background:#fff8e6;border:1px solid #e0c060;border-radius:3px;font-size:.8rem;line-height:1.6;color:#7a5c00"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="closePdfOptions">Zrušit</button>
@@ -2962,7 +2988,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 
 
 <script>
-var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [], snippety: [], aiConfig: {} };
+var STORE = { technik: {}, pristroje: [], archiv: [], odberatele: [], snippety: [], aiConfig: {}, tisk: {} };
 var aktTyp = 'elektro';
 var zavadyN = 0;
 var archiv = [];
@@ -2980,7 +3006,7 @@ var IDB_VERSION = 1;
 var IDB_STORE = 'kv';
 var idb = null;
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
-                  'snippety', 'aiConfig', 'vlastniNormy', 'plan',
+                  'snippety', 'aiConfig', 'vlastniNormy', 'plan', 'tisk',
                   'last_backup_at', 'archiv_count_at_last_backup',
                   'auto_cislovani', 'auto_zaloha_at', 'auto_zaloha_ver'];
 
@@ -3088,6 +3114,7 @@ async function loadStore() {
         STORE.odberatele = d.odberatele || [];
         STORE.snippety = d.snippety || [];
         STORE.plan = d.plan || {};
+        STORE.tisk = d.tisk || {};
         STORE.aiConfig = d.aiConfig || {};
         STORE.vlastniNormy = d.vlastniNormy || {};
         STORE.last_backup_at = d.last_backup_at || null;
@@ -3966,6 +3993,7 @@ function genZpravaUid() {
 
 function novaZprava(typ) {
   aktTyp = typ;
+  window.__tiskZpravy = {};        // nová zpráva jede podle profilu
   window.__aktualniOdberatelId = '';
   window.__openZpravaUid = genZpravaUid();
   window.__predchudceUid = '';
@@ -7841,6 +7869,8 @@ function getData() {
     },
     zhodnoceni: gv('f_zhodnoceni'), celkovy_vysledek: gv('f_celkovy_vysledek'), lhuta: gv('f_lhuta'),
     nadpis_vlastni: gv('f_nadpis_vlastni'), nadpis_doplnek: gv('f_nadpis_doplnek'),
+    // odchylky nastavení tisku u téhle konkrétní zprávy (prázdné = jako v profilu)
+    tisk: Object.assign({}, window.__tiskZpravy || {}),
     poznamka_zavady: gv('f_poznamka_zavady'),
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
     lps: collectLpsData(),
@@ -8326,50 +8356,18 @@ function pdfChybejiciPole() {
 
 function generujPDFAsk() {
   // Uložení (a případný dotaz na shodné ev. číslo) vyřešit HNED na začátku.
-  // Dřív se archivovalo až uvnitř generování, takže dotaz na duplicitu mohl
-  // předběhnout okno s razítkem a to se pak vůbec neukázalo.
   try { saveToArchiv(); } catch (e) { console.error(e); }
-  var t = STORE.technik || {};
-  var hasRaz = !!t.razitko;
-  var hasPod = !!t.podpis;
   var chybi = [];
   try { chybi = pdfChybejiciPole(); } catch(e) {}
+  // Razítko a podpis se nastavují v panelu u náhledu (živě), tenhle dotaz
+  // proto zbyl jen jako upozornění na nevyplněná pole.
+  if (!chybi.length) { generujPDF(); return; }
   var warnEl = document.getElementById('pdf-warnings');
   if (warnEl) {
-    if (chybi.length) {
-      warnEl.style.display = '';
-      warnEl.innerHTML = '⚠️ <strong>Nevyplněno:</strong> ' + esc(chybi.join(', ')) +
-        '<br><span style="font-size:.72rem">PDF se vygeneruje i tak — pokud je to záměr, pokračujte.</span>';
-    } else {
-      warnEl.style.display = 'none';
-      warnEl.innerHTML = '';
-    }
+    warnEl.style.display = '';
+    warnEl.innerHTML = '⚠️ <strong>Nevyplněno:</strong> ' + esc(chybi.join(', ')) +
+      '<br><span style="font-size:.72rem">PDF se vygeneruje i tak — pokud je to záměr, pokračujte.</span>';
   }
-  if (!hasRaz && !hasPod && !chybi.length) {
-    // Nic není nahráno a nic nechybí → rovnou generovat
-    window.__pdfOpts = { razitko: false, podpis: false };
-    generujPDF();
-    return;
-  }
-  // Ukázat modal s checkboxy podle toho, co je k dispozici. Text o razítku
-  // a podpisu jen pro ty, kdo je mají nahrané — kdo razítkuje ručně,
-  // vidí jen upozornění na nevyplněná pole.
-  var intro = document.getElementById('pdf-podpis-intro');
-  if (intro) intro.style.display = (hasRaz || hasPod) ? '' : 'none';
-  var rowR = document.getElementById('pdf-razitko-row');
-  var rowP = document.getElementById('pdf-podpis-row');
-  var nahled = document.getElementById('pdf-razitko-nahled');
-  if (nahled) {           // ať je vidět, které razítko se vloží
-    if (hasRaz) { nahled.src = t.razitko; nahled.style.display = ''; }
-    else nahled.style.display = 'none';
-  }
-  if (rowR) rowR.style.display = hasRaz ? '' : 'none';
-  if (rowP) rowP.style.display = hasPod ? '' : 'none';
-  // Default check obou (uživatel typicky chce vše vložit)
-  var chR = document.getElementById('pdf_use_razitko');
-  var chP = document.getElementById('pdf_use_podpis');
-  if (chR) chR.checked = hasRaz;
-  if (chP) chP.checked = hasPod;
   var m = document.getElementById('modal-pdf-options');
   if (m) m.classList.add('open');
 }
@@ -8380,19 +8378,10 @@ function closePdfOptions() {
 }
 
 function generujPDFPotvrzeno() {
-  var chR = document.getElementById('pdf_use_razitko');
-  var chP = document.getElementById('pdf_use_podpis');
-  window.__pdfOpts = {
-    razitko: !!(chR && chR.checked),
-    podpis: !!(chP && chP.checked)
-  };
   closePdfOptions();
   generujPDF();
 }
 
-// Druh revize v nadpisu zprávy — VELKÝMI a ve tvaru, který sedne do vazby
-// „ZPRÁVA O … REVIZI" (o výchozí / o pravidelné / o mimořádné revizi).
-// Neznámý nebo prázdný druh → obecné „ZPRÁVA O REVIZI".
 function druhVNadpisu(druh) {
   var m = {
     'Výchozí': 'VÝCHOZÍ ',
@@ -8417,9 +8406,38 @@ function druhVeVete(druh) {
   return m[druh] || '';
 }
 
+// ═══ NASTAVENÍ TISKU ════════════════════════════════════════════════════
+// Dvě úrovně: výchozí hodnoty v profilu (STORE.tisk) a případná odchylka
+// u konkrétní zprávy (D.tisk). Zpráva má přednost, chybí-li, platí profil.
+var VYCHOZI_TISK = {
+  pozadiTitulky: '',        // prázdné = bílá
+  barevneKolonky: false,
+  zavadyVlastniStranka: false,
+  fotekNaRadek: 2,
+  razitko: true,
+  podpis: true
+};
+
+// Podbarvení kolonek: o stupínek sytější odstín než pozadí strany.
+// Když je pozadí bílé, použije se decentní modrošedá.
+function pboxOdstin(pozadi) {
+  var m = String(pozadi || '').match(/^#([0-9a-f]{6})$/i);
+  if (!m) return '#eef2f8';
+  var c = parseInt(m[1], 16);
+  var r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+  // ztmavit o 6 % — na světlých podkladech dobře čitelné i po vytisknutí
+  var tmav = function(x) { return Math.max(0, Math.round(x * 0.94)); };
+  return 'rgb(' + tmav(r) + ',' + tmav(g) + ',' + tmav(b) + ')';
+}
+
+function tiskNastaveni(D) {
+  var zeZpravy = (D && D.tisk) || (window.__tiskZpravy || {});
+  return Object.assign({}, VYCHOZI_TISK, STORE.tisk || {}, zeZpravy);
+}
+
 function generujPDF() {
   var D = getData();
-  var pdfOpts = window.__pdfOpts || { razitko: true, podpis: true };
+  var pdfOpts = tiskNastaveni(D);
   var pages = document.getElementById('pdf-pages');
   if (!pages) return;
   pages.innerHTML = '';
@@ -8607,6 +8625,9 @@ function generujPDF() {
       '<div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
     '</div></div>' + ftr();
   p1.classList.add('a4-titulni');   // titulní strana se NIKDY nedělí
+  if (pdfOpts.pozadiTitulky) p1.style.background = pdfOpts.pozadiTitulky;
+  if (pdfOpts.barevneKolonky) p1.classList.add('pbox-tint');
+  if (pdfOpts.barevneKolonky) p1.style.setProperty('--pbox-tint', pboxOdstin(pdfOpts.pozadiTitulky));
   pages.appendChild(p1);
 
   var p2 = document.createElement('div');
@@ -8968,16 +8989,23 @@ function generujPDF() {
   var zavadyHtml = D.zavady.length > 0
     ? D.zavady.map(function(z, i) {
         var fotkyHtml = '';
-        if (Array.isArray(z.fotky) && z.fotky.length) {
+        var naRadek = parseInt(pdfOpts.fotekNaRadek, 10);
+        if (isNaN(naRadek)) naRadek = 2;
+        // 0 = fotky se netisknou vůbec (úspora papíru i velikosti souboru)
+        if (naRadek > 0 && Array.isArray(z.fotky) && z.fotky.length) {
+          // sazba je široká 186 mm; mezera mezi fotkami 3 mm
+          var sirka = Math.floor((186 - (naRadek - 1) * 3) / naRadek);
+          var vyska = naRadek === 1 ? 110 : (naRadek === 2 ? 60 : 45);
           fotkyHtml = '<div style="display:flex;flex-wrap:wrap;gap:3mm;margin:2mm 0 4mm 6mm">' +
             z.fotky.map(function(src) {
-              return '<img src="' + src + '" style="width:80mm;max-height:60mm;object-fit:contain;border:.5pt solid #999">';
+              return '<img src="' + src + '" style="width:' + sirka + 'mm;max-height:' + vyska +
+                     'mm;object-fit:contain;border:.5pt solid #999">';
             }).join('') + '</div>';
         }
         // Každá závada je samostatný blok přímo v .a4-content (ne ve
         // společném obalu) — jinak by se seznam závad nedal zalomit
         // a dlouhý seznam (hlavně s fotkami) by se v PDF ořízl.
-        return '<div style="margin-bottom:3mm;padding:0 2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + richHtml(z.popis) +
+        return '<div class="zavada-pdf" style="margin-bottom:3mm;padding:0 2mm;font-size:9.5pt"><strong>' + (i + 1) + '. [' + z.kod + ']</strong> ' + richHtml(z.popis) +
           (z.norma ? ' <em style="font-size:8.5pt;color:#444">(porušení: ' + richHtml(z.norma) + ')</em>' : '') +
           (z.dalsi ? '<br><em>Po odstranění závady: ' + esc(textPoOdstraneni(z.dalsi, z.kod)) + '</em>' : '') +
           fotkyHtml +
@@ -9007,6 +9035,7 @@ function generujPDF() {
 
   saveToArchiv();
   showScreen('pdf');
+  renderTiskPanel();     // panel nastavení tisku vlevo vedle stránek
   window.scrollTo(0, 0);
 
   // === Overflow detekce a přečíslování stran ===
@@ -9292,6 +9321,33 @@ function generujPDF() {
       } while (didPortraitSplit && portSafety < 100);
     }
 
+    // Volba „každá závada na vlastní stránku" — druhá a další závada se
+    // odsune na novou stránku i s tím, co za ní následuje. Musí proběhnout
+    // dřív než obecné dělení, aby se pak jen doladilo přetečení.
+    function rozdelZavadyNaStranky() {
+      if (!pdfOpts.zavadyVlastniStranka) return;
+      var pojistka = 0, znovu = true;
+      while (znovu && pojistka++ < 80) {
+        znovu = false;
+        var strany = Array.prototype.slice.call(pages.querySelectorAll('.a4:not(.a4-landscape)'));
+        for (var i = 0; i < strany.length; i++) {
+          var obsah = strany[i].querySelector('.a4-content');
+          if (!obsah) continue;
+          var zavady = obsah.querySelectorAll('.zavada-pdf');
+          if (zavady.length < 2) continue;
+          var np = newA4('a4');
+          var npObsah = np.querySelector('.a4-content');
+          var el = zavady[1], presunout = [];
+          while (el) { presunout.push(el); el = el.nextElementSibling; }
+          presunout.forEach(function(x) { npObsah.appendChild(x); });
+          pages.insertBefore(np, strany[i].nextSibling);
+          znovu = true;
+          break;
+        }
+      }
+    }
+
+    rozdelZavadyNaStranky();
     rozdelPortraitStranky();
 
     // LPS: kapitoly navazují na stejné stránce, pokud je na ní místo.
@@ -10482,6 +10538,7 @@ function nacistData(D) {
     // Chybí-li klíč úplně (starší zprávy), předvyplnění zůstane.
     if (fields[id] !== undefined && fields[id] !== null) el.value = fields[id];
   });
+  window.__tiskZpravy = (D.tisk && typeof D.tisk === 'object') ? Object.assign({}, D.tisk) : {};
   updateLhutaInfo();   // doporučená lhůta je jen ke čtení, ukázat ji
   // Vždy přepsat pole revizního technika z vlastního profilu uživatele
   if (STORE.technik && STORE.technik.jmeno) propsatTechnika();
@@ -11028,6 +11085,7 @@ function buildZalohaBlob() {
     snippety: STORE.snippety || [],
     vlastniNormy: STORE.vlastniNormy || {},
     plan: STORE.plan || {},
+    tisk: STORE.tisk || {},
     auto_cislovani: STORE.auto_cislovani !== false
   };
   return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -11267,6 +11325,7 @@ function obnovZeZalohy(data) {
   STORE.odberatele = data.odberatele || [];
   STORE.snippety = data.snippety || [];
   if (data.vlastniNormy) STORE.vlastniNormy = data.vlastniNormy;
+  if (data.tisk) STORE.tisk = data.tisk;
   if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
   archiv = STORE.archiv;
   odberatele = STORE.odberatele;
@@ -14503,6 +14562,110 @@ window.addEventListener('resize', txtListaUmisti);
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', richZapniVse);
 else setTimeout(richZapniVse, 0);
 
+
+// ═══ PANEL NASTAVENÍ TISKU (vlevo v náhledu PDF) ════════════════════════
+// Volby se projeví hned — náhled se překreslí. Žádné vyskakovací okno:
+// barvu je vidět rovnou na stránce, ne až po potvrzení.
+var __tiskPrekresliTimer = null;
+
+function renderTiskPanel() {
+  var box = document.getElementById('pdf-nastaveni');
+  if (!box) return;
+  var t = tiskNastaveni();
+  var maRazitko = !!(STORE.technik && STORE.technik.razitko);
+  var maPodpis = !!(STORE.technik && STORE.technik.podpis);
+  var zeZpravy = window.__tiskZpravy || {};
+  var upraveno = Object.keys(zeZpravy).length > 0;
+  box.innerHTML =
+    '<div class="tisk-nadpis">⚙ Nastavení tisku</div>' +
+    '<div class="tisk-pozn">Změny je vidět hned v náhledu. Platí pro tuhle zprávu; ' +
+    'tlačítkem dole je uložíte jako výchozí pro všechny.</div>' +
+
+    '<div class="tisk-skupina">Titulní strana</div>' +
+    '<label class="tisk-radek"><span>Barva pozadí</span>' +
+      '<input type="color" id="tisk-pozadi" value="' + esc(t.pozadiTitulky || '#ffffff') + '"></label>' +
+    '<button type="button" class="tisk-btn" data-action="tiskPozadiBila">⟲ Zpátky na bílou</button>' +
+    '<label class="tisk-check"><input type="checkbox" id="tisk-kolonky"' + (t.barevneKolonky ? ' checked' : '') +
+      '> Podbarvit kolonky</label>' +
+
+    '<div class="tisk-skupina">Závady</div>' +
+    '<label class="tisk-check"><input type="checkbox" id="tisk-zavady-stranka"' +
+      (t.zavadyVlastniStranka ? ' checked' : '') + '> Každá na vlastní stránku</label>' +
+    '<label class="tisk-radek"><span>Fotek na řádek</span>' +
+      '<select id="tisk-fotek">' +
+        [0, 1, 2, 3].map(function(n) {
+          return '<option value="' + n + '"' + (Number(t.fotekNaRadek) === n ? ' selected' : '') + '>' +
+                 (n === 0 ? 'netisknout' : n) + '</option>';
+        }).join('') +
+      '</select></label>' +
+
+    '<div class="tisk-skupina">Podpis</div>' +
+    '<label class="tisk-check' + (maRazitko ? '' : ' tisk-nedostupne') + '">' +
+      '<input type="checkbox" id="tisk-razitko"' + (t.razitko ? ' checked' : '') +
+      (maRazitko ? '' : ' disabled') + '> Razítko' +
+      (maRazitko ? '' : ' <span class="tisk-pozn2">(nahrajte v Nastavení)</span>') + '</label>' +
+    '<label class="tisk-check' + (maPodpis ? '' : ' tisk-nedostupne') + '">' +
+      '<input type="checkbox" id="tisk-podpis"' + (t.podpis ? ' checked' : '') +
+      (maPodpis ? '' : ' disabled') + '> Podpis' +
+      (maPodpis ? '' : ' <span class="tisk-pozn2">(nahrajte v Nastavení)</span>') + '</label>' +
+
+    '<div class="tisk-akce">' +
+      '<button type="button" class="tisk-btn tisk-btn-hlavni" data-action="tiskUlozitVychozi">💾 Uložit jako výchozí</button>' +
+      (upraveno ? '<button type="button" class="tisk-btn" data-action="tiskZpetVychozi">⟲ Zpět na výchozí</button>' : '') +
+    '</div>';
+
+  if (!box.dataset.wired) {
+    box.dataset.wired = '1';
+    box.addEventListener('input', tiskPanelZmena);
+    box.addEventListener('change', tiskPanelZmena);
+  }
+}
+
+function tiskPanelZmena(e) {
+  var el = e.target;
+  if (!el || !el.id) return;
+  var z = window.__tiskZpravy || (window.__tiskZpravy = {});
+  if (el.id === 'tisk-pozadi') z.pozadiTitulky = (el.value || '').toLowerCase() === '#ffffff' ? '' : el.value;
+  else if (el.id === 'tisk-kolonky') z.barevneKolonky = el.checked;
+  else if (el.id === 'tisk-zavady-stranka') z.zavadyVlastniStranka = el.checked;
+  else if (el.id === 'tisk-fotek') z.fotekNaRadek = parseInt(el.value, 10);
+  else if (el.id === 'tisk-razitko') z.razitko = el.checked;
+  else if (el.id === 'tisk-podpis') z.podpis = el.checked;
+  else return;
+  window.__formDirty = true;
+  // Tažení posuvníkem barvy sype události jednu za druhou — překreslit
+  // až když se na chvilku zastaví, jinak náhled poskakuje.
+  clearTimeout(__tiskPrekresliTimer);
+  __tiskPrekresliTimer = setTimeout(tiskPrekresli, el.type === 'color' ? 140 : 0);
+}
+
+function tiskPrekresli() {
+  var posun = window.scrollY;
+  generujPDF();
+  renderTiskPanel();
+  setTimeout(function() { window.scrollTo(0, posun); }, 0);
+}
+
+function tiskPozadiBila() {
+  var z = window.__tiskZpravy || (window.__tiskZpravy = {});
+  z.pozadiTitulky = '';
+  tiskPrekresli();
+}
+
+function tiskUlozitVychozi() {
+  STORE.tisk = Object.assign({}, tiskNastaveni());
+  window.__tiskZpravy = {};      // zpráva už se od profilu neliší
+  saveStore();
+  renderTiskPanel();
+  showToast('💾 Nastavení tisku uloženo jako výchozí pro všechny zprávy.');
+}
+
+function tiskZpetVychozi() {
+  window.__tiskZpravy = {};
+  tiskPrekresli();
+  showToast('⟲ Zpráva se tiskne podle výchozího nastavení.');
+}
+
 document.addEventListener('click', function(e) {
   var el = e.target.closest('[data-action],[data-tab]');
   if (!el) return;
@@ -14591,6 +14754,9 @@ document.addEventListener('click', function(e) {
     case 'zavritKnihovnu': zavritKnihovnu(); break;
     case 'generujPDFPotvrzeno': generujPDFPotvrzeno(); break;
     case 'closePdfOptions': closePdfOptions(); break;
+    case 'tiskPozadiBila': tiskPozadiBila(); break;
+    case 'tiskUlozitVychozi': tiskUlozitVychozi(); break;
+    case 'tiskZpetVychozi': tiskZpetVychozi(); break;
     case 'closeAiModal': closeAiModal(); break;
     case 'pouzitAiVysledek': pouzitAiVysledek(); break;
     case 'ulozitTechnika': ulozitTechnika(); break;
