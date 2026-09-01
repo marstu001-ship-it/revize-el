@@ -567,9 +567,13 @@ Berte jako **inspirační seznam**, ne plán k automatické realizaci.
 ## Nastavení tisku — živý panel v náhledu (2026-08-31)
 
 Panel `#pdf-nastaveni` je **stálý** (nesbaluje se) vlevo v `#screen-pdf`,
-`position:sticky`; na úzkém okně se přesune nad stránky. Volby: barva pozadí
-titulní strany (`input[type=color]`, **živý náhled**, debounce 140 ms),
-podbarvení kolonek (odstín se počítá z pozadí přes `pboxOdstin()`), každá
+`position:sticky`; na úzkém okně se přesune nad stránky. Volby: **barva všech
+stránek** — paleta šesti vzorků (`TISK_BARVY`) + vlastní barva; nastavuje se
+jako `--pdf-bg` na `#pdf-pages`, takže ji podědí i stránky vzniklé při
+přelamování. **Vlastní barva překresluje až na `change`** (puštění myši) —
+při `input` se tažení ignoruje, jinak náhled poskakuje. Kapátko v systémovém
+dialogu uživatele mátlo, proto ta paleta. Podbarvení kolonek je **zapnuté
+ve výchozím stavu** (`pbox-tint` na kontejneru, odstín z `pboxOdstin()`), každá
 závada na vlastní stránku (`rozdelZavadyNaStranky()` běží před
 `rozdelPortraitStranky()`), fotek na řádek 0–3 (0 = netisknout), razítko
 a podpis (přesunuty ze starého modalu).

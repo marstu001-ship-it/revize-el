@@ -595,8 +595,14 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .tisk-skupina{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
   border-top:1px solid var(--border);padding-top:.5rem;margin:.6rem 0 .35rem}
 .tisk-radek{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem}
-.tisk-radek input[type=color]{width:44px;height:26px;padding:1px;border:1px solid var(--border);
-  border-radius:3px;background:var(--bg);cursor:pointer}
+.tisk-palety{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem}
+.tisk-vzorek{width:26px;height:26px;padding:0;border:1px solid var(--border-dark);border-radius:3px;
+  cursor:pointer;position:relative}
+.tisk-vzorek:hover{outline:2px solid var(--accent2);outline-offset:1px}
+.tisk-vzorek.vybrana{outline:2px solid var(--accent);outline-offset:1px}
+.tisk-vlastni{width:26px;height:26px;border:1px dashed var(--border-dark);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+.tisk-vlastni input[type=color]{width:34px;height:34px;padding:0;border:0;background:none;cursor:pointer}
 .tisk-radek select{padding:.25rem .4rem;font-size:.78rem;font-family:var(--sans);
   border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text)}
 .tisk-check{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.4rem;cursor:pointer;line-height:1.4}
@@ -622,7 +628,7 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .pdf-pages{padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem}
 
 /* ═══ STRÁNKY A4 ═══ */
-.a4{width:210mm;min-height:297mm;background:#fff;
+.a4{width:210mm;min-height:297mm;background:var(--pdf-bg,#fff);
   padding:10mm 12mm 8mm 12mm;
   box-shadow:0 4px 20px rgba(0,0,0,.35);
   display:flex;flex-direction:column;
@@ -648,8 +654,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
 .pbox{border:.75pt solid #000;padding:1.5mm 2mm;min-height:8mm;font-size:10.5pt;line-height:1.45}
-/* Volitelné podbarvení kolonek na titulní straně (nastavení tisku) */
-.a4.pbox-tint .pbox{background:var(--pbox-tint,#eef2f8)}
+/* Volitelné podbarvení kolonek (nastavení tisku) */
+.pbox-tint .pbox{background:var(--pbox-tint,#eef2f8)}
 .pbox-label{font-size:7.5pt;font-weight:bold;margin-bottom:.75mm;display:block}
 .dtgrid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:10pt;align-items:baseline}
 .dtlabel{font-size:7.5pt;white-space:nowrap}
@@ -885,7 +891,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.224<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.225<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -990,8 +996,8 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V náhledu PDF je <strong>vlevo panel s nastavením tisku</strong>. Co v něm přepnete, <strong>je hned vidět na stránce</strong> — žádné potvrzovací okno, ve kterém byste výsledek uviděl až potom.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Barva pozadí titulní strany</strong> — vybíráte ji přímo a titulka se přebarvuje, jak posouváte po paletě. Tlačítkem se vrátíte na bílou.</li>
-        <li><strong>Podbarvení kolonek</strong> — rámečky na titulní straně dostanou jemný odstín odvozený z barvy pozadí, aby to spolu ladilo.</li>
+        <li><strong>Barva stránek</strong> — klepnutím na vzorek se obarví <strong>celá zpráva</strong>, ne jen titulní strana. První vzorek je bílá, poslední je vlastní barva podle chuti.</li>
+        <li><strong>Podbarvení kolonek</strong> — rámečky dostanou jemný odstín odvozený z barvy pozadí, aby to spolu ladilo. Je zapnuté rovnou; kdo to nechce, odškrtne.</li>
         <li><strong>Každá závada na vlastní stránku</strong> — hodí se, když se závady předávají po jedné k odstranění.</li>
         <li><strong>Fotek závady na řádek: 0 / 1 / 2 / 3</strong> — šířka fotek se dopočítá sama. Volba <em>netisknout</em> fotky vynechá (kratší zpráva, menší soubor).</li>
         <li><strong>Razítko a podpis</strong> se nastavují taky tady — dřív se na ně program ptal v okně před generováním.</li>
@@ -8425,8 +8431,8 @@ function druhVeVete(druh) {
 // Dvě úrovně: výchozí hodnoty v profilu (STORE.tisk) a případná odchylka
 // u konkrétní zprávy (D.tisk). Zpráva má přednost, chybí-li, platí profil.
 var VYCHOZI_TISK = {
-  pozadiTitulky: '',        // prázdné = bílá
-  barevneKolonky: false,
+  pozadiTisku: '',          // prázdné = bílá; obarví všechny strany
+  barevneKolonky: true,     // podbarvené kolonky jsou hezčí, zapnuto rovnou
   zavadyVlastniStranka: false,
   fotekNaRadek: 2,
   razitko: true,
@@ -8447,7 +8453,10 @@ function pboxOdstin(pozadi) {
 
 function tiskNastaveni(D) {
   var zeZpravy = (D && D.tisk) || (window.__tiskZpravy || {});
-  return Object.assign({}, VYCHOZI_TISK, STORE.tisk || {}, zeZpravy);
+  var t = Object.assign({}, VYCHOZI_TISK, STORE.tisk || {}, zeZpravy);
+  // dřívější název volby (obarvovala jen titulní stranu)
+  if (!t.pozadiTisku && t.pozadiTitulky) t.pozadiTisku = t.pozadiTitulky;
+  return t;
 }
 
 function generujPDF() {
@@ -8456,6 +8465,11 @@ function generujPDF() {
   var pages = document.getElementById('pdf-pages');
   if (!pages) return;
   pages.innerHTML = '';
+  // Barva pozadí a podbarvení kolonek se nastavují na kontejneru stránek —
+  // podědí je i stránky, které vzniknou později při přelamování.
+  pages.style.setProperty('--pdf-bg', pdfOpts.pozadiTisku || '#fff');
+  pages.style.setProperty('--pbox-tint', pboxOdstin(pdfOpts.pozadiTisku));
+  pages.classList.toggle('pbox-tint', !!pdfOpts.barevneKolonky);
   var total = 5;
   // Přidej landscape style pro tisk
   var existingStyle = document.getElementById('landscape-print-style');
@@ -8640,9 +8654,6 @@ function generujPDF() {
       '<div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
     '</div></div>' + ftr();
   p1.classList.add('a4-titulni');   // titulní strana se NIKDY nedělí
-  if (pdfOpts.pozadiTitulky) p1.style.background = pdfOpts.pozadiTitulky;
-  if (pdfOpts.barevneKolonky) p1.classList.add('pbox-tint');
-  if (pdfOpts.barevneKolonky) p1.style.setProperty('--pbox-tint', pboxOdstin(pdfOpts.pozadiTitulky));
   pages.appendChild(p1);
 
   var p2 = document.createElement('div');
@@ -14582,6 +14593,16 @@ else setTimeout(richZapniVse, 0);
 // Volby se projeví hned — náhled se překreslí. Žádné vyskakovací okno:
 // barvu je vidět rovnou na stránce, ne až po potvrzení.
 var __tiskPrekresliTimer = null;
+// Nabídka barev pozadí — pár decentních odstínů, které jdou vytisknout.
+// Prázdná hodnota = bílá (nic se netiskne navíc).
+var TISK_BARVY = [
+  { h: '', n: 'bílá (bez barvy)' },
+  { h: '#eef5ff', n: 'světle modrá' },
+  { h: '#eefaf0', n: 'světle zelená' },
+  { h: '#fdf6e8', n: 'béžová' },
+  { h: '#fdeeee', n: 'světle růžová' },
+  { h: '#f2f2f2', n: 'světle šedá' }
+];
 
 function renderTiskPanel() {
   var box = document.getElementById('pdf-nastaveni');
@@ -14596,10 +14617,18 @@ function renderTiskPanel() {
     '<div class="tisk-pozn">Změny je vidět hned v náhledu. Platí pro tuhle zprávu; ' +
     'tlačítkem dole je uložíte jako výchozí pro všechny.</div>' +
 
-    '<div class="tisk-skupina">Titulní strana</div>' +
-    '<label class="tisk-radek"><span>Barva pozadí</span>' +
-      '<input type="color" id="tisk-pozadi" value="' + esc(t.pozadiTitulky || '#ffffff') + '"></label>' +
-    '<button type="button" class="tisk-btn" data-action="tiskPozadiBila">⟲ Zpátky na bílou</button>' +
+    '<div class="tisk-skupina">Barva stránek</div>' +
+    '<div class="tisk-palety">' +
+      TISK_BARVY.map(function(b) {
+        var vybrana = (t.pozadiTisku || '') === b.h;
+        return '<button type="button" class="tisk-vzorek' + (vybrana ? ' vybrana' : '') +
+               '" data-action="tiskBarva" data-barva="' + b.h + '" title="' + esc(b.n) +
+               '" style="background:' + (b.h || '#ffffff') + '"></button>';
+      }).join('') +
+      '<label class="tisk-vlastni" title="Vlastní barva">' +
+        '<input type="color" id="tisk-pozadi" value="' + esc(t.pozadiTisku || '#ffffff') + '">' +
+      '</label>' +
+    '</div>' +
     '<label class="tisk-check"><input type="checkbox" id="tisk-kolonky"' + (t.barevneKolonky ? ' checked' : '') +
       '> Podbarvit kolonky</label>' +
 
@@ -14639,8 +14668,12 @@ function renderTiskPanel() {
 function tiskPanelZmena(e) {
   var el = e.target;
   if (!el || !el.id) return;
+  // Tažení po paletě sype události jednu za druhou — u výběru barvy se
+  // proto překresluje až po puštění myši (událost „change"), aby náhled
+  // neposkakoval uprostřed výběru.
+  if (el.id === 'tisk-pozadi' && e.type === 'input') return;
   var z = window.__tiskZpravy || (window.__tiskZpravy = {});
-  if (el.id === 'tisk-pozadi') z.pozadiTitulky = (el.value || '').toLowerCase() === '#ffffff' ? '' : el.value;
+  if (el.id === 'tisk-pozadi') z.pozadiTisku = (el.value || '').toLowerCase() === '#ffffff' ? '' : el.value;
   else if (el.id === 'tisk-kolonky') z.barevneKolonky = el.checked;
   else if (el.id === 'tisk-zavady-stranka') z.zavadyVlastniStranka = el.checked;
   else if (el.id === 'tisk-fotek') z.fotekNaRadek = parseInt(el.value, 10);
@@ -14651,7 +14684,7 @@ function tiskPanelZmena(e) {
   // Tažení posuvníkem barvy sype události jednu za druhou — překreslit
   // až když se na chvilku zastaví, jinak náhled poskakuje.
   clearTimeout(__tiskPrekresliTimer);
-  __tiskPrekresliTimer = setTimeout(tiskPrekresli, el.type === 'color' ? 140 : 0);
+  __tiskPrekresliTimer = setTimeout(tiskPrekresli, 0);
 }
 
 function tiskPrekresli() {
@@ -14661,9 +14694,9 @@ function tiskPrekresli() {
   setTimeout(function() { window.scrollTo(0, posun); }, 0);
 }
 
-function tiskPozadiBila() {
+function tiskBarva(el) {
   var z = window.__tiskZpravy || (window.__tiskZpravy = {});
-  z.pozadiTitulky = '';
+  z.pozadiTisku = el.getAttribute('data-barva') || '';
   tiskPrekresli();
 }
 
@@ -14769,7 +14802,7 @@ document.addEventListener('click', function(e) {
     case 'zavritKnihovnu': zavritKnihovnu(); break;
     case 'generujPDFPotvrzeno': generujPDFPotvrzeno(); break;
     case 'closePdfOptions': closePdfOptions(); break;
-    case 'tiskPozadiBila': tiskPozadiBila(); break;
+    case 'tiskBarva': tiskBarva(el); break;
     case 'tiskUlozitVychozi': tiskUlozitVychozi(); break;
     case 'tiskZpetVychozi': tiskZpetVychozi(); break;
     case 'closeAiModal': closeAiModal(); break;
