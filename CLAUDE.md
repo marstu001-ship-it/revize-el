@@ -575,8 +575,9 @@ strany od kraje ke kraji, uživatel to po porovnání s konkurencí odmítl:
 „vypadá líp, když není ta stránka celá obarvená"). **Vlastní barva překresluje až na `change`** (puštění myši) —
 při `input` se tažení ignoruje, jinak náhled poskakuje. Kapátko v systémovém
 dialogu uživatele mátlo, proto ta paleta. Podbarvení kolonek je **zapnuté
-ve výchozím stavu** (`pbox-tint` na kontejneru, odstín z `pboxOdstin()` —
-**světlejší** než barva bloku, aby pole vynikla), každá
+ve výchozím stavu** (`pbox-tint` na kontejneru, odstín z `pboxOdstin()` =
+**85 % bílé** — jen náznak; okénka i podpisové rámečky `.podp-inner` jsou
+jinak **bílá**, aby na barevném bloku vynikla jako u konkurence), každá
 závada na vlastní stránku (`rozdelZavadyNaStranky()` běží před
 `rozdelPortraitStranky()`), fotek na řádek 0–3 (0 = netisknout), razítko
 a podpis (přesunuty ze starého modalu).

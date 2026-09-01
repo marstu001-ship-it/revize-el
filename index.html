@@ -658,8 +658,10 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm;margin-bottom:2.5mm}
 .pbox{border:.75pt solid #000;padding:1.5mm 2mm;min-height:8mm;font-size:10.5pt;line-height:1.45}
-/* Volitelné podbarvení kolonek (nastavení tisku) */
-.pbox-tint .pbox{background:var(--pbox-tint,#eef2f8)}
+/* Kolonky na titulní straně jsou bílé — na barevném bloku tak vyniknou.
+   Volitelné podbarvení je pak jen jemný nádech téže barvy. */
+.a4-titulni .pbox,.a4-titulni .podp-inner{background:#fff}
+.pbox-tint .pbox,.pbox-tint .podp-inner{background:var(--pbox-tint,#f7f9fc)}
 .pbox-label{font-size:7.5pt;font-weight:bold;margin-bottom:.75mm;display:block}
 .dtgrid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:10pt;align-items:baseline}
 .dtlabel{font-size:7.5pt;white-space:nowrap}
@@ -895,7 +897,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.226<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.227<span class="ver-date"> · 2026-08-31</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1001,7 +1003,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
         <li><strong>Barva titulní strany</strong> — klepnutím na vzorek se podbarví blok s obsahem titulky, papír kolem zůstane bílý. První vzorek je bílá (bez barvy), poslední je vlastní barva podle chuti.</li>
-        <li><strong>Podbarvení kolonek</strong> — rámečky dostanou jemný odstín odvozený z barvy pozadí, aby to spolu ladilo. Je zapnuté rovnou; kdo to nechce, odškrtne.</li>
+        <li><strong>Okénka zůstávají bílá</strong>, aby se v nich dobře četlo. Volbou <em>Jemně podbarvit okénka</em> dostanou lehký nádech zvolené barvy — včetně rámečků pro podpisy.</li>
         <li><strong>Každá závada na vlastní stránku</strong> — hodí se, když se závady předávají po jedné k odstranění.</li>
         <li><strong>Fotek závady na řádek: 0 / 1 / 2 / 3</strong> — šířka fotek se dopočítá sama. Volba <em>netisknout</em> fotky vynechá (kratší zpráva, menší soubor).</li>
         <li><strong>Razítko a podpis</strong> se nastavují taky tady — dřív se na ně program ptal v okně před generováním.</li>
@@ -8443,16 +8445,16 @@ var VYCHOZI_TISK = {
   podpis: true
 };
 
-// Podbarvení kolonek: světlejší odstín téže barvy, aby pole na barevném
-// bloku titulní strany vynikla (tmavší odstín tam vypadá zašle).
-// Bez zvolené barvy zůstává decentní modrošedá.
+// Podbarvení kolonek je jen náznak — okénka mají zůstat prakticky bílá,
+// aby se v nich dobře četlo a na barevném bloku vynikla (stejně to řeší
+// konkurence). Bez zvolené barvy nádech do modrošedé.
 function pboxOdstin(pozadi) {
   var m = String(pozadi || '').match(/^#([0-9a-f]{6})$/i);
-  if (!m) return '#eef2f8';
+  if (!m) return '#f7f9fc';
   var c = parseInt(m[1], 16);
   var r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
-  // přimíchat bílou — 55 % bílé, zbytek zvolená barva
-  var svet = function(x) { return Math.min(255, Math.round(x + (255 - x) * 0.55)); };
+  // 85 % bílé, jen 15 % zvolené barvy
+  var svet = function(x) { return Math.min(255, Math.round(x + (255 - x) * 0.85)); };
   return 'rgb(' + svet(r) + ',' + svet(g) + ',' + svet(b) + ')';
 }
 
@@ -14636,7 +14638,7 @@ function renderTiskPanel() {
     '</div>' +
     '<div class="tisk-pozn2" style="margin:-.2rem 0 .5rem">Obarví se jen titulní strana, papír kolem zůstane bílý.</div>' +
     '<label class="tisk-check"><input type="checkbox" id="tisk-kolonky"' + (t.barevneKolonky ? ' checked' : '') +
-      '> Podbarvit kolonky</label>' +
+      '> Jemně podbarvit okénka</label>' +
 
     '<div class="tisk-skupina">Závady</div>' +
     '<label class="tisk-check"><input type="checkbox" id="tisk-zavady-stranka"' +
