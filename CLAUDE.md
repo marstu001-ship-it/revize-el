@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.32 · 2026-09-02**
+**Aktuální verze: v9.33 · 2026-09-02**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -240,6 +240,20 @@ trafo, osvětlení…), sáhněte na tahle místa:
   příští zprávy"** je ukládá do `STORE.strojeMereni` / `STORE.strojeKontroly`
   (jsou v `STORE_KEYS`, tedy i v záloze) — ukládá se **jen kostra**, ne
   naměřené hodnoty.
+- **Identifikace stroje je u režimu „jeden stroj" na titulní straně**
+  (pokyn uživatele 2026-09-02, tak to má konkurence) — `#stroje-blok`
+  se přesouvá mezi `#stroje-titulka-host` (titulka) a `#tab-stroje-objekt`
+  (soubor strojů). **Přepínač rozsahu do přesouvaného bloku nepatří** —
+  změna jeho hodnoty by odstěhovala sám přepínač pryč z obrazovky
+  (a Playwright na tom zacyklí „element is not visible").
+- U strojů se **neptáme na adresu objektu** (`#f-adresa-wrap` skryté) —
+  adresa je v poli Provozovatel.
+- Karty `scard-rozsah-popis` (předmět revize je/není, popis),
+  `scard-ochrana-char` a `scard-dokumentace` **bydlí v elektro tabu
+  `#tab-popis` a přesouvají se podle typu**. Přesun **musí být obousměrný**,
+  jinak po otevření zprávy o stroji chybí u elektro revize. Bez toho přesunu
+  se pole vytisknou do PDF, ale ve formuláři na ně uživatel nedosáhne —
+  přesně tuhle chybu měla v9.30–v9.32.
 - Data: `D.stroje = { rozsah, seznam: [{ …hlavička…, mereni: [], kontroly: [] }] }`.
 - `POPIS_STROJE` je definovaný **jednou** a používá ho magic tlačítko
   i knihovna typických textů, ať se ty dva texty nemůžou rozejít.

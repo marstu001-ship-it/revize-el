@@ -901,7 +901,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.32<span class="ver-date"> · 2026-09-02</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.33<span class="ver-date"> · 2026-09-02</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2158,7 +2158,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 </div>
 <div class="tab-bar" id="tab-bar-stroje" style="display:none">
   <button class="tab-btn active" data-tab="titulni">1. Titulní strana</button>
-  <button class="tab-btn" data-tab="stroje-objekt">2. Stroj</button>
+  <button class="tab-btn" data-tab="stroje-objekt">2. Stroj a popis</button>
   <button class="tab-btn" data-tab="pristroje">3. Přístroje</button>
   <button class="tab-btn" data-tab="stroje-mereni">4. Měření</button>
   <button class="tab-btn" data-tab="stroje-kontroly">5. Kontroly</button>
@@ -2180,7 +2180,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title">Místo a termíny <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.b) f)</span></div>
     <div class="g2">
       <div class="f"><label>Místo provádění revize <span class="req">*</span></label><textarea id="f_misto" placeholder="Budova M1 - SO12..."></textarea></div>
-      <div class="f"><label>Adresa revidovaného objektu <span class="req">*</span></label><textarea id="f_adresa" placeholder="Sokolovská 573&#10;686 01 Uherské Hradiště"></textarea></div>
+      <div class="f" id="f-adresa-wrap"><label>Adresa revidovaného objektu <span class="req">*</span></label><textarea id="f_adresa" placeholder="Sokolovská 573&#10;686 01 Uherské Hradiště"></textarea></div>
     </div>
     <div class="sep"></div>
     <div class="g4">
@@ -2194,6 +2194,10 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <div class="f" style="align-self:end"><button class="magic-btn" data-action="openModalRevize">🔮 Vypočítat termín</button></div>
     </div>
   </div>
+  <!-- Host pro blok stroje: u režimu „jeden stroj" se sem přesune
+       identifikace stroje, aby byla na titulce jako u konkurence.
+       Přesouvá ho strojeAktualizovatRozsah(). -->
+  <div id="stroje-titulka-host"></div>
   <div class="normy-panel">
     <div class="normy-title">📋 Použité normy a předpisy — zaklikněte použité <button style="font-size:.65rem;padding:.15rem .5rem;margin-left:.6rem;vertical-align:middle;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:2px;cursor:pointer;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase" data-action="otevritNormyEditor">⚙️ Upravit seznam</button></div>
     <div id="normy-obsah"></div>
@@ -2313,8 +2317,8 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title">Ochrana před úrazem el. proudem <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">zaklikněte použité — ČSN 33 2000-4-41 ed.3</span></div>
     <div id="ochrana-checkboxy"></div>
   </div>
-  <div class="scard">
-    <div class="scard-title">A. Rozsah a popis elektrické instalace</div>
+  <div class="scard" id="scard-rozsah-popis">
+    <div class="scard-title" id="scard-rozsah-popis-title">A. Rozsah a popis elektrické instalace</div>
     <div class="g2">
       <div class="f span2 duvod-mim-wrap" style="display:none">
         <label>Důvod mimořádné revize je</label>
@@ -2344,7 +2348,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         </div>
       </div>
       <div class="f span2">
-        <label>Popis revidované elektroinstalace</label>
+        <label id="f-popis-label">Popis revidované elektroinstalace</label>
         <textarea data-rich="1" id="f_popis" style="min-height:120px" placeholder="Přívod pro elektroinstalaci je proveden kabelem..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_popis">📝 Typický text</button>
@@ -2352,7 +2356,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
           <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.65rem;padding:.3rem .55rem" data-action="vlozitSnippet" data-target="f_popis">📋 Z knihovny</button>
         </div>
       </div>
-      <div class="f">
+      <div class="f zemnic-wrap">
         <label>Typ a popis zemniče</label>
         <input type="text" id="f_zemnič" list="f_zemnič_options" autocomplete="off" placeholder="vyberte nebo napište vlastní">
         <datalist id="f_zemnič_options">
@@ -2365,7 +2369,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
           <option value="Přípojnice MET — hlavní uzemňovací sběrnice objektu">
         </datalist>
       </div>
-      <div class="f"><label>Naměřený zemní odpor (Ω)</label><input type="text" id="f_zemni_odpor" placeholder="12,5"></div>
+      <div class="f zemnic-wrap"><label>Naměřený zemní odpor (Ω)</label><input type="text" id="f_zemni_odpor" placeholder="12,5"></div>
     </div>
   </div>
   <div class="scard" id="scard-dokumentace">
@@ -2762,7 +2766,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <div class="tab-panel" id="tab-stroje-objekt">
   <div class="scard">
     <div class="scard-title">Rozsah zprávy</div>
-    <div class="info-box">Jedna zpráva zvládne <strong>jeden stroj</strong> i <strong>soubor strojů</strong> (celá dílna, linka, hala). U souboru má každý stroj vlastní identifikaci, měření i kontroly.</div>
+    <div class="info-box">Jedna zpráva zvládne <strong>jeden stroj</strong> i <strong>soubor strojů</strong> (celá dílna, linka, hala). U souboru má každý stroj vlastní identifikaci, měření i kontroly.<br>U <strong>jednoho stroje</strong> se jeho identifikace vyplňuje rovnou na <strong>titulní straně</strong> (jako u konkurence); u <strong>souboru strojů</strong> se karty strojů ukážou tady pod přepínačem.</div>
     <div class="f" style="max-width:340px">
       <label>Rozsah revize</label>
       <select id="f_stroje_rozsah">
@@ -2771,8 +2775,14 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       </select>
     </div>
   </div>
-  <div id="stroje-container"></div>
-  <button class="add-row" id="btn-pridat-stroj" data-action="addStroj" style="display:none">+ Přidat stroj</button>
+  <!-- Karty strojů se přesouvají mezi titulní stranou (jeden stroj)
+       a tímhle tabem (soubor strojů) — přesouvá je strojeAktualizovatRozsah().
+       Přepínač rozsahu zůstává vždycky tady, aby se změnou hodnoty
+       neodstěhoval sám sebe pryč z obrazovky. -->
+  <div id="stroje-blok">
+    <div id="stroje-container"></div>
+    <button class="add-row" id="btn-pridat-stroj" data-action="addStroj" style="display:none">+ Přidat stroj</button>
+  </div>
 </div>
 
 <div class="tab-panel" id="tab-stroje-mereni">
@@ -4301,14 +4311,50 @@ function novaZprava(typ) {
     var b = document.getElementById(TYPY_ZPRAV[t].bar);
     if (b) b.style.display = (t === typ) ? 'flex' : 'none';
   });
-  // Předložená dokumentace je společná pro oba typy revize — u LPS ji
-  // přesuneme do tabu „2. Objekt & LPS" (elektro tab „A. Popis" tam není).
-  var dokCard = document.getElementById('scard-dokumentace');
-  if (dokCard) {
-    var cilId = (typ === 'lps') ? 'tab-lps-objekt' : (typ === 'stroje' ? 'tab-stroje-objekt' : 'tab-popis');
+  // Karty, které bydlí v elektro tabu „A. Popis", ale potřebují je i další
+  // typy. U LPS a strojů se přesunou do jejich objektového tabu; při návratu
+  // na elektro se vrátí zpátky. **Přesun musí být obousměrný** — jinak by
+  // po jednom otevření zprávy o stroji chyběly u elektro revize.
+  [
+    { id: 'scard-rozsah-popis', lps: 'tab-popis',      stroje: 'tab-stroje-objekt' },
+    { id: 'scard-ochrana-char', lps: 'tab-popis',      stroje: 'tab-stroje-objekt' },
+    { id: 'scard-dokumentace',  lps: 'tab-lps-objekt', stroje: 'tab-stroje-objekt' }
+  ].forEach(function(k) {
+    var karta = document.getElementById(k.id);
+    if (!karta) return;
+    var cilId = (typ === 'lps') ? k.lps : (typ === 'stroje' ? k.stroje : 'tab-popis');
     var cil = document.getElementById(cilId);
-    if (cil && dokCard.parentNode !== cil) cil.appendChild(dokCard);
+    if (cil && karta.parentNode !== cil) cil.appendChild(karta);
+  });
+  // Blok stroje bydlí na titulní straně jen u zpráv o strojích — u elektro
+  // a LPS se zaparkuje zpátky do svého tabu, ať nesvítí na cizí titulce.
+  if (typ !== 'stroje') {
+    var sBlok = document.getElementById('stroje-blok');
+    var sTab = document.getElementById('tab-stroje-objekt');
+    if (sBlok && sTab && sBlok.parentNode !== sTab) sTab.insertBefore(sBlok, sTab.firstChild);
   }
+  // Titulní strana: u strojů se adresa objektu neptá — místo ní je na titulce
+  // identifikace stroje (pokyn uživatele 2026-09-02, tak to má i konkurence).
+  // Adresa se do zprávy dostane z pole Provozovatel.
+  var adrWrap = document.getElementById('f-adresa-wrap');
+  if (adrWrap) adrWrap.style.display = (typ === 'stroje') ? 'none' : '';
+  // Zemnič v kartě „A. Rozsah a popis" u stroje nedává smysl
+  document.querySelectorAll('.zemnic-wrap').forEach(function(w) {
+    w.style.display = (typ === 'stroje') ? 'none' : '';
+  });
+  // Popisky té karty podle typu
+  var rpTitle = document.getElementById('scard-rozsah-popis-title');
+  if (rpTitle) rpTitle.textContent = (typ === 'stroje')
+    ? 'A. Rozsah a popis elektrického zařízení stroje'
+    : 'A. Rozsah a popis elektrické instalace';
+  var popisLbl = document.getElementById('f-popis-label');
+  if (popisLbl) popisLbl.textContent = (typ === 'stroje')
+    ? 'Popis elektrického zařízení stroje'
+    : 'Popis revidované elektroinstalace';
+  var popisPole = document.getElementById('f_popis');
+  if (popisPole) popisPole.placeholder = (typ === 'stroje')
+    ? 'Přívod ke stroji je proveden kabelem… hlavní vypínač… ochranné pospojování…'
+    : 'Přívod pro elektroinstalaci je proveden kabelem...';
   // Pro LPS skryj elektro-only sekce na titulní straně (Napěťová soustava
   // 1NPE/3PEN TN-C-S a Ochrana před úrazem el. proudem) — nedávají
   // u hromosvodu smysl.
@@ -6657,8 +6703,25 @@ function strojeAktualizovatRozsah() {
   var soubor = (strojRozsah() === 'soubor');
   var btn = document.getElementById('btn-pridat-stroj');
   if (btn) btn.style.display = soubor ? '' : 'none';
-  document.querySelectorAll('.stroj-hlavicka-nadpis').forEach(function(h) {
-    h.style.display = soubor ? '' : 'none';
+  // Jeden stroj = jeho identifikace patří na titulní stranu (tak to má
+  // i konkurence). Soubor strojů se na titulku nevejde — zůstane v tabu,
+  // na titulní straně PDF je pak jen souhrn „Soubor N strojů".
+  var blok = document.getElementById('stroje-blok');
+  var cil = document.getElementById(soubor ? 'tab-stroje-objekt' : 'stroje-titulka-host');
+  if (blok && cil && blok.parentNode !== cil) {
+    if (soubor) cil.insertBefore(blok, cil.firstChild);
+    else cil.appendChild(blok);
+  }
+  document.querySelectorAll('.stroj-akce').forEach(function(a) {
+    a.style.display = soubor ? 'flex' : 'none';
+  });
+  document.querySelectorAll('.stroj-nadpis-text').forEach(function(t) {
+    if (soubor) {
+      var c = t.querySelector('.stroj-cislo');
+      t.innerHTML = '⚙️ Stroj <span class="stroj-cislo">' + (c ? c.textContent : '1') + '</span>';
+    } else {
+      t.textContent = '⚙️ Předmět revize — stroj';
+    }
   });
   document.querySelectorAll('[data-stroj-blok] .stroj-blok-nadpis').forEach(function(h) {
     h.style.display = soubor ? '' : 'none';
@@ -6703,9 +6766,11 @@ function addStroj(data) {
   div.dataset.strojId = id;
   div.innerHTML =
     '<div class="scard-title stroj-hlavicka-nadpis" style="display:flex;align-items:center;gap:.5rem">' +
-      '<span>⚙️ Stroj <span class="stroj-cislo">1</span></span>' +
-      '<button class="del-btn" data-action="copyStroj" data-stroj="' + id + '" title="Kopírovat stroj i s jeho seznamy" style="color:#2B579A;margin-left:auto">⧉</button>' +
-      '<button class="del-btn" data-action="delStroj" data-stroj="' + id + '" title="Smazat stroj">✕</button>' +
+      '<span class="stroj-nadpis-text">⚙️ Stroj <span class="stroj-cislo">1</span></span>' +
+      '<span class="stroj-akce" style="margin-left:auto;display:flex;gap:.25rem">' +
+        '<button class="del-btn" data-action="copyStroj" data-stroj="' + id + '" title="Kopírovat stroj i s jeho seznamy" style="color:#2B579A">⧉</button>' +
+        '<button class="del-btn" data-action="delStroj" data-stroj="' + id + '" title="Smazat stroj">✕</button>' +
+      '</span>' +
     '</div>' +
     '<div class="g3">' +
       strojPole('stroj-nazev', 'Název stroje', 'např. Soustruh SU 50', 'dl_stroj_nazev') +
