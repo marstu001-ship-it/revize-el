@@ -577,7 +577,9 @@ při `input` se tažení ignoruje, jinak náhled poskakuje. Kapátko v systémov
 dialogu uživatele mátlo, proto ta paleta. Podbarvení kolonek je **zapnuté
 ve výchozím stavu** (`pbox-tint` na kontejneru, odstín z `pboxOdstin()` =
 **85 % bílé** — jen náznak; okénka i podpisové rámečky `.podp-inner` jsou
-jinak **bílá**, aby na barevném bloku vynikla jako u konkurence), každá
+jinak **bílá**, aby na barevném bloku vynikla jako u konkurence),
+**místo revize tučně** (`.pbox-tucne`, zapnuto ve výchozím stavu — u konkurence
+se to jmenuje „Předmět revize tučně"), každá
 závada na vlastní stránku (`rozdelZavadyNaStranky()` běží před
 `rozdelPortraitStranky()`), fotek na řádek 0–3 (0 = netisknout), razítko
 a podpis (přesunuty ze starého modalu).

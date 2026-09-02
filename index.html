@@ -663,6 +663,8 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .a4-titulni .pbox,.a4-titulni .podp-inner{background:#fff}
 .pbox-tint .pbox,.pbox-tint .podp-inner{background:var(--pbox-tint,#f7f9fc)}
 .pbox-label{font-size:7.5pt;font-weight:bold;margin-bottom:.75mm;display:block}
+/* Místo provádění revize tučně — volitelně v nastavení tisku */
+.pbox-tucne{font-weight:bold}
 .dtgrid{display:grid;grid-template-columns:auto 1fr;gap:.4mm 3mm;font-size:10pt;align-items:baseline}
 .dtlabel{font-size:7.5pt;white-space:nowrap}
 .dtval{border-bottom:.5pt solid #888;min-width:18mm}
@@ -897,7 +899,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.227<span class="ver-date"> · 2026-08-31</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.228<span class="ver-date"> · 2026-09-02</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1004,6 +1006,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
         <li><strong>Barva titulní strany</strong> — klepnutím na vzorek se podbarví blok s obsahem titulky, papír kolem zůstane bílý. První vzorek je bílá (bez barvy), poslední je vlastní barva podle chuti.</li>
         <li><strong>Okénka zůstávají bílá</strong>, aby se v nich dobře četlo. Volbou <em>Jemně podbarvit okénka</em> dostanou lehký nádech zvolené barvy — včetně rámečků pro podpisy.</li>
+        <li><strong>Místo revize tučně</strong> — název objektu a adresa nahoře na titulní straně se vytisknou tučně, ať jsou na první pohled vidět. Zapnuté rovnou, dá se vypnout.</li>
         <li><strong>Každá závada na vlastní stránku</strong> — hodí se, když se závady předávají po jedné k odstranění.</li>
         <li><strong>Fotek závady na řádek: 0 / 1 / 2 / 3</strong> — šířka fotek se dopočítá sama. Volba <em>netisknout</em> fotky vynechá (kratší zpráva, menší soubor).</li>
         <li><strong>Razítko a podpis</strong> se nastavují taky tady — dřív se na ně program ptal v okně před generováním.</li>
@@ -8437,7 +8440,8 @@ function druhVeVete(druh) {
 // Dvě úrovně: výchozí hodnoty v profilu (STORE.tisk) a případná odchylka
 // u konkrétní zprávy (D.tisk). Zpráva má přednost, chybí-li, platí profil.
 var VYCHOZI_TISK = {
-  pozadiTisku: '',          // prázdné = bílá; obarví všechny strany
+  mistoTucne: true,         // místo provádění revize tučně (jako u konkurence)
+  pozadiTisku: '',          // prázdné = bílá; obarví jen titulní stranu
   barevneKolonky: true,     // podbarvené kolonky jsou hezčí, zapnuto rovnou
   zavadyVlastniStranka: false,
   fotekNaRadek: 2,
@@ -8543,7 +8547,8 @@ function generujPDF() {
     ((D.misto || D.adresa) ?
       '<div style="margin-bottom:3mm">' +
       '<div class="pbox-label">Místo provádění revize:</div>' +
-      '<div class="pbox" style="font-size:9.5pt;line-height:1.5;min-height:10mm">' +
+      '<div class="pbox' + (pdfOpts.mistoTucne ? ' pbox-tucne' : '') +
+        '" style="font-size:9.5pt;line-height:1.5;min-height:10mm">' +
         (D.misto ? esc(D.misto) : '') +
         (D.misto && D.adresa ? '<br>' : '') +
         (D.adresa ? esc(D.adresa) : '') +
@@ -14637,6 +14642,8 @@ function renderTiskPanel() {
       '</label>' +
     '</div>' +
     '<div class="tisk-pozn2" style="margin:-.2rem 0 .5rem">Obarví se jen titulní strana, papír kolem zůstane bílý.</div>' +
+    '<label class="tisk-check"><input type="checkbox" id="tisk-misto-tucne"' +
+      (t.mistoTucne ? ' checked' : '') + '> Místo revize tučně</label>' +
     '<label class="tisk-check"><input type="checkbox" id="tisk-kolonky"' + (t.barevneKolonky ? ' checked' : '') +
       '> Jemně podbarvit okénka</label>' +
 
@@ -14682,6 +14689,7 @@ function tiskPanelZmena(e) {
   if (el.id === 'tisk-pozadi' && e.type === 'input') return;
   var z = window.__tiskZpravy || (window.__tiskZpravy = {});
   if (el.id === 'tisk-pozadi') z.pozadiTisku = (el.value || '').toLowerCase() === '#ffffff' ? '' : el.value;
+  else if (el.id === 'tisk-misto-tucne') z.mistoTucne = el.checked;
   else if (el.id === 'tisk-kolonky') z.barevneKolonky = el.checked;
   else if (el.id === 'tisk-zavady-stranka') z.zavadyVlastniStranka = el.checked;
   else if (el.id === 'tisk-fotek') z.fotekNaRadek = parseInt(el.value, 10);
