@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.35 · 2026-05-15**
+**Aktuální verze: v9.30 · 2026-09-02**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -175,6 +175,70 @@ Návrh z 2026-08-19, uživatel si ho nechal odložit ve prospěch **Plánu reviz
 10. **Deník budovy** — datované poznámky.
 
 Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
+
+## Typy revizních zpráv (elektro / LPS / stroje)
+
+Program umí **tři typy zpráv** — `aktTyp` ∈ `elektro` | `lps` | `stroje`.
+Typ **nebyl nikde centralizovaný**: byla to zhruba šedesátka binárních testů
+`aktTyp === 'lps'` / ternárů `… ? 'LPS' : 'Elektro'`, takže třetí hodnota by se
+všude tiše chovala jako elektro. Proto vznikla tabulka **`TYPY_ZPRAV`**
+(hned za `var aktTyp`) + `typInfo(t)`:
+
+```js
+TYPY_ZPRAV.stroje = { label:'Stroje', badge:'badge-stroje', bar:'tab-bar-stroje',
+                      planDruh:'T', prefix:'RS', pdfNadpis:'…', planPopis:'stroje' };
+```
+
+**Přidáváte-li čtvrtý typ** (roadmapa #10 jich má ještě osm — spotřebiče,
+trafo, osvětlení…), sáhněte na tahle místa:
+
+1. `TYPY_ZPRAV` — nový záznam. Tím se rovnou spraví štítek v archivu,
+   filtr, breadcrumb, fulltext, „naposledy otevřené", značka do plánu,
+   předmět e-mailu, rozpoznání souboru zprávy, obnova draftu i číselná řada
+   v `navazatZpravu` (všechna tahle místa už jedou přes `typInfo()`).
+2. `aktivniTabBar()` funguje sama — projde `TYPY_ZPRAV` a najde viditelný bar.
+3. HTML: nový `tab-bar-<typ>` + panely `tab-<typ>-*`, karta na `screen-podtyp`
+   (pokud typ patří pod elektro) nebo dlaždice na hlavní straně.
+4. `novaZprava()` — větev pro inicializaci a skrývání nehodících se karet.
+   **Pozor:** podmínky jsou psané jako `(typ === 'elektro') ? '' : 'none'`,
+   ne `(typ === 'lps') ? 'none' : ''`, právě aby nový typ nespadl do elektra.
+5. `collectXData()` / `restoreXData()` + volání v `getData()` a `nacistData()`.
+6. `NORMY.<typ>` + tab v editoru norem (`normy-tab-<typ>`),
+   `TYPICKE_ZAVADY_<TYP>` + větev v `getTypickeZavady()`, `magicPopis()`,
+   `magicZaver()`, `TYPY_TEXTU` + `TYPY_TEXTU_FILTRY`.
+7. **PDF a `cisloKapitolyZavady()` současně** — číslování kapitol je na dvou
+   místech a musí sedět, jinak závěr odkazuje „v kapitole N", která neexistuje.
+   U LPS i strojů platí `secZavady = secBase + 2` (proměnná `dveKapitoly`).
+
+### Stroje — ČSN EN 60204-1 ed.3 (v9.30)
+
+- Vstup: **pátá karta na `screen-podtyp`** (`pt-stroje`), ne dlaždice na hlavní
+  straně — pokyn uživatele 2026-09-02 („aby nám nenabyly dlaždice"). Ev. číslo
+  má prefix **RS**.
+- Taby: `1. Titulní strana | 2. Stroj | 3. Přístroje | 4. Měření | 5. Kontroly
+  | 6. Závěr & Závady`.
+- **Přepínač rozsahu** `f_stroje_rozsah`: *jeden stroj* (identifikace je na
+  titulce) nebo *soubor strojů* (karty jako rozváděče, každý stroj má vlastní
+  seznam měření i kontrol, v PDF podkapitoly `secBase.1`, `secBase.2`…).
+- **Měření a Kontroly nejsou mřížka obvodů, ale plochý editovatelný seznam**
+  (tak to má i konkurence): řádky `data-rowtype="stroj-nadpis"` (členicí řádek
+  s článkem normy) a `stroj-polozka`. Měření = text / hodnota / jednotka,
+  Kontroly = text / `<select>` výsledek. Sloupec **poznámky se do PDF netiskne**.
+  Řádky jde přidávat, kopírovat, mazat i přetahovat — `mkDelTd()` a
+  `initRowDnd()` fungují beze změny. `renumberRows()` se jich záměrně netýká
+  (seznam nemá sloupec s číslem).
+- Výchozí sady `STROJE_MERENI_VYCHOZI` (čl. 18.2–18.6) a
+  `STROJE_KONTROLY_VYCHOZI` (16 bodů). Tlačítko **„Uložit jako výchozí pro
+  příští zprávy"** je ukládá do `STORE.strojeMereni` / `STORE.strojeKontroly`
+  (jsou v `STORE_KEYS`, tedy i v záloze) — ukládá se **jen kostra**, ne
+  naměřené hodnoty.
+- Data: `D.stroje = { rozsah, seznam: [{ …hlavička…, mereni: [], kontroly: [] }] }`.
+- `POPIS_STROJE` je definovaný **jednou** a používá ho magic tlačítko
+  i knihovna typických textů, ať se ty dva texty nemůžou rozejít.
+- V **Plánu revizí** se stroje počítají jako značka **T**.
+- Lhůta příští revize: volba „Stroje a technologická zařízení (2 roky)"
+  v modálu se vybírá přes `option[data-pro="stroje"]`, ne přes `value` —
+  hodnotu „2" má i volba pro divadla a kina.
 
 ## Už implementované (neřešit jako nový nápad)
 
