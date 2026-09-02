@@ -901,7 +901,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.31<span class="ver-date"> · 2026-09-02</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.32<span class="ver-date"> · 2026-09-02</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2778,7 +2778,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <div class="tab-panel" id="tab-stroje-mereni">
   <div class="scard">
     <div class="scard-title">Měření a zkoušky <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">ČSN EN 60204-1 ed.3, čl. 18</span></div>
-    <div class="info-box">Seznam si upravte podle stroje — řádky jde přidávat, kopírovat, mazat i&nbsp;přetahovat. <strong>Nadpis</strong> je členicí řádek (článek normy), <strong>položka</strong> nese hodnotu a jednotku. Sloupec <strong>Poznámka se netiskne</strong> — je jen pro vás.</div>
+    <div class="info-box">Seznam si upravte podle stroje — řádky jde přidávat, kopírovat, mazat i&nbsp;přetahovat (za&nbsp;úchyt ⠿ vlevo). <strong>Nadpis</strong> je členicí řádek (článek normy), <strong>položka</strong> nese hodnotu a jednotku. Sloupec <strong>Poznámka se netiskne</strong> — je jen pro vás.<br><strong>Šedý text v poli Hodnota napovídá, co se tam píše</strong> (mezní hodnota dle normy). Najeďte myší na název položky — v bublině je celé vysvětlení včetně článku normy. Nápověda se nikam netiskne, dokud ji nepřepíšete vlastní hodnotou.</div>
     <div id="stroje-mereni-hosty"></div>
   </div>
 </div>
@@ -6580,26 +6580,40 @@ function addLpsMereni() {
 var STROJE_MERENI_VYCHOZI = [
   { n: '18.2: Ověřování podmínek pro ochranu automatickým odpojením napájení' },
   { n: 'Zkouška 1' },
-  { p: 'Ověření spojitosti ochranného obvodu', j: 'Ω' },
+  { p: 'Ověření spojitosti ochranného obvodu', j: 'Ω', ph: 'např. 0,15',
+    tip: 'Zkouší se proudem nejméně 10 A o síťovém kmitočtu po dobu min. 10 s mezi svorkou PE a jednotlivými neživými částmi stroje. Mezní hodnota naměřeného odporu závisí na průřezu a délce ochranného vodiče podle tabulky v ČSN EN 60204-1 ed.3, čl. 18.2.2 — porovnejte s ní naměřenou hodnotu.' },
   { n: 'Zkouška 2' },
-  { p: 'Ověření impedance poruchové smyčky', j: 'Ω' },
-  { p: 'Vhodnost přidruženého přístroje jistícího proti nadproudům', j: '' },
+  { p: 'Ověření impedance poruchové smyčky', j: 'Ω', ph: 'např. 0,42',
+    tip: 'Vyhovuje, když Zs ≤ Uo / Ia, tedy když předřazený jistící přístroj odpojí v požadovaném čase (ČSN 33 2000-4-41 ed.3, čl. 411.4).' },
+  { p: 'Vhodnost přidruženého přístroje jistícího proti nadproudům', j: '', ph: 'vyhovuje',
+    tip: 'Posouzení, zda typ a jmenovitá hodnota jistícího přístroje odpovídají naměřené impedanci smyčky a průřezu vodičů.' },
   { n: 'pomocná měření:' },
-  { p: 'vybavovací proud proudového chrániče', j: 'mA' },
-  { p: 'vybavovací čas proudového chrániče', j: 'ms' },
-  { p: 'unikající proud', j: 'mA' },
-  { p: 'měření poklesu napětí (4.3.2)', j: 'V' },
+  { p: 'vybavovací proud proudového chrániče', j: 'mA', ph: '≤ IΔn (např. 18)',
+    tip: 'Chránič musí vybavit nejpozději při svém jmenovitém reziduálním proudu IΔn (u typu 30 mA tedy do 30 mA).' },
+  { p: 'vybavovací čas proudového chrániče', j: 'ms', ph: '≤ 300',
+    tip: 'Chránič bez zpoždění musí vybavit do 300 ms při IΔn (ČSN 33 2000-6 ed.2, příloha NA). U selektivních typů platí jiné meze.' },
+  { p: 'unikající proud', j: 'mA', ph: 'např. 0,4',
+    tip: 'Trvalý unikající proud stroje za provozu. Měl by být výrazně nižší než IΔn předřazeného chrániče, jinak chránič vypadává bez poruchy.' },
+  { p: 'měření poklesu napětí (4.3.2)', j: 'V', ph: 'např. 6 (≤ 5 % Un)',
+    tip: 'Pokles napětí od místa připojení k nejvzdálenějšímu spotřebiči stroje. Nemá překročit 5 % jmenovitého napětí (ČSN EN 60204-1 ed.3, čl. 4.3.2).' },
   { n: '18.3: Zkoušky izolačního odporu' },
-  { p: 'silové obvody proti sobě L1-L2/L1-L3/L2-L3', j: 'MΩ' },
-  { p: 'silové obvody proti N L1-N/L2-N/L3-N', j: 'MΩ' },
-  { p: 'silové obvody proti PE L1-PE/L2-PE/L3-PE', j: 'MΩ' },
-  { p: 'FELV', j: '' },
+  { p: 'silové obvody proti sobě L1-L2/L1-L3/L2-L3', j: 'MΩ', ph: '≥ 1 (např. >550)',
+    tip: 'Měří se napětím 500 V DC. Nejmenší přípustná hodnota je 1 MΩ (ČSN EN 60204-1 ed.3, čl. 18.3). Před měřením odpojte SPD a citlivou elektroniku.' },
+  { p: 'silové obvody proti N L1-N/L2-N/L3-N', j: 'MΩ', ph: '≥ 1 (např. >550)',
+    tip: 'Měří se napětím 500 V DC, nejmenší přípustná hodnota 1 MΩ (čl. 18.3).' },
+  { p: 'silové obvody proti PE L1-PE/L2-PE/L3-PE', j: 'MΩ', ph: '≥ 1 (např. >550)',
+    tip: 'Měří se napětím 500 V DC, nejmenší přípustná hodnota 1 MΩ (čl. 18.3).' },
+  { p: 'FELV', j: 'MΩ', ph: '≥ 1 / neobsahuje',
+    tip: 'Obvody FELV (funkční malé napětí). Pokud je stroj nemá, napište „neobsahuje" nebo řádek smažte.' },
   { n: '18.4: Zkouška napětím' },
-  { p: 'zkušební napětí', j: 'V' },
+  { p: 'zkušební napětí', j: 'V', ph: '1000 / neprovedena',
+    tip: 'Zkouší se napětím 1000 V AC (resp. dvojnásobkem jmenovitého napětí, platí vyšší hodnota) po dobu přibližně 1 s — ČSN EN 60204-1 ed.3, čl. 18.4. U pravidelné revize se zpravidla NEPROVÁDÍ (dělá ji výrobce při uvedení stroje na trh); pak napište „neprovedena".' },
   { n: '18.5: Ochrana před zbytkovými napětími' },
-  { p: 'doba vybití zbytkového napětí', j: 's' },
+  { p: 'doba vybití zbytkového napětí', j: 's', ph: '≤ 5 (na ≤ 60 V)',
+    tip: 'Po odpojení napájení musí zbytkové napětí klesnout na 60 V a méně do 5 s. U částí, které lze rozpojit vidlicí přímo přístupnou obsluze, platí 1 s (ČSN EN 60204-1 ed.3, čl. 18.5 a 6.2.4).' },
   { n: '18.6: Funkční zkoušky' },
-  { p: 'funkce ovládacích obvodů a zastavení', j: '' }
+  { p: 'funkce ovládacích obvodů a zastavení', j: '', ph: 'vyhověly',
+    tip: 'Ověření funkce ovládacích obvodů, nouzového zastavení (kategorie 0 / 1), blokování ochranných krytů a chování stroje po obnovení napájení — čl. 18.6.' }
 ];
 
 // Výchozí sada kontrol (prohlídka stroje).
@@ -6817,7 +6831,7 @@ function strojPridatRadek(tbody, kind, data) {
   inpText.className = 'stroj-text';
   inpText.value = text;
   inpText.placeholder = jeNadpis ? 'nadpis (např. 18.3: Zkoušky izolačního odporu)' : 'název položky';
-  inpText.style.cssText = 'width:100%;border:none;background:transparent;padding:.3rem .4rem;font-size:.8rem;text-align:left' +
+  inpText.style.cssText = 'width:100%;border:none;background:transparent;padding:.3rem .4rem .3rem 17px;font-size:.8rem;text-align:left' +
     (jeNadpis ? ';font-weight:600;color:var(--accent2)' : '');
   tdText.appendChild(inpText);
   tr.appendChild(tdText);
@@ -6826,7 +6840,15 @@ function strojPridatRadek(tbody, kind, data) {
     tr.style.background = '#f2f6fc';
   } else {
     if (jeMereni) {
-      tr.appendChild(strojBunkaInput('stroj-hodnota', data.hodnota || '', '', 'center'));
+      var tdHod = strojBunkaInput('stroj-hodnota', data.hodnota || '',
+        data.napoveda !== undefined ? data.napoveda : (data.ph || ''), 'center');
+      var tip = (data.tip !== undefined) ? data.tip : (data.popis || '');
+      if (tip) {
+        tdHod.querySelector('input').title = tip;
+        if (inpText) inpText.title = tip;
+        tr.dataset.tip = tip;
+      }
+      tr.appendChild(tdHod);
       tr.appendChild(strojBunkaInput('stroj-jednotka', data.jednotka !== undefined ? data.jednotka : (data.j || ''), '', 'center'));
     } else {
       var tdV = document.createElement('td');
@@ -6904,7 +6926,8 @@ function strojUlozitVychozi(el) {
   var kostra = polozky.map(function(r) {
     return (r.rowtype === 'stroj-nadpis')
       ? { rowtype: 'stroj-nadpis', text: r.text }
-      : { rowtype: 'stroj-polozka', text: r.text, jednotka: r.jednotka || '' };
+      : { rowtype: 'stroj-polozka', text: r.text, jednotka: r.jednotka || '',
+          napoveda: r.napoveda || '', popis: r.popis || '' };
   });
   var klic = (kind === 'mereni') ? 'strojeMereni' : 'strojeKontroly';
   if ((STORE[klic] || []).length &&
@@ -6933,7 +6956,11 @@ function strojCistSeznam(tbody, kind) {
       out.push({
         rowtype: 'stroj-polozka', text: txt ? txt.value : '',
         hodnota: hod ? hod.value : '', jednotka: jed ? jed.value : '',
-        poznamka: pozn ? pozn.value : ''
+        poznamka: pozn ? pozn.value : '',
+        // nápověda (šedý náznak + bublina) se veze s kostrou, aby nezmizela
+        // po znovunačtení zprávy z archivu
+        napoveda: hod ? (hod.placeholder || '') : '',
+        popis: tr.dataset.tip || ''
       });
     } else {
       var vys = tr.querySelector('.stroj-vysledek');

@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.31 · 2026-09-02**
+**Aktuální verze: v9.32 · 2026-09-02**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -227,6 +227,14 @@ trafo, osvětlení…), sáhněte na tahle místa:
   Řádky jde přidávat, kopírovat, mazat i přetahovat — `mkDelTd()` a
   `initRowDnd()` fungují beze změny. `renumberRows()` se jich záměrně netýká
   (seznam nemá sloupec s číslem).
+- **Nápověda k hodnotám**: položka měření může mít `ph` (šedý náznak v poli
+  Hodnota — mezní hodnota dle normy) a `tip` (bublina s celým vysvětlením
+  a článkem normy). Do dat se ukládají jako `napoveda` / `popis`, aby
+  nezmizely po načtení zprávy z archivu. **Nikdy to nejsou hodnoty** —
+  placeholder se do PDF nedostane, pole zůstává prázdné.
+- **Levý padding textu řádku musí být inline** (`padding:.3rem .4rem .3rem 17px`).
+  CSS pravidlo `td.dnd-num-cell input{padding-left:15px}` je slabší než
+  inline styl, takže bez toho úchyt ⠿ leze do textu (nahlásil uživatel).
 - Výchozí sady `STROJE_MERENI_VYCHOZI` (čl. 18.2–18.6) a
   `STROJE_KONTROLY_VYCHOZI` (16 bodů). Tlačítko **„Uložit jako výchozí pro
   příští zprávy"** je ukládá do `STORE.strojeMereni` / `STORE.strojeKontroly`
