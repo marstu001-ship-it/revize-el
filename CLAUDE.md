@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.33 · 2026-09-02**
+**Aktuální verze: v9.34 · 2026-09-09**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -175,6 +175,39 @@ Návrh z 2026-08-19, uživatel si ho nechal odložit ve prospěch **Plánu reviz
 10. **Deník budovy** — datované poznámky.
 
 Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
+
+## Záloha databáze — zápis a čtení musí sedět (v9.34)
+
+`buildZalohaBlob()` (~ř. 12061) a `obnovZeZalohy()` (~ř. 12292) mají **každá
+vlastní ruční výčet klíčů**. Když se přidá nový klíč do STORE, musí se doplnit
+do OBOU — jinak se buď neuloží, nebo se tiše zahodí při obnově.
+
+**Co se stalo (nahlášeno 2026-09-09):** `plan` se do zálohy zapisoval od
+v9.206 (2026-08-20), ale řádek, který ho čte zpět, **nikdy neexistoval**.
+Uživatel přišel o všechno, co v plánu není odvozené z archivu — ručně přidané
+objekty, ruční termíny v buňkách roku, složky, techniky, štítky, EX.
+Na stejném zařízení se chyba neprojeví (STORE.plan v paměti přežije a obnova
+ho jen nepřepíše), udeří přesně ve chvíli, kdy je záloha k něčemu — po ztrátě
+dat nebo na jiném počítači.
+
+Pravidla, která z toho plynou:
+
+1. **Nový klíč = tři místa**: `STORE_KEYS`, `STORE_VYCHOZI`, `buildZalohaBlob()`
+   **a** `obnovZeZalohy()`. (`STORE_KEYS` sám o sobě do zálohy nestačí —
+   dřív to tvrdila i tahle dokumentace a nebyla to pravda.)
+2. **Fallback z localStorage v `loadStore()` jede přes `STORE_KEYS`**, ne přes
+   ruční výčet — dřív v něm chyběly `strojeMereni`, `strojeKontroly`
+   a `auto_zaloha_*`. Na iOS je to jediná cesta načtení (IDB je tam vypnutá),
+   takže chybějící klíč se po prvním dalším `saveStore()` z disku ztratil.
+3. **Obnova nesmí mlčky přepsat plán**: potvrzovací dialog ukazuje počet
+   objektů v záloze i varování, když je současný plán větší. Chybí-li v záloze
+   klíč `plan` úplně (zálohy před v9.206), stávající plán se nechá být.
+4. **Formát `revize-el-plan` musí poznat každá cesta importu** — drag&drop
+   (~ř. 3950), `importDatabaze()` a **taky `zpracovatZpravuData()`** (hlavní
+   tlačítko „Načíst"), kde chyběl a soubor plánu propadl do `nacistData()`
+   jako by to byla zpráva.
+5. **Test `test-zaloha-plan.js`** ve scratchpadu hlídá celé kolečko
+   plán → záloha → vyčištěný prohlížeč → obnova → restart.
 
 ## Typy revizních zpráv (elektro / LPS / stroje)
 

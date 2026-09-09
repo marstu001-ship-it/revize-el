@@ -901,7 +901,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.33<span class="ver-date"> · 2026-09-02</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.34<span class="ver-date"> · 2026-09-09</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3156,6 +3156,18 @@ var IDB_NAME = 'revize-el-db';
 var IDB_VERSION = 1;
 var IDB_STORE = 'kv';
 var idb = null;
+// Výchozí hodnota pro každý klíč STORE. Díky tomu se dá načítání psát
+// obecně přes STORE_KEYS a nový klíč nejde zapomenout — dřív byl seznam
+// vypsaný ručně ve fallbacku z localStorage a chyběly v něm strojeMereni,
+// strojeKontroly i stav automatické zálohy (na iOS, kde se IDB přeskakuje,
+// je tahle cesta jediná).
+var STORE_VYCHOZI = {
+  technik: {}, pristroje: [], archiv: [], odberatele: [], snippety: [],
+  aiConfig: {}, vlastniNormy: {}, plan: {}, tisk: {},
+  strojeMereni: [], strojeKontroly: [],
+  last_backup_at: null, archiv_count_at_last_backup: 0,
+  auto_cislovani: true, auto_zaloha_at: null, auto_zaloha_ver: null
+};
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
                   'snippety', 'aiConfig', 'vlastniNormy', 'plan', 'tisk',
                   'strojeMereni', 'strojeKontroly',
@@ -3260,18 +3272,9 @@ async function loadStore() {
       var s = localStorage.getItem('revize_el_store');
       if (s) {
         var d = JSON.parse(s);
-        STORE.technik = d.technik || {};
-        STORE.pristroje = d.pristroje || [];
-        STORE.archiv = d.archiv || [];
-        STORE.odberatele = d.odberatele || [];
-        STORE.snippety = d.snippety || [];
-        STORE.plan = d.plan || {};
-        STORE.tisk = d.tisk || {};
-        STORE.aiConfig = d.aiConfig || {};
-        STORE.vlastniNormy = d.vlastniNormy || {};
-        STORE.last_backup_at = d.last_backup_at || null;
-        STORE.archiv_count_at_last_backup = d.archiv_count_at_last_backup || 0;
-        STORE.auto_cislovani = (d.auto_cislovani !== false);
+        STORE_KEYS.forEach(function(k) {
+          STORE[k] = (d[k] !== undefined && d[k] !== null) ? d[k] : STORE_VYCHOZI[k];
+        });
         // Zapsat do IDB (jednorázová migrace)
         if (idb) {
           var snapshot = {};
@@ -11804,6 +11807,10 @@ function nacistJSON(e) {
 // záloha má top-level archiv/odberatele/technik, zpráva ploché vlastnosti
 // (ev_cislo, misto…). Zálohu rovnou pošle do obnovy místo hlášky.
 function zpracovatZpravuData(D) {
+  // Soubor plánu pro kolegu má vlastní formát — bez tohohle by propadl
+  // až k nacistData() a program by se ho pokusil otevřít jako zprávu.
+  // Drag&drop a tlačítko 📥 v plánu ho poznají, hlavní „Načíst" ne.
+  if (D && D._format === 'revize-el-plan') { planNacistData(D); return; }
   var looksLikeBackup =
     Array.isArray(D.archiv) ||
     Array.isArray(D.odberatele) ||
@@ -12071,6 +12078,8 @@ function buildZalohaBlob() {
     vlastniNormy: STORE.vlastniNormy || {},
     plan: STORE.plan || {},
     tisk: STORE.tisk || {},
+    strojeMereni: STORE.strojeMereni || [],
+    strojeKontroly: STORE.strojeKontroly || [],
     auto_cislovani: STORE.auto_cislovani !== false
   };
   return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -12295,12 +12304,21 @@ function obnovZeZalohy(data) {
   }
   var vlastniNormy = data.vlastniNormy || {};
   var vlastniNormyPocet = Object.values(vlastniNormy).reduce(function(s, a) { return s + (a ? a.length : 0); }, 0);
+  // Plán revizí je jediná část databáze, kterou nejde znovu odvodit z archivu —
+  // proto se u něj ukazuje i to, o kolik objektů by uživatel přišel.
+  var planZal = (data.plan && Array.isArray(data.plan.objekty)) ? data.plan.objekty.length : 0;
+  var planTed = (STORE.plan && Array.isArray(STORE.plan.objekty)) ? STORE.plan.objekty.length : 0;
+  var planRadek = data.plan
+    ? '• Objekty v plánu revizí: ' + planZal +
+      (planTed > planZal ? '   ⚠ váš současný plán má ' + planTed + ' — přijdete o rozdíl!' : '') + '\n'
+    : '• Plán revizí: v této záloze není (je starší než 20. 8. 2026) — váš současný plán zůstane\n';
   var msg = 'Obnovit ze zálohy?\n\n' +
     '• Odběratelé: ' + ((data.odberatele || []).length) + '\n' +
     '• Zprávy v archivu: ' + ((data.archiv || []).length) + '\n' +
     '• Přístroje: ' + ((data.pristroje || []).length) + '\n' +
     '• Vlastní texty: ' + ((data.snippety || []).length) + '\n' +
     (vlastniNormyPocet ? '• Vlastní normy: ' + vlastniNormyPocet + '\n' : '') +
+    planRadek +
     '• Profil technika: ' + (data.technik && data.technik.jmeno ? 'ano' : 'ne') + '\n\n' +
     'Tyto údaje nahradí aktuální data v prohlížeči.';
   if (!confirm(msg)) return;
@@ -12311,12 +12329,22 @@ function obnovZeZalohy(data) {
   STORE.snippety = data.snippety || [];
   if (data.vlastniNormy) STORE.vlastniNormy = data.vlastniNormy;
   if (data.tisk) STORE.tisk = data.tisk;
+  // Plán revizí — bez tohohle řádku se ze zálohy neobnovil a uživatel
+  // přišel o všechno, co v něm není odvozené z archivu: ručně přidané
+  // objekty, ruční termíny v buňkách, složky, techniky a štítky.
+  // Starší zálohy (před v9.206) klíč nemají — pak se stávající plán nechá být.
+  if (data.plan) STORE.plan = data.plan;
+  if (data.strojeMereni) STORE.strojeMereni = data.strojeMereni;
+  if (data.strojeKontroly) STORE.strojeKontroly = data.strojeKontroly;
   if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
   archiv = STORE.archiv;
   odberatele = STORE.odberatele;
   saveStore();
   renderArchiv();
   renderOdberatele();
+  // Je-li plán zrovna otevřený, ať se hned překreslí obnovenými daty
+  var scrPlan = document.getElementById('screen-plan');
+  if (scrPlan && scrPlan.classList.contains('active') && typeof renderPlan === 'function') renderPlan();
   showToast('Záloha úspěšně obnovena ✓');
 }
 
