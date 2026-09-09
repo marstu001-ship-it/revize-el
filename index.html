@@ -901,7 +901,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.34<span class="ver-date"> · 2026-09-09</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.35<span class="ver-date"> · 2026-09-09</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5175,9 +5175,7 @@ function copyRcdGroup(el) {
         // kopie spadla na první option ('A') bez ohledu na originál
         var origSel = r.querySelector('select');
         if (origSel) sel.value = origSel.value;
-        sel.addEventListener('change', function() {
-          addRcdSubRows(tbody, clone, this.value, newGroupId);
-        });
+        sel.addEventListener('change', function() { rcdTypZmenen(this); });
       }
       // cloneNode nepřenáší drag&drop listenery — resetovat a znovu initnout
       delete clone.dataset.dndInit;
@@ -5249,7 +5247,10 @@ function addRozvadec() {
   var phUmist = { dum: 'Technická místnost rodinného domu', byt: 'Vstupní chodba bytové jednotky', prumysl: 'Rozvodna VN/NN, trafostanice', spolecne: 'Chodba 1. NP bytového domu' };
   div.innerHTML = '<div class="scard-title" style="display:flex;justify-content:space-between;align-items:center">' +
     '<span>Rozváděč [' + n + '] <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 Z2 – příloha G</span></span>' +
-    (n > 1 ? '<button class="del-btn" style="font-size:.75rem" data-action="delRozvadec" data-rozvadec="rozv-' + n + '">✕ Odebrat rozváděč</button>' : '') +
+    '<span style="display:flex;gap:.4rem;flex-shrink:0">' +
+    '<button class="del-btn" style="font-size:.75rem;color:var(--accent2)" data-action="copyRozvadec" data-rozvadec="rozv-' + n + '" title="Vytvoří kopii rozváděče i se všemi obvody a vloží ji hned pod tento">⧉ Kopírovat rozváděč</button>' +
+    '<button class="del-btn rv-smazat" style="font-size:.75rem" data-action="delRozvadec" data-rozvadec="rozv-' + n + '">✕ Odebrat rozváděč</button>' +
+    '</span>' +
     '</div>' +
     '<div class="g2" style="margin-bottom:1rem">' +
     '<div class="f"><label>Rozváděč (označení)</label><input type="text" class="rozv-nazev" list="dl_nazev_rozvadec" autocomplete="off" placeholder="' + (phNazev[aktPodtyp] || phNazev.dum) + '"></div>' +
@@ -5418,12 +5419,76 @@ function rozvDragEnd() {
 // „Rozváděč [1]" je vždy první karta. Na data-rozvadec-id (interní
 // vazba tlačítek) se nesahá.
 function renumberRozvadece() {
-  document.querySelectorAll('#rozvadece-container .scard-rv').forEach(function(card, i) {
+  var karty = document.querySelectorAll('#rozvadece-container .scard-rv');
+  karty.forEach(function(card, i) {
     var span = card.querySelector('.scard-title > span');
     if (span && span.firstChild && span.firstChild.nodeType === 3) {
       span.firstChild.nodeValue = 'Rozváděč [' + (i + 1) + '] ';
     }
+    // Poslední rozváděč nejde odebrat — zpráva musí mít aspoň jeden.
+    var smazat = card.querySelector('.rv-smazat');
+    if (smazat) smazat.style.display = (karty.length > 1) ? '' : 'none';
   });
+}
+
+// Kopie rozváděče i se všemi obvody, vloží se hned pod originál.
+// Vzniká klonováním DOM, protože jinak by se musely znovu poskládat
+// všechny řádky včetně RCD skupin a naměřených hodnot.
+function copyRozvadec(el) {
+  var id = el.dataset.rozvadec;
+  var orig = document.querySelector('[data-rozvadec-id="' + id + '"]');
+  if (!orig) return;
+  if (window.__formReadOnly) {
+    showToast('Zpráva je dokončená — pro úpravy ji vraťte mezi rozpracované (✏️ nahoře).');
+    return;
+  }
+  rozvadecCounter++;
+  var novyId = 'rozv-' + rozvadecCounter;
+  var klon = orig.cloneNode(true);
+  klon.dataset.rozvadecId = novyId;
+  // Tlačítka uvnitř kopie musí ukazovat na kopii, ne na originál
+  klon.querySelectorAll('[data-rozvadec]').forEach(function(b) { b.dataset.rozvadec = novyId; });
+
+  // cloneNode nepřenáší vybranou hodnotu <select> — dopsat ručně podle originálu
+  var origSel = orig.querySelectorAll('select');
+  klon.querySelectorAll('select').forEach(function(sn, i) {
+    if (origSel[i]) sn.value = origSel[i].value;
+  });
+
+  // RCD skupiny musí dostat vlastní id, jinak by kopie sdílela skupinu
+  // s originálem a mazání/kopírování chrániče by sáhlo do obou rozváděčů.
+  var mapaSkupin = {};
+  klon.querySelectorAll('[data-rcd-group]').forEach(function(r) {
+    var stara = r.dataset.rcdGroup;
+    if (!mapaSkupin[stara]) { rcdGroupCounter++; mapaSkupin[stara] = 'rcd-' + rcdGroupCounter; }
+    r.dataset.rcdGroup = mapaSkupin[stara];
+  });
+  klon.querySelectorAll('[data-group]').forEach(function(b) {
+    if (mapaSkupin[b.dataset.group]) b.dataset.group = mapaSkupin[b.dataset.group];
+  });
+
+  orig.parentNode.insertBefore(klon, orig.nextSibling);
+
+  // Klonováním se neberou posluchače — drag&drop i změna typu chrániče
+  // se musí navázat znovu.
+  var tb = klon.querySelector('tbody');
+  klon.querySelectorAll('.drag-handle').forEach(function(h) { h.remove(); });
+  klon.querySelectorAll('tbody tr').forEach(function(tr) {
+    delete tr.dataset.dndInit;
+    tr.classList.remove('row-dragging', 'row-drag-above', 'row-drag-below');
+    initRowDnd(tr, tb);
+  });
+  klon.querySelectorAll('tr[data-rowtype="rcd-header"] select').forEach(function(sn) {
+    sn.addEventListener('change', function() { rcdTypZmenen(this); });
+  });
+
+  renumberRozvadece();
+  renumberRows(tb);
+  window.__formDirty = true;
+  if (typeof updateUlozitStav === 'function') updateUlozitStav();
+  var pocet = klon.querySelectorAll('tbody tr[data-rowtype="obvod"], tbody tr[data-rowtype="rcd-header"]').length;
+  showToast('Rozváděč zkopírován i s ' + pocet + ' řádky — přejmenujte ho a upravte hodnoty');
+  klon.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function getTbodyForRozvadec(el) {
@@ -5558,7 +5623,22 @@ function getDragGroup(tr) {
   return rows;
 }
 
-function initRowDnd(tr, tbody) {
+// Společná obsluha změny typu chrániče — tabulku i skupinu si zjistí
+// z DOM, takže funguje i po přesunu řádku do jiného rozváděče a po kopii.
+function rcdTypZmenen(sel) {
+  var radek = sel.closest('tr');
+  if (!radek || !radek.parentNode) return;
+  addRcdSubRows(radek.parentNode, radek, sel.value, radek.dataset.rcdGroup);
+}
+
+// Tabulky měření obvodů — mezi nimi se smí přetahovat i přes hranici
+// rozváděče. Ostatní tabulky (dokumentace, přístroje, LPS, stroje)
+// zůstávají uzavřené samy do sebe.
+function jeTabulkaObvodu(tbody) {
+  return !!(tbody && tbody.closest('#rozvadece-container'));
+}
+
+function initRowDnd(tr, tbodyInit) {
   if (tr.dataset.rowtype === 'rcd-mereni') return;
   if (tr.dataset.dndInit === '1') return;
   tr.dataset.dndInit = '1';
@@ -5577,10 +5657,21 @@ function initRowDnd(tr, tbody) {
     }
     h.setAttribute('draggable', 'true');
   }
+  // Zvýraznění se maže globálně — při tažení mezi rozváděči zůstávalo
+  // viset v té tabulce, ze které se odcházelo.
   function clearDragClasses() {
-    tbody.querySelectorAll('tr').forEach(function(r) {
+    document.querySelectorAll('tr.row-drag-above, tr.row-drag-below').forEach(function(r) {
       r.classList.remove('row-drag-above', 'row-drag-below');
     });
+  }
+  // Cíl se smí lišit od zdroje jen u tabulek obvodů.
+  function smiSemPustit(cil) {
+    if (!dndDragging || !dndDragging.length) return false;
+    if (dndDragging.indexOf(tr) !== -1) return false;
+    var zdroj = dndDragging[0].parentNode;
+    if (!zdroj || !cil) return false;
+    if (zdroj === cil) return true;
+    return jeTabulkaObvodu(zdroj) && jeTabulkaObvodu(cil);
   }
   if (h) {
     h.addEventListener('dragstart', function(e) {
@@ -5598,8 +5689,7 @@ function initRowDnd(tr, tbody) {
     });
   }
   tr.addEventListener('dragover', function(e) {
-    if (!dndDragging || dndDragging.indexOf(tr) !== -1) return;
-    if (dndDragging[0].parentNode !== tbody) return;
+    if (!smiSemPustit(tr.parentNode)) return;
     e.preventDefault(); e.dataTransfer.dropEffect = 'move';
     var rect = tr.getBoundingClientRect();
     clearDragClasses();
@@ -5610,8 +5700,9 @@ function initRowDnd(tr, tbody) {
   });
   tr.addEventListener('drop', function(e) {
     e.preventDefault();
-    if (!dndDragging || dndDragging.indexOf(tr) !== -1) return;
-    if (dndDragging[0].parentNode !== tbody) return;
+    var cil = tr.parentNode;
+    if (!smiSemPustit(cil)) return;
+    var zdroj = dndDragging[0].parentNode;
     tr.classList.remove('row-drag-above', 'row-drag-below');
     var rect = tr.getBoundingClientRect(), above = e.clientY < rect.top + rect.height / 2;
     var insertRef;
@@ -5623,11 +5714,15 @@ function initRowDnd(tr, tbody) {
     }
     dndDragging.forEach(function(r) { r.parentNode.removeChild(r); });
     if (insertRef) {
-      dndDragging.forEach(function(r) { tbody.insertBefore(r, insertRef); });
+      dndDragging.forEach(function(r) { cil.insertBefore(r, insertRef); });
     } else {
-      dndDragging.forEach(function(r) { tbody.appendChild(r); });
+      dndDragging.forEach(function(r) { cil.appendChild(r); });
     }
-    renumberRows(tbody);
+    renumberRows(cil);
+    // Po přetažení do jiného rozváděče se musí přečíslovat i ten,
+    // ze kterého řádek odešel.
+    if (zdroj && zdroj !== cil) renumberRows(zdroj);
+    if (typeof window.__formDirty !== 'undefined') window.__formDirty = true;
   });
 }
 
@@ -5844,7 +5939,7 @@ function addRcdRow(el) {
   trMain.appendChild(mkTd('Hager'));
   // Ch. — rozbalovací pole s typem chrániče
   var chTd = mkSelectTd(['A', 'AC', 'B', 'F', 'B/A', 'B/AC', 'C/A', 'C/AC'], 'A', function() {
-    addRcdSubRows(tbody, trMain, this.value, groupId);
+    rcdTypZmenen(this);
   });
   trMain.appendChild(chTd);
   // A, IΔn, Isc
@@ -15871,6 +15966,7 @@ document.addEventListener('click', function(e) {
     case 'strojVlozitVychozi': strojVlozitVychozi(el); break;
     case 'strojUlozitVychozi': strojUlozitVychozi(el); break;
     case 'delRozvadec': delRozvadec(el); break;
+    case 'copyRozvadec': copyRozvadec(el); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;

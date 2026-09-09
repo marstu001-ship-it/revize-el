@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.34 · 2026-09-09**
+**Aktuální verze: v9.35 · 2026-09-09**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -175,6 +175,32 @@ Návrh z 2026-08-19, uživatel si ho nechal odložit ve prospěch **Plánu reviz
 10. **Deník budovy** — datované poznámky.
 
 Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
+
+## Rozváděče — kopie a přesun obvodů mezi nimi (v9.35)
+
+- **`copyRozvadec(el)`** klonuje kartu rozváděče i s obvody a vkládá ji hned
+  pod originál. `cloneNode(true)` přenáší hodnoty `<input>` a zaškrtnutí, ale
+  **NE výběr `<select>`** — ten se dopisuje ručně podle originálu (stejná past
+  jako v `copyRcdGroup`). RCD skupiny v kopii dostanou **nová `data-rcd-group`**,
+  jinak by mazání chrániče sáhlo do obou rozváděčů. Posluchače se klonováním
+  neberou, takže se po vložení znovu navazuje drag&drop i změna typu chrániče.
+- **Tlačítko „✕ Odebrat rozváděč" se generuje vždycky** a schovává ho
+  `renumberRozvadece()`, když je rozváděč jediný. Dřív se u prvního rozváděče
+  negenerovalo vůbec — jeho kopie by pak nešla smazat.
+- **Obvod jde přetáhnout i do jiného rozváděče.** V `initRowDnd()` se cíl
+  zjišťuje z `tr.parentNode` **až při události**, ne z closure — jinak by řádek
+  po přesunu (nebo po kopii) pouštěl do své původní tabulky. Povolení dropu
+  řeší `smiSemPustit()`: stejná tabulka vždy, cizí jen mezi tabulkami obvodů
+  (`jeTabulkaObvodu()` = uvnitř `#rozvadece-container`). Dokumentace, přístroje,
+  LPS zemniče i seznamy strojů tak zůstávají uzavřené samy do sebe.
+  Po přesunu se přečíslují **obě** tabulky, zdrojová i cílová.
+- **`rcdTypZmenen(sel)`** je společná obsluha změny typu chrániče — tabulku,
+  řádek i skupinu si zjistí z DOM. Dřív to byla closure nad `tbody`/`trMain`,
+  takže po přesunu chrániče do jiného rozváděče přibývaly podřádky ve starém.
+- Testy: `test-kopie-rozvadec.js` (12) a `test-presun-obvod.js` (15, včetně
+  přesunu celé RCD skupiny i s podřádky). **Tažení v testu potřebuje po
+  `mouse.down()` nejdřív drobný pohyb**, jinak prohlížeč tažení nezahájí,
+  a zdroj i cíl se musí vejít do okna — jinak drop spadne mimo.
 
 ## Záloha databáze — zápis a čtení musí sedět (v9.34)
 
