@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.35 · 2026-09-09**
+**Aktuální verze: v9.36 · 2026-09-10**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -175,6 +175,48 @@ Návrh z 2026-08-19, uživatel si ho nechal odložit ve prospěch **Plánu reviz
 10. **Deník budovy** — datované poznámky.
 
 Nedávat: ekonomiku (ceny, faktury, km), mapu (patří na dashboard).
+
+## Strom rozváděčů — provázání podle zapojení (v9.36)
+
+Rozváděče se dají provázat podle skutečného zapojení: u jističe se řekne,
+který podružný rozváděč napájí, a z toho se odvodí strom.
+
+- **Vazba bydlí na řádku obvodu** (`tr.dataset.napaji` = uid cílového
+  rozváděče, `napajiNazev` pro rozváděč, který ve zprávě ještě není).
+  Je to **jediný zdroj pravdy** — pole „Napájen z" na kartě rozváděče píše
+  do téhož řádku, jen se zadává z druhé strany.
+- **Rozváděč má vlastní `uid`** (`genRozvUid()`), který se ukládá do dat.
+  **Nevázat na `data-rozvadec-id`** (`rozv-N` je běžící čítač a při načtení
+  z archivu se přiděluje znovu) **ani na název** (přejmenovává se).
+- **Strom se nikde neukládá**, počítá se z vazeb (`rozvStromData()` z DOM pro
+  obrazovku, `stromZDat(D)` z dat zprávy pro PDF). Obojí má pojistku proti
+  zacyklení; nabídka v dialogu cyklus ani nedovolí vytvořit
+  (`stromByVzniklCyklus()`).
+- **Dvě pojistky, aby se nezměnily staré zprávy** (pokyn uživatele):
+  1. zpráva z archivu **bez klíče `D.rozvStrom`** má funkci vypnutou
+     (nová zpráva zapnutou),
+  2. blok se do PDF tiskne, **jen když existuje aspoň jedna vazba**.
+  Ověřeno porovnáním PDF staré verze a nové: u všech čtyř podtypů elektro
+  i tří variant LPS vychází text **znak po znaku stejně**; v datech přibyly
+  jen klíče `napaji`, `napajiNazev`, `hlavniJistic`, `uid`, `rozvStrom`.
+- **PDF**: strom je **úvodní blok kapitoly „Naměřené hodnoty"**, ne vlastní
+  číslovaná kapitola — jinak by se posunulo číslování a rozjel odkaz
+  „v kapitole N" v závěru.
+- **Kontroly** (upozornění, ne chyby): rozváděč bez zaznamenaného napájení
+  (varuje se **jen u kořene BEZ potomků** a s prázdným polem Přívod — kdo
+  něco napájí, je zjevně hlavní rozváděč), vazba na neexistující rozváděč,
+  nesoulad jmenovitých proudů, zacyklení, napájení ze dvou míst.
+- **„🔍 Najít napojení"** hledá název rozváděče v názvu obvodu.
+  **Název obvodu a označení se prohledávají zvlášť** — po slepení dohromady
+  dá „vývod pro RM10" + označení „1" řetězec „…rm101" a pojistka proti
+  záměně RM1/RM10 nález zahodí. Zapisují se jen odsouhlasené nálezy.
+- **Kopie rozváděče** dostane nové `uid` a **nepřebírá příchozí vazbu**
+  (nadřazený jistič napájí pořád jen originál); odchozí vazby v řádcích se
+  kopírují.
+- **Překreslení po načtení z archivu musí být odložené** (`setTimeout 0`) —
+  `addRozvadec()` si strom překresluje průběžně, tehdy ještě bez vyplněných
+  názvů, a bez odloženého překreslení zůstane v panelu „(bez názvu)".
+- Testy: `test-strom-rozvadecu.js` (27 kontrol), `test-strom-model.js` (10).
 
 ## Rozváděče — kopie a přesun obvodů mezi nimi (v9.35)
 

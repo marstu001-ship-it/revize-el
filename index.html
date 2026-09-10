@@ -296,6 +296,22 @@ html.view-mobile .home-wrap{padding:0 .75rem}
 .badge-el{background:#e3f0ff;color:#2B579A;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
 .badge-lps{background:#fff3e0;color:#8a5200;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
 .badge-stroje{background:#eae7f7;color:#4b3f8f;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px}
+/* Strom rozváděčů — čáry jsou CSS okraje, ne znaky, aby se stejně
+   vykreslily i v PDF přes html2canvas. */
+.strom-box{font-size:.84rem;line-height:1.5}
+.strom-radek{position:relative;padding:.18rem 0 .18rem 2px;cursor:pointer;border-radius:2px}
+.strom-radek:hover{background:var(--surface)}
+.strom-radek .strom-cara{position:absolute;left:-14px;top:0;bottom:0;width:12px;
+  border-left:1px solid #b9b4a8;border-bottom:1px solid #b9b4a8;
+  height:.95em;border-bottom-left-radius:2px}
+.strom-jistic{color:var(--muted);font-size:.78rem}
+.strom-koren{color:var(--accent2);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+.strom-vykricnik{color:#b5291c;font-weight:bold}
+.strom-chybejici strong{color:#8a7a52}
+.strom-upoz{margin-top:.6rem;padding:.5rem .7rem;background:#fff8e6;border:1px solid #e0d0a0;
+  border-radius:3px;font-size:.8rem;line-height:1.6}
+html.dark .strom-upoz{background:#3a3320;border-color:#5a4d2a}
+tr.ma-napajeni td:nth-child(2) input{font-weight:600;color:#2B579A}
 .badge-rozprac{background:#f57c00;color:#fff;font-family:var(--mono);font-size:.6rem;padding:.15rem .4rem;border-radius:2px;letter-spacing:.04em;white-space:nowrap}
 tr.row-rozprac>td{background:#fff6e8}
 tr.row-rozprac>td:first-child{box-shadow:inset 3px 0 0 #f57c00}
@@ -901,7 +917,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.35<span class="ver-date"> · 2026-09-09</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.36<span class="ver-date"> · 2026-09-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2502,6 +2518,24 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 
 <!-- TAB MĚŘENÍ -->
 <div class="tab-panel" id="tab-mereni">
+  <div style="margin-bottom:.6rem">
+    <label style="display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;cursor:pointer">
+      <input type="checkbox" id="f_rozv_strom_zapnuto" data-action="stromPrepnout">
+      <span>Provázat rozváděče podle zapojení <span style="color:var(--muted)">— ukáže strom, kdo koho napájí</span></span>
+    </label>
+  </div>
+  <div class="scard" id="rozv-strom-panel" style="display:none">
+    <div class="scard-title" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <span>🔌 Zapojení rozváděčů</span>
+      <span style="margin-left:auto;display:flex;gap:.4rem;flex-wrap:wrap">
+        <button class="add-row" data-action="stromNajit" style="font-size:.68rem;padding:.35rem .7rem;border-color:var(--accent2);color:var(--accent2)" title="Projde názvy obvodů a nabídne, který jistič který rozváděč napájí">🔍 Najít napojení</button>
+        <button class="add-row" data-action="stromSeradit" style="font-size:.68rem;padding:.35rem .7rem" title="Přeskládá karty rozváděčů do pořadí podle zapojení">↕ Seřadit karty</button>
+        <button class="add-row" data-action="stromTisk" style="font-size:.68rem;padding:.35rem .7rem" title="Vytiskne samostatné schéma rozváděčů">🖨️ Tisk schématu</button>
+        <button class="del-btn" id="rozv-strom-sbalit" data-action="stromSbalit" title="Sbalit / rozbalit" style="font-size:.8rem">−</button>
+      </span>
+    </div>
+    <div id="rozv-strom-telo"></div>
+  </div>
   <div id="rozvadece-container"></div>
   <div style="display:flex;gap:.75rem;margin-top:1rem;margin-bottom:1rem;flex-wrap:wrap">
     <button class="add-row" data-action="addRozvadec" style="border-color:var(--accent2);color:var(--accent2);font-size:.7rem;padding:.5rem 1.2rem">+ Přidat další rozváděč</button>
@@ -3055,6 +3089,33 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div id="vnorit-list" style="max-height:300px;overflow-y:auto;margin-bottom:1rem"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritVnorit">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-napaji">
+  <div class="modal">
+    <div class="modal-title">🔌 Napájí tento jistič rozváděč?</div>
+    <div class="info-box" style="margin-bottom:.8rem">Jistič <strong id="napaji-popis"></strong></div>
+    <div class="f" style="margin-bottom:.8rem"><label>Rozváděč ve zprávě</label>
+      <select id="napaji-vyber"></select></div>
+    <div class="f" style="margin-bottom:1rem"><label>…nebo napište označení rozváděče, který teprve vytvoříte</label>
+      <input type="text" id="napaji-vlastni" placeholder="např. RM2" autocomplete="off">
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.25rem">Až rozváděč s tímhle označením ve zprávě vznikne, program si je sám propojí.</div></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritNapaji">Zrušit</button>
+      <button class="btn btn-gold" data-action="stromPriraditUlozit">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-najit">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-title">🔍 Nalezená napojení rozváděčů</div>
+    <div id="najit-telo" style="max-height:50vh;overflow:auto;margin-bottom:1rem"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritNajit">Zrušit</button>
+      <button class="btn btn-gold" data-action="stromNajitPotvrdit">Zapsat zaškrtnuté</button>
     </div>
   </div>
 </div>
@@ -4190,6 +4251,9 @@ function novaZprava(typ) {
   });
   var rc = document.getElementById('rozvadece-container'); if (rc) rc.innerHTML = '';
   rozvadecCounter = 0;
+  // Nová zpráva má provázání rozváděčů zapnuté (rozhodnutí uživatele
+  // 2026-09-10). Zpráva z archivu si stav nese s sebou — viz nacistData().
+  __rozvStrom = { zapnuto: true, sbaleno: false };
   var zl = document.getElementById('zavady-list'); if (zl) zl.innerHTML = '';
   var pb = document.getElementById('pristroje-body'); if (pb) pb.innerHTML = '';
   var db = document.getElementById('dokumentace-body'); if (db) db.innerHTML = '';
@@ -4414,6 +4478,8 @@ function novaZprava(typ) {
   updateTabNav();
   updateDuvodMimoradne();
   updateBreadcrumb();   // až tady jsou pole vyresetovaná a ev. číslo nové
+  renderRozvStrom();
+  stromNaplnitNapajenZ();
   window.__formDirty = false;
   showScreen('form');
 }
@@ -5233,6 +5299,17 @@ function getMeasTableHtml() {
     '</tr></thead><tbody></tbody></table>';
 }
 
+function genRozvUid() {
+  return 'rv' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// Stav provázání rozváděčů pro právě otevřenou zprávu.
+// U NOVÉ zprávy zapnuto, u zprávy načtené z archivu BEZ tohoto klíče
+// vypnuto — starým zprávám se tím nic nezmění (pokyn uživatele 2026-09-10).
+var __rozvStrom = { zapnuto: true, sbaleno: false };
+
+function stromZapnut() { return !!(__rozvStrom && __rozvStrom.zapnuto); }
+
 function addRozvadec() {
   rozvadecCounter++;
   var n = rozvadecCounter;
@@ -5241,6 +5318,7 @@ function addRozvadec() {
   var div = document.createElement('div');
   div.className = 'scard scard-rv';
   div.dataset.rozvadecId = 'rozv-' + n;
+  div.dataset.rozvUid = genRozvUid();
   // Režim číslování patří rozváděči; nový převezme poslední volbu uživatele
   div.dataset.autoCislovani = (STORE.auto_cislovani === false) ? '0' : '1';
   var phNazev = { dum: 'RD — plastový, zapuštěný, IP30', byt: 'RB — plastový, zapuštěný, IP30', prumysl: 'RH — skříňový OCEP, 1600A, IP40/00', spolecne: 'RS — rozváděč společné spotřeby, IP40' };
@@ -5259,6 +5337,14 @@ function addRozvadec() {
     '<div style="margin-bottom:1rem;padding:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:3px">' +
     '<div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem">Přívod a naměřené hodnoty na svorkách rozváděče</div>' +
     '<div class="f" style="margin-bottom:.5rem"><label style="font-size:.72rem">Přívod (kabel, ukončení)</label><input type="text" class="rozv-privod" placeholder="např. CYKY 4B×16 mm² ukončen v RMS 1 na svorkách hl. vypínače APN 63 A"></div>' +
+    '<div class="rozv-napajeni" style="display:none;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:flex-end">' +
+      '<div class="f" style="flex:1 1 220px;margin:0"><label style="font-size:.72rem">Napájen z rozváděče</label>' +
+        '<select class="rozv-napajen-z" data-action="rozvNapajenZ"></select></div>' +
+      '<div class="f" style="flex:1 1 220px;margin:0"><label style="font-size:.72rem">Jističem (obvodem)</label>' +
+        '<select class="rozv-napajen-jistic" data-action="rozvNapajenJistic"></select></div>' +
+      '<div class="f" style="flex:0 1 130px;margin:0"><label style="font-size:.72rem">Hlavní jistič (A)</label>' +
+        '<input type="text" class="rozv-hl-jistic" placeholder="např. 63" autocomplete="off"></div>' +
+    '</div>' +
     '<div style="display:grid;grid-template-columns:32px 1fr 1fr 1fr 1fr;gap:.4rem .5rem;align-items:center;font-size:.78rem">' +
     '<div></div>' +
     '<div style="font-size:.65rem;color:var(--muted);text-align:center">L-PEN (V)</div>' +
@@ -5292,13 +5378,637 @@ function addRozvadec() {
   // Titulky karet drží pořadí DOM (po mazání/řazení by čísla nesouhlasila)
   renumberRozvadece();
   if (container.classList.contains('razeni-mode')) initRozvadecSort(div);
+  renderRozvStrom();
+  stromNaplnitNapajenZ();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// STROM ROZVÁDĚČŮ — provázání podle skutečného zapojení
+// Vazba „tenhle jistič napájí tenhle rozváděč" bydlí na řádku obvodu
+// (tr.dataset.napaji = uid cílového rozváděče). Je to jediný zdroj pravdy;
+// zadání z karty rozváděče píše do téhož řádku. Strom se z vazeb odvozuje,
+// nikde se neukládá — takže nemůže zestárnout.
+// ═══════════════════════════════════════════════════════════════════════
+
+function rozvKarty() {
+  return Array.prototype.slice.call(document.querySelectorAll('#rozvadece-container [data-rozvadec-id]'));
+}
+
+// Porovnání názvů rozváděčů: nezáleží na velikosti písmen, mezerách,
+// pomlčkách ani tečkách — „RM-2", „rm 2" i „RM2" je totéž.
+function stromNorm(s) {
+  return String(s || '').toLowerCase().replace(/[\s\-_.]/g, '');
+}
+
+function stromCislo(s) {
+  var m = String(s || '').replace(',', '.').match(/\d+(\.\d+)?/);
+  return m ? parseFloat(m[0]) : null;
+}
+
+// Popisek jističe ve stromu: „FA3 — vývod pro RM2 (B 32 A)".
+// Označení bývá jen pořadové číslo, samo o sobě by nic neřeklo.
+function stromPopisJistice(v) {
+  var casti = [];
+  var oz = String(v.oznaceni || '').trim();
+  var nz = String(v.nazevObvodu || '').trim();
+  if (oz && nz) casti.push(oz + ' — ' + nz);
+  else casti.push(oz || nz || 'jistič');
+  var par = [v.ch, v.a ? v.a + ' A' : ''].filter(function(x) { return String(x || '').trim(); }).join(' ');
+  return casti.join('') + (par ? ' (' + par + ')' : '');
+}
+
+function rozvInfo(karta) {
+  return {
+    karta: karta,
+    uid: karta.dataset.rozvUid || '',
+    nazev: (karta.querySelector('.rozv-nazev') || {}).value || '',
+    privod: (karta.querySelector('.rozv-privod') || {}).value || '',
+    hlJistic: (karta.querySelector('.rozv-hl-jistic') || {}).value || ''
+  };
+}
+
+// Řádky, které mohou napájet rozváděč (obvod nebo hlavička chrániče).
+// Pozor na posun vstupů: u chrániče je sloupec Ch. <select>, takže
+// jmenovitý proud je o jeden input dřív než u běžného obvodu.
+function stromRadkyKarty(karta) {
+  var out = [];
+  karta.querySelectorAll('tbody tr').forEach(function(tr) {
+    var rt = tr.dataset.rowtype || 'obvod';
+    if (rt !== 'obvod' && rt !== 'rcd-header') return;
+    var inp = tr.querySelectorAll('input');
+    var jeRcd = (rt === 'rcd-header');
+    out.push({
+      tr: tr,
+      oznaceni: inp[0] ? inp[0].value : '',
+      nazev: inp[1] ? inp[1].value : '',
+      ch: jeRcd ? ((tr.querySelector('select') || {}).value || '') : (inp[3] ? inp[3].value : ''),
+      a: jeRcd ? (inp[3] ? inp[3].value : '') : (inp[4] ? inp[4].value : ''),
+      cilUid: tr.dataset.napaji || '',
+      cilNazev: tr.dataset.napajiNazev || ''
+    });
+  });
+  return out;
+}
+
+// Sestaví strom z vazeb. Vrací i všechna upozornění — kreslení a kontroly
+// mají jeden společný výpočet, aby si nemohly odporovat.
+function rozvStromData() {
+  var karty = rozvKarty().map(rozvInfo);
+  var podleUid = {};
+  karty.forEach(function(k) { if (k.uid) podleUid[k.uid] = k; });
+
+  var rodicVazba = {};      // uid dítěte -> vazba
+  var neznameCile = [];     // vazba míří na rozváděč, který ve zprávě není
+  var duplicity = [];       // dva řádky míří na tentýž rozváděč
+
+  rozvKarty().forEach(function(karta) {
+    var zdrojUid = karta.dataset.rozvUid || '';
+    stromRadkyKarty(karta).forEach(function(r) {
+      if (!r.cilUid && !r.cilNazev) return;
+      var cil = (r.cilUid && podleUid[r.cilUid]) ? r.cilUid : '';
+      // Rozváděč mohl vzniknout až po zadání názvu — dohledat a vazbu dopnout
+      if (!cil && r.cilNazev) {
+        var hledany = stromNorm(r.cilNazev);
+        var nalez = karty.filter(function(k) { return k.nazev && stromNorm(k.nazev) === hledany; })[0];
+        if (nalez) { cil = nalez.uid; r.tr.dataset.napaji = cil; r.cilUid = cil; }
+      }
+      var vazba = { zdrojUid: zdrojUid, cilUid: cil, cilNazev: r.cilNazev,
+                    oznaceni: r.oznaceni, nazevObvodu: r.nazev, ch: r.ch, a: r.a, tr: r.tr };
+      if (!cil) { neznameCile.push(vazba); return; }
+      if (rodicVazba[cil]) { duplicity.push(vazba); return; }
+      rodicVazba[cil] = vazba;
+    });
+  });
+
+  var deti = {};
+  karty.forEach(function(k) { deti[k.uid] = []; });
+  var koreny = [];
+  karty.forEach(function(k) {
+    var v = rodicVazba[k.uid];
+    if (v && deti[v.zdrojUid]) deti[v.zdrojUid].push(k.uid);
+    else koreny.push(k.uid);
+  });
+
+  // Průchod s ochranou proti zacyklení — data z archivu můžou být pokažená
+  var radky = [], videno = {};
+  function projdi(uid, hloubka) {
+    if (videno[uid]) return;
+    videno[uid] = true;
+    radky.push({ uid: uid, hloubka: hloubka, info: podleUid[uid], vazba: rodicVazba[uid] || null });
+    (deti[uid] || []).forEach(function(d) { projdi(d, hloubka + 1); });
+  }
+  koreny.forEach(function(u) { projdi(u, 0); });
+  // Co po průchodu zbylo, leží v cyklu
+  var vCyklu = karty.filter(function(k) { return !videno[k.uid]; }).map(function(k) { return k.uid; });
+  vCyklu.forEach(function(u) { projdi(u, 0); });
+
+  // ── kontroly ────────────────────────────────────────────────────────
+  var upozorneni = [];
+  var maVazby = Object.keys(rodicVazba).length > 0;
+  koreny.forEach(function(uid) {
+    var k = podleUid[uid];
+    if (!k) return;
+    // Kořen je buď hlavní rozváděč, nebo se jen zapomnělo napsat odkud.
+    // Vyplněný „Přívod" bereme jako zaznamenané napájení — pak neotravovat.
+    if (maVazby && !(deti[uid] || []).length && !String(k.privod).trim()) {
+      upozorneni.push({ druh: 'bez-napajeni', uid: uid,
+        text: 'Rozváděč „' + (k.nazev || '(bez názvu)') + '" nemá zaznamenané napájení — doplňte, ze kterého jističe je napájený, nebo vyplňte pole Přívod.' });
+    }
+  });
+  neznameCile.forEach(function(v) {
+    upozorneni.push({ druh: 'neznamy-cil', uid: v.zdrojUid,
+      text: 'Jistič „' + (v.oznaceni || v.nazevObvodu || '?') + '" v rozváděči „' + ((podleUid[v.zdrojUid] || {}).nazev || '?') + '" míří na rozváděč „' + v.cilNazev + '", který ve zprávě není.' });
+  });
+  duplicity.forEach(function(v) {
+    upozorneni.push({ druh: 'dvakrat', uid: v.cilUid,
+      text: 'Rozváděč „' + ((podleUid[v.cilUid] || {}).nazev || '?') + '" je označený jako napájený z více míst — platí to první, zbytek zkontrolujte.' });
+  });
+  if (vCyklu.length) {
+    upozorneni.push({ druh: 'cyklus', uid: vCyklu[0],
+      text: 'Zapojení se zacyklilo (' + vCyklu.map(function(u) { return (podleUid[u] || {}).nazev || '?'; }).join(' → ') + '). Některá vazba musí být špatně.' });
+  }
+  radky.forEach(function(r) {
+    if (!r.vazba || !r.info) return;
+    var dite = stromCislo(r.info.hlJistic);
+    var nad = stromCislo(r.vazba.a);
+    if (dite && nad && dite > nad) {
+      upozorneni.push({ druh: 'proudy', uid: r.uid,
+        text: 'Rozváděč „' + r.info.nazev + '" má hlavní jistič ' + r.info.hlJistic + ' A, ale jistič, který ho napájí, je jen ' + r.vazba.a + ' A.' });
+    }
+  });
+
+  return { radky: radky, karty: karty, podleUid: podleUid, koreny: koreny,
+           rodicVazba: rodicVazba, deti: deti, vCyklu: vCyklu, upozorneni: upozorneni,
+           pocetVazeb: Object.keys(rodicVazba).length };
+}
+
+// ── vykreslení panelu ─────────────────────────────────────────────────
+function renderRozvStrom() {
+  var panel = document.getElementById('rozv-strom-panel');
+  var prepinac = document.getElementById('f_rozv_strom_zapnuto');
+  if (!panel) return;
+  if (prepinac) prepinac.checked = stromZapnut();
+  stromZajistitTlacitka();
+  if (!stromZapnut()) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  var telo = document.getElementById('rozv-strom-telo');
+  var sbalitBtn = document.getElementById('rozv-strom-sbalit');
+  if (sbalitBtn) sbalitBtn.textContent = __rozvStrom.sbaleno ? '+' : '−';
+  if (!telo) return;
+  if (__rozvStrom.sbaleno) { telo.style.display = 'none'; return; }
+  telo.style.display = '';
+
+  var d = rozvStromData();
+  if (!d.karty.length) { telo.innerHTML = '<div style="font-size:.8rem;color:var(--muted)">Zatím tu není žádný rozváděč.</div>'; return; }
+
+  var html = '<div class="strom-box">';
+  d.radky.forEach(function(r) {
+    var k = r.info || {};
+    var chybi = d.upozorneni.some(function(u) { return u.uid === r.uid && u.druh === 'bez-napajeni'; });
+    var vCyklu = d.vCyklu.indexOf(r.uid) !== -1;
+    // „hlavní rozváděč" a varování „chybí napájení" se vylučují — buď je
+    // kořen záměrný, nebo se jen zapomnělo doplnit, odkud je napájený.
+    var popisVazby = r.vazba
+      ? ' <span class="strom-jistic">← ' + esc(stromPopisJistice(r.vazba)) + '</span>'
+      : ((r.hloubka === 0 && !chybi) ? ' <span class="strom-koren">hlavní rozváděč</span>'
+        : (chybi ? ' <span class="strom-jistic">napájení není zadané</span>' : ''));
+    html += '<div class="strom-radek" style="margin-left:' + (r.hloubka * 22) + 'px" data-action="stromSkok" data-uid="' + r.uid + '">' +
+      (r.hloubka ? '<span class="strom-cara"></span>' : '') +
+      (chybi ? '<span class="strom-vykricnik">⚠</span> ' : '') +
+      (vCyklu ? '<span class="strom-vykricnik">↻</span> ' : '') +
+      '<strong>' + esc(k.nazev || '(bez názvu)') + '</strong>' + popisVazby +
+      '</div>';
+  });
+  // Vazby na rozváděče, které ve zprávě nejsou — ať nezmizí z očí
+  var chybejici = {};
+  rozvKarty().forEach(function(karta) {
+    stromRadkyKarty(karta).forEach(function(r) {
+      if (r.cilNazev && !(r.cilUid && d.podleUid[r.cilUid])) chybejici[r.cilNazev] = true;
+    });
+  });
+  Object.keys(chybejici).forEach(function(nz) {
+    html += '<div class="strom-radek strom-chybejici" style="margin-left:22px">' +
+      '<span class="strom-cara"></span>⌛ <strong>' + esc(nz) + '</strong> ' +
+      '<span class="strom-jistic">zatím není ve zprávě</span></div>';
+  });
+  html += '</div>';
+
+  if (d.upozorneni.length) {
+    html += '<div class="strom-upoz">' + d.upozorneni.map(function(u) {
+      return '<div>⚠ ' + esc(u.text) + '</div>';
+    }).join('') + '</div>';
+  }
+  telo.innerHTML = html;
+}
+
+// Tlačítko „napájí rozváděč" se přidává až sem, ne při vzniku řádku —
+// tím se nemusí sahat na všechny cesty, kterými řádek vznikne
+// (nový, kopie, obnova z archivu, přesun mezi rozváděči).
+function stromZajistitTlacitka() {
+  var zap = stromZapnut();
+  rozvKarty().forEach(function(karta) {
+    karta.querySelectorAll('tbody tr').forEach(function(tr) {
+      var rt = tr.dataset.rowtype || 'obvod';
+      var td = tr.lastElementChild;
+      if (!td) return;
+      var btn = td.querySelector('.napaji-btn');
+      if (rt !== 'obvod' && rt !== 'rcd-header') { if (btn) btn.remove(); return; }
+      if (!zap) { if (btn) btn.remove(); tr.classList.remove('ma-napajeni'); return; }
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.className = 'del-btn napaji-btn';
+        btn.dataset.action = 'stromPriradit';
+        btn.style.cssText = 'color:#2B579A;font-size:.72rem;margin-right:2px';
+        td.insertBefore(btn, td.firstChild);
+      }
+      var ma = !!(tr.dataset.napaji || tr.dataset.napajiNazev);
+      btn.textContent = ma ? '🔌' : '⊕';
+      btn.title = ma ? 'Tento jistič napájí rozváděč — kliknutím změníte' : 'Napájí tento jistič nějaký rozváděč?';
+      tr.classList.toggle('ma-napajeni', ma);
+    });
+  });
+}
+
+// ── ovládání ──────────────────────────────────────────────────────────
+function stromPrepnout(el) {
+  __rozvStrom.zapnuto = !!(el && el.checked);
+  window.__formDirty = true;
+  renderRozvStrom();
+  if (typeof updateUlozitStav === 'function') updateUlozitStav();
+}
+
+function stromSbalit() {
+  __rozvStrom.sbaleno = !__rozvStrom.sbaleno;
+  renderRozvStrom();
+}
+
+function stromSkok(el) {
+  var karta = document.querySelector('#rozvadece-container [data-rozv-uid="' + (el.dataset.uid || '') + '"]');
+  if (!karta) return;
+  karta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  karta.style.transition = 'box-shadow .2s';
+  karta.style.boxShadow = '0 0 0 3px var(--accent2)';
+  setTimeout(function() { karta.style.boxShadow = ''; }, 1200);
+}
+
+// ── přiřazení rozváděče k jističi (z řádku) ───────────────────────────
+var __napajiRadek = null;
+
+function stromPriradit(el) {
+  if (window.__formReadOnly) {
+    showToast('Zpráva je dokončená — pro úpravy ji vraťte mezi rozpracované (✏️ nahoře).');
+    return;
+  }
+  var tr = el.closest('tr');
+  if (!tr) return;
+  __napajiRadek = tr;
+  var karta = el.closest('[data-rozvadec-id]');
+  var mujUid = karta ? karta.dataset.rozvUid : '';
+  var inp = tr.querySelectorAll('input');
+  var popis = (inp[0] ? inp[0].value : '') + (inp[1] && inp[1].value ? ' — ' + inp[1].value : '');
+
+  var sel = document.getElementById('napaji-vyber');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— žádný (jistič nenapájí rozváděč) —</option>';
+  var d = rozvStromData();
+  d.karty.forEach(function(k) {
+    if (!k.uid || k.uid === mujUid) return;                    // sám sebe ne
+    if (stromByVzniklCyklus(mujUid, k.uid, d)) return;          // ani do vlastní větve
+    var o = document.createElement('option');
+    o.value = k.uid;
+    o.textContent = k.nazev || '(bez názvu)';
+    sel.appendChild(o);
+  });
+  sel.value = tr.dataset.napaji || '';
+  var vlastni = document.getElementById('napaji-vlastni');
+  if (vlastni) vlastni.value = tr.dataset.napaji ? '' : (tr.dataset.napajiNazev || '');
+  var popisEl = document.getElementById('napaji-popis');
+  if (popisEl) popisEl.textContent = popis || '(řádek bez označení)';
+  var mN = document.getElementById('modal-napaji'); if (mN) mN.classList.add('open');
+}
+
+// Přiřazení nesmí vytvořit kruh: cíl nesmí být (ani nepřímo) nadřazený zdroji.
+function stromByVzniklCyklus(zdrojUid, cilUid, d) {
+  if (!zdrojUid || !cilUid) return false;
+  if (zdrojUid === cilUid) return true;
+  var videno = {}, u = zdrojUid;
+  while (u && !videno[u]) {
+    videno[u] = true;
+    var v = d.rodicVazba[u];
+    if (!v) return false;
+    if (v.zdrojUid === cilUid) return true;
+    u = v.zdrojUid;
+  }
+  return false;
+}
+
+function stromPriraditUlozit() {
+  var tr = __napajiRadek;
+  if (!tr) { closeModal('modal-napaji'); return; }
+  var sel = document.getElementById('napaji-vyber');
+  var vlastni = document.getElementById('napaji-vlastni');
+  var uid = sel ? sel.value : '';
+  var nazev = vlastni ? vlastni.value.trim() : '';
+  delete tr.dataset.napaji;
+  delete tr.dataset.napajiNazev;
+  if (uid) tr.dataset.napaji = uid;
+  else if (nazev) tr.dataset.napajiNazev = nazev;
+  __napajiRadek = null;
+  window.__formDirty = true;
+  closeModal('modal-napaji');
+  renderRozvStrom();
+  if (typeof updateUlozitStav === 'function') updateUlozitStav();
+}
+
+// ── zadání z druhé strany: „Napájen z" na kartě rozváděče ─────────────
+// Píše do TÉHOŽ řádku v nadřazeném rozváděči — jeden zdroj pravdy.
+function stromNaplnitNapajenZ() {
+  if (!stromZapnut()) {
+    document.querySelectorAll('.rozv-napajeni').forEach(function(w) { w.style.display = 'none'; });
+    return;
+  }
+  var d = rozvStromData();
+  rozvKarty().forEach(function(karta) {
+    var wrap = karta.querySelector('.rozv-napajeni');
+    if (wrap) wrap.style.display = 'flex';
+    var selR = karta.querySelector('.rozv-napajen-z');
+    var selJ = karta.querySelector('.rozv-napajen-jistic');
+    if (!selR || !selJ) return;
+    var mujUid = karta.dataset.rozvUid;
+    var vazba = d.rodicVazba[mujUid];
+    selR.innerHTML = '<option value="">— není zadáno —</option>';
+    d.karty.forEach(function(k) {
+      if (!k.uid || k.uid === mujUid) return;
+      if (stromByVzniklCyklus(k.uid, mujUid, d)) return;
+      var o = document.createElement('option');
+      o.value = k.uid; o.textContent = k.nazev || '(bez názvu)';
+      selR.appendChild(o);
+    });
+    selR.value = vazba ? vazba.zdrojUid : '';
+    stromNaplnitJistice(karta, selR.value, vazba ? vazba.tr : null);
+  });
+}
+
+function stromNaplnitJistice(karta, zdrojUid, vybranyTr) {
+  var selJ = karta.querySelector('.rozv-napajen-jistic');
+  if (!selJ) return;
+  selJ.innerHTML = '<option value="">— vyberte jistič —</option>';
+  if (!zdrojUid) { selJ.disabled = true; return; }
+  selJ.disabled = false;
+  var zdroj = document.querySelector('#rozvadece-container [data-rozv-uid="' + zdrojUid + '"]');
+  if (!zdroj) return;
+  stromRadkyKarty(zdroj).forEach(function(r, i) {
+    var o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = (r.oznaceni || ('řádek ' + (i + 1))) + (r.nazev ? ' — ' + r.nazev : '');
+    if (vybranyTr && r.tr === vybranyTr) o.selected = true;
+    selJ.appendChild(o);
+  });
+}
+
+function rozvNapajenZ(el) {
+  var karta = el.closest('[data-rozvadec-id]');
+  if (!karta) return;
+  stromOdpojit(karta.dataset.rozvUid);
+  stromNaplnitJistice(karta, el.value, null);
+  if (!el.value) { renderRozvStrom(); return; }
+  // Bez vybraného jističe zatím nic nezapisuj — uživatel ho vybere hned potom
+  renderRozvStrom();
+}
+
+function rozvNapajenJistic(el) {
+  var karta = el.closest('[data-rozvadec-id]');
+  if (!karta) return;
+  var mujUid = karta.dataset.rozvUid;
+  var selR = karta.querySelector('.rozv-napajen-z');
+  var zdrojUid = selR ? selR.value : '';
+  stromOdpojit(mujUid);
+  if (!zdrojUid || el.value === '') { renderRozvStrom(); return; }
+  var zdroj = document.querySelector('#rozvadece-container [data-rozv-uid="' + zdrojUid + '"]');
+  if (!zdroj) return;
+  var radky = stromRadkyKarty(zdroj);
+  var r = radky[parseInt(el.value, 10)];
+  if (!r) return;
+  r.tr.dataset.napaji = mujUid;
+  delete r.tr.dataset.napajiNazev;
+  window.__formDirty = true;
+  renderRozvStrom();
+  stromNaplnitNapajenZ();
+}
+
+// Zruší všechny vazby mířící na daný rozváděč
+function stromOdpojit(uid) {
+  if (!uid) return;
+  document.querySelectorAll('#rozvadece-container tbody tr[data-napaji="' + uid + '"]').forEach(function(tr) {
+    delete tr.dataset.napaji;
+  });
+}
+
+// ── 🔍 Najít napojení podle názvů obvodů ──────────────────────────────
+// V reálných zprávách se obvody jmenují „vývod pro RM2" nebo „přívod
+// rozváděč RS1". Program nálezy jen NABÍDNE — zapíše se, co uživatel
+// odsouhlasí. Nikdy nic nepřepíše sám.
+var __najitNalezy = [];
+
+function stromNajit() {
+  if (window.__formReadOnly) {
+    showToast('Zpráva je dokončená — pro úpravy ji vraťte mezi rozpracované (✏️ nahoře).');
+    return;
+  }
+  var d = rozvStromData();
+  // Delší názvy napřed, jinak by „RM1" chytlo i „RM10"
+  var cile = d.karty.filter(function(k) { return k.uid && String(k.nazev).trim(); })
+    .sort(function(a, b) { return stromNorm(b.nazev).length - stromNorm(a.nazev).length; });
+  __najitNalezy = [];
+  rozvKarty().forEach(function(karta) {
+    var mujUid = karta.dataset.rozvUid;
+    stromRadkyKarty(karta).forEach(function(r) {
+      if (r.cilUid || r.cilNazev) return;              // co je zadané, nechat být
+      // Hledá se v NÁZVU obvodu a v označení zvlášť — kdyby se slepily
+      // dohromady, „vývod pro RM10" + označení „1" by dalo „…rm101"
+      // a pojistka proti záměně RM1/RM10 by nález zahodila.
+      var texty = [stromNorm(r.nazev), stromNorm(r.oznaceni)].filter(Boolean);
+      if (!texty.length) return;
+      for (var i = 0; i < cile.length; i++) {
+        var k = cile[i];
+        if (k.uid === mujUid) continue;
+        var hledany = stromNorm(k.nazev);
+        if (hledany.length < 2) continue;
+        var sedi = texty.some(function(t) {
+          var poz = t.indexOf(hledany);
+          if (poz === -1) return false;
+          // Nesmí to být jen část delšího označení: „rm1" uvnitř „rm10"
+          var zaNim = t.charAt(poz + hledany.length);
+          if (zaNim && /[0-9]/.test(zaNim) && /[0-9]/.test(hledany.charAt(hledany.length - 1))) return false;
+          return true;
+        });
+        if (!sedi) continue;
+        if (d.rodicVazba[k.uid]) continue;             // už je odněkud napájený
+        if (stromByVzniklCyklus(mujUid, k.uid, d)) continue;
+        __najitNalezy.push({ tr: r.tr, zdrojNazev: rozvInfo(karta).nazev, oznaceni: r.oznaceni,
+                             nazevObvodu: r.nazev, cilUid: k.uid, cilNazev: k.nazev });
+        break;
+      }
+    });
+  });
+
+  var telo = document.getElementById('najit-telo');
+  if (!telo) return;
+  if (!__najitNalezy.length) {
+    telo.innerHTML = '<div class="info-box">Nic k napojení jsem nenašel. Program hledá název rozváděče v názvu obvodu — třeba obvod „vývod pro RM2" a rozváděč „RM2". Vazby, které už zadané jsou, nechává být.</div>';
+  } else {
+    telo.innerHTML = '<div class="info-box">Zapíšou se jen zaškrtnuté řádky. Nic, co už máte zadané, se nepřepíše.</div>' +
+      __najitNalezy.map(function(n, i) {
+        return '<label style="display:flex;gap:.5rem;align-items:flex-start;padding:.4rem .2rem;border-bottom:1px solid var(--border);font-size:.84rem">' +
+          '<input type="checkbox" class="najit-ok" data-idx="' + i + '" checked style="margin-top:.2rem">' +
+          '<span><strong>' + esc(n.zdrojNazev || '?') + '</strong> · jistič <strong>' + esc(n.oznaceni || '?') + '</strong>' +
+          (n.nazevObvodu ? ' <span style="color:var(--muted)">(' + esc(n.nazevObvodu) + ')</span>' : '') +
+          ' &nbsp;→&nbsp; napájí <strong>' + esc(n.cilNazev) + '</strong></span></label>';
+      }).join('');
+  }
+  var mF = document.getElementById('modal-najit'); if (mF) mF.classList.add('open');
+}
+
+function stromNajitPotvrdit() {
+  var zapsano = 0;
+  document.querySelectorAll('#modal-najit .najit-ok:checked').forEach(function(cb) {
+    var n = __najitNalezy[parseInt(cb.dataset.idx, 10)];
+    if (!n || !n.tr) return;
+    n.tr.dataset.napaji = n.cilUid;
+    delete n.tr.dataset.napajiNazev;
+    zapsano++;
+  });
+  closeModal('modal-najit');
+  __najitNalezy = [];
+  if (zapsano) {
+    window.__formDirty = true;
+    renderRozvStrom();
+    stromNaplnitNapajenZ();
+    if (typeof updateUlozitStav === 'function') updateUlozitStav();
+    showToast('Zapsáno napojení: ' + zapsano + (zapsano === 1 ? ' vazba' : (zapsano < 5 ? ' vazby' : ' vazeb')));
+  }
+}
+
+// ── ↕ Seřadit karty podle stromu ──────────────────────────────────────
+// Nikdy se nespustí samo (rozhodnutí uživatele) a jde vzít zpět.
+function stromSeradit() {
+  var d = rozvStromData();
+  if (!d.pocetVazeb) {
+    alert('Zatím není zadané žádné napojení, podle kterého by se dalo řadit.\n\nPřiřaďte jističům rozváděče (tlačítko ⊕ na řádku), nebo zkuste „🔍 Najít napojení".');
+    return;
+  }
+  var container = document.getElementById('rozvadece-container');
+  if (!container) return;
+  var puvodni = rozvKarty();
+  if (!confirm('Seřadit karty rozváděčů podle zapojení?\n\nPořadí bude hlavní rozváděč → jeho podružné → jejich podružné.\nSoučasné pořadí se tím přepíše — vzít zpět půjde hned potom.')) return;
+  var zaloha = puvodni.slice();
+  d.radky.forEach(function(r) {
+    var karta = document.querySelector('#rozvadece-container [data-rozv-uid="' + r.uid + '"]');
+    if (karta) container.appendChild(karta);
+  });
+  renumberRozvadece();
+  renderRozvStrom();
+  window.__formDirty = true;
+  showToast('Rozváděče seřazeny podle zapojení', {
+    actionLabel: 'Zpět',
+    action: function() {
+      zaloha.forEach(function(k) { container.appendChild(k); });
+      renumberRozvadece(); renderRozvStrom();
+      showToast('Pořadí vráceno');
+    },
+    timeout: 12000
+  });
+}
+
+// Strom pro PDF se staví z dat zprávy, ne z obrazovky — zpráva se může
+// generovat i z archivu, kdy formulář ukazuje něco jiného.
+// Tiskne se, JEN když je provázání zapnuté A existuje aspoň jedna vazba;
+// starší zprávy tak vyjdou znak po znaku stejně jako dřív.
+function stromZDat(D) {
+  var rozv = (D && D.rozvadece) || [];
+  if (!rozv.length) return null;
+  var podleUid = {};
+  rozv.forEach(function(r) { if (r.uid) podleUid[r.uid] = r; });
+  var rodic = {};
+  rozv.forEach(function(r) {
+    (r.mereni || []).forEach(function(m) {
+      if (!m || !m.napaji) return;
+      if (!podleUid[m.napaji]) return;
+      if (rodic[m.napaji]) return;
+      rodic[m.napaji] = { zdrojUid: r.uid, oznaceni: m.c || '', nazevObvodu: m.n || '',
+                          ch: m.ch || '', a: m.a || '' };
+    });
+  });
+  if (!Object.keys(rodic).length) return null;
+  var deti = {};
+  rozv.forEach(function(r) { deti[r.uid] = []; });
+  var koreny = [];
+  rozv.forEach(function(r) {
+    var v = rodic[r.uid];
+    if (v && deti[v.zdrojUid]) deti[v.zdrojUid].push(r.uid);
+    else koreny.push(r.uid);
+  });
+  var radky = [], videno = {};
+  function projdi(uid, h) {
+    if (videno[uid]) return;
+    videno[uid] = true;
+    radky.push({ uid: uid, hloubka: h, rozv: podleUid[uid], vazba: rodic[uid] || null });
+    (deti[uid] || []).forEach(function(d) { projdi(d, h + 1); });
+  }
+  koreny.forEach(function(u) { projdi(u, 0); });
+  rozv.forEach(function(r) { if (!videno[r.uid]) projdi(r.uid, 0); });   // pojistka proti cyklu
+  return radky;
+}
+
+function stromProPdf(D) {
+  if (!D || !D.rozvStrom || !D.rozvStrom.zapnuto) return '';
+  var radky = stromZDat(D);
+  if (!radky) return '';
+  var html = '<div class="pdf-strom" style="margin:0 2mm 4mm">' +
+    '<div style="font-size:9.5pt;font-weight:bold;margin-bottom:1.5mm">Zapojení rozváděčů</div>';
+  radky.forEach(function(r) {
+    var jm = (r.rozv && r.rozv.nazev) || '(bez názvu)';
+    var pop = r.vazba
+      ? ' <span style="color:#555;font-size:8pt">← ' + esc(stromPopisJistice(r.vazba)) + '</span>'
+      : (r.hloubka === 0 ? ' <span style="color:#555;font-size:8pt">hlavní rozváděč</span>' : '');
+    html += '<div style="position:relative;font-size:9pt;padding:.6mm 0 .6mm 0;margin-left:' + (r.hloubka * 6) + 'mm">' +
+      (r.hloubka ? '<span style="position:absolute;left:-4mm;top:0;width:3mm;height:2.2mm;border-left:.4pt solid #888;border-bottom:.4pt solid #888"></span>' : '') +
+      '<strong>' + esc(jm) + '</strong>' + pop +
+      ((r.rozv && r.rozv.umisteni) ? ' <span style="color:#777;font-size:8pt">— ' + esc(r.rozv.umisteni) + '</span>' : '') +
+      '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// Samostatný tisk schématu — vytiskne stránku, na které strom je.
+function stromTisk() {
+  var D = getData();
+  if (!stromZDat(D)) {
+    alert('Zatím není zadané žádné napojení, takže není co tisknout.\n\nPřiřaďte jističům rozváděče (tlačítko ⊕ na řádku), nebo zkuste „🔍 Najít napojení".');
+    return;
+  }
+  showToast('Připravuji schéma…');
+  generujPDF();
+  setTimeout(function() {
+    var container = document.getElementById('pdf-pages');
+    if (!container) return;
+    var stranky = Array.prototype.slice.call(container.querySelectorAll('.a4'))
+      .filter(function(p) { return p.querySelector('.pdf-strom'); });
+    if (!stranky.length) { alert('Schéma se v PDF nenašlo.'); return; }
+    renderPagesToPDF(stranky, 'RZ_' + (D.ev_cislo || 'zprava') + '_schema-rozvadecu.pdf', { kvalita: 'tisk' });
+  }, 1400);
 }
 
 function delRozvadec(el) {
   var id = el.dataset.rozvadec;
   var div = document.querySelector('[data-rozvadec-id="' + id + '"]');
   if (!div) return;
-  deleteWithUndo(div, 'Rozváděč smazán (včetně obvodů)', renumberRozvadece);
+  deleteWithUndo(div, 'Rozváděč smazán (včetně obvodů)', function() {
+    renumberRozvadece(); renderRozvStrom(); stromNaplnitNapajenZ();
+  });
 }
 
 // ═══ ŘAZENÍ ROZVÁDĚČŮ ════════════════════════════════════════════════════
@@ -5446,6 +6156,11 @@ function copyRozvadec(el) {
   var novyId = 'rozv-' + rozvadecCounter;
   var klon = orig.cloneNode(true);
   klon.dataset.rozvadecId = novyId;
+  // Kopie je jiný rozváděč — vlastní uid, jinak by strom nepoznal, který
+  // z nich je který. Odchozí vazby v řádcích se kopírují (kopie napájí
+  // totéž), PŘÍCHOZÍ vazba se nepřebírá: nadřazený jistič napájí pořád
+  // jen originál a uživatel kopii přiřadí sám.
+  klon.dataset.rozvUid = genRozvUid();
   // Tlačítka uvnitř kopie musí ukazovat na kopii, ne na originál
   klon.querySelectorAll('[data-rozvadec]').forEach(function(b) { b.dataset.rozvadec = novyId; });
 
@@ -5484,6 +6199,8 @@ function copyRozvadec(el) {
 
   renumberRozvadece();
   renumberRows(tb);
+  renderRozvStrom();
+  stromNaplnitNapajenZ();
   window.__formDirty = true;
   if (typeof updateUlozitStav === 'function') updateUlozitStav();
   var pocet = klon.querySelectorAll('tbody tr[data-rowtype="obvod"], tbody tr[data-rowtype="rcd-header"]').length;
@@ -5722,6 +6439,7 @@ function initRowDnd(tr, tbodyInit) {
     // Po přetažení do jiného rozváděče se musí přečíslovat i ten,
     // ze kterého řádek odešel.
     if (zdroj && zdroj !== cil) renumberRows(zdroj);
+    if (typeof renderRozvStrom === 'function') renderRozvStrom();
     if (typeof window.__formDirty !== 'undefined') window.__formDirty = true;
   });
 }
@@ -8663,10 +9381,14 @@ function getData() {
         ik: ik ? ik.value.trim() : ''
       };
     });
+    var hlJisticEl = card.querySelector('.rozv-hl-jistic');
     var rozv = {
+      // uid drží vazbu „kdo koho napájí" — viz genRozvUid()
+      uid: card.dataset.rozvUid || '',
       nazev: nazevEl ? nazevEl.value : '',
       umisteni: umistEl ? umistEl.value : '',
       privod: privodEl ? privodEl.value : '',
+      hlavniJistic: hlJisticEl ? hlJisticEl.value : '',
       faze: faze,
       // Režim číslování patří rozváděči — přenáší se se zprávou (i mezi
       // techniky) a přežije přeskládání rozváděčů
@@ -8677,10 +9399,14 @@ function getData() {
       var inp = tr.querySelectorAll('input');
       var rowtype = tr.dataset.rowtype || 'obvod';
       var rcdGroup = tr.dataset.rcdGroup || '';
+      // Vazba „tenhle jistič napájí tenhle rozváděč" bydlí na řádku obvodu.
+      // Je to jediný zdroj pravdy — obě místa zadávání píšou sem.
+      var napaji = tr.dataset.napaji || '';
+      var napajiNazev = tr.dataset.napajiNazev || '';
       if (rowtype === 'rcd-header') {
         var sel = tr.querySelector('select');
         if (inp.length >= 15) rozv.mereni.push({
-          rowtype: rowtype, rcdGroup: rcdGroup,
+          rowtype: rowtype, rcdGroup: rcdGroup, napaji: napaji, napajiNazev: napajiNazev,
           c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: sel ? sel.value : '',
           a: inp[3].value, idn: inp[4].value, isc: inp[5].value, zsm: inp[6].value, riso: inp[7].value, rpe: inp[8].value,
           faze: inp[9].value, vyp: inp[10].value, cas: inp[11].value, t5idn: inp[12].value, ut: inp[13].value, kabel: inp[14].value
@@ -8702,7 +9428,7 @@ function getData() {
         });
       } else {
         if (inp.length >= 16) rozv.mereni.push({
-          rowtype: rowtype, rcdGroup: rcdGroup,
+          rowtype: rowtype, rcdGroup: rcdGroup, napaji: napaji, napajiNazev: napajiNazev,
           c: inp[0].value, n: inp[1].value, typ: inp[2].value, ch: inp[3].value,
           a: inp[4].value, idn: inp[5].value, isc: inp[6].value, zsm: inp[7].value, riso: inp[8].value, rpe: inp[9].value,
           faze: inp[10].value, vyp: inp[11].value, cas: inp[12].value, t5idn: inp[13].value, ut: inp[14].value, kabel: inp[15].value
@@ -8783,6 +9509,7 @@ function getData() {
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
     lps: collectLpsData(),
     stroje: collectStrojeData(),
+    rozvStrom: { zapnuto: stromZapnut(), sbaleno: !!(__rozvStrom && __rozvStrom.sbaleno) },
     odberatel_id: window.__aktualniOdberatelId || '',
     // Checklist checkboxy — Popis instalace (och-), Prohlídka (chk-),
     // Napěťová soustava (ns-), Normy (n-csnXXXX). Bez nich se po načtení
@@ -9799,6 +10526,7 @@ function generujPDF() {
     '</tr><tr><th>Značka</th><th>Ch./Typ</th><th>A</th><th>IΔn</th><th>Isc<br>kA</th><th>Fáze</th><th>Vyp.<br>mA</th><th>čas<br>ms</th><th>5×IΔn<br>tvyp. ms</th><th>Ut<br>(V)</th></tr></thead>';
 
   var rozvadeceHtml = '<div class="sec-head"><div class="sec-num">' + secBase + '.</div><div class="sec-name">Naměřené hodnoty</div></div>';
+  rozvadeceHtml += stromProPdf(D);
   rozvList.forEach(function(rozv, ri) {
     var mereniRows = renderMereniRows(rozv.mereni || []);
     rozvadeceHtml += '<div data-rozv="' + ri + '">';
@@ -11634,6 +12362,12 @@ function nacistData(D) {
   // Restore LPS data (pokud jsou)
   if (D.lps) restoreLpsData(D.lps);
   if (D.stroje) restoreStrojeData(D.stroje);
+  // Strom rozváděčů: obnova je dlouhá a jednotlivé addRozvadec() si strom
+  // překreslují průběžně (tehdy ještě bez vyplněných názvů). Poslední slovo
+  // proto musí mít překreslení až po dokončení celé obnovy.
+  renderRozvStrom();
+  stromNaplnitNapajenZ();
+  setTimeout(function() { renderRozvStrom(); stromNaplnitNapajenZ(); }, 0);
   // Restore pristroje
   var pb = document.getElementById('pristroje-body');
   if (pb) pb.innerHTML = '';
@@ -11642,6 +12376,11 @@ function nacistData(D) {
   }
   // Přepsat přístroje vlastními uloženými z profilu (stejná logika jako u technika)
   if (STORE.pristroje && STORE.pristroje.length > 0) propsatPristroje();
+  // Provázání rozváděčů: zpráva uložená dřív, než funkce vznikla, klíč
+  // nemá — a musí zůstat vypnuté, aby se starým zprávám nic nezměnilo.
+  __rozvStrom = (D.rozvStrom && typeof D.rozvStrom === 'object')
+    ? { zapnuto: !!D.rozvStrom.zapnuto, sbaleno: !!D.rozvStrom.sbaleno }
+    : { zapnuto: false, sbaleno: false };
   // Restore rozvadece
   var rc = document.getElementById('rozvadece-container');
   if (rc) rc.innerHTML = '';
@@ -11652,10 +12391,15 @@ function nacistData(D) {
       var cards = rc.querySelectorAll('.scard');
       var lastCard = cards[cards.length - 1];
       if (!lastCard) return;
+      // uid ze zprávy; starší zprávy ho nemají — dostanou nové, na vazbách
+      // to nic nemění (žádné tam nejsou)
+      lastCard.dataset.rozvUid = rozv.uid || genRozvUid();
       var nazevEl = lastCard.querySelector('.rozv-nazev');
       var umistEl = lastCard.querySelector('.rozv-umisteni');
+      var hlJ = lastCard.querySelector('.rozv-hl-jistic');
       if (nazevEl) nazevEl.value = rozv.nazev || '';
       if (umistEl) umistEl.value = rozv.umisteni || '';
+      if (hlJ) hlJ.value = rozv.hlavniJistic || '';
       // Režim číslování ze zprávy. Starší zprávy (bez údaje) se posoudí
       // podle dat: obsahuje-li sloupec Č. nečíselné označení (FA1, 1a…),
       // jde o vlastní číslování a nesmí se přepsat — ani u zpráv od kolegů.
@@ -11692,12 +12436,14 @@ function nacistData(D) {
           var trR = document.createElement('tr');
           trR.dataset.rowtype = 'rcd-header';
           trR.dataset.rcdGroup = gid;
+          if (m.napaji) trR.dataset.napaji = m.napaji;
+          if (m.napajiNazev) trR.dataset.napajiNazev = m.napajiNazev;
           trR.style.background = '#f0f6ff';
           trR.appendChild(mkTd('')); trR.querySelector('input').value = m.c || '';
           trR.appendChild(mkTd('', ';text-align:left')); trR.querySelectorAll('input')[1].value = m.n || '';
           trR.appendChild(mkTd('')); trR.querySelectorAll('input')[2].value = m.typ || '';
           var chTd = mkSelectTd(['A','AC','B','F','B/A','B/AC','C/A','C/AC'], m.ch || 'A', function() {
-            addRcdSubRows(tbody, trR, this.value, gid);
+            rcdTypZmenen(this);
           });
           trR.appendChild(chTd);
           // Prázdné Riso zůstává prázdné — smazání hodnoty musí přežít
@@ -11760,6 +12506,8 @@ function nacistData(D) {
           addMereniRowTo(tbody);
           var lastTr = tbody.lastElementChild;
           if (lastTr) {
+            if (m.napaji) lastTr.dataset.napaji = m.napaji;
+            if (m.napajiNazev) lastTr.dataset.napajiNazev = m.napajiNazev;
             var inps = lastTr.querySelectorAll('input');
             // Prázdné Riso zůstává prázdné — smazání hodnoty („neměřeno")
             // musí přežít uložení a nové otevření zprávy.
@@ -15967,6 +16715,17 @@ document.addEventListener('click', function(e) {
     case 'strojUlozitVychozi': strojUlozitVychozi(el); break;
     case 'delRozvadec': delRozvadec(el); break;
     case 'copyRozvadec': copyRozvadec(el); break;
+    case 'stromPrepnout': stromPrepnout(el); break;
+    case 'stromSbalit': stromSbalit(); break;
+    case 'stromSkok': stromSkok(el); break;
+    case 'stromPriradit': stromPriradit(el); break;
+    case 'stromPriraditUlozit': stromPriraditUlozit(); break;
+    case 'zavritNapaji': closeModal('modal-napaji'); break;
+    case 'stromNajit': stromNajit(); break;
+    case 'stromNajitPotvrdit': stromNajitPotvrdit(); break;
+    case 'zavritNajit': closeModal('modal-najit'); break;
+    case 'stromSeradit': stromSeradit(); break;
+    case 'stromTisk': stromTisk(); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;
@@ -16019,6 +16778,9 @@ document.addEventListener('change', function(e) {
   if (el.id === 'f_druh') updateDuvodMimoradne();
   if (el.id === 'lps_jimaci') updateLpsMrizka();
   if (el.id === 'f_stroje_rozsah') strojeAktualizovatRozsah();
+  if (el.classList && el.classList.contains('rozv-napajen-z')) rozvNapajenZ(el);
+  if (el.classList && el.classList.contains('rozv-napajen-jistic')) rozvNapajenJistic(el);
+  if (el.id === 'f_rozv_strom_zapnuto') stromPrepnout(el);
   // Auto-save + dirty flag při změně
   if (el.closest('#screen-form')) { autoSave(); window.__formDirty = true; updateUlozitStav(); }
 });
@@ -16076,6 +16838,20 @@ document.addEventListener('input', function(e) {
     el.dataset.dlTouched = '1';
   }
 }, true);
+
+// Strom bere popisky z polí, takže po jejich změně musí přepočítat.
+// Odloženě, ať se to nepočítá při každém stisku klávesy.
+var __stromTimer = null;
+document.addEventListener('input', function(e) {
+  if (!stromZapnut()) return;
+  var el = e.target;
+  if (!el || !el.closest || !el.closest('#rozvadece-container')) return;
+  clearTimeout(__stromTimer);
+  __stromTimer = setTimeout(function() {
+    renderRozvStrom();
+    if (el.classList && el.classList.contains('rozv-nazev')) stromNaplnitNapajenZ();
+  }, 350);
+});
 document.addEventListener('focusout', function(e) {
   var el = e.target;
   if (!(el && el.tagName === 'INPUT' && el.hasAttribute('list'))) return;
