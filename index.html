@@ -917,7 +917,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.36<span class="ver-date"> · 2026-09-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.37<span class="ver-date"> · 2026-09-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1016,6 +1016,22 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-09-10">
+    <div class="scard-title">🔌 Rozváděče — kopie, přesun obvodů a strom zapojení <span class="nov-datum">10. 9. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V tabu <strong>E. Měření</strong> se toho změnilo víc najednou. Nově si můžete <strong>provázat rozváděče podle skutečného zapojení</strong> — u jističe řeknete, který podružný rozváděč napájí, a program nakreslí strom, kdo koho napájí a odkud.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>⧉ Kopírovat rozváděč</strong> — vedle „Odebrat rozváděč" udělá kopii i se všemi obvody, naměřenými hodnotami a proudovými chrániči a vloží ji hned pod původní. Rozváděče se samy přečíslují.</li>
+        <li><strong>Obvod přetáhnete do jiného rozváděče</strong> — chytnete řádek za úchyt ⠿ a pustíte ho v tabulce druhého rozváděče. Vezme si s sebou naměřené hodnoty a obě tabulky se přečíslují. Přetáhnout jde i celý proudový chránič včetně jeho fází.</li>
+        <li><strong>Strom zapojení</strong> — zaškrtnete <em>Provázat rozváděče podle zapojení</em> a nad kartami se objeví přehled. Vazbu zadáte buď tlačítkem <strong>⊕</strong> u řádku obvodu, nebo polem <em>Napájen z</em> na kartě rozváděče — je to jedno a totéž. Klepnutím na větev skočíte na příslušný rozváděč.</li>
+        <li><strong>🔍 Najít napojení</strong> — projde názvy obvodů („vývod pro RM2") a nabídne nalezené vazby ke schválení. Zapíšou se jen zaškrtnuté, nic se nepřepíše samo.</li>
+        <li><strong>Program hlídá, co nesedí</strong>: rozváděč, u kterého není řečeno, odkud je napájený; vazbu na rozváděč, který ve zprávě není; a jistič menší, než je hlavní jistič podružného rozváděče. Jsou to upozornění, posouzení zůstává na vás.</li>
+        <li><strong>Strom se tiskne do zprávy</strong> na začátku kapitoly Naměřené hodnoty a jde vytisknout i <strong>samostatně</strong> jako přehled pro provoz. Tlačítkem <em>↕ Seřadit karty</em> si můžete rozváděče přeskládat podle zapojení (ptá se předem a jde vzít zpět).</li>
+        <li>U <strong>starších zpráv z archivu</strong> je provázání vypnuté, aby se v nich nic nezměnilo — kdykoli si ho můžete zapnout, i zase vypnout. Vypnutí zadané vazby nemaže.</li>
+      </ul>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-09-02">
