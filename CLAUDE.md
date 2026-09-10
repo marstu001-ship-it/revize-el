@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.37 · 2026-09-10**
+**Aktuální verze: v9.38 · 2026-09-10**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -216,7 +216,26 @@ který podružný rozváděč napájí, a z toho se odvodí strom.
 - **Překreslení po načtení z archivu musí být odložené** (`setTimeout 0`) —
   `addRozvadec()` si strom překresluje průběžně, tehdy ještě bez vyplněných
   názvů, a bez odloženého překreslení zůstane v panelu „(bez názvu)".
-- Testy: `test-strom-rozvadecu.js` (27 kontrol), `test-strom-model.js` (10).
+- **Vazba je SEZNAM, ne jedna hodnota** (v9.38) — jedno jištění může napájet
+  víc podružných rozváděčů paralelně. V `dataset` čárkou oddělené uid,
+  v datech pole. Vše prochází přes `napajiSeznam(tr)` / `napajiZapsat(tr, uidy,
+  nazvy)` a `naSeznam(x)`. **`naSeznam` musí přijmout i řetězec** — zprávy
+  uložené ve v9.36 mají `napaji` jako jedinou hodnotu a jinak by o vazby
+  přišly (hlídá `test-v936-compat.js`).
+- **Vazbu má i „jiný řádek"** (`rowtype: 'info'`) — v reálné zprávě je
+  napájení podružného rozváděče popsané právě jím („Pojistky 3x80A SPH 00",
+  „Vývod kabelem CYKY 4Bx6mm2 do rozváděče RMS2"). Popisek ve stromu je jeho
+  text z obou sloupců; **jmenovitý proud nemá, takže se u něj kontrola
+  nesouladu proudů neprovede** — `stromCislo('')` vrátí `null` a program si
+  nic nedomýšlí z textu (rozhodnutí uživatele 2026-09-10).
+- **„Najít napojení" nedělá `break` po první shodě** — jeden řádek může vést
+  k víc rozváděčům (info řádek „…do rozváděče RMS2 a RMS3" najde oba).
+  Prohledávají se čtyři texty zvlášť: název obvodu, označení a oba sloupce
+  jiného řádku.
+- Varování **„napájen z více míst"** platí jen pro dva RŮZNÉ řádky mířící na
+  týž rozváděč. Jeden řádek s víc cíli je legitimní paralelní napájení.
+- Testy: `test-strom-rozvadecu.js` (41 kontrol), `test-strom-model.js` (11),
+  `test-v936-compat.js` (6).
 
 ## Rozváděče — kopie a přesun obvodů mezi nimi (v9.35)
 
