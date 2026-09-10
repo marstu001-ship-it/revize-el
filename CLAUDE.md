@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.38 · 2026-09-10**
+**Aktuální verze: v9.39 · 2026-09-10**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -234,8 +234,71 @@ který podružný rozváděč napájí, a z toho se odvodí strom.
   jiného řádku.
 - Varování **„napájen z více míst"** platí jen pro dva RŮZNÉ řádky mířící na
   týž rozváděč. Jeden řádek s víc cíli je legitimní paralelní napájení.
+- **`rozvStromData()` NESMÍ zapisovat do DOM** (v9.39). Do v9.38 při kreslení
+  překlápěla čekající názvy na uid — a protože odložené překreslení
+  v `nacistData` běží až po `setFormReadOnly(true)`, měnila data
+  i **dokončené (zamčené) zprávě**, aniž by se to označilo jako neuložené.
+  Překlopení dělá `stromDopnoutNazvy()`, které se volá **jen z akcí
+  uživatele** (uložení dialogu, „Najít napojení", přidání/smazání rozváděče)
+  a hned na začátku má `if (window.__formReadOnly) return;`.
+- **Nedohledaný název se nesmí zahodit.** Existuje-li rozváděč toho jména,
+  ale je napájený odjinud, zůstane text v řádku a vyleze jako upozornění —
+  dialog slibuje „až rozváděč vznikne, program si je sám propojí".
+- **Smazaný rozváděč nechává v řádcích své uid** (aby šlo vzetí zpět), ale
+  `stromZajistitTlacitka()` počítá **jen živé cíle** — jinak tlačítko lže
+  („Napájí 1 rozváděč") a řádek zůstane modrý. Strom hlásí `mrtvy-cil`.
+- **`setFormReadOnly` do v9.38 vynechával `<select>`.** `readOnly` na nich
+  nefunguje a CSS `pointer-events:none` neblokuje Tab + šipky, takže přes
+  rozbalovátka „Napájen z" šlo zamčenou zprávu rozbít z klávesnice (a rovnou
+  se to autosavlo). Musí být `disabled` + `data-ro-lock-sel` pro ty, které
+  jsou zamčené už z výroby.
+- **Tlačítka, která jen čtou** (🖨️ Schéma rozváděčů, sbalit panel), mají
+  třídu `ro-ok` — CSS pravidlo `#screen-form.form-readonly .tab-panel button
+  {display:none}` je jinak schová i u dokončené zprávy.
+- **`rozvNapajenZ` nesmí odpojovat předem.** Výběr rozváděče jen naplní
+  nabídku jističů; vazba se přepíše, teprve až je jistič vybraný. Výjimka je
+  „— není zadáno —", to je vědomé odpojení.
+- **Po smazání řádku a po přetažení mezi rozváděči** se musí zavolat
+  i `stromNaplnitNapajenZ()` — jinak selecty ukazují starého rodiče.
+  V `deleteRowsWithUndo` to jede přes `jeTabulkaObvodu(tbody)`, aby se to
+  netýkalo dokumentace, přístrojů ani strojů.
+- **Popisek „hlavní rozváděč" jen když existuje aspoň jedna vazba**
+  (`d.pocetVazeb`) — u čerstvé zprávy jinak svítí u každé karty.
+- **`stromPrepnout` se volá jen z `change`**, ne i z click delegace — checkbox
+  posílá obojí a strom se přepočítával dvakrát na jedno kliknutí.
 - Testy: `test-strom-rozvadecu.js` (41 kontrol), `test-strom-model.js` (11),
-  `test-v936-compat.js` (6).
+  `test-v936-compat.js` (6), `test-strom-oprava.js` (33 — opravy v9.39).
+
+## Samostatný tisk schématu rozváděčů (v9.39)
+
+**Samostatný výtisk NESMÍ jít přes `generujPDF()`.** Ta má tři vedlejší
+účinky: zapíše zprávu do archivu, přepne na `screen-pdf` a vysype
+`#pdf-pages`. Do v9.38 to tak „🖨️ Tisk schématu" dělal — bez ptaní uložil
+soubor a nechal uživatele stát v náhledu celé revize. Navíc je strom vsazený
+do kapitoly „Naměřené hodnoty", takže vyfiltrovaná stránka s sebou vždycky
+přinesla i tabulku měření prvního rozváděče.
+
+Schéma se proto kreslí samo, do vlastní obrazovky **`#screen-schema-pdf`**
+(lišta ← Zpět · 🖨️ Tisk přímo · 💾 Uložit PDF, kontejner
+`#schema-pdf-pages`) — přesně podle vzoru náhledu Plánu revizí.
+
+- `stromTisk()` → `schemaVykreslit(D, stromZDat(D))`; kontroluje
+  i `stromZapnut()`, ne jen existenci vazeb.
+- **`showScreen('schema-pdf')` musí předcházet měření výšky** — ve skryté
+  obrazovce mají prvky nulovou velikost a dělení stránek vyjde mimo
+  (stejná past jako u plánu).
+- Stránka se měří s `min-height:0`, jinak by každá „naměřila" 297 mm a
+  nikdy by se nic nerozdělilo. **Po dělení se `min-height` vrací**, ať list
+  v náhledu vypadá jako papír. Do PDF stejně `renderPagesToPDF` velikost
+  natvrdo přepíše.
+- Obsah listu: **hlavička** (místo revize, adresa, ev. číslo, datum revize
+  = `ukonceni` nebo `vypracovani`, technik) **+ strom + umístění** u každého
+  rozváděče. Popis jističe ve stromu tam patří — je to ta informace, odkud
+  rozváděč vede; celá tabulka měření ne.
+- **Zpět** vrací tam, odkud se přišlo — `showScreen` žádnou historii nevede,
+  takže se aktivní obrazovka zapamatuje do `__schemaZpet` PŘED přepnutím.
+- `pdfProgressShow(total, proTisk)` — u tisku overlay hlásí „Připravuji tisk",
+  ne „Ukládám PDF" (nic se neukládá).
 
 ## Rozváděče — kopie a přesun obvodů mezi nimi (v9.35)
 

@@ -334,6 +334,9 @@ tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
 #screen-form.form-readonly .tab-panel textarea,
 #screen-form.form-readonly .tab-panel select{background:#f7f6f2!important}
 #screen-form.form-readonly .tab-panel button{display:none!important}
+/* Tlačítka, která zprávu nemění (tisk schématu, sbalit panel), musí jít
+   použít i u dokončené zprávy — jinak si ji uživatel nemůže ani prohlédnout */
+#screen-form.form-readonly .tab-panel button.ro-ok{display:inline-block!important}
 #screen-form.form-readonly .drag-handle{display:none!important}
 #readonly-banner{position:sticky;top:0;z-index:50;display:flex;gap:.9rem;align-items:center;flex-wrap:wrap;
   background:#eef3fb;border:1px solid var(--accent2);border-left:5px solid var(--accent2);
@@ -917,7 +920,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.38<span class="ver-date"> · 2026-09-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.39<span class="ver-date"> · 2026-09-10</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2546,8 +2549,8 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <span style="margin-left:auto;display:flex;gap:.4rem;flex-wrap:wrap">
         <button class="add-row" data-action="stromNajit" style="font-size:.68rem;padding:.35rem .7rem;border-color:var(--accent2);color:var(--accent2)" title="Projde názvy obvodů a nabídne, který jistič který rozváděč napájí">🔍 Najít napojení</button>
         <button class="add-row" data-action="stromSeradit" style="font-size:.68rem;padding:.35rem .7rem" title="Přeskládá karty rozváděčů do pořadí podle zapojení">↕ Seřadit karty</button>
-        <button class="add-row" data-action="stromTisk" style="font-size:.68rem;padding:.35rem .7rem" title="Vytiskne samostatné schéma rozváděčů">🖨️ Tisk schématu</button>
-        <button class="del-btn" id="rozv-strom-sbalit" data-action="stromSbalit" title="Sbalit / rozbalit" style="font-size:.8rem">−</button>
+        <button class="add-row ro-ok" data-action="stromTisk" style="font-size:.68rem;padding:.35rem .7rem" title="Otevře náhled schématu rozváděčů — pak si ho vytisknete nebo uložíte">🖨️ Schéma rozváděčů</button>
+        <button class="del-btn ro-ok" id="rozv-strom-sbalit" data-action="stromSbalit" title="Sbalit / rozbalit" style="font-size:.8rem">−</button>
       </span>
     </div>
     <div id="rozv-strom-telo"></div>
@@ -2873,6 +2876,19 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <aside class="pdf-nastaveni" id="pdf-nastaveni"></aside>
     <div class="pdf-pages" id="pdf-pages"></div>
   </div>
+</div>
+
+<!-- NÁHLED SCHÉMATU ROZVÁDĚČŮ (samostatný výtisk, nejde přes generujPDF) -->
+<div class="screen" id="screen-schema-pdf">
+  <div class="pdf-toolbar">
+    <div class="pdf-toolbar-title">🔌 Náhled schématu — <span id="schema-pdf-info"></span></div>
+    <div class="pdf-actions">
+      <button class="pbtn" data-action="schemaNahledZpet" style="background:#555;border-color:#555">← Zpět</button>
+      <button class="pbtn" data-action="schemaNahledTisk" style="background:#b5291c;border-color:#b5291c" title="Vytiskne rovnou ve vyšší kvalitě, nic se do počítače neukládá">🖨️ Tisk přímo</button>
+      <button class="pbtn" data-action="schemaNahledUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
+    </div>
+  </div>
+  <div class="pdf-pages" id="schema-pdf-pages"></div>
 </div>
 
 <!-- MODAL VÝPOČET REVIZE -->
@@ -3573,13 +3589,22 @@ function deleteRowsWithUndo(rowList, label, tbody) {
   var rows = Array.prototype.slice.call(rowList);
   if (!rows.length || !tbody) return;
   var next = rows[rows.length - 1].nextSibling;
+  // Se smazaným řádkem mizí i vazba na podružný rozváděč — strom
+  // i rozbalovátka „Napájen z" se musí překreslit hned, ne až něco jiného.
+  function poZmene() {
+    if (typeof jeTabulkaObvodu !== 'function' || !jeTabulkaObvodu(tbody)) return;
+    if (typeof renderRozvStrom === 'function') renderRozvStrom();
+    if (typeof stromNaplnitNapajenZ === 'function') stromNaplnitNapajenZ();
+  }
   rows.forEach(function(r) { r.remove(); });
   renumberRows(tbody);
+  poZmene();
   window.__formDirty = true;
   showToast(label, { actionLabel: 'ZPĚT', timeout: 7000, action: function() {
     var ref = (next && next.parentNode === tbody) ? next : null;
     rows.forEach(function(r) { tbody.insertBefore(r, ref); });
     renumberRows(tbody);
+    poZmene();
     window.__formDirty = true;
   }});
 }
@@ -5394,6 +5419,8 @@ function addRozvadec() {
   // Titulky karet drží pořadí DOM (po mazání/řazení by čísla nesouhlasila)
   renumberRozvadece();
   if (container.classList.contains('razeni-mode')) initRozvadecSort(div);
+  // Rozváděč, na který nějaký jistič čekal jménem, se teď dá propojit
+  if (typeof stromDopnoutNazvy === 'function') stromDopnoutNazvy();
   renderRozvStrom();
   stromNaplnitNapajenZ();
 }
@@ -5514,6 +5541,8 @@ function rozvStromData() {
   var rodicVazba = {};      // uid dítěte -> vazba
   var neznameCile = [];     // vazba míří na rozváděč, který ve zprávě není
   var duplicity = [];       // dva řádky míří na tentýž rozváděč
+  var mrtveCile = [];       // uid rozváděče, který už ve zprávě není
+  var kDopnuti = [];        // název, který se dá překlopit na uid (viz stromDopnoutNazvy)
 
   rozvKarty().forEach(function(karta) {
     var zdrojUid = karta.dataset.rozvUid || '';
@@ -5531,23 +5560,27 @@ function rozvStromData() {
         if (rodicVazba[cil]) { duplicity.push(v); return; }
         rodicVazba[cil] = v;
       });
-      // Názvy rozváděčů, které ve zprávě ještě nejsou — zkusit dohledat,
-      // rozváděč mohl vzniknout až potom
-      var zbyleNazvy = [];
+      // Mrtvé uid — rozváděč byl mezitím smazaný. Data se nemažou (smazání
+      // jde vzít zpět), ale musí to být vidět, jinak tlačítko u řádku lže.
+      r.cileUid.forEach(function(cil) {
+        if (podleUid[cil]) return;
+        mrtveCile.push(vazbaProCil(cil, ''));
+      });
+      // Názvy rozváděčů, které ve zprávě (ještě) nejsou. Tady se jen ZJIŠŤUJE
+      // stav — přepis řádku dělá stromDopnoutNazvy() z akce uživatele.
+      // Kreslení nesmí sahat na data: běží i u zamčené zprávy.
       r.cileNazev.forEach(function(nz) {
         var hledany = stromNorm(nz);
         var nalez = karty.filter(function(k) { return k.nazev && stromNorm(k.nazev) === hledany; })[0];
         if (nalez && !rodicVazba[nalez.uid]) {
           rodicVazba[nalez.uid] = vazbaProCil(nalez.uid, '');
-          if (r.cileUid.indexOf(nalez.uid) === -1) r.cileUid.push(nalez.uid);
+          kDopnuti.push({ tr: r.tr, uid: nalez.uid, nazev: nz });
           return;
         }
-        if (nalez) return;                                // už je odněkud napájený
-        zbyleNazvy.push(nz);
+        // Rozváděč s tím názvem existuje, ale je napájený odjinud — název
+        // se NESMÍ zahodit, jen se o něm musí vědět.
         neznameCile.push(vazbaProCil('', nz));
       });
-      // Dopsat dohledané vazby zpátky do řádku
-      if (r.cileNazev.length !== zbyleNazvy.length) napajiZapsat(r.tr, r.cileUid, zbyleNazvy);
     });
   });
 
@@ -5590,6 +5623,10 @@ function rozvStromData() {
     upozorneni.push({ druh: 'neznamy-cil', uid: v.zdrojUid,
       text: 'Jistič „' + (v.oznaceni || v.nazevObvodu || '?') + '" v rozváděči „' + ((podleUid[v.zdrojUid] || {}).nazev || '?') + '" míří na rozváděč „' + v.cilNazev + '", který ve zprávě není.' });
   });
+  mrtveCile.forEach(function(v) {
+    upozorneni.push({ druh: 'mrtvy-cil', uid: v.zdrojUid,
+      text: 'Jistič „' + (v.oznaceni || v.nazevObvodu || '?') + '" v rozváděči „' + ((podleUid[v.zdrojUid] || {}).nazev || '?') + '" míří na rozváděč, který už ve zprávě není (nejspíš byl smazaný).' });
+  });
   duplicity.forEach(function(v) {
     upozorneni.push({ druh: 'dvakrat', uid: v.cilUid,
       text: 'Rozváděč „' + ((podleUid[v.cilUid] || {}).nazev || '?') + '" je označený jako napájený z více míst — platí to první, zbytek zkontrolujte.' });
@@ -5610,7 +5647,31 @@ function rozvStromData() {
 
   return { radky: radky, karty: karty, podleUid: podleUid, koreny: koreny,
            rodicVazba: rodicVazba, deti: deti, vCyklu: vCyklu, upozorneni: upozorneni,
+           mrtveCile: mrtveCile, kDopnuti: kDopnuti,
            pocetVazeb: Object.keys(rodicVazba).length };
+}
+
+// Překlopení čekajícího názvu na uid — JEDINÉ místo, kde se to zapisuje.
+// Volá se jen z akcí uživatele (uložení dialogu, „Najít napojení", přidání
+// nebo smazání rozváděče), nikdy z kreslení: to běží i u zamčené zprávy
+// a nesmí jí měnit data (odložené překreslení v nacistData jede až po
+// setFormReadOnly(true)).
+function stromDopnoutNazvy() {
+  // Zamčená zpráva ani zpráva s vypnutým provázáním se nesmí měnit.
+  // Obnova z archivu volá addRozvadec() v cyklu, tehdy jsou názvy ještě
+  // nevyplněné — proto se během ní taky nic nepřepisuje.
+  if (window.__formReadOnly || window.__nacitamZpravu || !stromZapnut()) return 0;
+  var d = rozvStromData();
+  if (!d.kDopnuti.length) return 0;
+  d.kDopnuti.forEach(function(x) {
+    var uidy = napajiSeznam(x.tr);
+    if (uidy.indexOf(x.uid) === -1) uidy.push(x.uid);
+    var nazvy = napajiNazvySeznam(x.tr).filter(function(n) { return stromNorm(n) !== stromNorm(x.nazev); });
+    napajiZapsat(x.tr, uidy, nazvy);
+  });
+  window.__formDirty = true;
+  if (typeof updateUlozitStav === 'function') updateUlozitStav();
+  return d.kDopnuti.length;
 }
 
 // ── vykreslení panelu ─────────────────────────────────────────────────
@@ -5640,9 +5701,11 @@ function renderRozvStrom() {
     var vCyklu = d.vCyklu.indexOf(r.uid) !== -1;
     // „hlavní rozváděč" a varování „chybí napájení" se vylučují — buď je
     // kořen záměrný, nebo se jen zapomnělo doplnit, odkud je napájený.
+    // Dokud ve zprávě není ANI JEDNA vazba, není co odvozovat — jinak by
+    // u čerstvé zprávy svítilo „hlavní rozváděč" u každé karty.
     var popisVazby = r.vazba
       ? ' <span class="strom-jistic">← ' + esc(stromPopisJistice(r.vazba)) + '</span>'
-      : ((r.hloubka === 0 && !chybi) ? ' <span class="strom-koren">hlavní rozváděč</span>'
+      : ((r.hloubka === 0 && !chybi && d.pocetVazeb) ? ' <span class="strom-koren">hlavní rozváděč</span>'
         : (chybi ? ' <span class="strom-jistic">napájení není zadané</span>' : ''));
     html += '<div class="strom-radek" style="margin-left:' + (r.hloubka * 22) + 'px" data-action="stromSkok" data-uid="' + r.uid + '">' +
       (r.hloubka ? '<span class="strom-cara"></span>' : '') +
@@ -5655,7 +5718,11 @@ function renderRozvStrom() {
   var chybejici = {};
   rozvKarty().forEach(function(karta) {
     stromRadkyKarty(karta).forEach(function(r) {
-      if (r.cilNazev && !(r.cilUid && d.podleUid[r.cilUid])) chybejici[r.cilNazev] = true;
+      r.cileNazev.forEach(function(nz) {
+        var hledany = stromNorm(nz);
+        var je = d.karty.some(function(k) { return k.nazev && stromNorm(k.nazev) === hledany; });
+        if (!je) chybejici[nz] = true;
+      });
     });
   });
   Object.keys(chybejici).forEach(function(nz) {
@@ -5678,6 +5745,10 @@ function renderRozvStrom() {
 // (nový, kopie, obnova z archivu, přesun mezi rozváděči).
 function stromZajistitTlacitka() {
   var zap = stromZapnut();
+  // Jen ŽIVÉ cíle — po smazání rozváděče zůstane uid v datech (smazání jde
+  // vzít zpět), ale tlačítko nesmí tvrdit, že řádek něco napájí.
+  var zive = {};
+  rozvKarty().forEach(function(k) { if (k.dataset.rozvUid) zive[k.dataset.rozvUid] = true; });
   rozvKarty().forEach(function(karta) {
     karta.querySelectorAll('tbody tr').forEach(function(tr) {
       var rt = tr.dataset.rowtype || 'obvod';
@@ -5695,7 +5766,8 @@ function stromZajistitTlacitka() {
         btn.style.cssText = 'color:#2B579A;font-size:.72rem;margin-right:2px';
         td.insertBefore(btn, td.firstChild);
       }
-      var pocet = napajiSeznam(tr).length + napajiNazvySeznam(tr).length;
+      var pocet = napajiSeznam(tr).filter(function(u) { return zive[u]; }).length
+                + napajiNazvySeznam(tr).length;
       var ma = pocet > 0;
       btn.textContent = ma ? (pocet > 1 ? '🔌' + pocet : '🔌') : '⊕';
       btn.title = ma
@@ -5708,9 +5780,11 @@ function stromZajistitTlacitka() {
 
 // ── ovládání ──────────────────────────────────────────────────────────
 function stromPrepnout(el) {
+  if (window.__formReadOnly) { if (el) el.checked = stromZapnut(); return; }
   __rozvStrom.zapnuto = !!(el && el.checked);
   window.__formDirty = true;
   renderRozvStrom();
+  stromNaplnitNapajenZ();          // po vypnutí musí zmizet i „Napájen z"
   if (typeof updateUlozitStav === 'function') updateUlozitStav();
 }
 
@@ -5784,7 +5858,7 @@ function stromByVzniklCyklus(zdrojUid, cilUid, d) {
 
 function stromPriraditUlozit() {
   var tr = __napajiRadek;
-  if (!tr) { closeModal('modal-napaji'); return; }
+  if (!tr || window.__formReadOnly) { __napajiRadek = null; closeModal('modal-napaji'); return; }
   var uidy = Array.prototype.slice.call(document.querySelectorAll('#modal-napaji .napaji-cil:checked'))
     .map(function(cb) { return cb.value; });
   var vlastni = document.getElementById('napaji-vlastni');
@@ -5793,7 +5867,9 @@ function stromPriraditUlozit() {
   __napajiRadek = null;
   window.__formDirty = true;
   closeModal('modal-napaji');
+  stromDopnoutNazvy();
   renderRozvStrom();
+  stromNaplnitNapajenZ();
   if (typeof updateUlozitStav === 'function') updateUlozitStav();
 }
 
@@ -5843,19 +5919,27 @@ function stromNaplnitJistice(karta, zdrojUid, vybranyTr) {
   });
 }
 
+// Výběr rozváděče sám o sobě NIC nemění — jen nabídne jističe. Vazba se
+// přepíše, teprve až je vybraný jistič; jinak by nedokončený výběr smazal
+// to, co tam bylo. Výjimka: „— není zadáno —" je vědomé odpojení.
 function rozvNapajenZ(el) {
   var karta = el.closest('[data-rozvadec-id]');
   if (!karta) return;
-  stromOdpojit(karta.dataset.rozvUid);
+  if (window.__formReadOnly) { stromNaplnitNapajenZ(); return; }
+  if (!el.value) {
+    stromOdpojit(karta.dataset.rozvUid);
+    window.__formDirty = true;
+    stromNaplnitJistice(karta, '', null);
+    renderRozvStrom();
+    return;
+  }
   stromNaplnitJistice(karta, el.value, null);
-  if (!el.value) { renderRozvStrom(); return; }
-  // Bez vybraného jističe zatím nic nezapisuj — uživatel ho vybere hned potom
-  renderRozvStrom();
 }
 
 function rozvNapajenJistic(el) {
   var karta = el.closest('[data-rozvadec-id]');
   if (!karta) return;
+  if (window.__formReadOnly) { stromNaplnitNapajenZ(); return; }
   var mujUid = karta.dataset.rozvUid;
   var selR = karta.querySelector('.rozv-napajen-z');
   var zdrojUid = selR ? selR.value : '';
@@ -5959,6 +6043,7 @@ function stromNajit() {
 }
 
 function stromNajitPotvrdit() {
+  if (window.__formReadOnly) { closeModal('modal-najit'); __najitNalezy = []; return; }
   var zapsano = 0;
   document.querySelectorAll('#modal-najit .najit-ok:checked').forEach(function(cb) {
     var n = __najitNalezy[parseInt(cb.dataset.idx, 10)];
@@ -5972,6 +6057,7 @@ function stromNajitPotvrdit() {
   __najitNalezy = [];
   if (zapsano) {
     window.__formDirty = true;
+    stromDopnoutNazvy();
     renderRozvStrom();
     stromNaplnitNapajenZ();
     if (typeof updateUlozitStav === 'function') updateUlozitStav();
@@ -5982,6 +6068,10 @@ function stromNajitPotvrdit() {
 // ── ↕ Seřadit karty podle stromu ──────────────────────────────────────
 // Nikdy se nespustí samo (rozhodnutí uživatele) a jde vzít zpět.
 function stromSeradit() {
+  if (window.__formReadOnly) {
+    showToast('Zpráva je dokončená — pro úpravy ji vraťte mezi rozpracované (✏️ nahoře).');
+    return;
+  }
   var d = rozvStromData();
   if (!d.pocetVazeb) {
     alert('Zatím není zadané žádné napojení, podle kterého by se dalo řadit.\n\nPřiřaďte jističům rozváděče (tlačítko ⊕ na řádku), nebo zkuste „🔍 Najít napojení".');
@@ -6077,23 +6167,149 @@ function stromProPdf(D) {
   return html;
 }
 
-// Samostatný tisk schématu — vytiskne stránku, na které strom je.
+// ── samostatné schéma rozváděčů ───────────────────────────────────────
+// NESMÍ jít přes generujPDF(): ta zapíše zprávu do archivu, přepne na
+// obrazovku náhledu celé zprávy a vysype #pdf-pages. Navíc je strom vsazený
+// do kapitoly Naměřené hodnoty, takže „samostatné schéma" vytažené z hotového
+// PDF s sebou vždycky přineslo i tabulku měření prvního rozváděče.
+// Schéma se proto kreslí sem, do vlastní obrazovky s náhledem.
+var __schemaZpet = 'form';
+
 function stromTisk() {
+  if (!stromZapnut()) {
+    alert('Provázání rozváděčů je vypnuté — zapněte přepínač „Provázat rozváděče podle zapojení" nad panelem.');
+    return;
+  }
   var D = getData();
-  if (!stromZDat(D)) {
+  var radky = stromZDat(D);
+  if (!radky) {
     alert('Zatím není zadané žádné napojení, takže není co tisknout.\n\nPřiřaďte jističům rozváděče (tlačítko ⊕ na řádku), nebo zkuste „🔍 Najít napojení".');
     return;
   }
-  showToast('Připravuji schéma…');
-  generujPDF();
-  setTimeout(function() {
-    var container = document.getElementById('pdf-pages');
-    if (!container) return;
-    var stranky = Array.prototype.slice.call(container.querySelectorAll('.a4'))
-      .filter(function(p) { return p.querySelector('.pdf-strom'); });
-    if (!stranky.length) { alert('Schéma se v PDF nenašlo.'); return; }
-    renderPagesToPDF(stranky, 'RZ_' + (D.ev_cislo || 'zprava') + '_schema-rozvadecu.pdf', { kvalita: 'tisk' });
-  }, 1400);
+  var akt = document.querySelector('.screen.active');
+  __schemaZpet = (akt && akt.id) ? akt.id.replace(/^screen-/, '') : 'form';
+  schemaVykreslit(D, radky);
+}
+
+function schemaNazevSouboru(D) {
+  return 'RZ_' + ((D && D.ev_cislo) || 'zprava').replace(/[^\w.-]+/g, '_') + '_schema-rozvadecu.pdf';
+}
+
+// Hlavička listu — ať je z papíru poznat, ke které zprávě schéma patří
+function schemaHlavicka(D) {
+  var t = STORE.technik || {};
+  var den = D.ukonceni || D.vypracovani || '';
+  var polozky = [
+    ['Místo revize', D.misto || ''],
+    ['Adresa', D.adresa || ''],
+    ['Ev. číslo zprávy', D.ev_cislo || ''],
+    ['Datum revize', den ? fmtDate(den) : ''],
+    ['Revizní technik', [t.jmeno, t.osvedceni].filter(Boolean).join(' · ')]
+  ].filter(function(x) { return String(x[1]).trim(); });
+  var h = '<div style="border-bottom:1.2pt solid #1F497D;padding-bottom:2.5mm;margin-bottom:4mm">' +
+    '<div style="font-size:14pt;font-weight:bold;color:#1F497D">Schéma zapojení rozváděčů</div>' +
+    '<table style="margin-top:2mm;font-size:9pt;border-collapse:collapse">';
+  polozky.forEach(function(x) {
+    h += '<tr><td style="padding:.3mm 4mm .3mm 0;color:#555;white-space:nowrap">' + esc(x[0]) + '</td>' +
+         '<td style="padding:.3mm 0"><strong>' + esc(x[1]).replace(/\n/g, '<br>') + '</strong></td></tr>';
+  });
+  return h + '</table></div>';
+}
+
+function schemaRadekHtml(r) {
+  var jm = (r.rozv && r.rozv.nazev) || '(bez názvu)';
+  var pop = r.vazba
+    ? ' <span style="color:#555;font-size:8.5pt">← ' + esc(stromPopisJistice(r.vazba)) + '</span>'
+    : (r.hloubka === 0 ? ' <span style="color:#555;font-size:8.5pt">hlavní rozváděč</span>' : '');
+  var um = (r.rozv && r.rozv.umisteni) ? '<div style="font-size:8pt;color:#777;margin-left:4mm">umístění: ' + esc(r.rozv.umisteni) + '</div>' : '';
+  return '<div style="position:relative;font-size:10pt;padding:1mm 0;margin-left:' + (r.hloubka * 7) + 'mm">' +
+    (r.hloubka ? '<span style="position:absolute;left:-4.5mm;top:0;width:3.5mm;height:2.6mm;border-left:.4pt solid #888;border-bottom:.4pt solid #888"></span>' : '') +
+    '<strong>' + esc(jm) + '</strong>' + pop + um + '</div>';
+}
+
+function schemaStranka(D, cast, cislo, celkem, prvni) {
+  var p = document.createElement('div');
+  p.className = 'a4';
+  p.style.cssText = 'padding:14mm 14mm 10mm;background:#fff;color:#000;min-height:0';
+  var h = prvni ? schemaHlavicka(D) : '';
+  h += cast.map(schemaRadekHtml).join('');
+  // margin-top:auto — .a4 je flex sloupec, zápatí tak sedí u dolního okraje
+  // papíru jako u zbytku zprávy, ne hned pod stromem.
+  h += '<div style="margin-top:auto;padding-top:2mm;border-top:.5pt solid #999;font-size:7.5pt;color:#666;' +
+       'display:flex;justify-content:space-between">' +
+       '<span>' + esc((D && D.misto) || '') + '</span><span>strana ' + cislo + ' / ' + celkem + '</span></div>';
+  p.innerHTML = h;
+  return p;
+}
+
+function schemaVykreslit(D, radky) {
+  var box = document.getElementById('schema-pdf-pages');
+  if (!box) return;
+  // Obrazovku je nutné ukázat DŘÍV, než se měří výška — ve skryté obrazovce
+  // mají prvky nulovou velikost a dělení stránek vyjde mimo (stejná past
+  // jako u náhledu plánu).
+  showScreen('schema-pdf');
+  var mmNaPx = 96 / 25.4;
+  var naStranu = radky.length;
+  for (var pokus = 0; pokus < 20; pokus++) {
+    box.innerHTML = '';
+    var stranky = [];
+    for (var i = 0; i < radky.length; i += naStranu) stranky.push(radky.slice(i, i + naStranu));
+    stranky.forEach(function(cast, idx) {
+      box.appendChild(schemaStranka(D, cast, idx + 1, stranky.length, idx === 0));
+    });
+    var prilis = false;
+    Array.prototype.forEach.call(box.querySelectorAll('.a4'), function(el) {
+      if (el.getBoundingClientRect().height / mmNaPx > 290) prilis = true;
+    });
+    if (!prilis || naStranu <= 4) break;
+    naStranu = Math.max(4, naStranu - 3);
+  }
+  // min-height:0 potřebuje jen měření (jinak by každá stránka „naměřila"
+  // 297 mm a dělení by nikdy nic nerozdělilo). Pro náhled se vrací, aby
+  // list vypadal jako papír, ne jako útržek.
+  Array.prototype.forEach.call(box.querySelectorAll('.a4'), function(el) { el.style.minHeight = ''; });
+  var pocet = box.querySelectorAll('.a4').length;
+  var info = document.getElementById('schema-pdf-info');
+  if (info) info.textContent = radky.length + (radky.length === 1 ? ' rozváděč' : (radky.length < 5 ? ' rozváděče' : ' rozváděčů')) +
+    ' · ' + pocet + (pocet === 1 ? ' strana' : (pocet < 5 ? ' strany' : ' stran'));
+  window.scrollTo(0, 0);
+}
+
+function schemaNahledZpet() { showScreen(__schemaZpet || 'form'); }
+
+function schemaStranky() {
+  return Array.prototype.slice.call(document.querySelectorAll('#schema-pdf-pages .a4'));
+}
+
+function schemaNahledUlozit() {
+  var els = schemaStranky();
+  if (!els.length) return;
+  renderPagesToPDF(els, schemaNazevSouboru(getData()));
+}
+
+function schemaNahledTisk() {
+  var els = schemaStranky();
+  if (!els.length) return;
+  var w = window.open('', '_blank');
+  if (!w) { alert('Prosím povolte vyskakovací okna — bez nich se tiskové okno neotevře.'); return; }
+  w.document.write('<!DOCTYPE html><html><body style="margin:0;background:#f5f5f5;font-family:sans-serif;' +
+    'display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px">' +
+    '<p style="font-size:1.1rem;color:#333">⏳ Připravuji schéma k tisku…</p>' +
+    '<p style="font-size:.85rem;color:#888">Může to pár vteřin trvat</p></body></html>');
+  w.document.close();
+  Promise.resolve(renderPagesToPDF(els, schemaNazevSouboru(getData()), { vratitBlob: true, kvalita: 'tisk' })).then(function(blob) {
+    if (!blob) { try { w.close(); } catch (e) {} return; }
+    var url = URL.createObjectURL(blob);
+    w.location.href = url;
+    setTimeout(function() {
+      try { w.print(); } catch (e) {}
+      setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+    }, 2500);
+  }).catch(function(err) {
+    try { w.close(); } catch (e) {}
+    alert('Chyba při přípravě tisku: ' + ((err && err.message) || err));
+  });
 }
 
 function delRozvadec(el) {
@@ -6101,7 +6317,12 @@ function delRozvadec(el) {
   var div = document.querySelector('[data-rozvadec-id="' + id + '"]');
   if (!div) return;
   deleteWithUndo(div, 'Rozváděč smazán (včetně obvodů)', function() {
-    renumberRozvadece(); renderRozvStrom(); stromNaplnitNapajenZ();
+    renumberRozvadece();
+    // Vzetí zpět může vrátit rozváděč, na který někdo čeká jménem.
+    // Uid smazaného rozváděče se v řádcích NECHÁVÁ — bez toho by vzetí
+    // zpět vrátilo kartu, ale vazby na ni už ne.
+    stromDopnoutNazvy();
+    renderRozvStrom(); stromNaplnitNapajenZ();
   });
 }
 
@@ -6314,6 +6535,7 @@ function getTbodyForRozvadec(el) {
 function addMereniRow(el) {
   var tbody = el ? getTbodyForRozvadec(el) : document.querySelector('#rozvadece-container tbody');
   addMereniRowTo(tbody);
+  if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
 }
 
 // Režim číslování je vlastností KONKRÉTNÍ tabulky (rozváděče), ne programu
@@ -6534,6 +6756,9 @@ function initRowDnd(tr, tbodyInit) {
     // ze kterého řádek odešel.
     if (zdroj && zdroj !== cil) renumberRows(zdroj);
     if (typeof renderRozvStrom === 'function') renderRozvStrom();
+    // Řádek s vazbou se přesunul pod jiný rozváděč — rozbalovátka „Napájen z"
+    // by jinak dál ukazovala starého rodiče.
+    if (typeof stromNaplnitNapajenZ === 'function') stromNaplnitNapajenZ();
     if (typeof window.__formDirty !== 'undefined') window.__formDirty = true;
   });
 }
@@ -6686,6 +6911,7 @@ function addInfoRow(el) {
   var tbody = el ? getTbodyForRozvadec(el) : document.querySelector('#rozvadece-container tbody');
   if (!tbody) return;
   addInfoRowTo(tbody, {});
+  if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
 }
 
 function addInfoRowTo(tbody, data) {
@@ -6786,6 +7012,7 @@ function addRcdRow(el) {
   // Vygeneruj podřádky dle výchozího typu (A)
   addRcdSubRows(tbody, trMain, 'A', groupId);
   renumberRows(tbody);
+  if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
 }
 
 // Typické závady + odkaz na normu (zdroje: ČSN 33 2000-4-41 ed.3,
@@ -11402,7 +11629,8 @@ function stahnoutSoubor(blob, filename) {
 // voláme my, addImage cílíme na actual page dims.
 // Overlay s průběhem ukládání PDF — u vícestránkových zpráv trvá render
 // i 15 s a bez vizualizace uživatel kliká znovu a znovu.
-function pdfProgressShow(total) {
+function pdfProgressShow(total, proTisk) {
+  window.__pdfProgressTisk = !!proTisk;   // u tisku se nikam neukládá — nelhat
   var ov = document.getElementById('pdf-progress-overlay');
   if (!ov) {
     ov = document.createElement('div');
@@ -11421,7 +11649,8 @@ function pdfProgressShow(total) {
 function pdfProgressUpdate(done, total) {
   var t = document.getElementById('pdf-progress-text');
   var b = document.getElementById('pdf-progress-bar');
-  if (t) t.textContent = 'Ukládám PDF — stránka ' + Math.min(done + 1, total) + ' z ' + total + '…';
+  if (t) t.textContent = (window.__pdfProgressTisk ? 'Připravuji tisk' : 'Ukládám PDF') +
+    ' — stránka ' + Math.min(done + 1, total) + ' z ' + total + '…';
   if (b) b.style.width = Math.round(done / total * 100) + '%';
 }
 function pdfProgressHide() {
@@ -11465,7 +11694,7 @@ function renderPagesToPDF(pageEls, filename, opts) {
   var proTisk = opts.kvalita === 'tisk';
   var kvalitaScale = proTisk ? 2.6 : 1.5;
   var kvalitaJpeg = proTisk ? 0.95 : 0.85;
-  pdfProgressShow(pageEls.length);
+  pdfProgressShow(pageEls.length, proTisk);
   // Force-fit .a4 na přesné rozměry — bez tohoto může html2canvas captures
   // canvas o 0.5mm vyšší než A4 (kvůli rounding s padding), addImage
   // pak roztáhne na celý a obsah vypadá zoomed.
@@ -12354,10 +12583,23 @@ function setFormReadOnly(on) {
         el.dataset.roLock = '1';
       }
     });
+    // `<select>` readOnly neumí a CSS `pointer-events:none` neblokuje Tab
+    // + šipky — přes rozbalovátka „Napájen z" tak šlo zamčenou zprávu
+    // rozbít z klávesnice (a rovnou se to autosavlo). Musí být `disabled`.
+    document.querySelectorAll('#screen-form .tab-panel select').forEach(function(el) {
+      if (!el.disabled) {
+        el.disabled = true;
+        el.dataset.roLockSel = '1';
+      }
+    });
   } else {
     document.querySelectorAll('#screen-form [data-ro-lock]').forEach(function(el) {
       el.readOnly = false;
       delete el.dataset.roLock;
+    });
+    document.querySelectorAll('#screen-form [data-ro-lock-sel]').forEach(function(el) {
+      el.disabled = false;
+      delete el.dataset.roLockSel;
     });
   }
 }
@@ -12392,6 +12634,10 @@ function toggleStavZpravy(i) {
 }
 
 function nacistData(D) {
+  // Během obnovy se addRozvadec() volá v cyklu s ještě prázdnými názvy —
+  // stromDopnoutNazvy() by v ten okamžik jen zbytečně přepisovalo řádky
+  // a označilo právě otevřenou zprávu jako neuloženou.
+  window.__nacitamZpravu = true;
   aktTyp = D.typ || 'elektro';
   aktPodtyp = D.podtyp || 'dum';
   novaZprava(aktTyp);
@@ -12461,7 +12707,10 @@ function nacistData(D) {
   // proto musí mít překreslení až po dokončení celé obnovy.
   renderRozvStrom();
   stromNaplnitNapajenZ();
-  setTimeout(function() { renderRozvStrom(); stromNaplnitNapajenZ(); }, 0);
+  setTimeout(function() {
+    window.__nacitamZpravu = false;
+    renderRozvStrom(); stromNaplnitNapajenZ();
+  }, 0);
   // Restore pristroje
   var pb = document.getElementById('pristroje-body');
   if (pb) pb.innerHTML = '';
@@ -16808,7 +17057,6 @@ document.addEventListener('click', function(e) {
     case 'strojUlozitVychozi': strojUlozitVychozi(el); break;
     case 'delRozvadec': delRozvadec(el); break;
     case 'copyRozvadec': copyRozvadec(el); break;
-    case 'stromPrepnout': stromPrepnout(el); break;
     case 'stromSbalit': stromSbalit(); break;
     case 'stromSkok': stromSkok(el); break;
     case 'stromPriradit': stromPriradit(el); break;
@@ -16819,6 +17067,9 @@ document.addEventListener('click', function(e) {
     case 'zavritNajit': closeModal('modal-najit'); break;
     case 'stromSeradit': stromSeradit(); break;
     case 'stromTisk': stromTisk(); break;
+    case 'schemaNahledZpet': schemaNahledZpet(); break;
+    case 'schemaNahledTisk': schemaNahledTisk(); break;
+    case 'schemaNahledUlozit': schemaNahledUlozit(); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;
