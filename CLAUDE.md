@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.42 · 2026-09-11**
+**Aktuální verze: v9.43 · 2026-09-11**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -269,6 +269,50 @@ který podružný rozváděč napájí, a z toho se odvodí strom.
 - Testy: `test-strom-rozvadecu.js` (41 kontrol), `test-strom-model.js` (11),
   `test-v936-compat.js` (6), `test-strom-oprava.js` (33 — opravy v9.39),
   `test-schema-kresba.js` (34 — kresba v9.40 a v9.41).
+
+## Stroj se KONTROLUJE, nerevidují se (v9.43)
+
+U pracovního stroje se podle **NV č. 378/2001 Sb.** a **ČSN EN 60204-1 ed.3**
+dělá **kontrola**, ne revize — slovo „revize" patří vyhrazeným elektrickým
+zařízením (NV 190/2022 Sb.). Uživatel to doložil vzorem od kolegy
+(2026-09-11): *ZPRÁVA O PRAVIDELNÉ KONTROLE…*, *Objednatel kontroly*,
+*Kontrolní technik*, *Termín další kontroly*. Týká se to **jen typu `stroje`**;
+elektro a LPS zůstávají u revize.
+
+- **Je to jedna tabulka `POJMY`, ne šedesát podmínek `aktTyp === 'stroje'`
+  po kódu** — přesně ta past, kterou popisuje oddíl „Typy revizních zpráv".
+  Sadu vybírá klíč `pojmy` v `TYPY_ZPRAV` (`'revize'` / `'kontrola'`),
+  čte ji `pojmy(typ)`.
+- **Texty jsou celé, ne skládané z kořenů.** Čeština se neohýbá strojově:
+  „revize / revizi / revizí" vs. „kontrola / kontrolu / kontroly". Každý
+  popisek je v tabulce napsaný celý pro obě sady.
+- **Formulář:** popisky nesou `data-term="klíč"` (placeholder `data-term-ph`)
+  a přepisuje je `aplikovatPojmy(typ)`. Mění se **jen první textový uzel**
+  prvku — za ním v HTML bývá `<span>` s poznámkou pod čarou, o který se nesmí
+  přijít.
+- **`aplikovatPojmy()` musí v `novaZprava()` běžet AŽ ZA vyčištěním
+  formuláře.** Reset dělá `el.value = el.defaultValue`, takže dřív nastavený
+  rozdělovník by se vrátil na elektro znění. Volá se i z `nacistData()`.
+- **Rozdělovník je HODNOTA, ne popisek** — přepíše se, jen když v poli stojí
+  výchozí text jedné ze sad. Co si uživatel napsal sám, zůstane.
+- **PDF:** `generujPDF()` si na začátku vezme `var PJ = pojmy(D.typ)` a všechny
+  popisky bere z něj. Elektro i LPS proto vycházejí **znak po znaku stejně**
+  (ověřeno `porovnani2.js`).
+- **Názvy norem se NEMĚNÍ.** ČSN 33 1500 se opravdu jmenuje „Revize
+  elektrických zařízení" — přejmenovat by znamenalo uvést špatný název normy.
+  Stejně tak zůstává výchozí text „Předmětem kontroly není: … (součást
+  **revize** elektroinstalace objektu)" — tam se o revizi mluví správně.
+  Přejmenoval se jen **nadpis skupiny norem** u strojů
+  („Revize a ochrana před úrazem" → „Elektrická bezpečnost a ochrana před
+  úrazem"), protože to je náš vlastní text, ne název normy.
+- **Zprávy uložené před v9.43** mají v datech uložený svůj starý rozdělovník
+  („Výtisk č. 2: Revizní technik"). Program ho při načtení **nepřepisuje** —
+  uložená data se za zády uživatele nemění. Popisky formuláře i PDF už
+  správné jsou.
+- Prefix evidenčního čísla zůstal **RS** (kolega má RZMs) — uživatel o změnu
+  nežádal.
+- Test: `test-pojmy-stroje.js` (43 kontrol — formulář, PDF, přepínání typů
+  tam a zpět, zpráva z archivu, neplechu s rozdělovníkem).
 
 ## Záloha zdrojového kódu do ZIPu (v9.42)
 

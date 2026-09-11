@@ -920,7 +920,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.42<span class="ver-date"> · 2026-09-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.43<span class="ver-date"> · 2026-09-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2217,14 +2217,14 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="g3">
       <div class="f"><label>Ev. číslo zprávy</label><input type="text" id="f_ev_cislo" placeholder="RE-26-0001"></div>
       <div class="f"><label>Výtisk č.</label><input type="text" id="f_vytisk" value="1"></div>
-      <div class="f"><label>Druh revize <span class="req">*</span></label>
+      <div class="f"><label data-term="f-druh">Druh revize <span class="req">*</span></label>
         <select id="f_druh"><option value="Výchozí">Výchozí</option><option value="Výchozí souhrnná">Výchozí souhrnná</option><option value="Pravidelná" selected>Pravidelná</option><option value="Mimořádná">Mimořádná</option></select></div>
     </div>
   </div>
   <div class="scard">
     <div class="scard-title">Místo a termíny <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.b) f)</span></div>
     <div class="g2">
-      <div class="f"><label>Místo provádění revize <span class="req">*</span></label><textarea id="f_misto" placeholder="Budova M1 - SO12..."></textarea></div>
+      <div class="f"><label data-term="f-misto">Místo provádění revize <span class="req">*</span></label><textarea id="f_misto" placeholder="Budova M1 - SO12..."></textarea></div>
       <div class="f" id="f-adresa-wrap"><label>Adresa revidovaného objektu <span class="req">*</span></label><textarea id="f_adresa" placeholder="Sokolovská 573&#10;686 01 Uherské Hradiště"></textarea></div>
     </div>
     <div class="sep"></div>
@@ -2234,8 +2234,8 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <div class="f"><label>Přerušení do</label><input type="date" id="f_preruseni_do"></div>
       <div class="f"><label>Ukončení <span class="req">*</span></label><input type="date" id="f_ukonceni"></div>
       <div class="f"><label>Vypracování zprávy</label><input type="date" id="f_vypracovani"></div>
-      <div class="f"><label>Datum předchozí revize</label><input type="date" id="f_predchozi"></div>
-      <div class="f"><label>Termín příští revize <span style="font-size:.5rem;color:var(--accent);display:block">dle ČSN 33 1500 č.3.9 + NV 190/2022 příloha č.4</span></label><input type="date" id="f_pristi"></div>
+      <div class="f"><label data-term="f-predchozi">Datum předchozí revize</label><input type="date" id="f_predchozi"></div>
+      <div class="f"><label data-term="f-pristi">Termín příští revize <span style="font-size:.5rem;color:var(--accent);display:block">dle ČSN 33 1500 č.3.9 + NV 190/2022 příloha č.4</span></label><input type="date" id="f_pristi"></div>
       <div class="f" style="align-self:end"><button class="magic-btn" data-action="openModalRevize">🔮 Vypočítat termín</button></div>
     </div>
   </div>
@@ -2268,7 +2268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     </div>
   </div>
   <div class="scard">
-    <div class="scard-title">Objednatel revize <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
+    <div class="scard-title" data-term="f-objednatel-card">Objednatel revize <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.a)</span></div>
     <div style="display:flex;gap:.5rem;align-items:flex-end;margin-bottom:.5rem">
       <div class="f" style="flex:0 0 180px;margin:0">
         <label>IČO (pro ARES)</label>
@@ -2278,12 +2278,12 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     </div>
     <div class="g2">
       <div class="f span2">
-        <label>Objednatel revize <span style="font-size:.7rem;color:var(--muted)">(pokud je stejný jako provozovatel, nechte prázdné)</span></label>
+        <label data-term="f-objednatel">Objednatel revize <span style="font-size:.7rem;color:var(--muted)">(pokud je stejný jako provozovatel, nechte prázdné)</span></label>
         <input type="text" id="f_objednatel" placeholder="Stejný jako provozovatel / Firma XY s.r.o., Ulice 1, Praha">
       </div>
-      <div class="f"><label>Při revizi byl přítomen</label><input type="text" id="f_pritomen2" placeholder="Jméno Příjmení, funkce" autocomplete="off"></div>
+      <div class="f"><label data-term="f-pritomen">Při revizi byl přítomen</label><input type="text" id="f_pritomen2" placeholder="Jméno Příjmení, funkce" autocomplete="off"></div>
       <div class="f"><label>Elektromontážní práce provedla firma</label><input type="text" id="f_firma_zmena2" placeholder="Firma s.r.o."></div>
-      <div class="f"><label>Ev. číslo oprávnění firmy <span style="font-size:.6rem;color:var(--muted)">(výchozí revize)</span></label><input type="text" id="f_firma_opravneni2" placeholder="16680/9/21/EZ-M"></div>
+      <div class="f"><label>Ev. číslo oprávnění firmy <span style="font-size:.6rem;color:var(--muted)" data-term="f-opravneni-hint">(výchozí revize)</span></label><input type="text" id="f_firma_opravneni2" placeholder="16680/9/21/EZ-M"></div>
     </div>
   </div>
   <div class="scard" id="scard-napetova">
@@ -2294,7 +2294,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     </div>
   </div>
   <div class="scard">
-    <div class="scard-title">Revizní technik <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.d)</span></div>
+    <div class="scard-title" data-term="f-technik-card">Revizní technik <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.d)</span></div>
     <div id="rt-badge"></div>
     <div class="g3">
       <div class="f"><label>Jméno a příjmení <span class="req">*</span></label><input type="text" id="f_rt_jmeno" class="prefilled"></div>
@@ -2366,7 +2366,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title" id="scard-rozsah-popis-title">A. Rozsah a popis elektrické instalace</div>
     <div class="g2">
       <div class="f span2 duvod-mim-wrap" style="display:none">
-        <label>Důvod mimořádné revize je</label>
+        <label data-term="f-duvod">Důvod mimořádné revize je</label>
         <textarea data-rich="1" id="f_duvod_mimoradne" style="min-height:60px" placeholder="Např. po rekonstrukci elektroinstalace, po zásahu bleskem, na žádost pojišťovny, po požáru, změna prostředí…"></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_duvod_mimoradne">📝 Typický text</button>
@@ -2375,7 +2375,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         </div>
       </div>
       <div class="f span2">
-        <label>Předmětem této revize je</label>
+        <label data-term="f-predmet-je">Předmětem této revize je</label>
         <textarea data-rich="1" id="f_predmet_je" style="min-height:80px" placeholder="Elektroinstalace v..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_predmet_je">📝 Typický text</button>
@@ -2384,7 +2384,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         </div>
       </div>
       <div class="f span2">
-        <label>Předmětem této revize není</label>
+        <label data-term="f-predmet-neni">Předmětem této revize není</label>
         <textarea data-rich="1" id="f_predmet_neni" style="min-height:60px" placeholder="Elektroinstalace ve výrobní budově..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_predmet_neni">📝 Typický text</button>
@@ -2582,7 +2582,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <!-- TAB ZÁVĚR -->
 <div class="tab-panel" id="tab-zaver">
   <div class="scard">
-    <div class="scard-title">F. Zhodnocení a závěr revizní zprávy</div>
+    <div class="scard-title" data-term="f-zaver-card">F. Zhodnocení a závěr revizní zprávy</div>
     <div class="f" style="margin-top:.75rem">
       <label>Slovní zhodnocení</label>
       <textarea data-rich="1" id="f_zhodnoceni" style="min-height:180px" placeholder="Způsob a provedení elektroinstalace je v souladu s platnými ČSN..."></textarea>
@@ -2600,16 +2600,16 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
            straně a do PDF se propíše sama — pole se proto nevyplňuje ručně
            a je schované. Zůstává v dokumentu jako držitel hodnoty, aby
            ukládání, archiv i zálohy fungovaly beze změny. -->
-      <div class="f" style="display:none"><label>Doporučená lhůta provedení příští revize</label><input type="text" id="f_lhuta" placeholder="5 let – do 01/2031"></div>
+      <div class="f" style="display:none"><label data-term="f-lhuta-skryta">Doporučená lhůta provedení příští revize</label><input type="text" id="f_lhuta" placeholder="5 let – do 01/2031"></div>
       <div class="f" id="lhuta-info-box" style="display:none">
-        <label>Doporučená lhůta provedení příští revize <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">počítá se z termínu na titulní straně, do zprávy se propíše sama</span></label>
+        <label data-term="f-lhuta">Doporučená lhůta provedení příští revize <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">počítá se z termínu na titulní straně, do zprávy se propíše sama</span></label>
         <div id="lhuta-info" style="font-size:.85rem;font-family:var(--sans);padding:.5rem .7rem;border:1px dashed var(--border);border-radius:2px;color:var(--text);background:var(--bg)"></div>
       </div>
     </div>
     <div class="sep"></div>
     <div class="g2">
-      <div class="f span2"><label>Vlastní nadpis zprávy <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">nepovinné — když zprávu přikládáte k něčemu jinému. Prázdné = program napíše nadpis sám podle druhu revize.</span></label>
-        <input type="text" id="f_nadpis_vlastni" placeholder="Zpráva o revizi vyhrazeného elektrického zařízení" autocomplete="off"></div>
+      <div class="f span2"><label>Vlastní nadpis zprávy <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0" data-term="f-nadpis-hint">nepovinné — když zprávu přikládáte k něčemu jinému. Prázdné = program napíše nadpis sám podle druhu revize.</span></label>
+        <input type="text" id="f_nadpis_vlastni" data-term-ph="ph-nadpis" placeholder="Zpráva o revizi vyhrazeného elektrického zařízení" autocomplete="off"></div>
       <div class="f span2"><label>Řádek nad podnadpisem <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">nepovinné — třeba „Příloha č. 3 k projektu 2026/114"</span></label>
         <input type="text" id="f_nadpis_doplnek" placeholder="Příloha č. 3 k …" autocomplete="off"></div>
     </div>
@@ -2637,7 +2637,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title">Předmět revize LPS</div>
     <div class="g1">
       <div class="f span2 duvod-mim-wrap" style="display:none">
-        <label>Důvod mimořádné revize je</label>
+        <label data-term="f-duvod">Důvod mimořádné revize je</label>
         <textarea id="f_lps_duvod_mimoradne" style="min-height:60px" placeholder="Např. po zásahu bleskem, po rekonstrukci střechy, po opravě jímací soustavy, na žádost pojišťovny…"></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_lps_duvod_mimoradne">📝 Typický text</button>
@@ -2646,7 +2646,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         </div>
       </div>
       <div class="f span2">
-        <label>Předmětem této revize je</label>
+        <label data-term="f-predmet-je">Předmětem této revize je</label>
         <textarea id="f_lps_predmet_je" style="min-height:80px" placeholder="Systém ochrany před bleskem (LPS) na objektu..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_lps_predmet_je">📝 Typický text</button>
@@ -2655,7 +2655,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         </div>
       </div>
       <div class="f span2">
-        <label>Předmětem této revize není</label>
+        <label data-term="f-predmet-neni">Předmětem této revize není</label>
         <textarea id="f_lps_predmet_neni" style="min-height:60px" placeholder="Silnoproudá elektrická instalace objektu..."></textarea>
         <div style="display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap">
           <button class="magic-btn" data-action="typickyText" data-field="f_lps_predmet_neni">📝 Typický text</button>
@@ -2831,7 +2831,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title">Rozsah zprávy</div>
     <div class="info-box">Jedna zpráva zvládne <strong>jeden stroj</strong> i <strong>soubor strojů</strong> (celá dílna, linka, hala). U souboru má každý stroj vlastní identifikaci, měření i kontroly.<br>U <strong>jednoho stroje</strong> se jeho identifikace vyplňuje rovnou na <strong>titulní straně</strong> (jako u konkurence); u <strong>souboru strojů</strong> se karty strojů ukážou tady pod přepínačem.</div>
     <div class="f" style="max-width:340px">
-      <label>Rozsah revize</label>
+      <label data-term="f-rozsah">Rozsah revize</label>
       <select id="f_stroje_rozsah">
         <option value="jeden" selected>Jeden stroj</option>
         <option value="soubor">Soubor strojů</option>
@@ -3226,24 +3226,155 @@ var aktTyp = 'elektro';
 var TYPY_ZPRAV = {
   elektro: {
     label: 'Elektro', badge: 'badge-el', bar: 'tab-bar-el',
-    planDruh: 'EL', prefix: 'RE',
+    planDruh: 'EL', prefix: 'RE', pojmy: 'revize',
     pdfNadpis: 'VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ',
     planPopis: 'elektroinstalace'
   },
   lps: {
     label: 'LPS', badge: 'badge-lps', bar: 'tab-bar-lps',
-    planDruh: 'LPS', prefix: 'RE',
+    planDruh: 'LPS', prefix: 'RE', pojmy: 'revize',
     pdfNadpis: 'OCHRANY PŘED BLESKEM (LPS)',
     planPopis: 'hromosvod'
   },
   stroje: {
     label: 'Stroje', badge: 'badge-stroje', bar: 'tab-bar-stroje',
-    planDruh: 'T', prefix: 'RS',
+    planDruh: 'T', prefix: 'RS', pojmy: 'kontrola',
     pdfNadpis: 'ELEKTRICKÉHO ZAŘÍZENÍ PRACOVNÍHO STROJE',
     planPopis: 'stroje'
   }
 };
 function typInfo(t) { return TYPY_ZPRAV[t] || TYPY_ZPRAV.elektro; }
+
+// ═══ SLOVNÍK POJMŮ — revize vs. kontrola ════════════════════════════════
+// U pracovního stroje se podle NV 378/2001 Sb. a ČSN EN 60204-1 ed.3 dělá
+// KONTROLA, ne revize — slovo „revize" patří vyhrazeným elektrickým
+// zařízením (NV 190/2022 Sb.). Uživatel to doložil vzorem od kolegy
+// (2026-09-11) a týká se to JEN typu `stroje`.
+//
+// Schválně to NENÍ šedesát podmínek `aktTyp === 'stroje'` rozsypaných po
+// kódu — to je přesně past, kterou popisuje oddíl „Typy revizních zpráv".
+// Je to jedna tabulka a dvě místa, která z ní berou: `aplikovatPojmy()`
+// pro formulář a `POJMY[...]` v `generujPDF()`.
+//
+// Texty jsou celé, ne skládané z kořenů — čeština se neohýbá strojově
+// („revize / revizi / revizí" vs. „kontrola / kontrolu / kontroly").
+var POJMY = {
+  revize: {
+    // PDF
+    nadpisAkce:     'REVIZI',
+    uvodniVeta:     'Revize provedena v souladu se zákonem',
+    mistoProvadeni: 'Místo provádění revize:',
+    technikPdf:     'Revizní technik:',
+    datumPdf:       'Datum revize:',
+    odPdf:          'revize od',
+    doPdf:          'revize do',
+    podpisPdf:      'podpis revizního technika',
+    vymezeniPdf:    'Vymezení rozsahu revize',
+    predmetemAkce:  'revize',                    // „Předmětem pravidelné ___ bylo…"
+    duvodPdf:       'Důvod mimořádné revize je:',
+    predmetJePdf:   'Předmětem revize je:',
+    predmetNeniPdf: 'Předmětem revize není:',
+    provedenaDle:   'Revize provedena dle:',
+    pocetStroju:    'Počet revidovaných strojů:',
+    predmetPdf:     'Předmět revize:',
+    objednatelPdf:  'Objednatel revize:',
+    pritomenPdf:    'Při revizi byl přítomen:',
+    preruseniPdf:   'Přerušení revize:',
+    lhutaPdf:       'Doporučená lhůta provedení příští revize: ',
+    // formulář (data-term) — celý text popisku včetně koncové mezery,
+    // za kterou bývá v HTML ještě <span> s poznámkou
+    'f-druh':        'Druh revize ',
+    'f-misto':       'Místo provádění revize ',
+    'f-predchozi':   'Datum předchozí revize',
+    'f-pristi':      'Termín příští revize ',
+    'f-predmet-stroj': '⚙️ Předmět revize — stroj',
+    'f-objednatel-card': 'Objednatel revize ',
+    'f-objednatel':  'Objednatel revize ',
+    'f-pritomen':    'Při revizi byl přítomen',
+    'f-opravneni-hint': '(výchozí revize)',
+    'f-technik-card': 'Revizní technik ',
+    'f-rozsah':      'Rozsah revize',
+    'f-predmet-je':  'Předmětem této revize je',
+    'f-predmet-neni': 'Předmětem této revize není',
+    'f-zaver-card':  'F. Zhodnocení a závěr revizní zprávy',
+    'f-lhuta':       'Doporučená lhůta provedení příští revize ',
+    'f-lhuta-skryta': 'Doporučená lhůta provedení příští revize',
+    'f-duvod':       'Důvod mimořádné revize je',
+    'f-nadpis-hint': 'nepovinné — když zprávu přikládáte k něčemu jinému. Prázdné = program napíše nadpis sám podle druhu revize.',
+    'f-rozdelovnik': 'Výtisk č. 1: Provozovatel, Výtisk č. 2: Revizní technik',
+    'ph-nadpis':     'Zpráva o revizi vyhrazeného elektrického zařízení'
+  },
+  kontrola: {
+    nadpisAkce:     'KONTROLE',
+    uvodniVeta:     'Kontrola provedena v souladu se zákonem',
+    mistoProvadeni: 'Místo provádění kontroly:',
+    technikPdf:     'Kontrolní technik:',
+    datumPdf:       'Datum kontroly:',
+    odPdf:          'kontrola od',
+    doPdf:          'kontrola do',
+    podpisPdf:      'podpis kontrolního technika',
+    vymezeniPdf:    'Vymezení rozsahu kontroly',
+    predmetemAkce:  'kontroly',
+    duvodPdf:       'Důvod mimořádné kontroly je:',
+    predmetJePdf:   'Předmětem kontroly je:',
+    predmetNeniPdf: 'Předmětem kontroly není:',
+    provedenaDle:   'Kontrola provedena dle:',
+    pocetStroju:    'Počet kontrolovaných strojů:',
+    predmetPdf:     'Předmět kontroly:',
+    objednatelPdf:  'Objednatel kontroly:',
+    pritomenPdf:    'Při kontrole byl přítomen:',
+    preruseniPdf:   'Přerušení kontroly:',
+    lhutaPdf:       'Doporučená lhůta provedení příští kontroly: ',
+    'f-druh':        'Druh kontroly ',
+    'f-misto':       'Místo provádění kontroly ',
+    'f-predchozi':   'Datum předchozí kontroly',
+    'f-pristi':      'Termín příští kontroly ',
+    'f-predmet-stroj': '⚙️ Předmět kontroly — stroj',
+    'f-objednatel-card': 'Objednatel kontroly ',
+    'f-objednatel':  'Objednatel kontroly ',
+    'f-pritomen':    'Při kontrole byl přítomen',
+    'f-opravneni-hint': '(výchozí kontroly)',
+    'f-technik-card': 'Kontrolní technik ',
+    'f-rozsah':      'Rozsah kontroly',
+    'f-predmet-je':  'Předmětem této kontroly je',
+    'f-predmet-neni': 'Předmětem této kontroly není',
+    'f-zaver-card':  'F. Zhodnocení a závěr kontrolní zprávy',
+    'f-lhuta':       'Doporučená lhůta provedení příští kontroly ',
+    'f-lhuta-skryta': 'Doporučená lhůta provedení příští kontroly',
+    'f-duvod':       'Důvod mimořádné kontroly je',
+    'f-nadpis-hint': 'nepovinné — když zprávu přikládáte k něčemu jinému. Prázdné = program napíše nadpis sám podle druhu kontroly.',
+    'f-rozdelovnik': 'Výtisk č. 1: Provozovatel, Výtisk č. 2: Kontrolní technik',
+    'ph-nadpis':     'Zpráva o kontrole elektrického zařízení pracovního stroje'
+  }
+};
+
+// Která sada pojmů platí pro daný typ zprávy.
+function pojmy(typ) { return POJMY[typInfo(typ).pojmy] || POJMY.revize; }
+
+// Přepíše popisky ve formuláři podle typu zprávy. Mění se VŽDY jen první
+// textový uzel prvku — za ním v HTML bývá <span> s poznámkou pod čarou,
+// o který nechceme přijít.
+function aplikovatPojmy(typ) {
+  var P = pojmy(typ), V = POJMY.revize, K = POJMY.kontrola;
+  document.querySelectorAll('[data-term]').forEach(function(el) {
+    var klic = el.dataset.term;
+    if (!P[klic]) return;
+    var uzel = el.firstChild;
+    if (uzel && uzel.nodeType === 3) uzel.nodeValue = P[klic];
+    else el.insertBefore(document.createTextNode(P[klic]), el.firstChild);
+  });
+  document.querySelectorAll('[data-term-ph]').forEach(function(el) {
+    var klic = el.dataset.termPh;
+    if (P[klic]) el.placeholder = P[klic];
+  });
+  // Rozdělovník je předvyplněná HODNOTA, ne popisek — přepsat se smí jen
+  // tehdy, když v poli pořád stojí výchozí text druhé sady. Co si uživatel
+  // napsal sám, zůstane.
+  var rz = document.getElementById('f_rozdelovnik');
+  if (rz && (rz.value === V['f-rozdelovnik'] || rz.value === K['f-rozdelovnik'] || !rz.value)) {
+    rz.value = P['f-rozdelovnik'];
+  }
+}
 var zavadyN = 0;
 var archiv = [];
 var odberatele = [];
@@ -4300,6 +4431,10 @@ function novaZprava(typ) {
   document.querySelectorAll('#screen-form input[list]').forEach(function(el) {
     el.value = '';
   });
+  // Popisky podle typu zprávy — u pracovního stroje „kontrola" místo
+  // „revize". Musí to být AŽ TADY: reset výš vrací pole na defaultValue
+  // z HTML, takže dřív nastavený rozdělovník by se přepsal zpátky.
+  aplikovatPojmy(typ);
   var rc = document.getElementById('rozvadece-container'); if (rc) rc.innerHTML = '';
   rozvadecCounter = 0;
   // Nová zpráva má provázání rozváděčů zapnuté (rozhodnutí uživatele
@@ -4895,7 +5030,7 @@ var NORMY = {
       { id: 'csn13849str', t: 'ČSN EN ISO 13849-1 ed.2 — Bezpečnostní části ovládacích systémů', od: 'od 10/2023', c: false },
       { id: 'csn13850str', t: 'ČSN EN ISO 13850 ed.2 — Nouzové zastavení', od: 'od 02/2016', c: false }
     ]},
-    { s: 'Revize a ochrana před úrazem', items: [
+    { s: 'Elektrická bezpečnost a ochrana před úrazem', items: [
       { id: 'csn331500str', t: 'ČSN 33 1500 (Z1–Z4) — Revize elektrických zařízení', od: 'od 1990 · Z4 2007', c: true },
       { id: 'csn332000641str', t: 'ČSN 33 2000-4-41 ed.3 — Ochrana před úrazem el. proudem', od: 'od 02/2018', c: true },
       { id: 'csn3320006str', t: 'ČSN 33 2000-6 ed.2 — Revize elektrických instalací', od: 'od 06/2017', c: false },
@@ -8047,7 +8182,7 @@ function strojeAktualizovatRozsah() {
       var c = t.querySelector('.stroj-cislo');
       t.innerHTML = '⚙️ Stroj <span class="stroj-cislo">' + (c ? c.textContent : '1') + '</span>';
     } else {
-      t.textContent = '⚙️ Předmět revize — stroj';
+      t.textContent = pojmy(aktTyp)['f-predmet-stroj'];
     }
   });
   document.querySelectorAll('[data-stroj-blok] .stroj-blok-nadpis').forEach(function(h) {
@@ -10645,16 +10780,19 @@ function generujPDF() {
   // Vydání souboru 62305: '62305' = ed.2, '62305e3' = ed.3. citaceNormy()
   // přepíše označení a u ed.3 vypustí čísla článků.
   var lpsVolba = (isLpsPdf && D.lps && D.lps.prohlidka_norma) || '62305';
+  // Slovník pojmů: u pracovního stroje se dělá KONTROLA, ne revize
+  // (NV 378/2001 Sb., ČSN EN 60204-1 ed.3) — viz POJMY u TYPY_ZPRAV.
+  var PJ = pojmy(D.typ);
   var nadpis = isStrojePdf
-    ? ('ZPRÁVA O ' + druhVNadpisu(D.druh) + 'REVIZI ELEKTRICKÉHO ZAŘÍZENÍ ' +
+    ? ('ZPRÁVA O ' + druhVNadpisu(D.druh) + PJ.nadpisAkce + ' ELEKTRICKÉHO ZAŘÍZENÍ ' +
        (vicStroju ? 'PRACOVNÍCH STROJŮ' : 'PRACOVNÍHO STROJE'))
-    : ('ZPRÁVA O ' + druhVNadpisu(D.druh) + 'REVIZI ' +
+    : ('ZPRÁVA O ' + druhVNadpisu(D.druh) + PJ.nadpisAkce + ' ' +
        (isLpsPdf ? 'OCHRANY PŘED BLESKEM (LPS)' : 'VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'));
   // Vlastní nadpis — když zpráva jde jako příloha něčeho jiného
   // („PŘÍLOHA Č. 3 — REVIZE ELEKTROINSTALACE"). Prázdné pole = beze změny.
   if (D.nadpis_vlastni) nadpis = String(D.nadpis_vlastni).toUpperCase();
   var podnadpis = isStrojePdf
-    ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 60204-1 ed.3, ČSN 33 1500 (Z1–Z4)'
+    ? PJ.uvodniVeta + ' č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 60204-1 ed.3, ČSN 33 1500 (Z1–Z4)'
     : isLpsPdf
     ? (lpsNorma1390
         ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 34 1390 (LPS zřízené do 1. 2. 2009), ČSN 33 2000-5-54 ed.3'
@@ -10682,7 +10820,7 @@ function generujPDF() {
     '<div class="a4-content">' +
     ((D.misto || D.adresa) ?
       '<div style="margin-bottom:3mm">' +
-      '<div class="pbox-label">Místo provádění revize:</div>' +
+      '<div class="pbox-label">' + PJ.mistoProvadeni + '</div>' +
       '<div class="pbox' + (pdfOpts.mistoTucne ? ' pbox-tucne' : '') +
         '" style="font-size:9.5pt;line-height:1.5;min-height:10mm">' +
         (D.misto ? esc(D.misto) : '') +
@@ -10690,7 +10828,7 @@ function generujPDF() {
         (D.adresa ? esc(D.adresa) : '') +
       '</div></div>' : '') +
     '<div class="r2" style="margin-bottom:4mm">' +
-    '<div><div class="pbox-label">Revizní technik:</div>' +
+    '<div><div class="pbox-label">' + PJ.technikPdf + '</div>' +
     '<div class="pbox" style="min-height:16mm;font-size:9.5pt;line-height:1.5">' + esc(D.rt_jmeno) + '<br>' + esc(D.rt_adresa) + '</div>' +
     '<div class="pbox" style="margin-top:1mm;font-size:9.5pt">Ev.č. ' + esc(D.rt_osvedceni) + '<br>Opr.č. ' + esc(D.rt_opravneni) + '</div></div>' +
     '<div><div class="pbox-label">Provozovatel:</div>' +
@@ -10702,7 +10840,7 @@ function generujPDF() {
     (isStrojePdf ? (function() {
       if (!strojList.length) return '';
       if (vicStroju) {
-        return '<div style="margin-bottom:2.5mm"><div class="pbox-label">Předmět revize:</div>' +
+        return '<div style="margin-bottom:2.5mm"><div class="pbox-label">' + PJ.predmetPdf + '</div>' +
           '<div class="pbox" style="font-size:9pt">Soubor ' + strojList.length + ' pracovních strojů — podrobná identifikace v kapitole ' + secBase + ' této zprávy.</div></div>';
       }
       var st = strojList[0];
@@ -10719,7 +10857,7 @@ function generujPDF() {
         radek('třída ochrany', st.trida_ochrany) + radek('vnější vlivy', st.vnejsi_vlivy);
       if (!levy && !pravy) return '';
       return '<div class="r2" style="margin-bottom:2.5mm">' +
-        '<div><div class="pbox-label">Předmět revize — stroj:</div>' +
+        '<div><div class="pbox-label">' + PJ['f-predmet-stroj'].replace('⚙️ ', '') + ':</div>' +
         '<div class="pbox" style="min-height:20mm;font-size:9pt"><div class="dtgrid">' + (levy || '<span class="dtval">—</span>') + '</div></div></div>' +
         '<div><div class="pbox-label">Technické specifikace:</div>' +
         '<div class="pbox" style="min-height:20mm;font-size:9pt"><div class="dtgrid">' + (pravy || '<span class="dtval">—</span>') + '</div></div></div>' +
@@ -10767,10 +10905,10 @@ function generujPDF() {
                '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>' +
                '<div style="margin-top:1mm"><div class="pbox-label">Síť:</div>' +
                '<div class="pbox" style="font-size:9pt">' + esc(D.napetova_soustava || '') + '</div></div>' +
-               '<div style="margin-top:1mm"><div class="pbox-label">Datum revize:</div>' +
+               '<div style="margin-top:1mm"><div class="pbox-label">' + PJ.datumPdf + '</div>' +
                '<div class="pbox" style="min-height:18mm"><div class="dtgrid">' +
-               '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
-               '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
+               '<span class="dtlabel">' + PJ.odPdf + '</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
+               '<span class="dtlabel">' + PJ.doPdf + '</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
                (D.preruseni_od || D.preruseni_do ? '<span class="dtlabel">přerušení</span><span class="dtval">' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '</span>' : '') +
                '<span class="dtlabel">předchozí</span><span class="dtval">' + fmtDate(D.predchozi) + '</span>' +
                '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
@@ -10791,11 +10929,11 @@ function generujPDF() {
       return '<div class="pbox" style="font-size:' + (many ? '7' : '8') + 'pt;min-height:18mm;line-height:' + (many ? '1.3' : '1.5') + '">' + inner + '</div>';
     })() +
     '</div>' +
-    '<div><div class="pbox-label">Datum revize:</div>' +
+    '<div><div class="pbox-label">' + PJ.datumPdf + '</div>' +
     '<div class="pbox" style="min-height:18mm">' +
     '<div class="dtgrid">' +
-    '<span class="dtlabel">revize od</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
-    '<span class="dtlabel">revize do</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
+    '<span class="dtlabel">' + PJ.odPdf + '</span><span class="dtval">' + fmtDate(D.zahajeni) + '</span>' +
+    '<span class="dtlabel">' + PJ.doPdf + '</span><span class="dtval">' + fmtDate(D.ukonceni) + '</span>' +
     (D.preruseni_od || D.preruseni_do ? '<span class="dtlabel">přerušení</span><span class="dtval">' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '</span>' : '') +
     '<span class="dtlabel">předchozí</span><span class="dtval">' + fmtDate(D.predchozi) + '</span>' +
     '<span class="dtlabel">vyhotovení</span><span class="dtval">' + fmtDate(D.vypracovani) + '</span>' +
@@ -10814,8 +10952,8 @@ function generujPDF() {
     '<div class="pbox" style="min-height:20mm;font-size:8.5pt">' +
     'Počet listů: <span data-pocet-listu>' + total + '</span><br>Výtisk č.: ' + esc(D.vytisk) + '<br>Počet příloh: ' + (D.prilohy ? D.prilohy.split('\n').filter(function(l){ return l.trim(); }).length : 0) + '<br>Vyhotovení: ' + esc(D.vyhotoveni) + '<br>' + esc(D.rozdelovnik) +
     '</div></div></div>' +
-    (D.objednatel ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '</div>' : '') +
-    (D.pritomen2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '</div>' : '') +
+    (D.objednatel ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>' + PJ.objednatelPdf + '</strong> ' + esc(D.objednatel) + '</div>' : '') +
+    (D.pritomen2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>' + PJ.pritomenPdf + '</strong> ' + esc(D.pritomen2) + '</div>' : '') +
     (D.firma_zmena2 ? '<div style="font-size:8.5pt;margin-bottom:1.5mm"><strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. oprávnění: ' + esc(D.firma_opravneni2) : '') + '</div>' : '') +
     '<div style="font-size:8.5pt;margin-bottom:2mm">Provozovatel potvrzuje převzetí zprávy' +
     (D.predano_misto ? ' v ' + esc(D.predano_misto) : '') +
@@ -10827,7 +10965,7 @@ function generujPDF() {
     '<div><div class="podp-inner"><div style="width:100%;text-align:center">' +
       ((pdfOpts.razitko && STORE.technik && STORE.technik.razitko) ? '<img class="razitko-pdf" src="' + STORE.technik.razitko + '" alt="razítko">' : '') +
       ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:20mm;max-width:70mm;display:block;margin:0 auto -3mm;position:relative;z-index:5" alt="podpis">' : '') +
-      '<div class="podp-line"></div><div class="podp-lbl">podpis revizního technika</div></div></div></div>' +
+      '<div class="podp-line"></div><div class="podp-lbl">' + PJ.podpisPdf + '</div></div></div></div>' +
     '</div></div>' + ftr();
   p1.classList.add('a4-titulni');   // titulní strana se NIKDY nedělí
   pages.appendChild(p1);
@@ -10837,51 +10975,51 @@ function generujPDF() {
   // Návětí („Předmětem revize je:" apod.) tučně pro přehlednost;
   // uživatelský obsah zůstává escapovaný, \n zachovává white-space:pre-line.
   var vymHtml = esc(isStrojePdf
-    ? ('Předmětem ' + druhVeVete(D.druh) + 'revize bylo elektrické zařízení ' +
+    ? ('Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + ' bylo elektrické zařízení ' +
        (vicStroju ? 'pracovních strojů výslovně uvedených' : 'pracovního stroje výslovně uvedeného') +
        ' v této zprávě.')
     : isLpsPdf
-    ? 'Předmětem ' + druhVeVete(D.druh) + 'revize byl systém ochrany před bleskem (LPS) výslovně uvedený v této zprávě.'
-    : 'Předmětem ' + druhVeVete(D.druh) + 'revize bylo VEZ výslovně uvedené v této zprávě.');
+    ? 'Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + ' byl systém ochrany před bleskem (LPS) výslovně uvedený v této zprávě.'
+    : 'Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + ' bylo VEZ výslovně uvedené v této zprávě.');
   // Důvod se tiskne jen u mimořádné revize (ČSN 33 1500 čl. 2.5) a stojí
   // před vymezením předmětu — čtenář musí hned vědět, proč revize vznikla.
   if (D.druh === 'Mimořádná' && D.duvod_mimoradne) {
-    vymHtml += '<br><br><strong>Důvod mimořádné revize je:</strong> ' + richHtml(D.duvod_mimoradne);
+    vymHtml += '<br><br><strong>' + PJ.duvodPdf + '</strong> ' + richHtml(D.duvod_mimoradne);
   }
-  if (D.predmet_je) vymHtml += '<br><br><strong>Předmětem revize je:</strong> ' + richHtml(D.predmet_je);
-  if (D.predmet_neni) vymHtml += '<br><br><strong>Předmětem revize není:</strong> ' + richHtml(D.predmet_neni);
+  if (D.predmet_je) vymHtml += '<br><br><strong>' + PJ.predmetJePdf + '</strong> ' + richHtml(D.predmet_je);
+  if (D.predmet_neni) vymHtml += '<br><br><strong>' + PJ.predmetNeniPdf + '</strong> ' + richHtml(D.predmet_neni);
   var zkouseniHtml = '<br><br><strong>Provedené zkoušky dle ČSN 33 2000-6 ed.2 čl. 6.4.3:</strong>' +
     esc('\na) spojitost ochranných vodičů (viz 6.4.3.2)\nb) izolační odpor elektrické instalace (viz 6.4.3.3)\nc) zkoušení izolačních odporů pro potvrzení účinnosti ochrany pomocí SELV, PELV nebo elektrickým oddělením (viz 6.4.3.4)\nd) zkoušení pro potvrzení účinnosti automatického odpojení od zdroje (viz 6.4.3.7)\ne) zkoušení pro potvrzení účinnosti doplňkové ochrany (viz 6.4.3.8)\nf) zkouška pořadí fází (viz 6.4.3.9)\ng) funkční a provozní zkoušky (viz 6.4.3.10)\nh) ověření úbytků napětí (viz 6.4.3.11)');
   var zkouseniStrojeHtml = '<br><br><strong>Provedené zkoušky dle ČSN EN 60204-1 ed.3 čl. 18:</strong>' +
-    esc('\n18.2 ověření podmínek pro ochranu automatickým odpojením napájení (spojitost ochranného obvodu, impedance poruchové smyčky, vhodnost jistícího přístroje)\n18.3 zkoušky izolačního odporu (500 V DC, nejmenší hodnota 1 MΩ)\n18.4 zkouška napětím (provádí se u výchozí revize / po opravě)\n18.5 ochrana před zbytkovými napětími\n18.6 funkční zkoušky (ovládací obvody, nouzové zastavení, blokování krytů)');
+    esc('\n18.2 ověření podmínek pro ochranu automatickým odpojením napájení (spojitost ochranného obvodu, impedance poruchové smyčky, vhodnost jistícího přístroje)\n18.3 zkoušky izolačního odporu (500 V DC, nejmenší hodnota 1 MΩ)\n18.4 zkouška napětím (provádí se u výchozí kontroly / po opravě)\n18.5 ochrana před zbytkovými napětími\n18.6 funkční zkoušky (ovládací obvody, nouzové zastavení, blokování krytů)');
   if (isStrojePdf) vymHtml += zkouseniStrojeHtml;
   else if (!isLpsPdf) vymHtml += zkouseniHtml;
   p2.innerHTML = hdr(2) +
     '<div class="a4-content">' +
     '<div data-p2sec="1">' +
-    '<div class="sec-head"><div class="sec-num">1.</div><div class="sec-name">Vymezení rozsahu revize</div></div>' +
+    '<div class="sec-head"><div class="sec-num">1.</div><div class="sec-name">' + PJ.vymezeniPdf + '</div></div>' +
     '<div style="font-size:9.5pt;line-height:1.8;padding:0 2mm;margin-bottom:4mm;white-space:pre-line">' + vymHtml + '</div>' +
     '</div>' +
     '<div data-p2sec="2">' +
     '<div class="sec-head"><div class="sec-num">2.</div><div class="sec-name">Charakteristika zařízení</div></div>' +
     '<div style="font-size:9.5pt;padding:0 2mm;margin-bottom:3mm">' +
     (isStrojePdf
-      ? ((vicStroju ? '<strong>Počet revidovaných strojů:</strong> ' + strojList.length + '<br>' : '')
+      ? ((vicStroju ? '<strong>' + PJ.pocetStroju + '</strong> ' + strojList.length + '<br>' : '')
         + (!vicStroju && strojList[0] && strojList[0].nazev ? '<strong>Stroj:</strong> ' + esc(strojList[0].nazev) + (strojList[0].typ ? ', typ ' + esc(strojList[0].typ) : '') + '<br>' : '')
         + (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '')
         + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>'
-        + (D.normy ? '<strong>Revize provedena dle:</strong> ' + esc(D.normy) + '<br>' : ''))
+        + (D.normy ? '<strong>' + PJ.provedenaDle + '</strong> ' + esc(D.normy) + '<br>' : ''))
       : isLpsPdf
       ? ((D.lps && D.lps.trida) ? '<strong>Třída LPS:</strong> ' + esc(D.lps.trida) + '<br>' : '')
         + ((D.lps && D.lps.jimaci) ? '<strong>Typ jímací soustavy:</strong> ' + esc(D.lps.jimaci) + '<br>' : '')
         + ((D.lps && D.lps.prohlidka_norma) ? '<strong>Posouzeno dle:</strong> ' + (lpsNorma1390 ? 'ČSN 34 1390' : citaceNormy('ČSN EN 62305-3 ed.2', lpsVolba)) + '<br>' : '')
-        + (D.normy ? '<strong>Revize provedena dle:</strong> ' + esc(D.normy) + '<br>' : '')
+        + (D.normy ? '<strong>' + PJ.provedenaDle + '</strong> ' + esc(D.normy) + '<br>' : '')
       : (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '')
         + (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '')
         + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>') +
-    (D.preruseni_od || D.preruseni_do ? '<strong>Přerušení revize:</strong> ' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '<br>' : '') +
-    (D.objednatel ? '<strong>Objednatel revize:</strong> ' + esc(D.objednatel) + '<br>' : '') +
-    (D.pritomen2 ? '<strong>Při revizi byl přítomen:</strong> ' + esc(D.pritomen2) + '<br>' : '') +
+    (D.preruseni_od || D.preruseni_do ? '<strong>' + PJ.preruseniPdf + '</strong> ' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '<br>' : '') +
+    (D.objednatel ? '<strong>' + PJ.objednatelPdf + '</strong> ' + esc(D.objednatel) + '<br>' : '') +
+    (D.pritomen2 ? '<strong>' + PJ.pritomenPdf + '</strong> ' + esc(D.pritomen2) + '<br>' : '') +
     (D.firma_zmena2 ? '<strong>Elektromontážní práce provedla firma:</strong> ' + esc(D.firma_zmena2) + (D.firma_opravneni2 ? ', ev.č. opr.: ' + esc(D.firma_opravneni2) : '') + '<br>' : '') +
     (D.zemnič ? '<strong>Typ a popis zemniče:</strong> ' + esc(D.zemnič) + '<br>' : '') +
     (D.zemni_odpor ? '<strong>Naměřený zemní odpor:</strong> ' + esc(D.zemni_odpor) + ' Ω<br>' : '') +
@@ -11341,7 +11479,7 @@ function generujPDF() {
     // zprávy — text mohl vzniknout dřív nebo v jiné sestavě kapitol.
     odstavceHtml(String(D.zhodnoceni || 'Závěr nebyl vyplněn.').replace(/v kapitole\s+\d+/g, 'v kapitole ' + secZavady),
       'font-size:9.5pt;line-height:1.8;padding:0 2mm;white-space:pre-line;') +
-    (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>Doporučená lhůta provedení příští revize: ' + esc(D.lhuta) + '</strong></div>' : '') +
+    (D.lhuta ? '<div style="font-size:9.5pt;padding:0 2mm;margin-top:3mm"><strong>' + PJ.lhutaPdf + esc(D.lhuta) + '</strong></div>' : '') +
     '<div style="margin-top:5mm;font-size:8.5pt;padding:0 2mm"><strong>Rozdělovník:</strong> ' + esc(D.rozdelovnik || '') + '</div>' +
     (D.prilohy ? '<div style="margin-top:2mm;font-size:8.5pt;padding:0 2mm"><strong>Seznam příloh:</strong><br><span style="white-space:pre-line">' + richHtml(D.prilohy) + '</span></div>' : '') +
     '</div>' + ftr();
@@ -12832,6 +12970,7 @@ function nacistData(D) {
   // a označilo právě otevřenou zprávu jako neuloženou.
   window.__nacitamZpravu = true;
   aktTyp = D.typ || 'elektro';
+  aplikovatPojmy(aktTyp);
   aktPodtyp = D.podtyp || 'dum';
   novaZprava(aktTyp);
   // Obnovit vazbu na odběratele a vybrat ho v dropdownu — ale jen
