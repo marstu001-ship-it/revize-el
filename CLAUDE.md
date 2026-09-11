@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.40 · 2026-09-11**
+**Aktuální verze: v9.41 · 2026-09-11**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -268,7 +268,40 @@ který podružný rozváděč napájí, a z toho se odvodí strom.
   posílá obojí a strom se přepočítával dvakrát na jedno kliknutí.
 - Testy: `test-strom-rozvadecu.js` (41 kontrol), `test-strom-model.js` (11),
   `test-v936-compat.js` (6), `test-strom-oprava.js` (33 — opravy v9.39),
-  `test-schema-kresba.js` (24 — kresba v9.40).
+  `test-schema-kresba.js` (34 — kresba v9.40 a v9.41).
+
+## Kresba stromu — JEDNA ČÁRA = JEDEN KABEL (v9.41)
+
+**Nejdůležitější pravidlo celé kresby.** Ve v9.40 se kreslila **jedna společná
+svislice** a potomci z ní odbočovali. Uživatel to odmítl jako elektrotechnickou
+chybu: „jsou to dva kabely z RH a nakreslená je jen jedna čára." Společná
+svislice je obrázek **sběrnice** — jako by z rozváděče šel jeden kabel, který
+se teprve pak rozvětví. Ve skutečnosti jde z každého jističe vlastní kabel,
+takže **z dolní hrany rámečku vychází tolik svislic, kolik je vývodů**.
+
+- **Pořadí kabelů je zprava doleva**: potomek 0 dostane nejpravější (nejkratší
+  čáru), poslední nejlevější (nejdelší). Jen tak se **žádné dvě čáry
+  nezkříží** — kabel pozdějšího sourozence leží vlevo od veškerého obsahu
+  těch dřívějších a hlubší úrovně jsou vždycky vpravo od průběžných čar
+  mělčích. Obrácené pořadí by vedlo čáru přes rámečky sourozenců.
+- **Průchody stromem vrací `rodic` / `poradi` / `deti`**, ne původní booleany
+  `cesta`. Jsou to údaje **bez jednotek** — geometrii z nich počítá až
+  `stromGeometrie()`, takže obrazovka jede v px a tisk v mm ze stejného
+  modelu. V DFS pořadí je rodič vždycky dřív než potomek, takže index stačí.
+- Rozteče: **`off`** (levá hrana rámečku → nejlevější kabel), **`rozestup`**
+  (mezi rovnoběžnými kabely), **`mezera`** (nejpravější kabel → obsah
+  potomka). Pro rodiče s N vývody a `vejir = (N-1)*rozestup`:
+  `drop_i = P.lx + off + (vejir - i*rozestup)`, `lx_i = P.lx + off + vejir + mezera`.
+- **Pojistka `maxLx`**: rozváděč s deseti vývody by vytlačil rámečky mimo
+  stránku, proto `stromGeometrie()` jede dvakrát — napoprvé změří, kam to
+  uteče, a když přeleze, zmenší všechny rozteče společným poměrem
+  (dolní mez 40 %, ať čáry nesplynou v jednu šmouhu).
+- **Odsazení dělá `margin-left` obsahu, ne `padding-left` řádku** — absolutní
+  čáry se tak měří od levé hrany řádku a pořád ze stejné nuly.
+- **Paralelní napájení z jednoho jističe = dvě čáry** se stejným popiskem
+  (rozhodnutí uživatele 2026-09-11). Vyjde to samo: dva potomci napájení
+  z téhož řádku jsou ve stromu dva uzly.
+- **Značka jističe na čáře se nekreslí** — stačí text (rozhodnutí uživatele).
 
 ## Kresba stromu — rámečky a popsané propoje (v9.40)
 
@@ -283,17 +316,14 @@ v PDF zprávy i samostatné schéma.
   které se pomalu rozcházely. Rozměry drží tři sady voleb — `STROM_PANEL`
   (px), `STROM_TISK` (mm, blok ve zprávě), `STROM_SCHEMA` (mm, samostatné
   schéma, navíc `umisteni: true`).
-- **Svislé čáry se berou z `cesta`, kterou počítá `projdi()`** (v obou
-  průchodech — `rozvStromData()` i `stromZDat()`). `cesta[k] === true`
-  znamená, že předek na úrovni k má ještě dalšího sourozence, takže jeho
-  čára řádkem prochází skrz; poslední prvek říká, jestli je uzel posledním
-  potomkem. **Díky tomu se strom kreslí z PLOCHÉHO seznamu** a nerozbije to
-  stránkování ve `schemaVykreslit()`.
-- **Páteř k potomkům NENÍ absolutní span, ale `border-left` prázdného bloku
-  pod rámečkem.** Absolutní span by musel znát výšku rámečku (ta se mění
-  s délkou názvu i s fontem) a čára by od rámečku odskakovala. Čáry PŘEDKŮ
-  absolutní spany (`top:0;bottom:0`) být můžou — leží vlevo od obsahu řádku,
-  takže rámeček nepřeškrtnou.
+- **Strom se kreslí z PLOCHÉHO seznamu**, takže stránkování ve
+  `schemaVykreslit()` zůstává netknuté. (Podklad pro čáry se ve v9.41 změnil
+  z `cesta` na `rodic`/`poradi`/`deti` — viz oddíl výš.)
+- **Vějíř kabelů k potomkům musí být blok POD rámečkem** (ve v9.41 už s N
+  absolutními spany uvnitř), ne span umístěný podle rámečku. Ten by musel
+  znát jeho výšku (mění se s délkou názvu i s fontem) a čáry by od rámečku
+  odskakovaly. Průběžné čáry absolutní spany (`top:0;bottom:0`) být můžou —
+  leží vlevo od obsahu řádku, takže rámeček nepřeškrtnou.
 - **Kabel se do vazby musel doplnit** — do v9.39 ho žádná cesta nenesla,
   přestože v datech je. Tři místa: `stromRadkyKarty()` (`inp[15]` u obvodu,
   **`inp[14]` u hlavičky chrániče** — Ch. je `<select>`, proto ten posun),

@@ -920,7 +920,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.40<span class="ver-date"> · 2026-09-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.41<span class="ver-date"> · 2026-09-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5492,7 +5492,7 @@ function stromProud(a) {
 function stromKabelVazby(vazba, cilPrivod) {
   var k = String((vazba && vazba.kabel) || '').trim();
   if (k) return stromZkratit(k, 40);
-  return stromZkratit(cilPrivod, 45);
+  return stromZkratit(cilPrivod, 38);
 }
 
 // Popisek jističe ve stromu: „AYKY 4B×16 · FA3 — vývod pro RM2 (B 32 A)".
@@ -5622,24 +5622,26 @@ function rozvStromData() {
   });
 
   // Průchod s ochranou proti zacyklení — data z archivu můžou být pokažená.
-  // `cesta` nese podklad pro svislé čáry: cesta[k] === true znamená, že
-  // předek na úrovni k má ještě dalšího sourozence, takže jeho čára musí
-  // tímhle řádkem projít skrz. Poslední prvek říká, jestli je uzel sám
-  // posledním potomkem (└ místo ├). Díky tomu se dá celý strom nakreslit
-  // z PLOCHÉHO seznamu a nerozbije to stránkování ve schématu.
+  // Pro kresbu se nese `rodic` (index řádku rodiče v tomhle plochém poli),
+  // `poradi` (kolikátý je to potomek) a `deti` (kolik jich sám má). Jsou to
+  // údaje BEZ jednotek — geometrii si z nich dopočítá až `stromKresba()`,
+  // takže obrazovka počítá v px a tisk v mm ze stejného modelu.
+  // V DFS pořadí je rodič vždycky dřív než potomek, takže index stačí.
   var radky = [], videno = {};
-  function projdi(uid, hloubka, cesta) {
+  function projdi(uid, hloubka, rodic, poradi) {
     if (videno[uid]) return;
     videno[uid] = true;
-    radky.push({ uid: uid, hloubka: hloubka, info: podleUid[uid],
-                 vazba: rodicVazba[uid] || null, cesta: cesta });
     var d = deti[uid] || [];
-    d.forEach(function(x, i) { projdi(x, hloubka + 1, cesta.concat(i < d.length - 1)); });
+    var muj = radky.length;
+    radky.push({ uid: uid, hloubka: hloubka, info: podleUid[uid],
+                 vazba: rodicVazba[uid] || null,
+                 rodic: rodic, poradi: poradi, deti: d.length });
+    d.forEach(function(x, i) { projdi(x, hloubka + 1, muj, i); });
   }
-  koreny.forEach(function(u) { projdi(u, 0, []); });
+  koreny.forEach(function(u) { projdi(u, 0, -1, 0); });
   // Co po průchodu zbylo, leží v cyklu
   var vCyklu = karty.filter(function(k) { return !videno[k.uid]; }).map(function(k) { return k.uid; });
-  vCyklu.forEach(function(u) { projdi(u, 0, []); });
+  vCyklu.forEach(function(u) { projdi(u, 0, -1, 0); });
 
   // ── kontroly ────────────────────────────────────────────────────────
   var upozorneni = [];
@@ -5716,35 +5718,37 @@ function stromDopnoutNazvy() {
 // rámečkem je popsaný kabel a jištění (pokyn uživatele 2026-09-10 —
 // „ať u každého připojení je ten kabel a hodnota jištění").
 //
-// `radky` mají tvar { hloubka, cesta, uid, nazev, umisteni, privod, vazba,
-//                     chybi, vCyklu, koren }.
-// `cesta[k] === true` znamená, že svislá čára úrovně k tímhle řádkem
-// prochází skrz (předek má ještě dalšího sourozence) — díky tomu se dá
-// strom nakreslit z plochého seznamu a nerozbije to stránkování.
+// **JEDNA ČÁRA = JEDEN KABEL** (pokyn uživatele 2026-09-11). Do v9.40 se
+// kreslila jedna společná svislice a potomci z ní odbočovali — jenže to je
+// obrázek SBĚRNICE, jako by z rozváděče šel jeden kabel, který se teprve pak
+// rozvětví. Ve skutečnosti jde z každého jističe vlastní kabel, takže
+// z dolní hrany rámečku vychází tolik svislic, kolik je vývodů.
+//
+// `radky` mají tvar { hloubka, rodic, poradi, deti, uid, nazev, umisteni,
+//                     privod, vazba, chybi, vCyklu, koren }, kde `rodic` je
+// index řádku rodiče (v DFS pořadí vždycky dřív) a `poradi` pořadí mezi
+// sourozenci. Geometrie se z toho počítá až tady — model je bez jednotek.
 function stromKresba(radky, o) {
   o = o || {};
   var u = o.jednotka || 'mm';
-  var krok = o.krok, off = o.off;
+  var g = stromGeometrie(radky, o);
   function j(x) { return (Math.round(x * 100) / 100) + u; }
   var html = '';
   radky.forEach(function(r, i) {
-    var dalsi = radky[i + 1];
-    var maDeti = !!(dalsi && dalsi.hloubka === r.hloubka + 1);
-    var cesta = r.cesta || [];
+    var m = g.mista[i];
 
-    // Svislé čáry PŘEDKŮ, kterým ještě zbývá sourozenec. Jsou vlevo od
-    // obsahu řádku, takže rámeček nepřeškrtnou — absolutní span na celou
-    // výšku řádku stačí.
+    // Kabely, které řádkem procházejí shora dolů — míří k pozdějším
+    // sourozencům (svým i předků). Leží vlevo od obsahu řádku, takže
+    // rámeček nepřeškrtnou.
     var cary = '';
-    for (var k = 0; k < r.hloubka; k++) {
-      if (!cesta[k]) continue;
-      cary += '<span style="position:absolute;left:' + j(k * krok + off) +
+    m.prochazi.forEach(function(x) {
+      cary += '<span style="position:absolute;left:' + j(x) +
         ';top:0;bottom:0;border-left:' + o.cara + '"></span>';
-    }
-    // Roh z páteře rodiče k vlastnímu popisku
-    if (r.hloubka) {
-      cary += '<span style="position:absolute;left:' + j((r.hloubka - 1) * krok + off) +
-        ';top:0;width:' + j(krok - off) + ';height:' + j(o.roh) +
+    });
+    // VLASTNÍ kabel: svislá část shora + odbočka doprava k popisku
+    if (m.drop !== null) {
+      cary += '<span style="position:absolute;left:' + j(m.drop) +
+        ';top:0;width:' + j(m.lx - m.drop) + ';height:' + j(o.roh) +
         ';border-left:' + o.cara + ';border-bottom:' + o.cara + '"></span>';
     }
 
@@ -5755,56 +5759,111 @@ function stromKresba(radky, o) {
     else if (String(r.privod || '').trim()) popis = 'přívod: ' + stromZkratit(r.privod, 55);
     else if (r.koren && o.hlavni) popis = 'hlavní rozváděč';
 
-    // VLASTNÍ páteř dolů k potomkům není absolutní span, ale `border-left`
-    // prázdného bloku POD rámečkem. Absolutní span by musel znát výšku
-    // rámečku — takhle čára začíná přesně pod ním a sahá až k rohu prvního
-    // potomka, ať je rámeček jakkoli vysoký.
-    var pod = '<div style="margin-left:' + j(off) + ';height:' + j(o.pahyl) +
-      (maDeti ? ';border-left:' + o.cara : '') + '"></div>';
-    // Umístění patří k rámečku, ne pod něj — vedle páteře by se pletlo
-    // s popiskem dalšího propoje.
+    // Vějíř kabelů k potomkům. Musí to být blok POD rámečkem, ne absolutní
+    // span: ten by musel znát výšku rámečku (mění se s délkou názvu) a čára
+    // by od něj odskakovala. Takhle začíná přesně pod ním.
+    var vejir = '';
+    m.detiDrop.forEach(function(x) {
+      vejir += '<span style="position:absolute;left:' + j(x) +
+        ';top:0;bottom:0;border-left:' + o.cara + '"></span>';
+    });
+    var pod = '<div style="position:relative;height:' + j(o.pahyl) + '">' + vejir + '</div>';
+
+    // Umístění patří k rámečku, ne pod něj — pod ním by leželo u kabelů
+    // a pletlo by se s popiskem dalšího propoje.
     var umisteni = (o.umisteni && String(r.umisteni || '').trim())
       ? '<span style="font-size:' + o.fontPopis + ';color:#777;padding-left:' +
         j(o.odsazeniPod) + '">' + esc(r.umisteni) + '</span>' : '';
 
+    // Odsazení dělá margin-left obsahu, ne padding řádku — absolutní čáry
+    // se tak měří od levé hrany řádku a pořád ze stejné nuly.
     var klik = o.klikaci ? ' data-action="stromSkok" data-uid="' + esc(r.uid || '') + '"' : '';
-    html += '<div style="position:relative;padding-left:' + j(r.hloubka * krok) +
-      (o.klikaci ? ';cursor:pointer' : '') + '"' + klik + '>' +
+    html += '<div style="position:relative' + (o.klikaci ? ';cursor:pointer' : '') + '"' + klik + '>' +
       cary +
-      (popis ? '<div style="font-size:' + o.fontPopis + ';color:' + o.barvaPopis +
-               ';line-height:1.3;padding:' + j(o.mezeraPopis) + ' 0 ' + j(o.mezeraPopis) +
-               ' ' + j(o.odsazeniPod) + '">' + esc(popis) + '</div>' : '') +
-      '<div style="display:inline-block;border:' + o.ram + ';border-radius:' + j(o.radius) +
-        ';padding:' + o.pad + ';background:#fff;font-weight:bold;font-size:' + o.fontBox +
-        ';line-height:1.25">' +
-        (r.chybi ? '⚠ ' : '') + (r.vCyklu ? '↻ ' : '') +
-        esc(r.nazev || '(bez názvu)') + '</div>' + umisteni +
+      (popis ? '<div style="margin-left:' + j(m.lx) + ';font-size:' + o.fontPopis +
+               ';color:' + o.barvaPopis + ';line-height:1.3;padding:' + j(o.mezeraPopis) +
+               ' 0 ' + j(o.mezeraPopis) + ' ' + j(o.odsazeniPod) + '">' + esc(popis) + '</div>' : '') +
+      '<div style="margin-left:' + j(m.lx) + '">' +
+        '<span style="display:inline-block;border:' + o.ram + ';border-radius:' + j(o.radius) +
+          ';padding:' + o.pad + ';background:#fff;font-weight:bold;font-size:' + o.fontBox +
+          ';line-height:1.25">' +
+          (r.chybi ? '⚠ ' : '') + (r.vCyklu ? '↻ ' : '') +
+          esc(r.nazev || '(bez názvu)') + '</span>' + umisteni +
+      '</div>' +
       pod +
       '</div>';
   });
   return html;
 }
 
+// Rozmístění kabelů. Pro rodiče s N vývody platí (vejir = (N-1)*rozestup):
+//
+//     potomek i:  drop = P.lx + off + (vejir - i*rozestup)
+//                 lx   = P.lx + off + vejir + mezera
+//
+// Potomek 0 dostane NEJPRAVĚJŠÍ kabel (nejkratší čára), poslední nejlevější
+// (nejdelší) — jako v náčrtu uživatele. Tím se žádné dvě čáry nezkříží:
+// kabel pozdějšího sourozence leží vlevo od veškerého obsahu těch dřívějších
+// a hlubší úrovně jsou vždycky vpravo od průběžných čar mělčích.
+function stromGeometrie(radky, o) {
+  var off = o.off, rozestup = o.rozestup, mezera = o.mezera;
+  // Dva průchody: napoprvé se zjistí, jak daleko doprava to uteče, a když
+  // se to nevejde, všechny rozteče se společně zmenší. Bez toho by rozváděč
+  // s deseti vývody vytlačil rámečky mimo stránku.
+  for (var pokus = 0; pokus < 2; pokus++) {
+    var mista = [], nejdal = 0;
+    radky.forEach(function(r) {
+      if (!r || r.rodic === undefined || r.rodic < 0 || !mista[r.rodic]) {
+        mista.push({ lx: 0, drop: null, prochazi: [], detiDrop: [] });
+      } else {
+        var p = mista[r.rodic], pr = radky[r.rodic];
+        var vejir = Math.max(0, (pr.deti - 1)) * rozestup;
+        var zaklad = p.lx + off;
+        // Kabely sourozenců, kteří přijdou až po mně, tudy procházejí dál dolů
+        var dal = [];
+        for (var k = r.poradi + 1; k < pr.deti; k++) dal.push(zaklad + vejir - k * rozestup);
+        mista.push({ lx: zaklad + vejir + mezera,
+                     drop: zaklad + vejir - r.poradi * rozestup,
+                     prochazi: p.prochazi.concat(dal), detiDrop: [] });
+      }
+      var m = mista[mista.length - 1];
+      var mujVejir = Math.max(0, (r.deti || 0) - 1) * rozestup;
+      for (var i = 0; i < (r.deti || 0); i++) m.detiDrop.push(m.lx + off + mujVejir - i * rozestup);
+      if (m.lx > nejdal) nejdal = m.lx;
+    });
+    if (!o.maxLx || nejdal <= o.maxLx || pokus) return { mista: mista, nejdal: nejdal };
+    // Dolní mez 40 %, ať čáry nesplynou v jednu šmouhu
+    var pomer = Math.max(0.4, o.maxLx / nejdal);
+    off *= pomer; rozestup *= pomer; mezera *= pomer;
+  }
+}
+
 // Řádky ze `stromZDat(D)` (data zprávy) do tvaru pro `stromKresba`.
 function stromRadkyProKresbu(radky) {
   return radky.map(function(r) {
     var rz = r.rozv || {};
-    return { hloubka: r.hloubka, cesta: r.cesta, uid: r.uid,
-             nazev: rz.nazev, umisteni: rz.umisteni, privod: rz.privod,
+    return { hloubka: r.hloubka, rodic: r.rodic, poradi: r.poradi, deti: r.deti,
+             uid: r.uid, nazev: rz.nazev, umisteni: rz.umisteni, privod: rz.privod,
              vazba: r.vazba, koren: r.hloubka === 0 };
   });
 }
 
 // Rozměry kresby — tisk počítá v mm, obrazovka v px.
-var STROM_TISK = { jednotka: 'mm', krok: 7, off: 3, roh: 2.2, pahyl: 2.2, odsazeniPod: 1.5,
+// `off` = od levé hrany rámečku k nejlevějšímu kabelu, `rozestup` = mezera
+// mezi rovnoběžnými kabely, `mezera` = od nejpravějšího kabelu k obsahu
+// potomka, `maxLx` = kam nejdál doprava smí odsazení utéct.
+var STROM_TISK = { jednotka: 'mm', off: 3, rozestup: 3.2, mezera: 4, maxLx: 95,
+                   roh: 2.2, pahyl: 2.4, odsazeniPod: 1.5,
                    cara: '.5pt solid #666', ram: '.5pt solid #333', radius: 1,
                    pad: '.9mm 2.2mm', fontBox: '9.5pt', fontPopis: '7.6pt',
                    barvaPopis: '#444', mezeraPopis: .5, hlavni: true, umisteni: true };
-var STROM_SCHEMA = { jednotka: 'mm', krok: 9, off: 4, roh: 2.8, pahyl: 3, odsazeniPod: 1.8,
+var STROM_SCHEMA = { jednotka: 'mm', off: 3.5, rozestup: 3.8, mezera: 5, maxLx: 105,
+                     roh: 2.8, pahyl: 3, odsazeniPod: 1.8,
                      cara: '.5pt solid #666', ram: '.6pt solid #333', radius: 1.2,
                      pad: '1.2mm 3mm', fontBox: '11pt', fontPopis: '8.2pt',
                      barvaPopis: '#444', mezeraPopis: .7, hlavni: true, umisteni: true };
-var STROM_PANEL = { jednotka: 'px', krok: 26, off: 11, roh: 10, pahyl: 9, odsazeniPod: 6,
+var STROM_PANEL = { jednotka: 'px', off: 12, rozestup: 13, mezera: 16, maxLx: 420,
+                    roh: 10, pahyl: 9, odsazeniPod: 6,
                     cara: '1px solid #9a958a', ram: '1px solid var(--accent2)', radius: 3,
                     pad: '3px 9px', fontBox: '.86rem', fontPopis: '.72rem',
                     barvaPopis: 'var(--muted)', mezeraPopis: 2, klikaci: true };
@@ -5836,8 +5895,8 @@ function renderRozvStrom() {
   var opts = Object.assign({}, STROM_PANEL, { hlavni: !!d.pocetVazeb });
   var kresleneRadky = d.radky.map(function(r) {
     var k = r.info || {};
-    return { hloubka: r.hloubka, cesta: r.cesta, uid: r.uid,
-             nazev: k.nazev, umisteni: '', privod: k.privod, vazba: r.vazba,
+    return { hloubka: r.hloubka, rodic: r.rodic, poradi: r.poradi, deti: r.deti,
+             uid: r.uid, nazev: k.nazev, umisteni: '', privod: k.privod, vazba: r.vazba,
              chybi: d.upozorneni.some(function(u) { return u.uid === r.uid && u.druh === 'bez-napajeni'; }),
              vCyklu: d.vCyklu.indexOf(r.uid) !== -1,
              koren: r.hloubka === 0 };
@@ -6265,16 +6324,18 @@ function stromZDat(D) {
     else koreny.push(r.uid);
   });
   var radky = [], videno = {};
-  function projdi(uid, h, cesta) {
+  function projdi(uid, h, rodicIdx, poradi) {
     if (videno[uid]) return;
     videno[uid] = true;
-    radky.push({ uid: uid, hloubka: h, rozv: podleUid[uid],
-                 vazba: rodic[uid] || null, cesta: cesta });
     var d = deti[uid] || [];
-    d.forEach(function(x, i) { projdi(x, h + 1, cesta.concat(i < d.length - 1)); });
+    var muj = radky.length;
+    radky.push({ uid: uid, hloubka: h, rozv: podleUid[uid],
+                 vazba: rodic[uid] || null,
+                 rodic: rodicIdx, poradi: poradi, deti: d.length });
+    d.forEach(function(x, i) { projdi(x, h + 1, muj, i); });
   }
-  koreny.forEach(function(u) { projdi(u, 0, []); });
-  rozv.forEach(function(r) { if (!videno[r.uid]) projdi(r.uid, 0, []); });   // pojistka proti cyklu
+  koreny.forEach(function(u) { projdi(u, 0, -1, 0); });
+  rozv.forEach(function(r) { if (!videno[r.uid]) projdi(r.uid, 0, -1, 0); });   // pojistka proti cyklu
   return radky;
 }
 
