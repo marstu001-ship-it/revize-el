@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.39 · 2026-09-10**
+**Aktuální verze: v9.40 · 2026-09-11**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -267,7 +267,51 @@ který podružný rozváděč napájí, a z toho se odvodí strom.
 - **`stromPrepnout` se volá jen z `change`**, ne i z click delegace — checkbox
   posílá obojí a strom se přepočítával dvakrát na jedno kliknutí.
 - Testy: `test-strom-rozvadecu.js` (41 kontrol), `test-strom-model.js` (11),
-  `test-v936-compat.js` (6), `test-strom-oprava.js` (33 — opravy v9.39).
+  `test-v936-compat.js` (6), `test-strom-oprava.js` (33 — opravy v9.39),
+  `test-schema-kresba.js` (24 — kresba v9.40).
+
+## Kresba stromu — rámečky a popsané propoje (v9.40)
+
+Strom byl do v9.39 odsazený **textový seznam**. Uživatel poslal náčrt tužkou
+a chce **blokové schéma**: rozváděč = rámeček, propoj = čára a **u každého
+propoje typ kabelu a hodnota jištění** („nakreslil jsem to jen u jednoho jako
+ukázku"). Kreslí se tak na **všech třech místech** — panel v programu, blok
+v PDF zprávy i samostatné schéma.
+
+- **Kreslí se na JEDNOM místě: `stromKresba(radky, o)`.** Dřív to byly tři
+  kopie téhož odsazení (`renderRozvStrom`, `stromProPdf`, `schemaRadekHtml`),
+  které se pomalu rozcházely. Rozměry drží tři sady voleb — `STROM_PANEL`
+  (px), `STROM_TISK` (mm, blok ve zprávě), `STROM_SCHEMA` (mm, samostatné
+  schéma, navíc `umisteni: true`).
+- **Svislé čáry se berou z `cesta`, kterou počítá `projdi()`** (v obou
+  průchodech — `rozvStromData()` i `stromZDat()`). `cesta[k] === true`
+  znamená, že předek na úrovni k má ještě dalšího sourozence, takže jeho
+  čára řádkem prochází skrz; poslední prvek říká, jestli je uzel posledním
+  potomkem. **Díky tomu se strom kreslí z PLOCHÉHO seznamu** a nerozbije to
+  stránkování ve `schemaVykreslit()`.
+- **Páteř k potomkům NENÍ absolutní span, ale `border-left` prázdného bloku
+  pod rámečkem.** Absolutní span by musel znát výšku rámečku (ta se mění
+  s délkou názvu i s fontem) a čára by od rámečku odskakovala. Čáry PŘEDKŮ
+  absolutní spany (`top:0;bottom:0`) být můžou — leží vlevo od obsahu řádku,
+  takže rámeček nepřeškrtnou.
+- **Kabel se do vazby musel doplnit** — do v9.39 ho žádná cesta nenesla,
+  přestože v datech je. Tři místa: `stromRadkyKarty()` (`inp[15]` u obvodu,
+  **`inp[14]` u hlavičky chrániče** — Ch. je `<select>`, proto ten posun),
+  `vazbaProCil()` v `rozvStromData()` a `stromZDat()` (`m.kabel`).
+- **Záloha z „Přívodu"** řeší až kreslení (`stromKabelVazby`), ne data: když
+  je sloupec Kabel prázdný, vezme se pole „Přívod" **cílového** rozváděče.
+  Text se **nijak nerozebírá** — je to celá věta („CYKY 4B×16 mm² ukončen
+  v RMS 1 na svorkách…"), jen se zkrátí. Program si z ní nic nedomýšlí.
+- **Jednotka „A" se nepřidává, když si ji uživatel napsal sám**
+  (`stromProud()`) — z hodnoty `3x40A` dřív vyšlo „3x40A A".
+- **U kořene je propojem jeho „Přívod"** — vypíše se nad rámečkem jako
+  „přívod: …". Prázdný přívod = nic (pak se ukáže „hlavní rozváděč").
+- **V rámečku je JEN název** (pokyn uživatele — „přesně jak je můj náčrt").
+  Umístění je drobným šedým textem **vedle** rámečku, ne pod ním: pod ním
+  by leželo u páteře a pletlo by se s popiskem dalšího propoje.
+- Zlom stránky uprostřed větve svislou čáru přeruší — ponecháno vědomě,
+  alternativa (nedělit větve) by u velkého areálu nechávala půl stránky
+  prázdné.
 
 ## Samostatný tisk schématu rozváděčů (v9.39)
 

@@ -920,7 +920,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.39<span class="ver-date"> · 2026-09-10</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.40<span class="ver-date"> · 2026-09-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5471,20 +5471,45 @@ function stromCislo(s) {
   return m ? parseFloat(m[0]) : null;
 }
 
-// Popisek jističe ve stromu: „FA3 — vývod pro RM2 (B 32 A)".
+// Zkrátí dlouhý text na popisek, ať schéma nezhoustne.
+function stromZkratit(t, max) {
+  t = String(t || '').replace(/\s+/g, ' ').trim();
+  return t.length > max ? t.slice(0, max - 1) + '…' : t;
+}
+
+// Jednotka „A" se přidává, jen když si ji uživatel nenapsal sám —
+// jinak z hodnoty „3x40A" vyjde „3x40A A" (nahlásil uživatel 2026-09-10).
+function stromProud(a) {
+  a = String(a || '').trim();
+  if (!a) return '';
+  return /a$/i.test(a) ? a : (a + ' A');
+}
+
+// Kabel k vazbě: sloupec „Kabel" u jističe, a když je prázdný, pole
+// „Přívod" cílového rozváděče. Text přívodu se NEROZEBÍRÁ — je to celá
+// věta („CYKY 4B×16 mm² ukončen v RMS 1 na svorkách…") a program si z ní
+// nic nedomýšlí, jen ji zkrátí.
+function stromKabelVazby(vazba, cilPrivod) {
+  var k = String((vazba && vazba.kabel) || '').trim();
+  if (k) return stromZkratit(k, 40);
+  return stromZkratit(cilPrivod, 45);
+}
+
+// Popisek jističe ve stromu: „AYKY 4B×16 · FA3 — vývod pro RM2 (B 32 A)".
 // Označení bývá jen pořadové číslo, samo o sobě by nic neřeklo.
-function stromPopisJistice(v) {
+function stromPopisJistice(v, cilPrivod) {
   var oz = String(v.oznaceni || '').trim();
   var nz = String(v.nazevObvodu || '').trim();
-  // Jiný řádek nemá sloupce jištění — popisek je jeho vlastní text
-  // (a případně druhý sloupec), zkrácený, ať strom nezhoustne.
+  // Jiný řádek nemá sloupce jištění ani kabelu — popisek je jeho vlastní
+  // text (a případně druhý sloupec), zkrácený, ať strom nezhoustne.
   if (v.jinyRadek) {
     var t = [nz, String(v.doplnek || '').trim()].filter(Boolean).join(' · ') || oz || 'jiný řádek';
-    return t.length > 70 ? t.slice(0, 68) + '…' : t;
+    return stromZkratit(t, 70);
   }
   var zaklad = (oz && nz) ? (oz + ' — ' + nz) : (oz || nz || 'jistič');
-  var par = [v.ch, v.a ? v.a + ' A' : ''].filter(function(x) { return String(x || '').trim(); }).join(' ');
-  return zaklad + (par ? ' (' + par + ')' : '');
+  var par = [v.ch, stromProud(v.a)].filter(function(x) { return String(x || '').trim(); }).join(' ');
+  var kabel = stromKabelVazby(v, cilPrivod);
+  return (kabel ? kabel + ' · ' : '') + zaklad + (par ? ' (' + par + ')' : '');
 }
 
 function rozvInfo(karta) {
@@ -5515,14 +5540,17 @@ function stromRadkyKarty(karta) {
       var pop = (tr.querySelector('.info-popis') || {}).value || '';
       var hod = (tr.querySelector('.info-hodnota') || {}).value || '';
       polozka = { tr: tr, jinyRadek: true, oznaceni: inp[0] ? inp[0].value : '',
-                  nazev: pop, doplnek: hod, ch: '', a: '' };
+                  nazev: pop, doplnek: hod, ch: '', a: '', kabel: '' };
     } else {
       polozka = { tr: tr, jinyRadek: false,
         oznaceni: inp[0] ? inp[0].value : '',
         nazev: inp[1] ? inp[1].value : '',
         doplnek: '',
         ch: jeRcd ? ((tr.querySelector('select') || {}).value || '') : (inp[3] ? inp[3].value : ''),
-        a: jeRcd ? (inp[3] ? inp[3].value : '') : (inp[4] ? inp[4].value : '') };
+        a: jeRcd ? (inp[3] ? inp[3].value : '') : (inp[4] ? inp[4].value : ''),
+        // Kabel je poslední sloupec před akcemi. U chrániče je Ch. <select>,
+        // takže vstupů je o jeden méně — proto ten posun (stejná past jako u A).
+        kabel: jeRcd ? (inp[14] ? inp[14].value : '') : (inp[15] ? inp[15].value : '') };
     }
     polozka.cileUid = napajiSeznam(tr);
     polozka.cileNazev = napajiNazvySeznam(tr);
@@ -5551,7 +5579,7 @@ function rozvStromData() {
       function vazbaProCil(cil, cilNazev) {
         return { zdrojUid: zdrojUid, cilUid: cil, cilNazev: cilNazev || '',
                  oznaceni: r.oznaceni, nazevObvodu: r.nazev, doplnek: r.doplnek,
-                 jinyRadek: r.jinyRadek, ch: r.ch, a: r.a, tr: r.tr };
+                 jinyRadek: r.jinyRadek, ch: r.ch, a: r.a, kabel: r.kabel, tr: r.tr };
       }
       // Jeden řádek může napájet víc rozváděčů paralelně
       r.cileUid.forEach(function(cil) {
@@ -5593,18 +5621,25 @@ function rozvStromData() {
     else koreny.push(k.uid);
   });
 
-  // Průchod s ochranou proti zacyklení — data z archivu můžou být pokažená
+  // Průchod s ochranou proti zacyklení — data z archivu můžou být pokažená.
+  // `cesta` nese podklad pro svislé čáry: cesta[k] === true znamená, že
+  // předek na úrovni k má ještě dalšího sourozence, takže jeho čára musí
+  // tímhle řádkem projít skrz. Poslední prvek říká, jestli je uzel sám
+  // posledním potomkem (└ místo ├). Díky tomu se dá celý strom nakreslit
+  // z PLOCHÉHO seznamu a nerozbije to stránkování ve schématu.
   var radky = [], videno = {};
-  function projdi(uid, hloubka) {
+  function projdi(uid, hloubka, cesta) {
     if (videno[uid]) return;
     videno[uid] = true;
-    radky.push({ uid: uid, hloubka: hloubka, info: podleUid[uid], vazba: rodicVazba[uid] || null });
-    (deti[uid] || []).forEach(function(d) { projdi(d, hloubka + 1); });
+    radky.push({ uid: uid, hloubka: hloubka, info: podleUid[uid],
+                 vazba: rodicVazba[uid] || null, cesta: cesta });
+    var d = deti[uid] || [];
+    d.forEach(function(x, i) { projdi(x, hloubka + 1, cesta.concat(i < d.length - 1)); });
   }
-  koreny.forEach(function(u) { projdi(u, 0); });
+  koreny.forEach(function(u) { projdi(u, 0, []); });
   // Co po průchodu zbylo, leží v cyklu
   var vCyklu = karty.filter(function(k) { return !videno[k.uid]; }).map(function(k) { return k.uid; });
-  vCyklu.forEach(function(u) { projdi(u, 0); });
+  vCyklu.forEach(function(u) { projdi(u, 0, []); });
 
   // ── kontroly ────────────────────────────────────────────────────────
   var upozorneni = [];
@@ -5674,6 +5709,106 @@ function stromDopnoutNazvy() {
   return d.kDopnuti.length;
 }
 
+// ── společná kresba stromu ────────────────────────────────────────────
+// JEDNO místo pro všechna tři vykreslení (panel v programu, blok v PDF
+// zprávy, samostatné schéma). Dřív to byly tři kopie téhož odsazení, které
+// se pomalu rozcházely. Rozváděč je rámeček, propoj čára a nad každým
+// rámečkem je popsaný kabel a jištění (pokyn uživatele 2026-09-10 —
+// „ať u každého připojení je ten kabel a hodnota jištění").
+//
+// `radky` mají tvar { hloubka, cesta, uid, nazev, umisteni, privod, vazba,
+//                     chybi, vCyklu, koren }.
+// `cesta[k] === true` znamená, že svislá čára úrovně k tímhle řádkem
+// prochází skrz (předek má ještě dalšího sourozence) — díky tomu se dá
+// strom nakreslit z plochého seznamu a nerozbije to stránkování.
+function stromKresba(radky, o) {
+  o = o || {};
+  var u = o.jednotka || 'mm';
+  var krok = o.krok, off = o.off;
+  function j(x) { return (Math.round(x * 100) / 100) + u; }
+  var html = '';
+  radky.forEach(function(r, i) {
+    var dalsi = radky[i + 1];
+    var maDeti = !!(dalsi && dalsi.hloubka === r.hloubka + 1);
+    var cesta = r.cesta || [];
+
+    // Svislé čáry PŘEDKŮ, kterým ještě zbývá sourozenec. Jsou vlevo od
+    // obsahu řádku, takže rámeček nepřeškrtnou — absolutní span na celou
+    // výšku řádku stačí.
+    var cary = '';
+    for (var k = 0; k < r.hloubka; k++) {
+      if (!cesta[k]) continue;
+      cary += '<span style="position:absolute;left:' + j(k * krok + off) +
+        ';top:0;bottom:0;border-left:' + o.cara + '"></span>';
+    }
+    // Roh z páteře rodiče k vlastnímu popisku
+    if (r.hloubka) {
+      cary += '<span style="position:absolute;left:' + j((r.hloubka - 1) * krok + off) +
+        ';top:0;width:' + j(krok - off) + ';height:' + j(o.roh) +
+        ';border-left:' + o.cara + ';border-bottom:' + o.cara + '"></span>';
+    }
+
+    // Popisek propoje — kabel a jištění. U kořene je propojem jeho Přívod.
+    var popis = '';
+    if (r.vazba) popis = stromPopisJistice(r.vazba, r.privod);
+    else if (r.chybi) popis = 'napájení není zadané';
+    else if (String(r.privod || '').trim()) popis = 'přívod: ' + stromZkratit(r.privod, 55);
+    else if (r.koren && o.hlavni) popis = 'hlavní rozváděč';
+
+    // VLASTNÍ páteř dolů k potomkům není absolutní span, ale `border-left`
+    // prázdného bloku POD rámečkem. Absolutní span by musel znát výšku
+    // rámečku — takhle čára začíná přesně pod ním a sahá až k rohu prvního
+    // potomka, ať je rámeček jakkoli vysoký.
+    var pod = '<div style="margin-left:' + j(off) + ';height:' + j(o.pahyl) +
+      (maDeti ? ';border-left:' + o.cara : '') + '"></div>';
+    // Umístění patří k rámečku, ne pod něj — vedle páteře by se pletlo
+    // s popiskem dalšího propoje.
+    var umisteni = (o.umisteni && String(r.umisteni || '').trim())
+      ? '<span style="font-size:' + o.fontPopis + ';color:#777;padding-left:' +
+        j(o.odsazeniPod) + '">' + esc(r.umisteni) + '</span>' : '';
+
+    var klik = o.klikaci ? ' data-action="stromSkok" data-uid="' + esc(r.uid || '') + '"' : '';
+    html += '<div style="position:relative;padding-left:' + j(r.hloubka * krok) +
+      (o.klikaci ? ';cursor:pointer' : '') + '"' + klik + '>' +
+      cary +
+      (popis ? '<div style="font-size:' + o.fontPopis + ';color:' + o.barvaPopis +
+               ';line-height:1.3;padding:' + j(o.mezeraPopis) + ' 0 ' + j(o.mezeraPopis) +
+               ' ' + j(o.odsazeniPod) + '">' + esc(popis) + '</div>' : '') +
+      '<div style="display:inline-block;border:' + o.ram + ';border-radius:' + j(o.radius) +
+        ';padding:' + o.pad + ';background:#fff;font-weight:bold;font-size:' + o.fontBox +
+        ';line-height:1.25">' +
+        (r.chybi ? '⚠ ' : '') + (r.vCyklu ? '↻ ' : '') +
+        esc(r.nazev || '(bez názvu)') + '</div>' + umisteni +
+      pod +
+      '</div>';
+  });
+  return html;
+}
+
+// Řádky ze `stromZDat(D)` (data zprávy) do tvaru pro `stromKresba`.
+function stromRadkyProKresbu(radky) {
+  return radky.map(function(r) {
+    var rz = r.rozv || {};
+    return { hloubka: r.hloubka, cesta: r.cesta, uid: r.uid,
+             nazev: rz.nazev, umisteni: rz.umisteni, privod: rz.privod,
+             vazba: r.vazba, koren: r.hloubka === 0 };
+  });
+}
+
+// Rozměry kresby — tisk počítá v mm, obrazovka v px.
+var STROM_TISK = { jednotka: 'mm', krok: 7, off: 3, roh: 2.2, pahyl: 2.2, odsazeniPod: 1.5,
+                   cara: '.5pt solid #666', ram: '.5pt solid #333', radius: 1,
+                   pad: '.9mm 2.2mm', fontBox: '9.5pt', fontPopis: '7.6pt',
+                   barvaPopis: '#444', mezeraPopis: .5, hlavni: true, umisteni: true };
+var STROM_SCHEMA = { jednotka: 'mm', krok: 9, off: 4, roh: 2.8, pahyl: 3, odsazeniPod: 1.8,
+                     cara: '.5pt solid #666', ram: '.6pt solid #333', radius: 1.2,
+                     pad: '1.2mm 3mm', fontBox: '11pt', fontPopis: '8.2pt',
+                     barvaPopis: '#444', mezeraPopis: .7, hlavni: true, umisteni: true };
+var STROM_PANEL = { jednotka: 'px', krok: 26, off: 11, roh: 10, pahyl: 9, odsazeniPod: 6,
+                    cara: '1px solid #9a958a', ram: '1px solid var(--accent2)', radius: 3,
+                    pad: '3px 9px', fontBox: '.86rem', fontPopis: '.72rem',
+                    barvaPopis: 'var(--muted)', mezeraPopis: 2, klikaci: true };
+
 // ── vykreslení panelu ─────────────────────────────────────────────────
 function renderRozvStrom() {
   var panel = document.getElementById('rozv-strom-panel');
@@ -5694,26 +5829,20 @@ function renderRozvStrom() {
   var d = rozvStromData();
   if (!d.karty.length) { telo.innerHTML = '<div style="font-size:.8rem;color:var(--muted)">Zatím tu není žádný rozváděč.</div>'; return; }
 
-  var html = '<div class="strom-box">';
-  d.radky.forEach(function(r) {
+  // „hlavní rozváděč" a varování „chybí napájení" se vylučují — buď je
+  // kořen záměrný, nebo se jen zapomnělo doplnit, odkud je napájený.
+  // Dokud ve zprávě není ANI JEDNA vazba, není co odvozovat — jinak by
+  // u čerstvé zprávy svítilo „hlavní rozváděč" u každé karty.
+  var opts = Object.assign({}, STROM_PANEL, { hlavni: !!d.pocetVazeb });
+  var kresleneRadky = d.radky.map(function(r) {
     var k = r.info || {};
-    var chybi = d.upozorneni.some(function(u) { return u.uid === r.uid && u.druh === 'bez-napajeni'; });
-    var vCyklu = d.vCyklu.indexOf(r.uid) !== -1;
-    // „hlavní rozváděč" a varování „chybí napájení" se vylučují — buď je
-    // kořen záměrný, nebo se jen zapomnělo doplnit, odkud je napájený.
-    // Dokud ve zprávě není ANI JEDNA vazba, není co odvozovat — jinak by
-    // u čerstvé zprávy svítilo „hlavní rozváděč" u každé karty.
-    var popisVazby = r.vazba
-      ? ' <span class="strom-jistic">← ' + esc(stromPopisJistice(r.vazba)) + '</span>'
-      : ((r.hloubka === 0 && !chybi && d.pocetVazeb) ? ' <span class="strom-koren">hlavní rozváděč</span>'
-        : (chybi ? ' <span class="strom-jistic">napájení není zadané</span>' : ''));
-    html += '<div class="strom-radek" style="margin-left:' + (r.hloubka * 22) + 'px" data-action="stromSkok" data-uid="' + r.uid + '">' +
-      (r.hloubka ? '<span class="strom-cara"></span>' : '') +
-      (chybi ? '<span class="strom-vykricnik">⚠</span> ' : '') +
-      (vCyklu ? '<span class="strom-vykricnik">↻</span> ' : '') +
-      '<strong>' + esc(k.nazev || '(bez názvu)') + '</strong>' + popisVazby +
-      '</div>';
+    return { hloubka: r.hloubka, cesta: r.cesta, uid: r.uid,
+             nazev: k.nazev, umisteni: '', privod: k.privod, vazba: r.vazba,
+             chybi: d.upozorneni.some(function(u) { return u.uid === r.uid && u.druh === 'bez-napajeni'; }),
+             vCyklu: d.vCyklu.indexOf(r.uid) !== -1,
+             koren: r.hloubka === 0 };
   });
+  var html = '<div class="strom-box">' + stromKresba(kresleneRadky, opts);
   // Vazby na rozváděče, které ve zprávě nejsou — ať nezmizí z očí
   var chybejici = {};
   rozvKarty().forEach(function(karta) {
@@ -6121,7 +6250,8 @@ function stromZDat(D) {
                        oznaceni: m.c || '',
                        nazevObvodu: jinyRadek ? (m.popis || '') : (m.n || ''),
                        doplnek: jinyRadek ? (m.hodnota || '') : '',
-                       ch: jinyRadek ? '' : (m.ch || ''), a: jinyRadek ? '' : (m.a || '') };
+                       ch: jinyRadek ? '' : (m.ch || ''), a: jinyRadek ? '' : (m.a || ''),
+                       kabel: jinyRadek ? '' : (m.kabel || '') };
       });
     });
   });
@@ -6135,14 +6265,16 @@ function stromZDat(D) {
     else koreny.push(r.uid);
   });
   var radky = [], videno = {};
-  function projdi(uid, h) {
+  function projdi(uid, h, cesta) {
     if (videno[uid]) return;
     videno[uid] = true;
-    radky.push({ uid: uid, hloubka: h, rozv: podleUid[uid], vazba: rodic[uid] || null });
-    (deti[uid] || []).forEach(function(d) { projdi(d, h + 1); });
+    radky.push({ uid: uid, hloubka: h, rozv: podleUid[uid],
+                 vazba: rodic[uid] || null, cesta: cesta });
+    var d = deti[uid] || [];
+    d.forEach(function(x, i) { projdi(x, h + 1, cesta.concat(i < d.length - 1)); });
   }
-  koreny.forEach(function(u) { projdi(u, 0); });
-  rozv.forEach(function(r) { if (!videno[r.uid]) projdi(r.uid, 0); });   // pojistka proti cyklu
+  koreny.forEach(function(u) { projdi(u, 0, []); });
+  rozv.forEach(function(r) { if (!videno[r.uid]) projdi(r.uid, 0, []); });   // pojistka proti cyklu
   return radky;
 }
 
@@ -6151,19 +6283,9 @@ function stromProPdf(D) {
   var radky = stromZDat(D);
   if (!radky) return '';
   var html = '<div class="pdf-strom" style="margin:0 2mm 4mm">' +
-    '<div style="font-size:9.5pt;font-weight:bold;margin-bottom:1.5mm">Zapojení rozváděčů</div>';
-  radky.forEach(function(r) {
-    var jm = (r.rozv && r.rozv.nazev) || '(bez názvu)';
-    var pop = r.vazba
-      ? ' <span style="color:#555;font-size:8pt">← ' + esc(stromPopisJistice(r.vazba)) + '</span>'
-      : (r.hloubka === 0 ? ' <span style="color:#555;font-size:8pt">hlavní rozváděč</span>' : '');
-    html += '<div style="position:relative;font-size:9pt;padding:.6mm 0 .6mm 0;margin-left:' + (r.hloubka * 6) + 'mm">' +
-      (r.hloubka ? '<span style="position:absolute;left:-4mm;top:0;width:3mm;height:2.2mm;border-left:.4pt solid #888;border-bottom:.4pt solid #888"></span>' : '') +
-      '<strong>' + esc(jm) + '</strong>' + pop +
-      ((r.rozv && r.rozv.umisteni) ? ' <span style="color:#777;font-size:8pt">— ' + esc(r.rozv.umisteni) + '</span>' : '') +
-      '</div>';
-  });
-  html += '</div>';
+    '<div style="font-size:9.5pt;font-weight:bold;margin-bottom:1.5mm">Zapojení rozváděčů</div>' +
+    stromKresba(stromRadkyProKresbu(radky), STROM_TISK) +
+    '</div>';
   return html;
 }
 
@@ -6216,15 +6338,10 @@ function schemaHlavicka(D) {
   return h + '</table></div>';
 }
 
-function schemaRadekHtml(r) {
-  var jm = (r.rozv && r.rozv.nazev) || '(bez názvu)';
-  var pop = r.vazba
-    ? ' <span style="color:#555;font-size:8.5pt">← ' + esc(stromPopisJistice(r.vazba)) + '</span>'
-    : (r.hloubka === 0 ? ' <span style="color:#555;font-size:8.5pt">hlavní rozváděč</span>' : '');
-  var um = (r.rozv && r.rozv.umisteni) ? '<div style="font-size:8pt;color:#777;margin-left:4mm">umístění: ' + esc(r.rozv.umisteni) + '</div>' : '';
-  return '<div style="position:relative;font-size:10pt;padding:1mm 0;margin-left:' + (r.hloubka * 7) + 'mm">' +
-    (r.hloubka ? '<span style="position:absolute;left:-4.5mm;top:0;width:3.5mm;height:2.6mm;border-left:.4pt solid #888;border-bottom:.4pt solid #888"></span>' : '') +
-    '<strong>' + esc(jm) + '</strong>' + pop + um + '</div>';
+// Stránka schématu kreslí celý svůj úsek najednou — svislé čáry musí
+// navazovat mezi řádky, takže se nedá skládat řádek po řádku.
+function schemaRadkyHtml(cast) {
+  return stromKresba(stromRadkyProKresbu(cast), STROM_SCHEMA);
 }
 
 function schemaStranka(D, cast, cislo, celkem, prvni) {
@@ -6232,7 +6349,7 @@ function schemaStranka(D, cast, cislo, celkem, prvni) {
   p.className = 'a4';
   p.style.cssText = 'padding:14mm 14mm 10mm;background:#fff;color:#000;min-height:0';
   var h = prvni ? schemaHlavicka(D) : '';
-  h += cast.map(schemaRadekHtml).join('');
+  h += schemaRadkyHtml(cast);
   // margin-top:auto — .a4 je flex sloupec, zápatí tak sedí u dolního okraje
   // papíru jako u zbytku zprávy, ne hned pod stromem.
   h += '<div style="margin-top:auto;padding-top:2mm;border-top:.5pt solid #999;font-size:7.5pt;color:#666;' +
