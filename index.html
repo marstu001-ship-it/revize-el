@@ -920,7 +920,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.41<span class="ver-date"> · 2026-09-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.42<span class="ver-date"> · 2026-09-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1769,6 +1769,16 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" id="btn-zrusit-autozalohu" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zrusitSlozkuZaloh">✕ Vypnout automatické zálohy</button>
     </div>
     <div style="margin-top:.5rem;font-size:.72rem;color:var(--muted)">Funguje v Chrome a Edge na počítači. Na mobilu a v jiných prohlížečích zůstává ruční stažení.</div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-title">📦 Záloha programu (zdrojový kód)</div>
+    <div class="info-box">Stáhne <strong>celý program v ZIPu</strong> — abyste ho měl po ruce a mohl ho rozjet kdekoliv, i kdyby přestal fungovat GitHub, odkud se teď načítá. Přibalí se i knihovny pro generování PDF a písma, takže rozbalený program funguje <strong>i bez internetu</strong>, a návod <em>JAK-TO-ROZJET.txt</em>. Zabalit to jde i offline — program si sáhne do své vlastní paměti.</div>
+    <div class="info-box" style="border-left-color:var(--accent2)">Tohle je záloha <strong>programu</strong>, ne vašich dat. Zprávy, plán revizí a odběratele zálohuje tlačítko <strong>„⬇️ Stáhnout zálohu"</strong> výš.</div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-gold" id="btn-zip-kodu" data-action="stahnoutKodZip">📦 Stáhnout program jako ZIP</button>
+      <span style="font-size:.72rem;color:var(--muted)">asi 1 MB · verze <span id="zip-verze"></span></span>
+    </div>
   </div>
 </div>
 </div>
@@ -4567,6 +4577,8 @@ function nacistTechnika() {
   // Vždy obnov seznam přístrojů — STORE mohl být změněn jinou akcí
   // (např. ulozitPristrojeJakoVychozi z formuláře)
   renderPristrojePreset();
+  var zv = document.getElementById('zip-verze');
+  if (zv) zv.textContent = getAppVer();
 }
 
 // Zobraz pole pro URL + model jen když je provider 'local'.
@@ -11724,9 +11736,12 @@ async function ulozitSoubor(blob, filename, opts) {
     var souborVybran = false;
     try {
       var isJson = blob.type === 'application/json';
+      var isZip = blob.type === 'application/zip';
       var handle = await window.showSaveFilePicker({
         suggestedName: filename,
-        types: [isJson
+        types: [isZip
+          ? { description: 'ZIP archiv',  accept: { 'application/zip':  ['.zip']  } }
+          : isJson
           ? { description: 'JSON soubor', accept: { 'application/json': ['.json'] } }
           : { description: 'PDF soubor',  accept: { 'application/pdf':  ['.pdf']  } }]
       });
@@ -13471,6 +13486,279 @@ async function exportDatabaze() {
   STORE.archiv_count_at_last_backup = (STORE.archiv || []).length;
   saveStore();
   renderZalohaStatus();
+}
+
+
+// ═══ ZÁLOHA ZDROJOVÉHO KÓDU DO ZIPU ══════════════════════════════════════
+// Uživatel chtěl mít program po ruce i pro případ, že by spadl GitHub
+// (pokyn 2026-09-11). Aplikace běží ze statických stránek a přes Pages se
+// nasazuje CELÝ repozitář, takže si svoje vlastní soubory umí stáhnout
+// obyčejným fetch() ze stejného původu — a co má service worker v cache,
+// dostane i bez sítě.
+//
+// ZIP se skládá VLASTNÍM kódem, ne knihovnou z CDN: je potřeba přesně ve
+// chvíli, kdy síť nefunguje, takže stahovat si kvůli němu knihovnu by byl
+// nesmysl. Komprimuje vestavěný CompressionStream („deflate-raw").
+
+var ZIP_VLASTNI = ['index.html', 'sw.js', 'manifest.json', 'CLAUDE.md',
+                   '.nojekyll', '.github/workflows/pages.yml'];
+var ZIP_LIMIT_MS = 15000;
+
+var __crcTab = null;
+function crc32(buf) {
+  if (!__crcTab) {
+    __crcTab = new Int32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      __crcTab[n] = c;
+    }
+  }
+  var crc = -1;
+  for (var i = 0; i < buf.length; i++) crc = (crc >>> 8) ^ __crcTab[(crc ^ buf[i]) & 0xFF];
+  return (crc ^ -1) >>> 0;
+}
+
+// Vrátí komprimovaná data, nebo null, když prohlížeč CompressionStream nemá
+// (starší iOS Safari) — pak se do ZIPu uloží originál a soubor je jen větší.
+async function zipKomprimuj(data) {
+  if (typeof CompressionStream !== 'function') return null;
+  try {
+    var proud = new Blob([data]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(proud).arrayBuffer());
+  } catch (e) { return null; }
+}
+
+// polozky = [{ nazev, data: Uint8Array }] → Blob se ZIPem.
+// Všechno je pod 4 GB, takže žádné ZIP64.
+async function zipVytvor(polozky) {
+  var casti = [], central = [], offset = 0;
+  var d = new Date();
+  var dosCas = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF;
+  var dosDatum = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+
+  for (var i = 0; i < polozky.length; i++) {
+    var jmeno = new TextEncoder().encode(polozky[i].nazev);
+    var raw = polozky[i].data;
+    var crc = crc32(raw);
+    var zabaleno = await zipKomprimuj(raw);
+    // Komprimovaně jen když to opravdu pomůže — u drobných souborů bývá
+    // deflate delší než originál.
+    var metoda = (zabaleno && zabaleno.length < raw.length) ? 8 : 0;
+    var telo = metoda === 8 ? zabaleno : raw;
+
+    var lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);
+    lh.setUint16(4, 20, true);
+    lh.setUint16(6, 0x0800, true);          // bit 11 = název v UTF-8
+    lh.setUint16(8, metoda, true);
+    lh.setUint16(10, dosCas, true);
+    lh.setUint16(12, dosDatum, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, telo.length, true);
+    lh.setUint32(22, raw.length, true);
+    lh.setUint16(26, jmeno.length, true);
+    casti.push(new Uint8Array(lh.buffer), jmeno, telo);
+
+    var cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);
+    cd.setUint16(4, 20, true);
+    cd.setUint16(6, 20, true);
+    cd.setUint16(8, 0x0800, true);
+    cd.setUint16(10, metoda, true);
+    cd.setUint16(12, dosCas, true);
+    cd.setUint16(14, dosDatum, true);
+    cd.setUint32(16, crc, true);
+    cd.setUint32(20, telo.length, true);
+    cd.setUint32(24, raw.length, true);
+    cd.setUint16(28, jmeno.length, true);
+    cd.setUint32(42, offset, true);
+    central.push(new Uint8Array(cd.buffer), jmeno);
+
+    offset += 30 + jmeno.length + telo.length;
+  }
+
+  var cdVelikost = central.reduce(function(sum, c) { return sum + c.length; }, 0);
+  var konec = new DataView(new ArrayBuffer(22));
+  konec.setUint32(0, 0x06054b50, true);
+  konec.setUint16(8, polozky.length, true);
+  konec.setUint16(10, polozky.length, true);
+  konec.setUint32(12, cdVelikost, true);
+  konec.setUint32(16, offset, true);
+  return new Blob(casti.concat(central, [new Uint8Array(konec.buffer)]),
+                  { type: 'application/zip' });
+}
+
+// Stažení jednoho souboru. ČASOVÝ LIMIT JE NUTNÝ: nedostupná síť (firemní
+// proxy, odpojený tunel) umí fetch zaseknout napořád místo toho, aby vrátila
+// chybu — a balení by pak viselo. Neúspěch není chyba: záloha kódu nesmí
+// spadnout kvůli jednomu fontu, jen se to musí říct.
+async function zipStahni(url) {
+  var ac = (typeof AbortController === 'function') ? new AbortController() : null;
+  var hlidac = setTimeout(function() { if (ac) ac.abort(); }, ZIP_LIMIT_MS);
+  try {
+    var r = await fetch(url, ac ? { signal: ac.signal } : undefined);
+    if (!r || !r.ok) return null;
+    return new Uint8Array(await r.arrayBuffer());
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(hlidac);
+  }
+}
+
+// Externí zdroje se berou Z DOKUMENTU, ne z ručního seznamu — kdyby se
+// knihovna vyměnila nebo přibyla, ZIP se přizpůsobí sám a nezůstane pozadu.
+// Schválně se nikde nejmenuje konkrétní doména: bere se všechno, co má
+// stránka načtené zvenčí.
+function zipAbsolutni(url) { return /^https?:\/\//.test(url || ''); }
+
+// Z názvu souboru v URL udělá jméno v ZIPu a pohlídá, ať se dvě nepřekryjí.
+function zipJmenoZUrl(url, slozka, obsazena) {
+  var zaklad = url.split('?')[0].split('/').filter(Boolean).slice(-1)[0] || 'soubor';
+  zaklad = zaklad.replace(/[^\w.\-]/g, '_');
+  var jmeno = slozka + zaklad, n = 2;
+  while (obsazena[jmeno]) jmeno = slozka + (n++) + '-' + zaklad;
+  obsazena[jmeno] = true;
+  return jmeno;
+}
+
+async function zipExterniPolozky(nestazeno) {
+  var polozky = [], nahrady = [], obsazena = {};
+
+  var skripty = Array.prototype.slice.call(document.querySelectorAll('script[src]'))
+    .map(function(el) { return el.getAttribute('src'); }).filter(zipAbsolutni);
+  for (var i = 0; i < skripty.length; i++) {
+    var data = await zipStahni(skripty[i]);
+    if (!data) { nestazeno.push(skripty[i]); continue; }
+    var cil = zipJmenoZUrl(skripty[i], 'knihovny/', obsazena);
+    polozky.push({ nazev: cil, data: data });
+    nahrady.push([skripty[i], cil]);
+  }
+
+  var styly = Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"][href]'))
+    .map(function(el) { return el.getAttribute('href'); }).filter(zipAbsolutni);
+  for (var s = 0; s < styly.length; s++) {
+    var cssBin = await zipStahni(styly[s]);
+    if (!cssBin) { nestazeno.push(styly[s]); continue; }
+    var css = new TextDecoder().decode(cssBin);
+    // Písma, na která CSS odkazuje. Server vrací variantu podle prohlížeče
+    // (woff2), takže se nestahují zbytečné formáty.
+    var zdroje = css.match(/https?:\/\/[^)"'\s]+/g) || [];
+    var videno = {};
+    for (var j = 0; j < zdroje.length; j++) {
+      var fu = zdroje[j];
+      if (videno[fu]) continue;
+      videno[fu] = true;
+      var fd = await zipStahni(fu);
+      if (!fd) { nestazeno.push(fu); continue; }
+      var fn = zipJmenoZUrl(fu, 'pisma/', obsazena);
+      polozky.push({ nazev: 'knihovny/' + fn, data: fd });
+      css = css.split(fu).join(fn);
+    }
+    var cilCss = zipJmenoZUrl(styly[s], 'knihovny/', obsazena);
+    if (!/\.css$/i.test(cilCss)) cilCss += '.css';
+    polozky.push({ nazev: cilCss, data: new TextEncoder().encode(css) });
+    nahrady.push([styly[s], cilCss]);
+  }
+  return { polozky: polozky, nahrady: nahrady };
+}
+
+function zipNazevSouboru() {
+  var ver = getAppVer().replace(/\s*·\s*/, '-').replace(/[^\w.\-]/g, '');
+  return 'revize-el-' + (ver || 'kod') + '.zip';
+}
+
+function zipNavod(nestazeno, offlineHotovo) {
+  var t = [];
+  t.push('REVIZE EL — záloha zdrojového kódu');
+  t.push('Verze ' + getAppVer() + ',  zabaleno ' + new Date().toLocaleString('cs-CZ'));
+  t.push('');
+  t.push('JAK PROGRAM ROZJET');
+  t.push('');
+  if (offlineHotovo) {
+    t.push('1) Nejjednodušeji: rozbalte ZIP a otevřete soubor index-offline.html.');
+    t.push('   Je to tentýž program, jen má cesty na přiložené knihovny ve složce');
+    t.push('   knihovny/, takže funguje i bez internetu — včetně generování PDF.');
+    t.push('');
+    t.push('2) Chcete-li ho takhle provozovat natrvalo, přejmenujte');
+    t.push('   index-offline.html na index.html (přepište původní). Service worker');
+    t.push('   totiž při otevírání sahá po index.html a jinak by vám podstrčil');
+    t.push('   původní verzi, která si knihovny tahá z internetu.');
+  } else {
+    t.push('1) Rozbalte ZIP a otevřete index.html.');
+    t.push('   POZOR: knihovny pro PDF se nepodařilo stáhnout (viz níže), takže');
+    t.push('   generování PDF bude potřebovat internet.');
+  }
+  t.push('');
+  t.push('3) Plný provoz (instalace jako aplikace, offline režim přes service');
+  t.push('   worker) potřebuje webový server — otevření souboru z disku na to');
+  t.push('   nestačí. Stačí cokoliv, třeba ve složce s rozbaleným ZIPem spustit:');
+  t.push('       python3 -m http.server 8000');
+  t.push('   a otevřít http://localhost:8000 . Nebo obsah ZIPu nahrajte na');
+  t.push('   jakýkoliv webhosting.');
+  t.push('');
+  t.push('CO JE VE SLOŽCE');
+  t.push('  index.html      hlavní program (přesně jak je na serveru)');
+  if (offlineHotovo) t.push('  index-offline.html  totéž s cestami na přiložené knihovny');
+  t.push('  sw.js           service worker (offline režim a aktualizace)');
+  t.push('  manifest.json   popis aplikace pro instalaci na plochu');
+  t.push('  knihovny/       jsPDF, html2canvas a písma');
+  t.push('  CLAUDE.md       dokumentace projektu — všechna pravidla a rozhodnutí');
+  t.push('  .github/, .nojekyll   jen pro nasazení zpátky na GitHub Pages');
+  t.push('');
+  t.push('DATA (zprávy, plán revizí, odběratelé) V TOMHLE ZIPU NEJSOU.');
+  t.push('Ta se zálohují zvlášť tlačítkem „Stáhnout zálohu" v Nastavení.');
+  if (nestazeno.length) {
+    t.push('');
+    t.push('NEPODAŘILO SE STÁHNOUT (nejspíš nebyla síť):');
+    nestazeno.forEach(function(u) { t.push('  ' + u); });
+  }
+  t.push('');
+  return t.join('\r\n');
+}
+
+async function stahnoutKodZip() {
+  var btn = document.getElementById('btn-zip-kodu');
+  var puvodni = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Balím…'; }
+  try {
+    var nestazeno = [], polozky = [], indexHtml = null;
+    for (var i = 0; i < ZIP_VLASTNI.length; i++) {
+      var data = await zipStahni(ZIP_VLASTNI[i]);
+      if (!data) { nestazeno.push(ZIP_VLASTNI[i]); continue; }
+      if (ZIP_VLASTNI[i] === 'index.html') indexHtml = data;
+      polozky.push({ nazev: ZIP_VLASTNI[i], data: data });
+    }
+    if (!indexHtml) {
+      alert('Nepodařilo se stáhnout index.html, takže záloha kódu nemá smysl.\n\n' +
+            'Zkuste to znovu, až budete online.');
+      return;
+    }
+    var ext = await zipExterniPolozky(nestazeno);
+    polozky = polozky.concat(ext.polozky);
+    if (ext.nahrady.length) {
+      var html = new TextDecoder().decode(indexHtml);
+      ext.nahrady.forEach(function(par) { html = html.split(par[0]).join(par[1]); });
+      polozky.push({ nazev: 'index-offline.html', data: new TextEncoder().encode(html) });
+    }
+    polozky.push({ nazev: 'JAK-TO-ROZJET.txt',
+                   data: new TextEncoder().encode(zipNavod(nestazeno, ext.nahrady.length > 0)) });
+
+    var blob = await zipVytvor(polozky);
+    var ulozeno = await ulozitSoubor(blob, zipNazevSouboru());
+    if (ulozeno === false) return;
+    var mb = (blob.size / 1048576).toFixed(1).replace('.', ',');
+    showToast(nestazeno.length
+      ? '⚠️ Kód stažen (' + mb + ' MB), ale ' + nestazeno.length +
+        ' souborů chybí — podrobnosti v JAK-TO-ROZJET.txt'
+      : '✓ Kód programu stažen — ' + polozky.length + ' souborů, ' + mb + ' MB',
+      { timeout: 9000 });
+  } catch (e) {
+    alert('Zabalení kódu se nezdařilo: ' + ((e && e.message) || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = puvodni; }
+  }
 }
 
 // ═══ AUTOMATICKÉ ZÁLOHY DO SLOŽKY (File System Access API) ═══════════════
@@ -17148,6 +17436,7 @@ document.addEventListener('click', function(e) {
     case 'lpzTypickyDum': lpzTypickyDum(); break;
     case 'ulozitDoArchivu': ulozitDoArchivu(); break;
     case 'vybratSlozkuZaloh': vybratSlozkuZaloh(); break;
+    case 'stahnoutKodZip': stahnoutKodZip(); break;
     case 'zrusitSlozkuZaloh': zrusitSlozkuZaloh(); break;
     case 'toggleRazeniRozvadecu': toggleRazeniRozvadecu(); break;
     case 'ulozit': ulozit(); break;

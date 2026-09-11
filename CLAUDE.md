@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.41 · 2026-09-11**
+**Aktuální verze: v9.42 · 2026-09-11**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -269,6 +269,56 @@ který podružný rozváděč napájí, a z toho se odvodí strom.
 - Testy: `test-strom-rozvadecu.js` (41 kontrol), `test-strom-model.js` (11),
   `test-v936-compat.js` (6), `test-strom-oprava.js` (33 — opravy v9.39),
   `test-schema-kresba.js` (34 — kresba v9.40 a v9.41).
+
+## Záloha zdrojového kódu do ZIPu (v9.42)
+
+Tlačítko **úplně dole v Nastavení** („📦 Záloha programu") stáhne celý program
+v ZIPu. Uživatel ho chtěl pro případ, že by spadl GitHub, odkud se program
+načítá — aby si ho mohl rozjet jinde.
+
+- **ZIP se skládá VLASTNÍM kódem, nikdy knihovnou z CDN.** Je potřeba přesně
+  ve chvíli, kdy síť nefunguje, takže stahovat si kvůli němu knihovnu je
+  nesmysl. `zipVytvor()` píše hlavičky ručně (local `PK\x03\x04`, central
+  `PK\x01\x02`, EOCD `PK\x05\x06`), komprimuje vestavěný
+  **`CompressionStream('deflate-raw')`** (metoda 8); když ho prohlížeč nemá
+  (starší iOS Safari), uloží se nekomprimovaně (metoda 0) — ZIP je větší,
+  ale platný. Vše je pod 4 GB, takže žádné ZIP64.
+- **Přes Pages se nasazuje CELÝ repozitář** (`.github/workflows/pages.yml`),
+  takže si aplikace umí `fetch()`em stáhnout i `CLAUDE.md`, `pages.yml`
+  a `.nojekyll`. Service worker je drží v cache → **záloha jde pořídit
+  i offline**, což je celý smysl.
+- **Externí zdroje se berou Z DOM**, ne z ručního seznamu: `script[src]`
+  a `link[rel=stylesheet][href]` s absolutní URL, a uvnitř staženého CSS
+  všechny absolutní `url(...)` (písma). Nikde se nejmenuje konkrétní doména,
+  takže výměna knihovny ZIP nerozbije. Do `index-offline.html` se cesty
+  přepíšou na `knihovny/`; originální `index.html` zůstává v ZIPu nedotčený.
+- **`zipStahni()` MUSÍ mít časový limit** (`AbortController`, 15 s).
+  Nedostupná síť (firemní proxy, odpojený tunel) umí `fetch` **zaseknout**
+  místo toho, aby vrátila chybu — bez limitu by balení viselo napořád.
+  Zjištěno při testech 2026-09-11.
+- **Bundlovat jde jen zdroj, který posílá CORS hlavičku.** cdnjs
+  i fonts.gstatic.com ji posílají; `<script src>` by se načetl i bez ní,
+  ale `fetch()` ne. Při výměně knihovny to ověřit.
+- Neúspěch jedné položky ZIP neshodí — vynechá se, zapíše se do
+  `JAK-TO-ROZJET.txt` a řekne uživateli. Záloha kódu nesmí padnout kvůli
+  jednomu fontu, ale taky se nesmí tvářit jako plně offline, když není.
+- **Data v ZIPu nejsou** (rozhodnutí uživatele) — ta má vlastní tlačítko
+  „⬇️ Stáhnout zálohu". Návod na to výslovně upozorňuje.
+- Testy: `test-zip-kodu.js` (28 kontrol — včetně rozbalení a **reálného
+  spuštění programu s odstřiženou sítí**) a `test-ulozit-typy.js` (7).
+
+**Pasti při testování** (stály hodinu, ať je to příště rychlejší):
+1. `page.evaluate(() => stahnoutKodZip())` **spadne** — Playwright čeká na
+   vrácený slib a stažení mu zabije kontext. Musí být `() => { stahnoutKodZip(); }`.
+2. Service worker si po převzetí kontroly stránku sám reloadne (PWA
+   auto-update). V testu se musí vypnout jeho **registrace**
+   (`navigator.serviceWorker.register = () => new Promise(() => {})` přes
+   `addInitScript`), ne stahování `sw.js` — ten musí do ZIPu jít.
+3. `showSaveFilePicker` v headless bez uživatelského gesta **nikdy
+   nedoresolvuje** → v testu ho smazat, ať se jede cestou stažení.
+4. Sandbox nepouští cdnjs. Knihovny se nasimulují lokálním serverem, který
+   **posílá `Access-Control-Allow-Origin`** (`corsserver.py`) — obyčejný
+   `python3 -m http.server` ne, a fetch by selhal na CORS.
 
 ## Kresba stromu — JEDNA ČÁRA = JEDEN KABEL (v9.41)
 
