@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.43 · 2026-09-11**
+**Aktuální verze: v9.44 · 2026-09-11**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -269,6 +269,47 @@ který podružný rozváděč napájí, a z toho se odvodí strom.
 - Testy: `test-strom-rozvadecu.js` (41 kontrol), `test-strom-model.js` (11),
   `test-v936-compat.js` (6), `test-strom-oprava.js` (33 — opravy v9.39),
   `test-schema-kresba.js` (34 — kresba v9.40 a v9.41).
+
+## Přepsání textů, které program skládá sám (v9.44)
+
+**Smysl (pokyn uživatele 2026-09-11):** „kdyby tam bylo něco špatně jako
+třeba ten nadpis zprávy u strojů, ať to uživatel vyřeší sám a nemusí mi psát,
+ať opravím kód." Je to **pojistka**, ne kosmetika.
+
+V panelu nastavení tisku (vlevo v náhledu) je skupina **„Texty ve zprávě"**
+se třemi poli: **nadpis zprávy**, **citace norem pod ním**, **celkový
+posudek**. Náhled se překresluje živě.
+
+- **Panel není třetí úložiště** — píše do POLÍ ZPRÁVY
+  (`f_nadpis_vlastni`, `f_podnadpis_vlastni`, `f_posudek_vlastni`, ta dvě
+  poslední jsou nová a jsou i v tabu 6). Tím se ukládání, archiv, zálohy
+  i načtení z archivu řeší samy a formulář se s panelem nemůže rozejít.
+- **Prázdné pole = program si text složí sám.** Co program složil, se ukazuje
+  jako **náznak v poli** (`window.__pdfVychoziTexty`, plní ho `generujPDF()`
+  ještě PŘED aplikací přepisů), takže je vidět, co se vlastně přepisuje.
+- **Text se tiskne PŘESNĚ tak, jak ho uživatel napsal.** Do v9.43 se
+  `nadpis_vlastni` převáděl na VELKÁ PÍSMENA — uživatel to odmítl.
+- **Psaní se překresluje se zpožděním 500 ms.** `generujPDF()` je drahé
+  a volá `saveToArchiv()`, takže překreslovat na každý znak nejde.
+  Po překreslení se **vrací focus i pozice kurzoru** (`tiskTextyPrekresli`),
+  protože panel se překresluje taky.
+- **„📌 Použít i pro příští zprávy — <typ>"** uloží texty do
+  `STORE.tisk.textyTyp[typ]` a `novaZprava()` je předvyplní
+  (`vlozitTextyTypu`). **Per typ schválně** — špatný nadpis u strojů nemá co
+  dělat u elektro revize. Prázdná pole nastavení zruší.
+- **Přidat čtvrtý přepisovatelný text** = jeden řádek do `TISK_TEXTY`
+  + nové pole zprávy + jeho naplnění do `window.__pdfVychoziTexty`.
+- Test: `test-texty-pdf.js` (19 kontrol).
+
+### Podbarvení okének je od v9.44 VYPNUTÉ
+
+`VYCHOZI_TISK.barevneKolonky` je `false` (pokyn uživatele) — zaškrtnutý
+zůstává jen **„Místo revize tučně"**. Kdo měl podbarvení uložené jako svoje
+výchozí v profilu, dostal by ho dál, takže je tu **jednorázová migrace**
+`migraceKolonky()`: smaže ten jeden klíč z `STORE.tisk` a poznamená si to do
+`STORE.tisk_migrace_kolonky` (nový klíč → doplněn do `STORE_KEYS`,
+`STORE_VYCHOZI`, `buildZalohaBlob()` i `obnovZeZalohy()` podle pravidla výš).
+Nastavení uložené u konkrétní zprávy se nemění.
 
 ## Stroj se KONTROLUJE, nerevidují se (v9.43)
 
@@ -1011,10 +1052,11 @@ se jako `--pdf-bg` na `#pdf-pages`, ale používá ji **jen `.a4-titulni
 strany od kraje ke kraji, uživatel to po porovnání s konkurencí odmítl:
 „vypadá líp, když není ta stránka celá obarvená"). **Vlastní barva překresluje až na `change`** (puštění myši) —
 při `input` se tažení ignoruje, jinak náhled poskakuje. Kapátko v systémovém
-dialogu uživatele mátlo, proto ta paleta. Podbarvení kolonek je **zapnuté
-ve výchozím stavu** (`pbox-tint` na kontejneru, odstín z `pboxOdstin()` =
-**85 % bílé** — jen náznak; okénka i podpisové rámečky `.podp-inner` jsou
-jinak **bílá**, aby na barevném bloku vynikla jako u konkurence),
+dialogu uživatele mátlo, proto ta paleta. Podbarvení kolonek je od **v9.44
+VYPNUTÉ** ve výchozím stavu (`pbox-tint` na kontejneru, odstín z
+`pboxOdstin()` = **85 % bílé** — jen náznak; okénka i podpisové rámečky
+`.podp-inner` jsou jinak **bílá**, aby na barevném bloku vynikla jako
+u konkurence),
 **místo revize tučně** (`.pbox-tucne`, zapnuto ve výchozím stavu — u konkurence
 se to jmenuje „Předmět revize tučně"), každá
 závada na vlastní stránku (`rozdelZavadyNaStranky()` běží před

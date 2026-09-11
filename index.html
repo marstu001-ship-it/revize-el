@@ -627,6 +627,14 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
 .tisk-radek select{padding:.25rem .4rem;font-size:.78rem;font-family:var(--sans);
   border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text)}
 .tisk-check{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.4rem;cursor:pointer;line-height:1.4}
+/* Textové pole v panelu tisku — přepis toho, co program skládá sám */
+.tisk-pole{display:block;margin-bottom:.5rem}
+.tisk-pole>span{display:block;font-size:.62rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.04em;margin-bottom:.15rem}
+.tisk-pole textarea{width:100%;font-family:inherit;font-size:.74rem;line-height:1.35;
+  padding:.3rem .4rem;border:1px solid var(--border);border-radius:3px;background:#fff;
+  color:var(--text);resize:vertical}
+.tisk-pole textarea::placeholder{color:#aaa;font-style:italic}
 .tisk-check input{width:15px;height:15px;padding:0;flex:0 0 15px;margin-top:.1rem}
 .tisk-nedostupne{opacity:.55;cursor:default}
 .tisk-btn{width:100%;margin-bottom:.35rem;padding:.35rem .5rem;font-size:.72rem;font-family:var(--sans);
@@ -920,7 +928,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.43<span class="ver-date"> · 2026-09-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.44<span class="ver-date"> · 2026-09-11</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2612,6 +2620,10 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <input type="text" id="f_nadpis_vlastni" data-term-ph="ph-nadpis" placeholder="Zpráva o revizi vyhrazeného elektrického zařízení" autocomplete="off"></div>
       <div class="f span2"><label>Řádek nad podnadpisem <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">nepovinné — třeba „Příloha č. 3 k projektu 2026/114"</span></label>
         <input type="text" id="f_nadpis_doplnek" placeholder="Příloha č. 3 k …" autocomplete="off"></div>
+      <div class="f span2"><label>Vlastní citace norem pod nadpisem <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">nepovinné — prázdné = program si ji složí sám podle typu zprávy</span></label>
+        <textarea id="f_podnadpis_vlastni" rows="2" placeholder="Kontrola provedena v souladu se zákonem č. …"></textarea></div>
+      <div class="f span2"><label>Vlastní celkový posudek <span style="font-size:.5rem;color:var(--muted);display:block;text-transform:none;letter-spacing:0">nepovinné — prázdné = program ho složí podle celkového výsledku</span></label>
+        <textarea id="f_posudek_vlastni" rows="2" placeholder="Provedenou prohlídkou, měřením a zkouškami bylo zjištěno, že …"></textarea></div>
     </div>
   </div>
   <div class="scard">
@@ -3400,13 +3412,15 @@ var STORE_VYCHOZI = {
   aiConfig: {}, vlastniNormy: {}, plan: {}, tisk: {},
   strojeMereni: [], strojeKontroly: [],
   last_backup_at: null, archiv_count_at_last_backup: 0,
-  auto_cislovani: true, auto_zaloha_at: null, auto_zaloha_ver: null
+  auto_cislovani: true, auto_zaloha_at: null, auto_zaloha_ver: null,
+  tisk_migrace_kolonky: 0
 };
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
                   'snippety', 'aiConfig', 'vlastniNormy', 'plan', 'tisk',
                   'strojeMereni', 'strojeKontroly',
                   'last_backup_at', 'archiv_count_at_last_backup',
-                  'auto_cislovani', 'auto_zaloha_at', 'auto_zaloha_ver'];
+                  'auto_cislovani', 'auto_zaloha_at', 'auto_zaloha_ver',
+                  'tisk_migrace_kolonky'];
 
 // iOS Safari (tab i PWA) má historicky bugy v IndexedDB v WebKit content
 // procesu — open() někdy nikdy nedovolá callback a stránka padne. Detekce
@@ -4435,6 +4449,9 @@ function novaZprava(typ) {
   // „revize". Musí to být AŽ TADY: reset výš vrací pole na defaultValue
   // z HTML, takže dřív nastavený rozdělovník by se přepsal zpátky.
   aplikovatPojmy(typ);
+  // Vlastní texty uložené pro tenhle typ zprávy (nadpis, citace norem,
+  // posudek) — tím si uživatel může opravit, co program skládá špatně.
+  vlozitTextyTypu(typ);
   var rc = document.getElementById('rozvadece-container'); if (rc) rc.innerHTML = '';
   rozvadecCounter = 0;
   // Nová zpráva má provázání rozváděčů zapnuté (rozhodnutí uživatele
@@ -10149,6 +10166,7 @@ function getData() {
     },
     zhodnoceni: gv('f_zhodnoceni'), celkovy_vysledek: gv('f_celkovy_vysledek'), lhuta: gv('f_lhuta'),
     nadpis_vlastni: gv('f_nadpis_vlastni'), nadpis_doplnek: gv('f_nadpis_doplnek'),
+    podnadpis_vlastni: gv('f_podnadpis_vlastni'), posudek_vlastni: gv('f_posudek_vlastni'),
     // odchylky nastavení tisku u téhle konkrétní zprávy (prázdné = jako v profilu)
     tisk: Object.assign({}, window.__tiskZpravy || {}),
     poznamka_zavady: gv('f_poznamka_zavady'),
@@ -10694,7 +10712,9 @@ function druhVeVete(druh) {
 var VYCHOZI_TISK = {
   mistoTucne: true,         // místo provádění revize tučně (jako u konkurence)
   pozadiTisku: '',          // prázdné = bílá; obarví jen titulní stranu
-  barevneKolonky: true,     // podbarvené kolonky jsou hezčí, zapnuto rovnou
+  // Podbarvení okének je od v9.44 VYPNUTÉ (pokyn uživatele 2026-09-11) —
+  // zaškrtnutý zůstává jen tučný nadpis místa revize.
+  barevneKolonky: false,
   zavadyVlastniStranka: false,
   fotekNaRadek: 2,
   razitko: true,
@@ -10712,6 +10732,17 @@ function pboxOdstin(pozadi) {
   // 85 % bílé, jen 15 % zvolené barvy
   var svet = function(x) { return Math.min(255, Math.round(x + (255 - x) * 0.85)); };
   return 'rgb(' + svet(r) + ',' + svet(g) + ',' + svet(b) + ')';
+}
+
+// Jednorázový úklid: kdo měl podbarvení uložené jako svoje VÝCHOZÍ
+// nastavení v profilu, dostal by ho dál — změna výchozí hodnoty by se ho
+// netýkala a vypadalo by to, že se nic nestalo. Smaže se jen ten jeden
+// klíč v profilu; nastavení uložené u konkrétní zprávy zůstává.
+function migraceKolonky() {
+  if (STORE.tisk_migrace_kolonky) return;
+  STORE.tisk_migrace_kolonky = 1;
+  if (STORE.tisk && STORE.tisk.barevneKolonky === true) delete STORE.tisk.barevneKolonky;
+  saveStore();
 }
 
 function tiskNastaveni(D) {
@@ -10788,9 +10819,14 @@ function generujPDF() {
        (vicStroju ? 'PRACOVNÍCH STROJŮ' : 'PRACOVNÍHO STROJE'))
     : ('ZPRÁVA O ' + druhVNadpisu(D.druh) + PJ.nadpisAkce + ' ' +
        (isLpsPdf ? 'OCHRANY PŘED BLESKEM (LPS)' : 'VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'));
-  // Vlastní nadpis — když zpráva jde jako příloha něčeho jiného
-  // („PŘÍLOHA Č. 3 — REVIZE ELEKTROINSTALACE"). Prázdné pole = beze změny.
-  if (D.nadpis_vlastni) nadpis = String(D.nadpis_vlastni).toUpperCase();
+  // Co program složil sám — panel nastavení tisku to ukazuje jako náznak
+  // v polích, aby bylo vidět, co se vlastně přepisuje.
+  window.__pdfVychoziTexty = { nadpis: nadpis };
+  // Vlastní nadpis — když zpráva jde jako příloha něčeho jiného, nebo když
+  // program složí nadpis špatně a uživatel si to chce opravit sám.
+  // Text se tiskne PŘESNĚ tak, jak ho uživatel napsal (pokyn 2026-09-11);
+  // do v9.43 se převáděl na velká písmena.
+  if (D.nadpis_vlastni) nadpis = String(D.nadpis_vlastni);
   var podnadpis = isStrojePdf
     ? PJ.uvodniVeta + ' č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 60204-1 ed.3, ČSN 33 1500 (Z1–Z4)'
     : isLpsPdf
@@ -10798,6 +10834,10 @@ function generujPDF() {
         ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 34 1390 (LPS zřízené do 1. 2. 2009), ČSN 33 2000-5-54 ed.3'
         : citaceNormy('Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 62305-1 ed.2 až ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3', lpsVolba))
     : 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 33 1500 (Z1–Z4), ČSN 33 2000-6 ed.2';
+  window.__pdfVychoziTexty.podnadpis = podnadpis;
+  // Citaci norem pod nadpisem jde celou přepsat; `nadpis_doplnek` zůstává
+  // jako řádek NAD ní (číslo přílohy apod.).
+  if (D.podnadpis_vlastni) podnadpis = String(D.podnadpis_vlastni);
   if (D.nadpis_doplnek) podnadpis = String(D.nadpis_doplnek) + '\n' + podnadpis;
   var posudek = isStrojePdf
     ? (D.celkovy_vysledek === 'schopno'
@@ -10813,6 +10853,8 @@ function generujPDF() {
     : (D.celkovy_vysledek === 'schopno'
         ? 'Provedenou prohlídkou a měřením bylo zjištěno, že revidovaná elektrická instalace je z hlediska bezpečnosti schopna provozu.'
         : 'Revidované elektrické zařízení NENÍ z hlediska bezpečnosti schopno provozu.');
+  window.__pdfVychoziTexty.posudek = posudek;
+  if (D.posudek_vlastni) posudek = String(D.posudek_vlastni);
 
   var p1 = document.createElement('div');
   p1.className = 'a4';
@@ -13007,6 +13049,7 @@ function nacistData(D) {
     'f_prohlídka': D.prohlídka, 'f_zkouseni': D.zkouseni,
     'f_zhodnoceni': D.zhodnoceni, 'f_celkovy_vysledek': D.celkovy_vysledek, 'f_lhuta': D.lhuta,
     'f_nadpis_vlastni': D.nadpis_vlastni, 'f_nadpis_doplnek': D.nadpis_doplnek,
+    'f_podnadpis_vlastni': D.podnadpis_vlastni, 'f_posudek_vlastni': D.posudek_vlastni,
     'f_poznamka_zavady': D.poznamka_zavady
   };
   // Migrace: staré hodnoty "Třída 1/2/3" → nové "Třída I/II" dle §4 NV 190/2022
@@ -13597,7 +13640,8 @@ function buildZalohaBlob() {
     tisk: STORE.tisk || {},
     strojeMereni: STORE.strojeMereni || [],
     strojeKontroly: STORE.strojeKontroly || [],
-    auto_cislovani: STORE.auto_cislovani !== false
+    auto_cislovani: STORE.auto_cislovani !== false,
+    tisk_migrace_kolonky: STORE.tisk_migrace_kolonky || 0
   };
   return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 }
@@ -14126,6 +14170,7 @@ function obnovZeZalohy(data) {
   if (data.plan) STORE.plan = data.plan;
   if (data.strojeMereni) STORE.strojeMereni = data.strojeMereni;
   if (data.strojeKontroly) STORE.strojeKontroly = data.strojeKontroly;
+  if (data.tisk_migrace_kolonky) STORE.tisk_migrace_kolonky = data.tisk_migrace_kolonky;
   if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
   archiv = STORE.archiv;
   odberatele = STORE.odberatele;
@@ -14784,6 +14829,7 @@ async function init() {
     if (!t.getAttribute('lang')) t.setAttribute('lang', 'cs');
   });
   await loadStore();
+  migraceKolonky();
   archiv = STORE.archiv || [];
   odberatele = STORE.odberatele || [];
   // Migrace: každý záznam archivu dostane interní uid (identita zprávy
@@ -17388,6 +17434,45 @@ var TISK_BARVY = [
   { h: '#f2f2f2', n: 'světle šedá' }
 ];
 
+// Texty, které program skládá sám a uživatel je smí přepsat.
+// Přidat další = jeden řádek tady + `podnadpis_vlastni`-style pole ve zprávě.
+var TISK_TEXTY = [
+  { klic: 'nadpis',    id: 'tisk-txt-nadpis',    pole: 'f_nadpis_vlastni',    popisek: 'Nadpis zprávy',        radku: 2 },
+  { klic: 'podnadpis', id: 'tisk-txt-podnadpis', pole: 'f_podnadpis_vlastni', popisek: 'Citace norem pod ním', radku: 2 },
+  { klic: 'posudek',   id: 'tisk-txt-posudek',   pole: 'f_posudek_vlastni',   popisek: 'Celkový posudek',      radku: 3 }
+];
+
+function maVlastniTexty() {
+  return TISK_TEXTY.some(function(x) { return String(gv(x.pole) || '').trim(); });
+}
+
+// Uloží přepsané texty jako výchozí pro DANÝ TYP zprávy. Per typ schválně:
+// nadpis špatný u strojů nemá co dělat u elektro revize.
+function tiskTextyProTyp() {
+  var typ = aktTyp || 'elektro';
+  STORE.tisk = STORE.tisk || {};
+  STORE.tisk.textyTyp = STORE.tisk.textyTyp || {};
+  var sada = {};
+  TISK_TEXTY.forEach(function(x) {
+    var v = String(gv(x.pole) || '').trim();
+    if (v) sada[x.klic] = v;
+  });
+  STORE.tisk.textyTyp[typ] = sada;
+  saveStore();
+  renderTiskPanel();
+  showToast('📌 Texty se použijí i u příštích zpráv typu „' + typInfo(typ).label + '".' +
+            (Object.keys(sada).length ? '' : ' (Pole byla prázdná — nastavení se zrušilo.)'), { timeout: 8000 });
+}
+
+// Předvyplní vlastní texty u nové zprávy podle uloženého nastavení typu.
+function vlozitTextyTypu(typ) {
+  var sada = ((STORE.tisk || {}).textyTyp || {})[typ] || {};
+  TISK_TEXTY.forEach(function(x) {
+    var el = document.getElementById(x.pole);
+    if (el) el.value = sada[x.klic] || '';
+  });
+}
+
 function renderTiskPanel() {
   var box = document.getElementById('pdf-nastaveni');
   if (!box) return;
@@ -17430,6 +17515,23 @@ function renderTiskPanel() {
         }).join('') +
       '</select></label>' +
 
+    // Texty, které program skládá sám. Když je složí špatně (třeba nadpis
+    // u nového typu zprávy), uživatel si to opraví TADY a nemusí čekat na
+    // zásah do kódu — to je celý smysl (pokyn uživatele 2026-09-11).
+    // Náznak v poli ukazuje, co by program napsal sám.
+    '<div class="tisk-skupina">Texty ve zprávě</div>' +
+    '<div class="tisk-pozn2" style="margin:-.2rem 0 .4rem">Prázdné pole = program si text složí sám. Co napíšete, se vytiskne přesně tak.</div>' +
+    TISK_TEXTY.map(function(x) {
+      var vych = (window.__pdfVychoziTexty || {})[x.klic] || '';
+      return '<label class="tisk-pole"><span>' + x.popisek + '</span>' +
+        '<textarea id="' + x.id + '" rows="' + x.radku + '" placeholder="' +
+          esc(vych.replace(/\n/g, ' ')) + '">' + esc(gv(x.pole)) + '</textarea></label>';
+    }).join('') +
+    (maVlastniTexty()
+      ? '<button type="button" class="tisk-btn" style="width:100%;margin-bottom:.5rem" data-action="tiskTextyProTyp">' +
+        '📌 Použít i pro příští zprávy — ' + esc(typInfo(aktTyp).label) + '</button>'
+      : '') +
+
     '<div class="tisk-skupina">Podpis</div>' +
     '<label class="tisk-check' + (maRazitko ? '' : ' tisk-nedostupne') + '">' +
       '<input type="checkbox" id="tisk-razitko"' + (t.razitko ? ' checked' : '') +
@@ -17467,12 +17569,40 @@ function tiskPanelZmena(e) {
   else if (el.id === 'tisk-fotek') z.fotekNaRadek = parseInt(el.value, 10);
   else if (el.id === 'tisk-razitko') z.razitko = el.checked;
   else if (el.id === 'tisk-podpis') z.podpis = el.checked;
-  else return;
+  else {
+    // Texty nejsou nastavení tisku, ale POLE ZPRÁVY — panel do nich jen
+    // píše. Díky tomu se ukládají, archivují i zálohují beze změny a
+    // nevzniká třetí úložiště, které by se rozešlo s formulářem.
+    var txt = TISK_TEXTY.filter(function(x) { return x.id === el.id; })[0];
+    if (!txt) return;
+    var pole = document.getElementById(txt.pole);
+    if (pole) pole.value = el.value;
+    window.__formDirty = true;
+    // Psaní sype událost na každý znak a překreslení PDF je drahé
+    // (a volá saveToArchiv) — počkat, až uživatel na chvilku přestane.
+    clearTimeout(__tiskPrekresliTimer);
+    __tiskPrekresliTimer = setTimeout(tiskTextyPrekresli, 500);
+    return;
+  }
   window.__formDirty = true;
   // Tažení posuvníkem barvy sype události jednu za druhou — překreslit
   // až když se na chvilku zastaví, jinak náhled poskakuje.
   clearTimeout(__tiskPrekresliTimer);
   __tiskPrekresliTimer = setTimeout(tiskPrekresli, 0);
+}
+
+// Překreslení po psaní do textového pole: panel se překresluje taky,
+// takže by se ztratil focus i pozice kurzoru. Proto se po překreslení
+// vrátí zpátky do stejného pole na stejné místo.
+function tiskTextyPrekresli() {
+  var akt = document.activeElement;
+  var id = akt && akt.id, start = akt && akt.selectionStart, end = akt && akt.selectionEnd;
+  tiskPrekresli();
+  var zpet = id && document.getElementById(id);
+  if (zpet && zpet.focus) {
+    zpet.focus();
+    try { zpet.setSelectionRange(start, end); } catch (e) {}
+  }
 }
 
 function tiskPrekresli() {
@@ -17592,6 +17722,7 @@ document.addEventListener('click', function(e) {
     case 'generujPDFPotvrzeno': generujPDFPotvrzeno(); break;
     case 'closePdfOptions': closePdfOptions(); break;
     case 'tiskBarva': tiskBarva(el); break;
+    case 'tiskTextyProTyp': tiskTextyProTyp(); break;
     case 'tiskUlozitVychozi': tiskUlozitVychozi(); break;
     case 'tiskZpetVychozi': tiskZpetVychozi(); break;
     case 'closeAiModal': closeAiModal(); break;
