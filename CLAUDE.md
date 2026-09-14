@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.44 · 2026-09-11**
+**Aktuální verze: v9.45 · 2026-09-14**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -437,6 +437,14 @@ takže **z dolní hrany rámečku vychází tolik svislic, kolik je vývodů**.
   (rozhodnutí uživatele 2026-09-11). Vyjde to samo: dva potomci napájení
   z téhož řádku jsou ve stromu dva uzly.
 - **Značka jističe na čáře se nekreslí** — stačí text (rozhodnutí uživatele).
+- **Popisek propoje je jen `kabel · označení (jištění)`** — bez názvu obvodu
+  (pokyn uživatele 2026-09-14, přeškrtal ho v snímku). U vývodu do podružného
+  rozváděče jen opakuje jméno, které stojí hned pod ním v rámečku
+  („FU5 — Rozváděč 31RM3 – vlevo" → rámeček „31-RM3"), a u většího stromu se
+  kvůli němu kresba nevejde na šířku A4. Zkrátilo to popisky zhruba o dvě
+  třetiny. **Když označení chybí, zaskočí název obvodu** — jinak by u jističe
+  nebylo vůbec nic. „Jiný řádek" si dál nese svůj vlastní text.
+  Test: `test-popisek-propoje.js` (10 kontrol).
 
 ## Kresba stromu — rámečky a popsané propoje (v9.40)
 

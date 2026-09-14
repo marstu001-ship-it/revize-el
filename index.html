@@ -928,7 +928,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.44<span class="ver-date"> · 2026-09-11</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.45<span class="ver-date"> · 2026-09-14</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5659,8 +5659,11 @@ function stromKabelVazby(vazba, cilPrivod) {
   return stromZkratit(cilPrivod, 38);
 }
 
-// Popisek jističe ve stromu: „AYKY 4B×16 · FA3 — vývod pro RM2 (B 32 A)".
-// Označení bývá jen pořadové číslo, samo o sobě by nic neřeklo.
+// Popisek jističe ve stromu: „AYKY 4B×16 · FA3 (B 32 A)".
+// NÁZEV OBVODU se do popisku nedává (pokyn uživatele 2026-09-14): u vývodu
+// do podružného rozváděče jen opakuje jméno, které stojí hned pod ním
+// v rámečku („FU5 — Rozváděč 31RM3 – vlevo" → rámeček „31-RM3"), a u většího
+// stromu se kvůli němu kresba nevejde na šířku A4.
 function stromPopisJistice(v, cilPrivod) {
   var oz = String(v.oznaceni || '').trim();
   var nz = String(v.nazevObvodu || '').trim();
@@ -5670,7 +5673,9 @@ function stromPopisJistice(v, cilPrivod) {
     var t = [nz, String(v.doplnek || '').trim()].filter(Boolean).join(' · ') || oz || 'jiný řádek';
     return stromZkratit(t, 70);
   }
-  var zaklad = (oz && nz) ? (oz + ' — ' + nz) : (oz || nz || 'jistič');
+  // Když označení chybí (bývá to jen pořadové číslo, ale i to je vodítko),
+  // zůstane aspoň název obvodu — jinak by u jističe nebylo vůbec nic.
+  var zaklad = oz || nz || 'jistič';
   var par = [v.ch, stromProud(v.a)].filter(function(x) { return String(x || '').trim(); }).join(' ');
   var kabel = stromKabelVazby(v, cilPrivod);
   return (kabel ? kabel + ' · ' : '') + zaklad + (par ? ' (' + par + ')' : '');
