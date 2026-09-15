@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.50 · 2026-09-15**
+**Aktuální verze: v9.51 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,50 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Datace norem u strojů — ČSN EN 60204-1 má ČTYŘI verze (v9.51)
+
+Uživatel se zeptal (2026-09-15): „U ed.2 je jen od roku 2007 — neměla by tam
+být ještě ed.1? Když mám stroj z roku 2004?" Měl pravdu. **Stroj se posuzuje
+podle verze normy, která platila, když byl uveden do provozu**, takže
+v seznamu musí být i verze před ed.2. České verze ČSN EN 60204-1 (33 2200):
+
+| verze | platnost |
+|---|---|
+| vydání **10/1995** | 10/1995 – 03/2000 |
+| vydání **03/2000** | 03/2000 – 06/2009 (souběžně s ed.2) |
+| **ed.2** (06/2007) | 06/2007 – **09/2021** (zrušena 14. 9. 2021) |
+| **ed.3** (02/2019) | od 02/2019, účinnost 1. 3. 2019 |
+
+Starší dvě verze nemají v označení „ed.", jsou to prostě další vydání téže
+ČSN — v seznamu se proto rozlišují textem `(vyd. 03/2000)` / `(vyd. 10/1995)`.
+
+Opravená datace (ověřeno u ČAS / normy.biz 2026-09-15):
+
+- **ed.3** `od 06/2019` → **`od 02/2019`** (vydání únor 2019, účinnost 1. 3. 2019)
+- **ed.2** `2007 – 06/2019` → **`06/2007 – 09/2021`** (ed.3 ji nahradila až
+  14. 9. 2021, do té doby platily souběžně)
+- **ČSN EN ISO 13849-1 ed.2** `od 10/2023` → **`od 09/2024`** (vydání 09/2024,
+  účinnost 10/2024)
+- **ČSN EN ISO 13850** — mělo chybně v názvu „ed.2", **žádné ed.2 v ČSN
+  neexistuje**; datace `od 02/2016` → **`od 01/2017`** (vydání 05/2016 platilo
+  jen do ledna 2017)
+
+Ověřeno a **ponecháno beze změny**: NV 378/2001 (od 01/2003),
+ČSN 33 2000-4-41 ed.3 (vydání 01/2018, účinnost 02/2018), ČSN EN ISO 12100
+(2011), a celá skupina LPS 62305 ed.2/ed.3 včetně souběžné platnosti
+do 31. 10. 2027.
+
+**Neověřeno** (chybí spolehlivý zdroj, datace ponechána): ČSN EN 60529
+„od 1993", ČSN EN IEC 60445 ed.6 „od 11/2018", ČSN EN 61140 ed.3 „od 04/2016",
+ČSN 33 2000-6 ed.2 „od 06/2017", ČSN 33 1500 „od 1990 · Z4 2007" a drobné
+elektro položky. **Nevymýšlet — když se má datum změnit, musí být ověřené.**
+
+- Sandbox Claude Code **na csnonline.agentura-cas.cz ani normy.biz nesmí**
+  (egress proxy). Ověřovalo se přes `WebSearch`, který citace vrátí.
+- Test: `test-normy-datace.js` (42 kontrol — název, datace a příznak
+  „neplatná" u devíti norem, návaznost čtyř verzí 60204-1 bez díry,
+  a že se zakliknutá starší verze opravdu vytiskne do PDF).
 
 ## U kontroly stroje se necitují normy o REVIZÍCH (v9.50)
 

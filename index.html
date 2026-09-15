@@ -939,7 +939,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.50<span class="ver-date"> · 2026-09-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.51<span class="ver-date"> · 2026-09-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5066,12 +5066,18 @@ var NORMY = {
       { id: 'nv378str', t: 'NV č. 378/2001 Sb. — požadavky na bezpečný provoz strojů a zařízení', od: 'od 01/2003', c: true },
       { id: 'z250str', t: 'zákon č. 250/2021 Sb. — bezpečnost práce s vyhrazenými zařízeními', od: 'od 07/2022', c: false }
     ]},
+    // ČSN EN 60204-1 má v ČR ČTYŘI po sobě jdoucí verze, ne dvě. Stroj se
+    // posuzuje podle té, která platila, když byl uveden do provozu — proto
+    // jsou v seznamu i obě verze před ed.2 (dotaz uživatele 2026-09-15:
+    // „mám stroj z roku 2004"). Data ověřena u ČAS / normy.biz 2026-09-15.
     { s: 'Elektrické zařízení strojů', items: [
-      { id: 'csn60204str', t: 'ČSN EN 60204-1 ed.3 — Elektrická zařízení strojů, obecné požadavky', od: 'od 06/2019', c: true },
-      { id: 'csn60204e2str', t: 'ČSN EN 60204-1 ed.2 — Elektrická zařízení strojů (starší stroje)', od: '2007 – 06/2019', c: false, neplatna: true },
+      { id: 'csn60204str', t: 'ČSN EN 60204-1 ed.3 — Elektrická zařízení strojů, obecné požadavky', od: 'od 02/2019', c: true },
+      { id: 'csn60204e2str', t: 'ČSN EN 60204-1 ed.2 — Elektrická zařízení strojů (stroje 2007–2021)', od: '06/2007 – 09/2021', c: false, neplatna: true },
+      { id: 'csn60204v2000str', t: 'ČSN EN 60204-1 (vyd. 03/2000) — Elektrická zařízení strojů (stroje 2000–2009)', od: '03/2000 – 06/2009', c: false, neplatna: true },
+      { id: 'csn60204v1995str', t: 'ČSN EN 60204-1 (vyd. 10/1995) — Elektrická zařízení pracovních strojů (do r. 2000)', od: '10/1995 – 03/2000', c: false, neplatna: true },
       { id: 'csn12100str', t: 'ČSN EN ISO 12100 — Bezpečnost strojních zařízení, posouzení rizika', od: 'od 06/2011', c: false },
-      { id: 'csn13849str', t: 'ČSN EN ISO 13849-1 ed.2 — Bezpečnostní části ovládacích systémů', od: 'od 10/2023', c: false },
-      { id: 'csn13850str', t: 'ČSN EN ISO 13850 ed.2 — Nouzové zastavení', od: 'od 02/2016', c: false }
+      { id: 'csn13849str', t: 'ČSN EN ISO 13849-1 ed.2 — Bezpečnostní části ovládacích systémů', od: 'od 09/2024', c: false },
+      { id: 'csn13850str', t: 'ČSN EN ISO 13850 — Funkce nouzového zastavení', od: 'od 01/2017', c: false }
     ]},
     { s: 'Elektrická bezpečnost a ochrana před úrazem', items: [
       { id: 'csn331500str', t: 'ČSN 33 1500 (Z1–Z4) — Revize elektrických zařízení', od: 'od 1990 · Z4 2007', c: false },
