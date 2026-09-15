@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.52 · 2026-09-15**
+**Aktuální verze: v9.53 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,61 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Měřicí list do terénu (v9.53)
+
+**Smysl (kolega Jiří Roubalík přes uživatele, 2026-09-15):** technici chodí
+měřit s tužkou a papírem a všechny okruhy si vypisují ručně. Program tabulku
+vygeneruje za ně — s vyplněnými okruhy a **prázdnými buňkami na naměřené
+hodnoty**. „Stačí do programu vepsat nejdřív všechny okruhy a potom si
+vygenerovat a vytisknout tabulku a jít do terénu měřit."
+
+- **Nic se nekreslí znovu.** List je **tatáž tabulka, kterou už tiskne
+  „🖨️ Tisk měření samostatně"** — `renderTiskRows()` dostala volitelný druhý
+  parametr `o`. **Bez `o` musí vracet BAJT PO BAJTU totéž**, jinak se rozbije
+  stávající tisk měření; hlídá to první kontrola v `test-teren-list.js`.
+- `o.prazdne` = `TEREN_MERENE` (`isc, zsm, riso, rpe, vyp, cas, t5idn, ut`).
+  **`faze` mezi nimi NENÍ** — polarity `A+`/`A−` se předtisknou, ať technik ví,
+  co má měřit. **Pozor na `riso`:** program ho předvyplňuje hodnotou `>20`
+  (ř. 7157 a 7371), takže se na listu MUSÍ vyprázdnit — jinak by technik
+  přetiskl falešnou hodnotu jako naměřenou.
+- `o.skryte` = vizuální indexy sloupců (0–15) k vynechání. **Colspany u řádků
+  `info` (1+11+4) a `rcd-mereni` (10+5+1) se musí dopočítat**, jinak se tabulka
+  rozjede. Řeší to `radek()` + `ubrat()` uvnitř funkce; test počítá šířku
+  každého řádku a čeká u všech stejné číslo.
+- **Nejde přes `generujPDF()`** (ta ukládá do archivu, přepíná obrazovku
+  a vysype `#pdf-pages`) — vlastní obrazovka `#screen-teren-pdf` podle vzoru
+  schématu rozváděčů. `showScreen('teren-pdf')` **PŘED měřením**, stránky
+  s inline `min-height:0`, jinak se nikdy nic nerozdělí.
+- **Stránkuje se greedy, ne odhadem počtu řádků**: řádek se přidá, změří se
+  výška a když přeteče, založí se nová strana a **hlavička tabulky se
+  zopakuje**. U rozváděčů je stránka na šířku (limit 190 mm uvnitř paddingu),
+  u strojů na výšku (276 mm).
+- U strojů se vybírá, **které stroje jde technik měřit** a jestli měření,
+  kontroly, nebo obojí. **U kontrol je prázdný čtvereček ☐** místo výsledku —
+  to bylo výslovné přání.
+- **Minulé hodnoty** (volba, výchozí vypnuto) se berou z řetězu revizí přes
+  `predchudce_uid`. Rozváděč se páruje **přes `uid`**, řádek přes
+  `rowtype|název|číslo|fáze`. **Nesejde-li se to, nevytiskne se nic** — radši
+  prázdno než cizí číslo.
+- **Nový klíč `STORE.teren`** = čtyři místa (`STORE_KEYS`, `STORE_VYCHOZI`,
+  `buildZalohaBlob()`, `obnovZeZalohy()`). Pamatuje si volby, ne výběr
+  rozváděčů.
+- Tlačítka mají třídu **`ro-ok`**, jinak je CSS pravidlo
+  `#screen-form.form-readonly .tab-panel button {display:none}` schová
+  i u dokončené zprávy.
+- Test: `test-teren-list.js` (34 kontrol).
+
+**Dvě pasti v CSS, na které to najelo:**
+1. **`.f label` platí i na VNOŘENÉ popisky** (mono, VELKÁ PÍSMENA, prostrkané).
+   Zaškrtávací řádky v dialogu proto mají vlastní třídu `.teren-radek`.
+2. **`.f input` dává VŠEM polím `width:100%` + padding + rámeček** — ze
+   zaškrtávátka se stalo pole přes celý dialog a text vytlačilo mimo. Proto
+   `.teren-radek input[type=checkbox]{width:auto!important;…}`.
+3. **`display` v `.teren-radek` NESMÍ mít `!important`** — přebilo by inline
+   `style.display='none'`, kterým se schovává volba „minulé hodnoty".
+   A test na schovanou volbu musí číst `getComputedStyle`, ne `style.display`
+   (atribut se nastaví, i když prvek zůstane vidět).
 
 ## Datace norem u strojů — ČSN EN 60204-1 má ČTYŘI verze (v9.51)
 

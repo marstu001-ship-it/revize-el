@@ -465,6 +465,18 @@ td.dnd-num-cell input{padding-left:15px}
 .f label{font-family:var(--mono);font-size:.58rem;font-weight:500;
   letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .f label .req{color:var(--accent)}
+/* Zaškrtávací řádky v dialogu měřicího listu. Bez tohohle je `.f label`
+   (mono, VELKÁ PÍSMENA, prostrkané, šedé) zdědí i vnořené popisky
+   a dialog se rozsype. */
+.teren-radek{font-family:var(--sans)!important;font-size:.84rem!important;font-weight:400!important;
+  letter-spacing:normal!important;text-transform:none!important;color:var(--text)!important;
+  display:flex;gap:.45rem;align-items:center;padding:.18rem 0;cursor:pointer}
+/* `.f input` dává VŠEM polím width:100% + padding + rámeček; zaškrtávátko
+   se tím roztáhlo přes celý dialog a text vytlačilo na okraj. */
+.teren-radek input[type=checkbox]{width:auto!important;flex:0 0 auto;margin:0!important;
+  padding:0!important;border:none!important;background:none!important}
+.teren-radek strong{font-weight:600}
+.teren-radek .tm{color:var(--muted);font-size:.78rem}
 .f label .nv{color:var(--accent);font-size:.52rem;display:block;margin-top:1px}
 .f input,.f select,.f textarea{font-family:var(--sans);font-size:.88rem;
   padding:.5rem .7rem;border:1px solid var(--border);background:var(--bg);
@@ -939,7 +951,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.52<span class="ver-date"> · 2026-09-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.53<span class="ver-date"> · 2026-09-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2596,6 +2608,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div id="rozvadece-container"></div>
   <div style="display:flex;gap:.75rem;margin-top:1rem;margin-bottom:1rem;flex-wrap:wrap">
     <button class="add-row" data-action="addRozvadec" style="border-color:var(--accent2);color:var(--accent2);font-size:.7rem;padding:.5rem 1.2rem">+ Přidat další rozváděč</button>
+    <button class="add-row ro-ok" data-action="terenOtevrit" style="border-color:var(--gold);color:var(--gold);font-size:.7rem;padding:.5rem 1.2rem" title="Vytiskne tabulku se všemi okruhy a prázdnými buňkami — vezmete si ji do terénu">📋 Měřicí list do terénu</button>
     <button class="add-row" id="btn-razeni-rozvadecu" data-action="toggleRazeniRozvadecu" style="font-size:.7rem;padding:.5rem 1.2rem" title="Skryje obvody a umožní změnit pořadí rozváděčů přetažením nebo šipkami">↕ Seřadit rozváděče</button>
   </div>
   <div class="info-box" style="font-size:.76rem">
@@ -2885,6 +2898,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="scard-title">Měření a zkoušky <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">ČSN EN 60204-1 ed.3, čl. 18</span></div>
     <div class="info-box">Seznam si upravte podle stroje — řádky jde přidávat, kopírovat, mazat i&nbsp;přetahovat (za&nbsp;úchyt ⠿ vlevo). <strong>Nadpis</strong> je členicí řádek (článek normy), <strong>položka</strong> nese hodnotu a jednotku. Sloupec <strong>Poznámka se netiskne</strong> — je jen pro vás.<br><strong>Šedý text v poli Hodnota napovídá, co se tam píše</strong> (mezní hodnota dle normy). Najeďte myší na název položky — v bublině je celé vysvětlení včetně článku normy. Nápověda se nikam netiskne, dokud ji nepřepíšete vlastní hodnotou.</div>
     <div id="stroje-mereni-hosty"></div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap">
+    <button class="add-row ro-ok" data-action="terenOtevrit" style="border-color:var(--gold);color:var(--gold);font-size:.7rem;padding:.5rem 1.2rem" title="Vytiskne tabulku se všemi okruhy a prázdnými buňkami — vezmete si ji do terénu">📋 Měřicí list do terénu</button>
+    </div>
   </div>
 </div>
 
@@ -2931,6 +2947,48 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     </div>
   </div>
   <div class="pdf-pages" id="schema-pdf-pages"></div>
+</div>
+
+<!-- NÁHLED MĚŘICÍHO LISTU DO TERÉNU (samostatný výtisk, nejde přes generujPDF) -->
+<div class="screen" id="screen-teren-pdf">
+  <div class="pdf-toolbar">
+    <div class="pdf-toolbar-title">📋 Měřicí list — <span id="teren-pdf-info"></span></div>
+    <div class="pdf-actions">
+      <button class="pbtn" data-action="terenNahledZpet" style="background:#555;border-color:#555">← Zpět</button>
+      <button class="pbtn" data-action="terenOtevrit" style="background:#8a6d1f;border-color:#8a6d1f" title="Vrátit se k výběru, co má být na listu">⚙️ Změnit výběr</button>
+      <button class="pbtn" data-action="terenNahledTisk" style="background:#b5291c;border-color:#b5291c" title="Vytiskne rovnou ve vyšší kvalitě, nic se do počítače neukládá">🖨️ Tisk přímo</button>
+      <button class="pbtn" data-action="terenNahledUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
+    </div>
+  </div>
+  <div class="pdf-pages" id="teren-pdf-pages"></div>
+</div>
+
+<!-- MODAL MĚŘICÍ LIST DO TERÉNU — co dát na list -->
+<div class="modal-overlay" id="modal-teren">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title">📋 Měřicí list do terénu</div>
+    <div class="info-box" style="margin-bottom:.8rem">Program vytiskne tabulku se všemi okruhy a <strong>prázdnými buňkami na naměřené hodnoty</strong>. Vezmete si ji s sebou, v terénu do ní zapíšete hodnoty a pak je přepíšete do programu.</div>
+    <div class="f" style="margin-bottom:.8rem">
+      <label id="teren-co-label">Co dát na list</label>
+      <div id="teren-vyber" style="max-height:30vh;overflow:auto;border:1px solid var(--border);border-radius:3px;padding:.3rem .5rem"></div>
+    </div>
+    <div class="f" id="teren-sloupce-wrap" style="margin-bottom:.8rem">
+      <label>Měřené sloupce <span style="font-weight:normal;color:var(--muted)">— odškrtnutím se list zúží a do zbylých buněk se líp píše</span></label>
+      <div id="teren-sloupce" style="display:flex;flex-wrap:wrap;gap:.2rem .9rem;padding:.2rem 0"></div>
+    </div>
+    <div class="f" style="margin-bottom:1rem">
+      <label>Nastavení listu</label>
+      <div style="display:flex;flex-direction:column;gap:.3rem;padding:.2rem 0">
+        <label class="teren-radek"><input type="checkbox" id="teren-vyssi" checked> Vyšší řádky (aby se do buněk dalo psát tužkou)</label>
+        <label class="teren-radek"><input type="checkbox" id="teren-poznamka" checked> Sloupec na poznámku</label>
+        <label class="teren-radek" id="teren-minule-wrap"><input type="checkbox" id="teren-minule"> Předtisknout šedě hodnoty z minulé revize</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="terenZavrit">Zrušit</button>
+      <button class="btn btn-gold" data-action="terenVytvorit">📋 Vytvořit list</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL VÝPOČET REVIZE -->
@@ -3436,14 +3494,14 @@ var idb = null;
 var STORE_VYCHOZI = {
   technik: {}, pristroje: [], archiv: [], odberatele: [], snippety: [],
   aiConfig: {}, vlastniNormy: {}, plan: {}, tisk: {},
-  strojeMereni: [], strojeKontroly: [],
+  strojeMereni: [], strojeKontroly: [], teren: {},
   last_backup_at: null, archiv_count_at_last_backup: 0,
   auto_cislovani: true, auto_zaloha_at: null, auto_zaloha_ver: null,
   tisk_migrace_kolonky: 0
 };
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
                   'snippety', 'aiConfig', 'vlastniNormy', 'plan', 'tisk',
-                  'strojeMereni', 'strojeKontroly',
+                  'strojeMereni', 'strojeKontroly', 'teren',
                   'last_backup_at', 'archiv_count_at_last_backup',
                   'auto_cislovani', 'auto_zaloha_at', 'auto_zaloha_ver',
                   'tisk_migrace_kolonky'];
@@ -12748,21 +12806,60 @@ function stahnoutMereniPDF() {
   return renderPagesToPDF(pageList, filename);
 }
 
-function renderTiskRows(data) {
+// Volitelný druhý parametr `o` používá měřicí list do terénu (v9.53):
+//   o.prazdne    — klíče, které se mají vyprázdnit (technik je teprve naměří)
+//   o.minule     — { indexŘádku: { klíč: hodnota } } z předchozí revize, tiskne
+//                  se drobně šedě do jinak prázdné buňky
+//   o.vyssiRadek — vyšší řádky, aby se do buněk dalo psát tužkou
+//   o.skryte     — indexy sloupců (0-15) k vynechání; colspany u řádků `info`
+//                  a `rcd-mereni` se MUSÍ dopočítat, jinak se tabulka rozjede
+// BEZ `o` musí funkce vracet BAJT PO BAJTU totéž co dřív — jede přes ni
+// „🖨️ Tisk měření samostatně" (hlídá test-teren-list.js).
+function renderTiskRows(data, o) {
+  o = o || {};
+  var prazdne = {};
+  (o.prazdne || []).forEach(function(k) { prazdne[k] = true; });
+  var minule = o.minule || null;
+  var pad = o.vyssiRadek ? '2.6mm 1.5mm' : '1mm 1.5mm';
+  var skryte = {};
+  (o.skryte || []).forEach(function(i) { skryte[i] = true; });
+  // Kolik ze skrytých sloupců padne do rozsahu od..do — o tolik se zkrátí colspan.
+  function ubrat(od, doo) {
+    var n = 0;
+    for (var i = od; i <= doo; i++) if (skryte[i]) n++;
+    return n;
+  }
+  // Vyskládá řádek a vynechá buňky skrytých sloupců. `bunky` je pole
+  // { i: vizuálníIndex, html } nebo { rozsah: [od, do], html, cs: colspan }.
+  function radek(bunky) {
+    return '<tr>' + bunky.map(function(b) {
+      if (b.rozsah) {
+        var cs = b.cs - ubrat(b.rozsah[0], b.rozsah[1]);
+        return cs <= 0 ? '' : b.html(cs);
+      }
+      return skryte[b.i] ? '' : b.html();
+    }).join('') + '</tr>';
+  }
+  // Obsah buňky: beze změny, pokud se sloupec nevyprazdňuje.
+  function bunka(ri, klic, zaklad) {
+    if (!prazdne[klic]) return zaklad;
+    var m = minule && minule[ri] && minule[ri][klic];
+    return m ? '<span style="color:#aaa;font-size:7pt">' + esc(m) + '</span>' : '';
+  }
   var prevGroup = '';
-  return data.map(function(m) {
+  return data.map(function(m, ri) {
     var isRcd = m.rowtype === 'rcd-mereni';
     var isRcdH = m.rowtype === 'rcd-header';
     var isInfo = m.rowtype === 'info';
     var bg = isRcd ? ' background:#f8f8f0;' : (isRcdH ? ' background:#f0f4ff;' : (isInfo ? ' background:#fff8e6;' : ''));
-    var s = 'text-align:center;padding:1mm 1.5mm;border:.75pt solid #000;' + bg;
+    var s = 'text-align:center;padding:' + pad + ';border:.75pt solid #000;' + bg;
     if (isInfo) {
       prevGroup = '';
-      return '<tr>' +
-        '<td style="' + s + '">' + esc(m.c || '') + '</td>' +
-        '<td colspan="11" style="text-align:left;padding:1mm 1.5mm;border:.75pt solid #000;' + bg + 'font-style:italic">' + esc(m.popis || '') + '</td>' +
-        '<td colspan="4" style="text-align:left;padding:1mm 1.5mm;border:.75pt solid #000;' + bg + '">' + esc(m.hodnota || '') + '</td>' +
-        '</tr>';
+      return radek([
+        { i: 0, html: function() { return '<td style="' + s + '">' + esc(m.c || '') + '</td>'; } },
+        { rozsah: [1, 11], cs: 11, html: function(cs) { return '<td colspan="' + cs + '" style="text-align:left;padding:' + pad + ';border:.75pt solid #000;' + bg + 'font-style:italic">' + esc(m.popis || '') + '</td>'; } },
+        { rozsah: [12, 15], cs: 4, html: function(cs) { return '<td colspan="' + cs + '" style="text-align:left;padding:' + pad + ';border:.75pt solid #000;' + bg + '">' + esc(m.hodnota || '') + '</td>'; } }
+      ]);
     }
     if (isRcd) {
       var isFirstSub = m.rcdGroup !== prevGroup;
@@ -12771,36 +12868,463 @@ function renderTiskRows(data) {
         ? 'border:none;background:#f8f8f0;text-align:right;padding:1mm 1.5mm;font-size:7pt;color:#666;vertical-align:middle'
         : 'border:none;background:#f8f8f0';
       var leadText = isFirstSub ? 'ověření RCD dle přílohy NA ČSN 33 2000-6 ed.2 →' : '';
-      return '<tr>' +
-        '<td colspan="10" style="' + leadStyle + '">' + leadText + '</td>' +
-        '<td style="' + s + 'font-weight:bold">' + esc(m.faze||'') + '</td>' +
-        '<td style="' + s + '">' + esc(m.vyp||'') + '</td>' +
-        '<td style="' + s + '">' + esc(m.cas||'') + '</td>' +
-        '<td style="' + s + '">' + esc(m.t5idn||'') + '</td>' +
-        '<td style="' + s + '">' + esc(m.ut||'') + '</td>' +
-        '<td style="border:none;background:#f8f8f0"></td>' +
-        '</tr>';
+      return radek([
+        { rozsah: [0, 9], cs: 10, html: function(cs) { return '<td colspan="' + cs + '" style="' + leadStyle + '">' + leadText + '</td>'; } },
+        { i: 10, html: function() { return '<td style="' + s + 'font-weight:bold">' + esc(m.faze||'') + '</td>'; } },
+        { i: 11, html: function() { return '<td style="' + s + '">' + bunka(ri, 'vyp', esc(m.vyp||'')) + '</td>'; } },
+        { i: 12, html: function() { return '<td style="' + s + '">' + bunka(ri, 'cas', esc(m.cas||'')) + '</td>'; } },
+        { i: 13, html: function() { return '<td style="' + s + '">' + bunka(ri, 't5idn', esc(m.t5idn||'')) + '</td>'; } },
+        { i: 14, html: function() { return '<td style="' + s + '">' + bunka(ri, 'ut', esc(m.ut||'')) + '</td>'; } },
+        { i: 15, html: function() { return '<td style="border:none;background:#f8f8f0"></td>'; } }
+      ]);
     }
     prevGroup = '';
-    return '<tr>' +
-      '<td style="' + s + '">' + esc(m.c) + '</td>' +
-      '<td style="padding:1mm 1.5mm;border:.75pt solid #000;' + bg + '">' + esc(m.n) + '</td>' +
-      '<td style="' + s + '">' + esc(m.typ) + '</td>' +
-      '<td style="' + s + '">' + esc(m.ch) + '</td>' +
-      '<td style="' + s + '">' + esc(m.a) + '</td>' +
-      '<td style="' + s + '">' + esc(m.idn) + '</td>' +
-      '<td style="' + s + '">' + esc(m.isc||'') + '</td>' +
-      '<td style="' + s + '">' + esc(m.zsm) + '</td>' +
-      '<td style="' + s + '">' + esc(m.riso) + '</td>' +
-      '<td style="' + s + '">' + esc(m.rpe||'') + '</td>' +
-      '<td style="' + s + 'font-weight:' + (isRcdH?'bold':'normal') + '">' + esc(m.faze||'') + '</td>' +
-      '<td style="' + s + '">' + esc(m.vyp||'') + '</td>' +
-      '<td style="' + s + '">' + esc(m.cas||'') + '</td>' +
-      '<td style="' + s + '">' + esc(m.t5idn||'') + '</td>' +
-      '<td style="' + s + '">' + esc(m.ut||'') + '</td>' +
-      '<td style="padding:1mm 1.5mm;border:.75pt solid #000;' + bg + '">' + esc(m.kabel) + '</td>' +
-      '</tr>';
+    return radek([
+      { i: 0,  html: function() { return '<td style="' + s + '">' + esc(m.c) + '</td>'; } },
+      { i: 1,  html: function() { return '<td style="padding:' + pad + ';border:.75pt solid #000;' + bg + '">' + esc(m.n) + '</td>'; } },
+      { i: 2,  html: function() { return '<td style="' + s + '">' + esc(m.typ) + '</td>'; } },
+      { i: 3,  html: function() { return '<td style="' + s + '">' + esc(m.ch) + '</td>'; } },
+      { i: 4,  html: function() { return '<td style="' + s + '">' + esc(m.a) + '</td>'; } },
+      { i: 5,  html: function() { return '<td style="' + s + '">' + esc(m.idn) + '</td>'; } },
+      { i: 6,  html: function() { return '<td style="' + s + '">' + bunka(ri, 'isc', esc(m.isc||'')) + '</td>'; } },
+      { i: 7,  html: function() { return '<td style="' + s + '">' + bunka(ri, 'zsm', esc(m.zsm)) + '</td>'; } },
+      { i: 8,  html: function() { return '<td style="' + s + '">' + bunka(ri, 'riso', esc(m.riso)) + '</td>'; } },
+      { i: 9,  html: function() { return '<td style="' + s + '">' + bunka(ri, 'rpe', esc(m.rpe||'')) + '</td>'; } },
+      { i: 10, html: function() { return '<td style="' + s + 'font-weight:' + (isRcdH?'bold':'normal') + '">' + esc(m.faze||'') + '</td>'; } },
+      { i: 11, html: function() { return '<td style="' + s + '">' + bunka(ri, 'vyp', esc(m.vyp||'')) + '</td>'; } },
+      { i: 12, html: function() { return '<td style="' + s + '">' + bunka(ri, 'cas', esc(m.cas||'')) + '</td>'; } },
+      { i: 13, html: function() { return '<td style="' + s + '">' + bunka(ri, 't5idn', esc(m.t5idn||'')) + '</td>'; } },
+      { i: 14, html: function() { return '<td style="' + s + '">' + bunka(ri, 'ut', esc(m.ut||'')) + '</td>'; } },
+      { i: 15, html: function() { return '<td style="padding:' + pad + ';border:.75pt solid #000;' + bg + '">' + esc(m.kabel) + '</td>'; } }
+    ]);
   }).join('');
+}
+
+// ═══ MĚŘICÍ LIST DO TERÉNU (v9.53) ═══════════════════════════════════════
+// Kolega Jiří Roubalík (2026-09-15): technici chodí měřit s tužkou a papírem
+// a všechny okruhy si vypisují ručně. Program tabulku vygeneruje za ně —
+// s vyplněnými okruhy a PRÁZDNÝMI buňkami na naměřené hodnoty.
+//
+// NESMÍ jít přes generujPDF(): ta zapíše zprávu do archivu, přepne na náhled
+// celé zprávy a vysype #pdf-pages. Kreslí se proto do vlastní obrazovky,
+// stejně jako schéma rozváděčů a náhled plánu.
+
+// Sloupce, které se v terénu teprve měří → na listu prázdné.
+// `faze` mezi nimi NENÍ: polarity A+/A− se předtisknou, ať technik ví, co měřit.
+var TEREN_MERENE = ['isc', 'zsm', 'riso', 'rpe', 'vyp', 'cas', 't5idn', 'ut'];
+
+// Sloupce, které jde z listu vyhodit, aby se do zbylých buněk líp psalo.
+// `i` je VIZUÁLNÍ index sloupce (0–15), viz renderTiskRows.
+var TEREN_SLOUPCE = [
+  { klic: 'isc',  popis: 'Isc kA',          i: [6] },
+  { klic: 'zsm',  popis: 'Zsm max Ω',       i: [7] },
+  { klic: 'riso', popis: 'Riso MΩ',         i: [8] },
+  { klic: 'rpe',  popis: 'Rpe Ω',           i: [9] },
+  { klic: 'rcd',  popis: 'měření RCD',      i: [11, 12, 13, 14] }
+];
+
+var __terenZpet = 'form';
+
+function terenNastaveni() {
+  var t = STORE.teren || {};
+  return {
+    sloupce: t.sloupce || {},          // klíč → false = skrytý
+    vyssi: t.vyssi !== false,
+    poznamka: t.poznamka !== false,
+    minule: !!t.minule
+  };
+}
+
+// Zpráva, na kterou tahle navazuje (řetěz přes „🔗 Navázat"). Null, když žádná.
+function terenPredchozi() {
+  var uid = window.__openZpravaUid;
+  if (!uid) return null;
+  var ja = null;
+  archiv.forEach(function(z) { if (z.uid === uid) ja = z; });
+  if (!ja || !ja.predchudce_uid) return null;
+  var pred = null;
+  archiv.forEach(function(z) { if (z.uid === ja.predchudce_uid) pred = z; });
+  return (pred && pred.data) ? pred.data : null;
+}
+
+// Klíč řádku pro spárování s minulou revizí. Schválně přísný — když se
+// nesejde, hodnota se prostě nevytiskne; radši nic než cizí číslo.
+function terenKlicRadku(m) {
+  return (m.rowtype || 'obvod') + '|' + (m.n || '') + '|' + (m.c || '') + '|' + (m.faze || '');
+}
+
+// { indexŘádku: { klíč: hodnota } } z minulé revize pro jeden rozváděč.
+function terenMinuleProRozvadec(rozv, predD) {
+  if (!predD || !Array.isArray(predD.rozvadece)) return null;
+  var stary = null;
+  predD.rozvadece.forEach(function(r) { if (r.uid && r.uid === rozv.uid) stary = r; });
+  if (!stary) return null;
+  var mapa = {};
+  (stary.mereni || []).forEach(function(m) { mapa[terenKlicRadku(m)] = m; });
+  var out = {}, naslo = 0;
+  (rozv.mereni || []).forEach(function(m, i) {
+    var st = mapa[terenKlicRadku(m)];
+    if (!st) return;
+    var h = {};
+    TEREN_MERENE.forEach(function(k) { if (st[k]) h[k] = st[k]; });
+    if (Object.keys(h).length) { out[i] = h; naslo++; }
+  });
+  return naslo ? out : null;
+}
+
+// ── dialog „co dát na list" ───────────────────────────────────────────────
+function terenOtevrit() {
+  var D = getData();
+  var n = terenNastaveni();
+  // Kam se vrátit. `showScreen` žádnou historii nevede, takže se aktivní
+  // obrazovka zapamatuje PŘED přepnutím — a nepřepisuje se, když se dialog
+  // otevírá z náhledu tlačítkem „⚙️ Změnit výběr".
+  var akt = document.querySelector('.screen.active');
+  var aktId = (akt && akt.id) ? akt.id.replace(/^screen-/, '') : 'form';
+  if (aktId !== 'teren-pdf') __terenZpet = aktId;
+  var box = document.getElementById('teren-vyber');
+  var lbl = document.getElementById('teren-co-label');
+  var slWrap = document.getElementById('teren-sloupce-wrap');
+  if (!box) return;
+  var jeStroj = (aktTyp === 'stroje');
+
+  if (jeStroj) {
+    lbl.textContent = 'Které stroje jdete měřit';
+    slWrap.style.display = 'none';
+    var stroje = (D.stroje && D.stroje.seznam) || [];
+    if (!stroje.length) { alert('Zpráva zatím nemá žádný stroj.'); return; }
+    box.innerHTML = stroje.map(function(st, i) {
+      return '<label class="teren-radek">' +
+        '<input type="checkbox" class="teren-ch" data-idx="' + i + '" checked> ' +
+        '<strong>' + esc(st.nazev || ('Stroj ' + (i + 1))) + '</strong>' +
+        (st.typ ? '<span class="tm">· ' + esc(st.typ) + '</span>' : '') +
+        (st.umisteni ? '<span class="tm">· ' + esc(st.umisteni) + '</span>' : '') +
+        '</label>';
+    }).join('') +
+      '<div style="border-top:1px solid var(--border);margin-top:.4rem;padding-top:.4rem;display:flex;gap:1.2rem">' +
+      '<label class="teren-radek"><input type="checkbox" id="teren-s-mereni" checked> měření</label>' +
+      '<label class="teren-radek"><input type="checkbox" id="teren-s-kontroly" checked> kontroly (se zaškrtávacím políčkem)</label>' +
+      '</div>';
+  } else {
+    lbl.textContent = 'Které rozváděče jdete měřit';
+    slWrap.style.display = '';
+    var rozv = D.rozvadece || [];
+    if (!rozv.length) { alert('Zpráva zatím nemá žádný rozváděč.'); return; }
+    box.innerHTML = rozv.map(function(r, i) {
+      var pocet = (r.mereni || []).filter(function(m) { return m.rowtype !== 'rcd-mereni'; }).length;
+      return '<label class="teren-radek">' +
+        '<input type="checkbox" class="teren-ch" data-idx="' + i + '" checked> ' +
+        '<strong>' + esc(r.nazev || ('Rozváděč ' + (i + 1))) + '</strong>' +
+        (r.umisteni ? '<span class="tm">· ' + esc(r.umisteni) + '</span>' : '') +
+        '<span class="tm" style="margin-left:auto;white-space:nowrap">' + pocet + ' ř.</span>' +
+        '</label>';
+    }).join('');
+    document.getElementById('teren-sloupce').innerHTML = TEREN_SLOUPCE.map(function(sl) {
+      var zapnuto = n.sloupce[sl.klic] !== false;
+      return '<label class="teren-radek" style="white-space:nowrap">' +
+        '<input type="checkbox" class="teren-sl" data-klic="' + sl.klic + '"' + (zapnuto ? ' checked' : '') + '> ' + esc(sl.popis) + '</label>';
+    }).join('');
+  }
+
+  document.getElementById('teren-vyssi').checked = n.vyssi;
+  document.getElementById('teren-poznamka').checked = n.poznamka;
+  var mw = document.getElementById('teren-minule-wrap');
+  var maPred = !!terenPredchozi();
+  mw.style.display = maPred ? 'flex' : 'none';
+  document.getElementById('teren-minule').checked = maPred && n.minule;
+  document.getElementById('modal-teren').classList.add('open');
+}
+
+function terenZavrit() {
+  var m = document.getElementById('modal-teren');
+  if (m) m.classList.remove('open');
+}
+
+function terenVytvorit() {
+  var vybrane = [];
+  document.querySelectorAll('#teren-vyber .teren-ch').forEach(function(ch) {
+    if (ch.checked) vybrane.push(parseInt(ch.dataset.idx, 10));
+  });
+  if (!vybrane.length) { alert('Vyberte aspoň jednu položku.'); return; }
+  var sloupce = {};
+  document.querySelectorAll('#teren-sloupce .teren-sl').forEach(function(ch) {
+    sloupce[ch.dataset.klic] = ch.checked;
+  });
+  var v = {
+    vybrane: vybrane,
+    sloupce: sloupce,
+    vyssi: document.getElementById('teren-vyssi').checked,
+    poznamka: document.getElementById('teren-poznamka').checked,
+    minule: document.getElementById('teren-minule').checked,
+    mereni: !document.getElementById('teren-s-mereni') || document.getElementById('teren-s-mereni').checked,
+    kontroly: !document.getElementById('teren-s-kontroly') || document.getElementById('teren-s-kontroly').checked
+  };
+  // Volby (ne výběr rozváděčů) si program pamatuje do příště.
+  STORE.teren = { sloupce: sloupce, vyssi: v.vyssi, poznamka: v.poznamka, minule: v.minule };
+  saveStore();
+  terenZavrit();
+  terenVykreslit(getData(), v);
+}
+
+// ── kreslení listu ────────────────────────────────────────────────────────
+function terenSkryteSloupce(v) {
+  var out = [];
+  TEREN_SLOUPCE.forEach(function(sl) {
+    if (v.sloupce && v.sloupce[sl.klic] === false) sl.i.forEach(function(i) { out.push(i); });
+  });
+  return out;
+}
+
+function terenThead(skryte, poznamka, pad) {
+  var th = 'border:.75pt solid #000;padding:' + pad + ';background:#eee;text-align:center;font-size:7.5pt';
+  var skryt = {};
+  skryte.forEach(function(i) { skryt[i] = true; });
+  function cs(od, doo, zaklad) {
+    var n = zaklad;
+    for (var i = od; i <= doo; i++) if (skryt[i]) n--;
+    return n;
+  }
+  function h1(i, txt, st) { return skryt[i] ? '' : '<th rowspan="2" style="' + th + (st || '') + '">' + txt + '</th>'; }
+  function h2(i, txt) { return skryt[i] ? '' : '<th style="' + th + '">' + txt + '</th>'; }
+  var csJist = cs(2, 6, 5), csRcd = cs(10, 14, 5);
+  return '<thead><tr>' +
+    h1(0, 'Č.') + h1(1, 'Název obvodu', ';min-width:26mm') +
+    (csJist > 0 ? '<th colspan="' + csJist + '" style="' + th + '">Jmenovité hodnoty jištění</th>' : '') +
+    h1(7, 'Zsm<br>max Ω') + h1(8, 'Riso<br>MΩ') + h1(9, 'Rpe<br>Ω') +
+    (csRcd > 0 ? '<th colspan="' + csRcd + '" style="' + th + '">Měření RCD</th>' : '') +
+    h1(15, 'Kabel typ,<br>průřezu mm²', ';min-width:22mm') +
+    (poznamka ? '<th rowspan="2" style="' + th + ';min-width:26mm">Poznámka</th>' : '') +
+    '</tr><tr>' +
+    h2(2, 'Značka') + h2(3, 'Ch./Typ') + h2(4, 'A') + h2(5, 'IΔn') + h2(6, 'Isc<br>kA') +
+    h2(10, 'Fáze') + h2(11, 'Vyp.<br>mA') + h2(12, 'čas<br>ms') + h2(13, '5×IΔn<br>tvyp. ms') + h2(14, 'Ut<br>(V)') +
+    '</tr></thead>';
+}
+
+function terenHlavicka(D) {
+  var r = function(l, h) {
+    return '<div style="display:flex;gap:1.5mm"><span style="color:#555;min-width:26mm">' + l + '</span><strong>' + esc(h || '—') + '</strong></div>';
+  };
+  var prazdny = function(l) {
+    return '<div style="display:flex;gap:1.5mm;align-items:flex-end"><span style="color:#555;min-width:26mm">' + l + '</span>' +
+      '<span style="flex:1;border-bottom:.5pt solid #999;min-width:40mm">&nbsp;</span></div>';
+  };
+  return '<div style="border:.75pt solid #000;padding:2.5mm 3mm;margin-bottom:3mm;font-size:8.5pt;line-height:1.55;display:flex;gap:8mm">' +
+    '<div style="flex:1">' + r('Místo:', D.misto) + r('Ev. číslo:', D.ev_cislo) + r('Technik:', D.rt_jmeno) + '</div>' +
+    '<div style="flex:1">' + prazdny('Měřeno dne:') + prazdny('Přístroj:') + prazdny('Počasí / teplota:') + '</div>' +
+    '</div>';
+}
+
+function terenVykreslit(D, v) {
+  var box = document.getElementById('teren-pdf-pages');
+  if (!box) return;
+  box.innerHTML = '';
+  // Musí PŘED měřením — ve skryté obrazovce mají prvky nulovou velikost
+  // (stejná past jako u schématu a u náhledu plánu).
+  showScreen('teren-pdf');
+
+  var jeStroj = (aktTyp === 'stroje');
+  var mmNaPx = 96 / 25.4;
+  var limitMm = jeStroj ? 276 : 190;      // uvnitř paddingu stránky
+  var pad = v.vyssi ? '2.6mm 1.5mm' : '1mm 1.5mm';
+  var strany = [];
+  var strana = null, obsah = null;
+
+  function novaStrana() {
+    strana = document.createElement('div');
+    strana.className = jeStroj ? 'a4' : 'a4 a4-landscape';
+    strana.style.cssText = 'padding:10mm 8mm;background:#fff;color:#000;min-height:0;display:flex;flex-direction:column';
+    obsah = document.createElement('div');
+    obsah.style.cssText = 'flex:1;font-family:\'Courier Prime\',monospace';
+    if (!strany.length) obsah.innerHTML = terenHlavicka(D);
+    strana.appendChild(obsah);
+    box.appendChild(strana);
+    strany.push(strana);
+    return strana;
+  }
+  function preteklo() {
+    return obsah.getBoundingClientRect().height / mmNaPx > limitMm;
+  }
+  // Přidá blok; když přeteče, založí novou stranu a dá ho tam.
+  function pridat(el) {
+    obsah.appendChild(el);
+    if (preteklo() && obsah.children.length > 1) {
+      obsah.removeChild(el);
+      novaStrana();
+      obsah.appendChild(el);
+    }
+    return el;
+  }
+  novaStrana();
+
+  if (jeStroj) {
+    var stroje = (D.stroje && D.stroje.seznam) || [];
+    v.vybrane.forEach(function(idx) {
+      var st = stroje[idx];
+      if (!st) return;
+      var hl = document.createElement('div');
+      hl.style.cssText = 'font-weight:bold;font-size:10pt;margin:3mm 0 1mm;border-bottom:.75pt solid #000;padding-bottom:1mm';
+      hl.innerHTML = esc(st.nazev || ('Stroj ' + (idx + 1))) +
+        (st.typ ? '<span style="font-weight:normal;font-size:8pt;color:#444"> · ' + esc(st.typ) + '</span>' : '') +
+        (st.umisteni ? '<span style="font-weight:normal;font-size:8pt;color:#444"> · ' + esc(st.umisteni) + '</span>' : '');
+      pridat(hl);
+      if (v.mereni) pridat(terenStrojTabulka(st.mereni || [], 'mereni', pad, v));
+      if (v.kontroly) pridat(terenStrojTabulka(st.kontroly || [], 'kontroly', pad, v));
+    });
+  } else {
+    var predD = v.minule ? terenPredchozi() : null;
+    var skryte = terenSkryteSloupce(v);
+    var rozvs = D.rozvadece || [];
+    v.vybrane.forEach(function(idx) {
+      var rozv = rozvs[idx];
+      if (!rozv) return;
+      pridat(terenRozvHlavicka(rozv, pad));
+      var minule = predD ? terenMinuleProRozvadec(rozv, predD) : null;
+      var radky = renderTiskRows(rozv.mereni || [], {
+        prazdne: TEREN_MERENE, minule: minule, vyssiRadek: v.vyssi, skryte: skryte
+      });
+      if (v.poznamka) {
+        radky = radky.replace(/<\/tr>/g, '<td style="border:.75pt solid #000;padding:' + pad + '"></td></tr>');
+      }
+      // Tabulka se plní řádek po řádku; při přetečení se založí nová strana
+      // a hlavička tabulky se zopakuje.
+      var tabulka = terenTabulka(skryte, v.poznamka, pad);
+      pridat(tabulka);
+      var tbody = tabulka.querySelector('tbody');
+      var kusy = radky.split('</tr>').filter(function(x) { return x.trim(); });
+      kusy.forEach(function(kus) {
+        tbody.insertAdjacentHTML('beforeend', kus + '</tr>');
+        if (preteklo() && tbody.children.length > 1) {
+          var posledni = tbody.lastElementChild;
+          tbody.removeChild(posledni);
+          novaStrana();
+          tabulka = terenTabulka(skryte, v.poznamka, pad);
+          obsah.appendChild(tabulka);
+          tbody = tabulka.querySelector('tbody');
+          tbody.appendChild(posledni);
+        }
+      });
+    });
+  }
+
+  // Zápatí se stránkováním až nakonec, když je počet stran známý
+  strany.forEach(function(p, i) {
+    var f = document.createElement('div');
+    f.style.cssText = 'margin-top:auto;padding-top:2mm;border-top:.5pt solid #999;display:flex;justify-content:space-between;font-size:7.5pt;color:#555';
+    f.innerHTML = '<span>' + esc(D.rt_jmeno || '') + '</span>' +
+      '<span>Měřicí list — ' + esc(D.misto || '') + '</span>' +
+      '<span>strana ' + (i + 1) + ' / ' + strany.length + '</span>';
+    p.appendChild(f);
+  });
+
+  var info = document.getElementById('teren-pdf-info');
+  if (info) info.textContent = (D.ev_cislo || '') + ' · ' + v.vybrane.length +
+    (jeStroj ? (v.vybrane.length === 1 ? ' stroj' : ' strojů') : (v.vybrane.length === 1 ? ' rozváděč' : ' rozváděčů')) +
+    ' · ' + strany.length + (strany.length === 1 ? ' strana' : ' stran');
+  window.scrollTo(0, 0);
+}
+
+function terenRozvHlavicka(rozv, pad) {
+  var el = document.createElement('div');
+  el.style.cssText = 'margin:3mm 0 1mm';
+  var udaje = [
+    rozv.umisteni ? 'umístění: ' + rozv.umisteni : '',
+    rozv.privod ? 'přívod: ' + rozv.privod : '',
+    rozv.hlavniJistic ? 'hlavní jistič: ' + rozv.hlavniJistic : ''
+  ].filter(Boolean).map(esc).join(' · ');
+  // Napětí, kmitočet, impedance a zkratový proud na svorkách se taky měří —
+  // na papíře pro ně dosud nebylo místo vůbec.
+  var fazeTh = 'border:.75pt solid #000;padding:.8mm 2mm;background:#eee;font-size:7pt;text-align:center';
+  var fazeTd = 'border:.75pt solid #000;padding:' + pad + ';text-align:center;min-width:16mm';
+  var faze = '<table style="border-collapse:collapse;font-size:8pt;margin-top:1.5mm"><tr>' +
+    '<th style="' + fazeTh + '"></th><th style="' + fazeTh + '">L-PEN (V)</th><th style="' + fazeTh + '">f (Hz)</th>' +
+    '<th style="' + fazeTh + '">Z (Ω)</th><th style="' + fazeTh + '">I_k (kA)</th></tr>' +
+    ['L1', 'L2', 'L3'].map(function(f) {
+      return '<tr><th style="' + fazeTh + '">' + f + '</th>' +
+        '<td style="' + fazeTd + '"></td><td style="' + fazeTd + '"></td>' +
+        '<td style="' + fazeTd + '"></td><td style="' + fazeTd + '"></td></tr>';
+    }).join('') + '</table>';
+  el.innerHTML = '<div style="font-weight:bold;font-size:10pt;border-bottom:.75pt solid #000;padding-bottom:1mm">' +
+    esc(rozv.nazev || 'Rozváděč') + '</div>' +
+    (udaje ? '<div style="font-size:7.5pt;color:#444;margin-top:.8mm">' + udaje + '</div>' : '') + faze;
+  return el;
+}
+
+function terenTabulka(skryte, poznamka, pad) {
+  var t = document.createElement('table');
+  t.style.cssText = 'width:100%;border-collapse:collapse;font-size:8pt;margin-top:1.5mm';
+  t.innerHTML = terenThead(skryte, poznamka, '.8mm 1.5mm') + '<tbody></tbody>';
+  return t;
+}
+
+// Tabulka měření / kontrol jednoho stroje. U kontrol je místo výsledku
+// PRÁZDNÝ ČTVEREČEK k zaškrtnutí (přání kolegy).
+function terenStrojTabulka(polozky, kind, pad, v) {
+  var jeMereni = (kind === 'mereni');
+  var t = document.createElement('table');
+  t.style.cssText = 'width:100%;border-collapse:collapse;font-size:8.5pt;margin-top:1.5mm;margin-bottom:2mm';
+  var th = 'border:.75pt solid #000;padding:.8mm 2mm;background:#eee;text-align:left;font-size:7.5pt';
+  var td = 'border:.75pt solid #000;padding:' + pad + ';';
+  var hlavicka = jeMereni
+    ? '<tr><th style="' + th + '">Měření — položka</th><th style="' + th + ';width:20%;text-align:center">Hodnota</th>' +
+      '<th style="' + th + ';width:12%;text-align:center">Jednotka</th>' +
+      (v.poznamka ? '<th style="' + th + ';width:22%">Poznámka</th>' : '') + '</tr>'
+    : '<tr><th style="' + th + '">Kontrola — položka</th><th style="' + th + ';width:14%;text-align:center">Provedeno</th>' +
+      '<th style="' + th + ';width:22%;text-align:center">Výsledek</th>' +
+      (v.poznamka ? '<th style="' + th + ';width:22%">Poznámka</th>' : '') + '</tr>';
+  var sloupcu = (jeMereni ? 3 : 3) + (v.poznamka ? 1 : 0);
+  var radky = polozky.map(function(p) {
+    if (p.rowtype === 'stroj-nadpis') {
+      return '<tr><td colspan="' + sloupcu + '" style="' + td + 'background:#f2f2f2;font-weight:bold">' + esc(p.text || '') + '</td></tr>';
+    }
+    if (jeMereni) {
+      return '<tr><td style="' + td + '">' + esc(p.text || '') + '</td>' +
+        '<td style="' + td + 'text-align:center"></td>' +
+        '<td style="' + td + 'text-align:center">' + esc(p.jednotka || '') + '</td>' +
+        (v.poznamka ? '<td style="' + td + '"></td>' : '') + '</tr>';
+    }
+    return '<tr><td style="' + td + '">' + esc(p.text || '') + '</td>' +
+      '<td style="' + td + 'text-align:center;font-size:12pt;line-height:1">☐</td>' +
+      '<td style="' + td + 'text-align:center"></td>' +
+      (v.poznamka ? '<td style="' + td + '"></td>' : '') + '</tr>';
+  }).join('');
+  t.innerHTML = '<thead>' + hlavicka + '</thead><tbody>' + radky + '</tbody>';
+  return t;
+}
+
+// ── lišta náhledu ─────────────────────────────────────────────────────────
+function terenNazevSouboru() {
+  var ev = (document.getElementById('f_ev_cislo') || {}).value || 'list';
+  return 'Mericí_list_' + String(ev).replace(/[^\w\-]+/g, '_') + '.pdf';
+}
+function terenStranky() {
+  return Array.prototype.slice.call(document.querySelectorAll('#teren-pdf-pages .a4'));
+}
+function terenNahledZpet() { showScreen(__terenZpet || 'form'); }
+function terenNahledUlozit() {
+  var els = terenStranky();
+  if (!els.length) { alert('Není co uložit.'); return; }
+  renderPagesToPDF(els, terenNazevSouboru());
+}
+function terenNahledTisk() {
+  var els = terenStranky();
+  if (!els.length) { alert('Není co tisknout.'); return; }
+  var w = window.open('', '_blank');
+  if (!w) { alert('Prosím povolte vyskakovací okna — bez nich se tiskové okno neotevře.'); return; }
+  w.document.write('<!doctype html><meta charset="utf-8"><title>Měřicí list</title>' +
+    '<body style="font-family:sans-serif;padding:2rem;color:#555">⏳ Připravuji měřicí list k tisku…</body>');
+  w.document.close();
+  Promise.resolve(renderPagesToPDF(els, terenNazevSouboru(), { vratitBlob: true, kvalita: 'tisk' })).then(function(blob) {
+    if (!blob) { try { w.close(); } catch (e) {} return; }
+    var url = URL.createObjectURL(blob);
+    w.location.href = url;
+    setTimeout(function() {
+      try { w.print(); } catch (e) {}
+      setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+    }, 2500);
+  }).catch(function(err) {
+    try { w.close(); } catch (e) {}
+    alert('Chyba při přípravě tisku: ' + ((err && err.message) || err));
+  });
 }
 
 function tiskMereni() {
@@ -13784,6 +14308,7 @@ function buildZalohaBlob() {
     tisk: STORE.tisk || {},
     strojeMereni: STORE.strojeMereni || [],
     strojeKontroly: STORE.strojeKontroly || [],
+    teren: STORE.teren || {},
     auto_cislovani: STORE.auto_cislovani !== false,
     tisk_migrace_kolonky: STORE.tisk_migrace_kolonky || 0
   };
@@ -14329,6 +14854,7 @@ function obnovZeZalohy(data) {
   if (data.plan) STORE.plan = data.plan;
   if (data.strojeMereni) STORE.strojeMereni = data.strojeMereni;
   if (data.strojeKontroly) STORE.strojeKontroly = data.strojeKontroly;
+  if (data.teren) STORE.teren = data.teren;
   if (data.tisk_migrace_kolonky) STORE.tisk_migrace_kolonky = data.tisk_migrace_kolonky;
   if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
   archiv = STORE.archiv;
@@ -18009,6 +18535,12 @@ document.addEventListener('click', function(e) {
     case 'schemaNahledZpet': schemaNahledZpet(); break;
     case 'schemaNahledTisk': schemaNahledTisk(); break;
     case 'schemaNahledUlozit': schemaNahledUlozit(); break;
+    case 'terenOtevrit': terenOtevrit(); break;
+    case 'terenZavrit': terenZavrit(); break;
+    case 'terenVytvorit': terenVytvorit(); break;
+    case 'terenNahledZpet': terenNahledZpet(); break;
+    case 'terenNahledTisk': terenNahledTisk(); break;
+    case 'terenNahledUlozit': terenNahledUlozit(); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;
