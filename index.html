@@ -939,7 +939,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.46<span class="ver-date"> · 2026-09-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.47<span class="ver-date"> · 2026-09-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -14236,6 +14236,43 @@ function importDatabaze() {
   inp.click();
 }
 
+// U zprávy o stroji je „Místo" samo o sobě k ničemu — v areálu s desítkami
+// strojů z něj nepoznáte, o který stroj jde (pokyn uživatele 2026-09-15).
+// Proto se do sloupce přidá NÁZEV a TYP stroje a umístění zůstane drobně pod
+// nimi. Údaje se berou z dat zprávy (D.stroje.seznam), takže se to samo
+// projeví i u zpráv uložených dřív — nic se nemusí ukládat znovu.
+// U režimu „soubor strojů" se ukáže první stroj a počet ostatních.
+function strojeHlavicka(z) {
+  if (!z || z.typ !== 'stroje') return null;
+  var seznam = (z.data && z.data.stroje && z.data.stroje.seznam) || [];
+  if (!seznam.length) return null;
+  var prvni = seznam[0] || {};
+  var nazev = String(prvni.nazev || '').trim();
+  var typ = String(prvni.typ || '').trim();
+  if (!nazev && !typ) return null;   // nevyplněno → chová se jako dřív
+  return { nazev: nazev, typ: typ, dalsich: seznam.length - 1 };
+}
+
+// Obsah sloupce „Místo". `maly` = vnořený řádek řetězu (drobnější písmo).
+function archivMistoBunka(z, maly) {
+  var misto = esc(z.misto || '—');
+  var h = strojeHlavicka(z);
+  if (!h) return misto;
+  var out = '';
+  if (h.nazev) {
+    out += '<div style="font-size:' + (maly ? '.82rem' : '.92rem') + ';font-weight:600;line-height:1.25;color:var(--text,#1a1a1a)">' +
+           esc(h.nazev) +
+           (h.dalsich > 0 ? ' <span style="font-weight:400;font-size:.72rem;color:var(--muted)">+ ' + h.dalsich +
+              (h.dalsich < 5 ? ' další' : ' dalších') + '</span>' : '') +
+           '</div>';
+  }
+  if (h.typ) {
+    out += '<div style="font-size:' + (maly ? '.72rem' : '.8rem') + ';line-height:1.25;color:#444">' + esc(h.typ) + '</div>';
+  }
+  out += '<div style="font-size:' + (maly ? '.66rem' : '.72rem') + ';line-height:1.25;color:var(--muted)">' + misto + '</div>';
+  return out;
+}
+
 function renderArchiv() {
   var c = document.getElementById('archiv-container');
   var countEl = document.getElementById('archiv-count');
@@ -14294,10 +14331,16 @@ function renderArchiv() {
       var typLabel = typInfo(z.typ).label.toLowerCase();
       var rok = z.datum ? String(z.datum).slice(0, 4) : '';
       var d = z.data || {};
+      // Stroje se hledají i podle názvu, typu a výrobního čísla — jinak by
+      // šlo jméno stroje ve výpisu přečíst, ale ne podle něj hledat.
+      var stroje = (d.stroje && d.stroje.seznam) || [];
       var hay = [
         z.ev_cislo, z.misto, typLabel, rok,
         d.objednatel, d.provozovatel, d.adresa, d.firma_zmena2, z.podtyp
-      ].filter(Boolean).join(' ').toLowerCase();
+      ].concat(stroje.map(function(s) {
+        return [s.nazev, s.typ, s.vyrobce, s.vyrobni_cislo, s.ev_cislo, s.umisteni]
+               .filter(Boolean).join(' ');
+      })).filter(Boolean).join(' ').toLowerCase();
       return hay.indexOf(q) !== -1;
     });
   }
@@ -14352,7 +14395,7 @@ function renderArchiv() {
     html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
     html += '<td><span class="' + typInfo(z.typ).badge + '">' + typInfo(z.typ).label + '</span></td>';
     html += '<td style="font-family:monospace;font-size:.8rem">' + (z.ev_cislo || '—') + '</td>';
-    html += '<td style="font-size:.85rem">' + (z.misto || '—') +
+    html += '<td style="font-size:.85rem">' + archivMistoBunka(z, false) +
       (!q && chainLen ? ' <button data-action="toggleArchivChain" data-uid="' + z.uid + '" title="Starší revize tohoto objektu — klepnutím rozbalíte/sbalíte" style="background:#fff;border:1px solid var(--accent2);color:var(--accent2);font-family:var(--mono);font-size:.72rem;font-weight:600;padding:.22rem .6rem;border-radius:3px;cursor:pointer;margin-left:.4rem;white-space:nowrap">' + (rozbaleno ? '▼' : '►') + ' ' + chainLen + ' starší</button>' : '') +
       '</td>';
     html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + (z.timestamp ? '<br><span style="font-size:.68rem;color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</td>';
@@ -14395,7 +14438,7 @@ function renderArchiv() {
         html += '<td style="text-align:right;color:#b5af9f">↳</td>';
         html += '<td><span class="' + typInfo(nz.typ).badge + '">' + typInfo(nz.typ).label + '</span></td>';
         html += '<td style="font-family:monospace;font-size:.78rem">' + (nz.ev_cislo || '—') + '</td>';
-        html += '<td style="font-size:.8rem;color:#6e6a60">' + (nz.misto || '—') + '</td>';
+        html += '<td style="font-size:.8rem;color:#6e6a60">' + archivMistoBunka(nz, true) + '</td>';
         html += '<td style="font-family:monospace;font-size:.75rem;color:#6e6a60">' + fmtDate(nz.datum) + '</td>';
         html += '<td>' + (nz.vysledek === 'schopno' ? '✅' : (nz.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
         html += '<td style="white-space:nowrap;text-align:right">' +
@@ -14686,7 +14729,7 @@ function renderArchivRecents() {
         '<span style="font-family:var(--mono);font-size:.72rem;color:var(--muted)">' + esc(z.ev_cislo || '—') + '</span>' +
         (stav ? '<span style="margin-left:auto;margin-right:1.4rem">' + stav + '</span>' : '') +
       '</div>' +
-      '<div style="font-size:.85rem;line-height:1.3;margin-bottom:.2rem;padding-right:1.5rem">' + esc(z.misto || '—') + '</div>' +
+      '<div style="font-size:.85rem;line-height:1.3;margin-bottom:.2rem;padding-right:1.5rem">' + archivMistoBunka(z, false) + '</div>' +
       '<div style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">' + fmtDate(z.datum) + (z.timestamp ? ' <span style="color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</div>' +
     '</div>';
   });

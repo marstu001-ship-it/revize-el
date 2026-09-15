@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.46 · 2026-09-15**
+**Aktuální verze: v9.47 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,31 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Archiv — u stroje se ukazuje NÁZEV a TYP (v9.47)
+
+Sloupec „Místo" nesl u zprávy o stroji jen umístění, z něhož v areálu
+s desítkami strojů nepoznáte, o který stroj jde (pokyn uživatele 2026-09-15,
+přeškrtal to ve snímku). Teď jsou v buňce **tři řádky: název stroje (tučně,
+největší) → typ → umístění (drobně, šedě)**.
+
+- **Údaje se berou z `z.data.stroje.seznam`, nikam se neukládají znovu.**
+  Projeví se to proto samo i u zpráv uložených dřív; `saveToArchiv()` se
+  nemusel měnit, takže nehrozí, že by se položka archivu rozešla s daty.
+- **Týká se to JEN typu `stroje`** (`strojeHlavicka()` vrátí `null` jinak).
+  Elektro i LPS vypadají přesně jako dřív.
+- **Nevyplněný stroj = chová se jako dřív** — když není ani název, ani typ,
+  vypíše se samotné místo. Prázdné řádky se nekreslí.
+- **Režim „soubor strojů"**: první stroj + „+ N dalších".
+- Kreslí to `archivMistoBunka(z, maly)` — jedno místo pro **tři** výpisy:
+  hlavní řádek archivu, vnořený řádek řetězu starších revizí a kartu
+  v „Naposledy otevřené / Připnuté". Dřív to byly tři kopie `z.misto`.
+- **Fulltext hledá i podle stroje** — název, typ, výrobce, výrobní číslo,
+  ev. číslo stroje a jeho umístění. Bez toho by šlo jméno stroje ve výpisu
+  přečíst, ale ne podle něj hledat.
+- Hlavní řádek archivu tiskl `z.misto` **bez `esc()`**; nová buňka escapuje
+  všechno.
+- Test: `test-archiv-stroj.js` (13 kontrol).
 
 ## Kontrolní otisky knihoven — SRI (v9.46)
 
