@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.49 · 2026-09-15**
+**Aktuální verze: v9.50 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,48 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## U kontroly stroje se necitují normy o REVIZÍCH (v9.50)
+
+Uživatel se zeptal (2026-09-15): „Nemáme v kontrole strojů zbytečně normy
+o revizích? Například 1500?" Měl pravdu a bylo to nekonzistentní s v9.43:
+nadpis říkal *kontrola*, ale program u toho citoval **ČSN 33 1500 — Revize
+elektrických zařízení** a **NV 190/2022 Sb. — vyhrazená technická zařízení**,
+a celkový posudek dokonce začínal „**Revize** byla provedena…". Podklad
+kontroly stroje je **NV č. 378/2001 Sb.** + **ČSN EN 60204-1 ed.3**.
+
+Změněná tři místa (na pokyn uživatele „udělej všechny tři body"):
+
+1. **Celkový posudek** (`magicZaver` **i** `TYPY_TEXTU.f_zhodnoceni` — dvě
+   kopie téhož textu, musí se měnit obě): „Kontrola byla provedena v souladu
+   s požadavky NV č. 378/2001 Sb. … a ČSN EN 60204-1 ed.3 …", „zprávy
+   o kontrole" a **vypuštěná věta** „Slovní zhodnocení bylo provedeno dle
+   požadavků NV č. 190/2022 Sb. § 10 písmeno l)" — to je požadavek na revizní
+   zprávu vyhrazeného zařízení. **Pozor:** větu „Podpisem převzetí zprávy
+   o revizi…" mají i elektro a LPS, tam zůstává; hledat se musí celá věta
+   s „elektrického zařízení stroje", ne jen ten začátek.
+2. **Výchozí zaškrtnutí norem** — `csn331500str` a `nv190str` mají `c: false`.
+   Ze seznamu se **nemažou**, takže si je technik u konkrétní zprávy zaklikne.
+   Zaškrtnuté zůstávají NV 378/2001, ČSN EN 60204-1 ed.3 a ČSN 33 2000-4-41 ed.3.
+3. **Citace pod nadpisem + odůvodnění lhůty** — „Kontrola provedena v souladu
+   s NV č. 378/2001 Sb., ČSN EN 60204-1 ed.3, ČSN 33 2000-4-41 ed.3" a
+   u lhůty „(dle NV č. 378/2001 Sb. a ČSN EN 60204-1 ed.3)".
+
+- **Poznámka drobným písmem pod popiskem** („dle ČSN 33 1500 č.3.9 + NV
+  190/2022 příloha č.4" u pole Termín příští revize) je **nový mechanismus
+  `data-term-pozn`** v `aplikovatPojmy()`. Na rozdíl od `data-term` přepisuje
+  **celý obsah** prvku — je to samostatný `<span>`, ne první textový uzel.
+- **`POJMY.*.uvodniVeta` zrušeno** — citace norem pod nadpisem se skládá pro
+  každý typ zvlášť a klíč už nikdo nečetl.
+- **Názvy norem se pořád nesmí měnit** — ČSN 33 1500 se opravdu jmenuje
+  „Revize elektrických zařízení". Test si ji proto zaškrtne ručně a ověří,
+  že se název nezměnil.
+- **Uložené zprávy se nemění** — posudek i seznam norem si nesou v datech,
+  program je při načtení nepřepisuje.
+- Elektro i LPS beze změny: `porovnani2.js` vychází znak po znaku stejně
+  a `test-normy-stroje.js` to kontroluje i zvlášť (citace pod nadpisem,
+  poznámka u termínu, posudek).
+- Test: `test-normy-stroje.js` (30 kontrol).
 
 ## Stroje — měření a kontroly POHROMADĚ, jedna kapitola (v9.49)
 

@@ -939,7 +939,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.49<span class="ver-date"> · 2026-09-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.50<span class="ver-date"> · 2026-09-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2263,7 +2263,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <div class="f"><label>Ukončení <span class="req">*</span></label><input type="date" id="f_ukonceni"></div>
       <div class="f"><label>Vypracování zprávy</label><input type="date" id="f_vypracovani"></div>
       <div class="f"><label data-term="f-predchozi">Datum předchozí revize</label><input type="date" id="f_predchozi"></div>
-      <div class="f"><label data-term="f-pristi">Termín příští revize <span style="font-size:.5rem;color:var(--accent);display:block">dle ČSN 33 1500 č.3.9 + NV 190/2022 příloha č.4</span></label><input type="date" id="f_pristi"></div>
+      <div class="f"><label data-term="f-pristi">Termín příští revize <span data-term-pozn="f-pristi-pozn" style="font-size:.5rem;color:var(--accent);display:block">dle ČSN 33 1500 č.3.9 + NV 190/2022 příloha č.4</span></label><input type="date" id="f_pristi"></div>
       <div class="f" style="align-self:end"><button class="magic-btn" data-action="openModalRevize">🔮 Vypočítat termín</button></div>
     </div>
   </div>
@@ -3294,7 +3294,6 @@ var POJMY = {
   revize: {
     // PDF
     nadpisAkce:     'REVIZI',
-    uvodniVeta:     'Revize provedena v souladu se zákonem',
     mistoProvadeni: 'Místo provádění revize:',
     technikPdf:     'Revizní technik:',
     datumPdf:       'Datum revize:',
@@ -3319,6 +3318,7 @@ var POJMY = {
     'f-misto':       'Místo provádění revize ',
     'f-predchozi':   'Datum předchozí revize',
     'f-pristi':      'Termín příští revize ',
+    'f-pristi-pozn': 'dle ČSN 33 1500 č.3.9 + NV 190/2022 příloha č.4',
     'f-predmet-stroj': '⚙️ Předmět revize — stroj',
     'f-objednatel-card': 'Objednatel revize ',
     'f-objednatel':  'Objednatel revize ',
@@ -3338,7 +3338,6 @@ var POJMY = {
   },
   kontrola: {
     nadpisAkce:     'KONTROLE',
-    uvodniVeta:     'Kontrola provedena v souladu se zákonem',
     mistoProvadeni: 'Místo provádění kontroly:',
     technikPdf:     'Kontrolní technik:',
     datumPdf:       'Datum kontroly:',
@@ -3361,6 +3360,7 @@ var POJMY = {
     'f-misto':       'Místo provádění kontroly ',
     'f-predchozi':   'Datum předchozí kontroly',
     'f-pristi':      'Termín příští kontroly ',
+    'f-pristi-pozn': 'dle NV 378/2001 Sb. § 4 a ČSN EN 60204-1 ed.3',
     'f-predmet-stroj': '⚙️ Předmět kontroly — stroj',
     'f-objednatel-card': 'Objednatel kontroly ',
     'f-objednatel':  'Objednatel kontroly ',
@@ -3394,6 +3394,12 @@ function aplikovatPojmy(typ) {
     var uzel = el.firstChild;
     if (uzel && uzel.nodeType === 3) uzel.nodeValue = P[klic];
     else el.insertBefore(document.createTextNode(P[klic]), el.firstChild);
+  });
+  // Poznámka drobným písmem pod popiskem — celý obsah prvku, na rozdíl od
+  // `data-term`, kde se mění jen první textový uzel.
+  document.querySelectorAll('[data-term-pozn]').forEach(function(el) {
+    var klic = el.dataset.termPozn;
+    if (P[klic]) el.textContent = P[klic];
   });
   document.querySelectorAll('[data-term-ph]').forEach(function(el) {
     var klic = el.dataset.termPh;
@@ -5056,7 +5062,7 @@ var NORMY = {
   ],
   stroje: [
     { s: 'Nařízení vlády a zákony', items: [
-      { id: 'nv190str', t: 'NV č. 190/2022 Sb. — vyhrazená technická elektrická zařízení', od: 'od 07/2022', c: true },
+      { id: 'nv190str', t: 'NV č. 190/2022 Sb. — vyhrazená technická elektrická zařízení', od: 'od 07/2022', c: false },
       { id: 'nv378str', t: 'NV č. 378/2001 Sb. — požadavky na bezpečný provoz strojů a zařízení', od: 'od 01/2003', c: true },
       { id: 'z250str', t: 'zákon č. 250/2021 Sb. — bezpečnost práce s vyhrazenými zařízeními', od: 'od 07/2022', c: false }
     ]},
@@ -5068,7 +5074,7 @@ var NORMY = {
       { id: 'csn13850str', t: 'ČSN EN ISO 13850 ed.2 — Nouzové zastavení', od: 'od 02/2016', c: false }
     ]},
     { s: 'Elektrická bezpečnost a ochrana před úrazem', items: [
-      { id: 'csn331500str', t: 'ČSN 33 1500 (Z1–Z4) — Revize elektrických zařízení', od: 'od 1990 · Z4 2007', c: true },
+      { id: 'csn331500str', t: 'ČSN 33 1500 (Z1–Z4) — Revize elektrických zařízení', od: 'od 1990 · Z4 2007', c: false },
       { id: 'csn332000641str', t: 'ČSN 33 2000-4-41 ed.3 — Ochrana před úrazem el. proudem', od: 'od 02/2018', c: true },
       { id: 'csn3320006str', t: 'ČSN 33 2000-6 ed.2 — Revize elektrických instalací', od: 'od 06/2017', c: false },
       { id: 'csn61140str', t: 'ČSN EN 61140 ed.3 — Ochrana před úrazem elektrickým proudem', od: 'od 04/2016', c: false },
@@ -8824,10 +8830,10 @@ function magicZaver() {
   // Stroje — ČSN EN 60204-1 ed.3
   var kapZavS = cisloKapitolyZavady();
   var katTextS = textyKategoriiZavad(kapZavS, false);
-  var strojeSchopno = 'Revize byla provedena v souladu s požadavky ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů, a ČSN 33 1500.\n\nOvěřením podle čl. 18 bylo potvrzeno, že spojitost ochranného obvodu stroje vyhovuje mezním hodnotám (čl. 18.2.2), naměřené hodnoty izolačního odporu převyšují nejmenší hodnotu 1 MΩ stanovenou normou (čl. 18.3), zbytkové napětí se po odpojení vybije v požadované době (čl. 18.5) a funkční zkoušky ovládacích obvodů, prostředků nouzového zastavení a blokování ochranných krytů vyhověly (čl. 18.6).\n\nProhlídkou bylo ověřeno, že elektrické zařízení stroje odpovídá průvodní technické dokumentaci, je provedeno v souladu s působením vnějších vlivů v místě instalace a je opatřeno předepsaným značením a výstražnými tabulkami.\n\nElektrické zařízení stroje je z hlediska bezpečnosti schopno provozu.\n\nPoučení a seznámení s obsluhou:\nObsluhu stroje smí provádět pouze osoba seznámená s návodem k používání a poučená dle ČSN EN 50110-1 ed.3. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním elektrického zařízení stroje.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
-  var strojeNeschopno = 'Revize byla provedena v souladu s požadavky ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů, a ČSN 33 1500.\n\nPři prohlídce, měření a zkouškách dle čl. 18 byly zjištěny závady uvedené v kapitole ' + kapZavS + ' této zprávy. Elektrické zařízení stroje NENÍ v plném rozsahu v souladu s požadavky ČSN EN 60204-1 ed.3.' +
+  var strojeSchopno = 'Kontrola byla provedena v souladu s požadavky NV č. 378/2001 Sb. — požadavky na bezpečný provoz strojů a zařízení, a ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů.\n\nOvěřením podle čl. 18 bylo potvrzeno, že spojitost ochranného obvodu stroje vyhovuje mezním hodnotám (čl. 18.2.2), naměřené hodnoty izolačního odporu převyšují nejmenší hodnotu 1 MΩ stanovenou normou (čl. 18.3), zbytkové napětí se po odpojení vybije v požadované době (čl. 18.5) a funkční zkoušky ovládacích obvodů, prostředků nouzového zastavení a blokování ochranných krytů vyhověly (čl. 18.6).\n\nProhlídkou bylo ověřeno, že elektrické zařízení stroje odpovídá průvodní technické dokumentaci, je provedeno v souladu s působením vnějších vlivů v místě instalace a je opatřeno předepsaným značením a výstražnými tabulkami.\n\nElektrické zařízení stroje je z hlediska bezpečnosti schopno provozu.\n\nPoučení a seznámení s obsluhou:\nObsluhu stroje smí provádět pouze osoba seznámená s návodem k používání a poučená dle ČSN EN 50110-1 ed.3. Podpisem převzetí zprávy o kontrole potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním elektrického zařízení stroje.';
+  var strojeNeschopno = 'Kontrola byla provedena v souladu s požadavky NV č. 378/2001 Sb. — požadavky na bezpečný provoz strojů a zařízení, a ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů.\n\nPři prohlídce, měření a zkouškách dle čl. 18 byly zjištěny závady uvedené v kapitole ' + kapZavS + ' této zprávy. Elektrické zařízení stroje NENÍ v plném rozsahu v souladu s požadavky ČSN EN 60204-1 ed.3.' +
     (katTextS ? '\n\n' + katTextS : '') +
-    '\n\nDo odstranění závad kategorie C1 nesmí být stroj provozován; provozovatel zajistí jeho vyřazení z provozu podle NV č. 378/2001 Sb.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).';
+    '\n\nDo odstranění závad kategorie C1 nesmí být stroj provozován; provozovatel zajistí jeho vyřazení z provozu podle NV č. 378/2001 Sb.';
 
   var text;
   if (isLps) {
@@ -8923,8 +8929,8 @@ var TYPY_TEXTU = {
     { nazev: 'LPS neschopno – ČSN EN 62305', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN EN 62305-1 ed.2, ČSN EN 62305-2 ed.2, ČSN EN 62305-3 ed.2, ČSN EN 62305-4 ed.2, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN EN 62305-3 ed.2 a zjištěné závady musí být neprodleně odstraněny.\n\n{{KATEGORIE}}\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
     { nazev: 'LPS schopno – ČSN 34 1390', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN 34 1390, ČSN 33 2000-5-54 ed.3.\n\nPo provedené prohlídce (včetně měření) posuzovaného zařízení LPS bylo potvrzeno, že jímací soustava, svody i uzemňovací soustava jsou provedeny v souladu s projektovou dokumentací. Naměřené hodnoty zemního odporu vyhovují požadavkům ČSN 34 1390.\n\nProvedení ochrany před bleskem a přepětím je v souladu s právními a ostatními předpisy k zajištění bezpečnosti a ochrany zdraví při práci z doby jejího zřízení a její součásti jsou ve stavu způsobilém plnit požadovanou funkci.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
     { nazev: 'LPS neschopno – ČSN 34 1390', text: 'Revize byla provedena v souladu s požadavky následujících technických předpisů a norem: ČSN 34 1390, ČSN 33 2000-5-54 ed.3.\n\nPři prohlídce a měření byly zjištěny závady uvedené v kapitole 9 této zprávy. Provedení ochrany před bleskem a přepětím NENÍ v plném rozsahu v souladu s požadavky ČSN 34 1390 a zjištěné závady musí být neprodleně odstraněny.\n\n{{KATEGORIE}}\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
-    { nazev: 'Stroj schopno – ČSN EN 60204-1', text: 'Revize byla provedena v souladu s požadavky ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů, a ČSN 33 1500.\n\nOvěřením podle čl. 18 bylo potvrzeno, že spojitost ochranného obvodu stroje vyhovuje mezním hodnotám (čl. 18.2.2), naměřené hodnoty izolačního odporu převyšují nejmenší hodnotu 1 MΩ stanovenou normou (čl. 18.3), zbytkové napětí se po odpojení vybije v požadované době (čl. 18.5) a funkční zkoušky ovládacích obvodů, prostředků nouzového zastavení a blokování ochranných krytů vyhověly (čl. 18.6).\n\nProhlídkou bylo ověřeno, že elektrické zařízení stroje odpovídá průvodní technické dokumentaci, je provedeno v souladu s působením vnějších vlivů v místě instalace a je opatřeno předepsaným značením a výstražnými tabulkami.\n\nElektrické zařízení stroje je z hlediska bezpečnosti schopno provozu.\n\nPoučení a seznámení s obsluhou:\nObsluhu stroje smí provádět pouze osoba seznámená s návodem k používání a poučená dle ČSN EN 50110-1 ed.3. Podpisem převzetí zprávy o revizi potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním elektrického zařízení stroje.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' },
-    { nazev: 'Stroj neschopno – ČSN EN 60204-1', text: 'Revize byla provedena v souladu s požadavky ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů, a ČSN 33 1500.\n\nPři prohlídce, měření a zkouškách dle čl. 18 byly zjištěny závady uvedené v kapitole 9 této zprávy. Elektrické zařízení stroje NENÍ v plném rozsahu v souladu s požadavky ČSN EN 60204-1 ed.3.\n\n{{KATEGORIE}}\n\nDo odstranění závad kategorie C1 nesmí být stroj provozován; provozovatel zajistí jeho vyřazení z provozu podle NV č. 378/2001 Sb.\n\nSlovní zhodnocení bylo provedeno dle požadavků NV č. 190/2022 Sb. § 10 písmeno l).' }
+    { nazev: 'Stroj schopno – ČSN EN 60204-1', text: 'Kontrola byla provedena v souladu s požadavky NV č. 378/2001 Sb. — požadavky na bezpečný provoz strojů a zařízení, a ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů.\n\nOvěřením podle čl. 18 bylo potvrzeno, že spojitost ochranného obvodu stroje vyhovuje mezním hodnotám (čl. 18.2.2), naměřené hodnoty izolačního odporu převyšují nejmenší hodnotu 1 MΩ stanovenou normou (čl. 18.3), zbytkové napětí se po odpojení vybije v požadované době (čl. 18.5) a funkční zkoušky ovládacích obvodů, prostředků nouzového zastavení a blokování ochranných krytů vyhověly (čl. 18.6).\n\nProhlídkou bylo ověřeno, že elektrické zařízení stroje odpovídá průvodní technické dokumentaci, je provedeno v souladu s působením vnějších vlivů v místě instalace a je opatřeno předepsaným značením a výstražnými tabulkami.\n\nElektrické zařízení stroje je z hlediska bezpečnosti schopno provozu.\n\nPoučení a seznámení s obsluhou:\nObsluhu stroje smí provádět pouze osoba seznámená s návodem k používání a poučená dle ČSN EN 50110-1 ed.3. Podpisem převzetí zprávy o kontrole potvrzuje přebírající, že byl seznámen se správným a bezpečným užíváním elektrického zařízení stroje.' },
+    { nazev: 'Stroj neschopno – ČSN EN 60204-1', text: 'Kontrola byla provedena v souladu s požadavky NV č. 378/2001 Sb. — požadavky na bezpečný provoz strojů a zařízení, a ČSN EN 60204-1 ed.3 — Bezpečnost strojních zařízení, elektrická zařízení strojů.\n\nPři prohlídce, měření a zkouškách dle čl. 18 byly zjištěny závady uvedené v kapitole 9 této zprávy. Elektrické zařízení stroje NENÍ v plném rozsahu v souladu s požadavky ČSN EN 60204-1 ed.3.\n\n{{KATEGORIE}}\n\nDo odstranění závad kategorie C1 nesmí být stroj provozován; provozovatel zajistí jeho vyřazení z provozu podle NV č. 378/2001 Sb.' }
   ]
 };
 
@@ -10016,8 +10022,9 @@ function openModalRevize() {
     else if (aktPodtyp === 'byt') typObj.value = '4';
     else if (aktPodtyp === 'prumysl') typObj.value = '3';
     else if (aktPodtyp === 'spolecne') typObj.value = '5'; // bytové domy — 5 let
-    // Stroje: lhůta se řídí prostředím dle ČSN 33 1500, v běžném prostoru
-    // 2 roky. Uživatel si ji v modálu může přepnout.
+    // Stroje: kontrola nejméně jednou za 12 měsíců dle NV č. 378/2001 Sb.;
+    // delší lhůta jen podle průvodní dokumentace výrobce nebo MPBP.
+    // Uživatel si ji v modálu může přepnout.
     else if (aktTyp === 'stroje') {
       var oStroj = typObj.querySelector('option[data-pro="stroje"]');
       if (oStroj) oStroj.selected = true;
@@ -10063,7 +10070,7 @@ function potvrditRevize() {
   var lhutaText = '';
   if (aktTyp === 'stroje') {
     var letStroj = roky === 1 ? '1 rok' : (roky < 5 ? roky + ' roky' : roky + ' let');
-    lhutaText = letStroj + ' — do ' + mm + '/' + d.getFullYear() + ' (dle NV č. 190/2022 Sb. §10 písm. n), ČSN 33 1500 č. 3.9, ČSN EN 60204-1 ed.3)';
+    lhutaText = letStroj + ' — do ' + mm + '/' + d.getFullYear() + ' (dle NV č. 378/2001 Sb. a ČSN EN 60204-1 ed.3)';
   } else if (aktPodtyp === 'prumysl') {
     lhutaText = 've smyslu NV č. 190/2022 Sb. dle vypracovaného řádu el. zařízení a plánu revizí provozovatele do konce roku ' + d.getFullYear();
   } else {
@@ -10897,8 +10904,10 @@ function generujPDF() {
   // Text se tiskne PŘESNĚ tak, jak ho uživatel napsal (pokyn 2026-09-11);
   // do v9.43 se převáděl na velká písmena.
   if (D.nadpis_vlastni) nadpis = String(D.nadpis_vlastni);
+  // Stroj se KONTROLUJE podle NV 378/2001 Sb., ne reviduje podle NV 190/2022
+  // a ČSN 33 1500 — ty patří vyhrazeným zařízením (pokyn uživatele 2026-09-15).
   var podnadpis = isStrojePdf
-    ? PJ.uvodniVeta + ' č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN EN 60204-1 ed.3, ČSN 33 1500 (Z1–Z4)'
+    ? 'Kontrola provedena v souladu s NV č. 378/2001 Sb.,\nČSN EN 60204-1 ed.3, ČSN 33 2000-4-41 ed.3'
     : isLpsPdf
     ? (lpsNorma1390
         ? 'Revize provedena v souladu se zákonem č. 250/2021 Sb., NV č. 190/2022 Sb.,\nČSN 34 1390 (LPS zřízené do 1. 2. 2009), ČSN 33 2000-5-54 ed.3'
