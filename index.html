@@ -939,7 +939,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.48<span class="ver-date"> · 2026-09-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.49<span class="ver-date"> · 2026-09-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -8189,6 +8189,15 @@ var STROJE_KONTROLY_VYCHOZI = [
 var STROJE_VYSLEDKY = ['', 'vyhovuje', 'nevyhovuje', 'nehodnotí se'];
 
 var strojCounter = 0;
+// Od v9.49 má stroj JEDNU kapitolu — u každého stroje jde měření a hned za
+// ním jeho kontroly (pokyn uživatele 2026-09-15). Dřív to byly kapitoly dvě
+// a u souboru strojů se výsledky jednoho stroje rozpadly na dvě místa.
+// Sloučením se ale posune číslo kapitoly Závady a Závěru, a to by změnilo
+// ZPRÁVY ULOŽENÉ DŘÍV — jejich závěr odkazuje „v kapitole N". Proto je to
+// příznak uložený ve zprávě (`D.stroje.spolu`): nová zpráva ho má, zpráva
+// z archivu bez něj se tiskne postaru. Stejná pojistka jako u `D.rozvStrom`.
+var __strojeSpolu = false;
+function strojeSpolu() { return !!__strojeSpolu; }
 
 function strojeVychozi(kind) {
   var vlastni = (kind === 'mereni') ? STORE.strojeMereni : STORE.strojeKontroly;
@@ -8608,11 +8617,12 @@ function collectStrojeData() {
     s.kontroly = strojCistSeznam(strojBlokTbody(id, 'kontroly'), 'kontroly');
     seznam.push(s);
   });
-  return { rozsah: strojRozsah(), seznam: seznam };
+  return { rozsah: strojRozsah(), spolu: strojeSpolu(), seznam: seznam };
 }
 
 function restoreStrojeData(S) {
   if (!S) return;
+  __strojeSpolu = !!S.spolu;   // zpráva uložená před v9.49 příznak nemá
   var sel = document.getElementById('f_stroje_rozsah');
   if (sel) sel.value = (S.rozsah === 'soubor') ? 'soubor' : 'jeden';
   var container = document.getElementById('stroje-container');
@@ -8626,6 +8636,7 @@ function restoreStrojeData(S) {
 
 // Nová zpráva typu stroje: jeden prázdný stroj s výchozími seznamy
 function initStroje() {
+  __strojeSpolu = true;        // nová zpráva jede sloučenou kapitolou
   var container = document.getElementById('stroje-container');
   if (container) container.innerHTML = '';
   var mh = document.getElementById('stroje-mereni-hosty'); if (mh) mh.innerHTML = '';
@@ -8755,9 +8766,12 @@ function cisloKapitolyZavady() {
     });
   var docOffset = maDok ? 1 : 0;
   var secBase = 5 + docOffset;
-  // Stroje mají stejnou stavbu kapitol jako LPS (dvě kapitoly měření
-  // a kontrol), takže i stejný offset. Musí to sedět s generujPDF().
-  if (aktTyp === 'lps' || aktTyp === 'stroje') return secBase + 2;
+  // Stroje: od v9.49 jedna sloučená kapitola (měření + kontroly u každého
+  // stroje pohromadě), starší zprávy dvě. LPS má dvě vždycky.
+  // MUSÍ TO SEDĚT S generujPDF() — jinak závěr odkazuje na kapitolu,
+  // která neexistuje.
+  if (aktTyp === 'stroje') return secBase + (strojeSpolu() ? 1 : 2);
+  if (aktTyp === 'lps') return secBase + 2;
   var maRcd = !!document.querySelector('#rozvadece-container tr[data-rowtype="rcd-header"]');
   return secBase + 3 + (maRcd ? 1 : 0);
 }
@@ -10856,8 +10870,13 @@ function generujPDF() {
     return (r.mereni || []).some(function(m) { return m.rowtype === 'rcd-header'; });
   });
   var rcdOffset = hasRcd ? 1 : 0;
-  var secZavady = dveKapitoly ? secBase + 2 : secBase + 3 + rcdOffset;
-  var secZaver  = dveKapitoly ? secBase + 3 : secBase + 4 + rcdOffset;
+  // Kolik kapitol zabere blok měření/kontrol, než začnou Závady.
+  // `dveKapitoly` se tu NEPOUŽÍVÁ na číslování — drží i slučování stránek
+  // níž v kódu a to platí pro stroje pořád.
+  var strojeSpoluPdf = isStrojePdf && !!(D.stroje && D.stroje.spolu);
+  var kapMereni = dveKapitoly ? (strojeSpoluPdf ? 1 : 2) : 3 + rcdOffset;
+  var secZavady = secBase + kapMereni;
+  var secZaver  = secZavady + 1;
   var lpsNorma1390 = isLpsPdf && D.lps && D.lps.prohlidka_norma === '1390';
   // Vydání souboru 62305: '62305' = ed.2, '62305e3' = ed.3. citaceNormy()
   // přepíše označení a u ed.3 vypustí čísla článků.
@@ -11156,7 +11175,7 @@ function generujPDF() {
         (D.prohlídka ? '<div style="font-size:9.5pt;padding:0 2mm;margin-bottom:2mm"><strong>Výsledek prohlídky:</strong> ' + esc(D.prohlídka) + '</div>' : '') +
         '<div style="font-size:9.5pt;line-height:1.7;padding:0 2mm">' +
         'Prohlídka předchází měření a zkouškám. Ověřuje se zejména, zda elektrické zařízení stroje odpovídá technické dokumentaci, zda jsou vodiče a svorky správně označeny, zda ochranný obvod stroje a jeho spoje nejsou porušeny, zda jsou osazeny předepsané kryty a bezpečnostní značení a zda ovládací prvky včetně prostředků nouzového zastavení odpovídají požadavkům normy.<br><br>' +
-        'Podrobný výčet kontrolovaných bodů a jejich výsledky jsou uvedeny v kapitole ' + (secBase + 1) + ' této zprávy.' +
+        'Podrobný výčet kontrolovaných bodů a jejich výsledky jsou uvedeny v kapitole ' + (secBase + (strojeSpoluPdf ? 0 : 1)) + ' této zprávy.' +
         '</div>'
       : isLpsPdf
       ? (function() {
@@ -11502,42 +11521,87 @@ function generujPDF() {
       ].filter(function(u) { return u[1]; })
        .map(function(u) { return '<strong>' + u[0] + ':</strong> ' + esc(u[1]); })
        .join(' · ');
-      return '<div class="sec-head" style="margin-top:3mm"><div class="sec-num">' + secBase + '.' + poradi + '</div>' +
+      // Nadpis stroje a jeho údaje jsou JEDEN blok se třídou `stroj-hlavicka-pdf`,
+      // kterou `jeNadpis()` bere jako nadpis — jinak zůstane jméno stroje viset
+      // na konci stránky a jeho tabulka začne na další (řádek s údaji za
+      // nadpisem dělič zastavil, protože hledal jen `.sec-head`).
+      return '<div class="stroj-hlavicka-pdf">' +
+        '<div class="sec-head" style="margin-top:3mm"><div class="sec-num">' + secBase + '.' + poradi + '</div>' +
         '<div class="sec-name">' + esc(st.nazev || ('Stroj ' + poradi)) + '</div></div>' +
-        (udaje ? '<div style="font-size:8.5pt;padding:0 2mm;margin-bottom:1mm;line-height:1.6;color:#333">' + udaje + '</div>' : '');
+        (udaje ? '<div style="font-size:8.5pt;padding:0 2mm;margin-bottom:1mm;line-height:1.6;color:#333">' + udaje + '</div>' : '') +
+        '</div>';
     }
 
-    var mereniHtml = '', kontrolyHtml = '';
-    if (!strojList.length) {
-      mereniHtml = '<div style="font-size:9pt;padding:0 2mm;color:#666">Měření nebylo zadáno.</div>';
-      kontrolyHtml = '<div style="font-size:9pt;padding:0 2mm;color:#666">Kontroly nebyly zadány.</div>';
+    function strojPrazdno(t) {
+      return '<div style="font-size:9pt;padding:0 2mm;color:#666">' + t + '</div>';
+    }
+    // Popisek nad tabulkou. Drží se s tabulkou v jednom obalu, aby
+    // nezůstal viset na konci stránky — `jeNadpis()` pozná jen `.sec-head`.
+    function strojPodnadpis(t) {
+      return '<div style="font-size:9pt;font-weight:bold;padding:0 2mm;margin:2.5mm 0 .5mm">' + t + '</div>';
+    }
+    var MEZNI = '<div style="font-size:8pt;padding:0 2mm;margin:2mm 0 4mm;color:#444">' +
+      'Mezní hodnoty: izolační odpor měřen při 500 V DC, nejmenší přípustná hodnota 1 MΩ (čl. 18.3). ' +
+      'Spojitost ochranného obvodu ověřena zkušebním proudem podle čl. 18.2.2.</div>';
+    var zkouseniHtml = D.zkouseni
+      ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0"><strong>Výsledek zkoušení:</strong> ' + esc(D.zkouseni) + '</div>'
+      : '';
+
+    var strojeObsah;
+    if (strojeSpoluPdf) {
+      // JEDNA kapitola: u každého stroje měření a hned za ním jeho kontroly.
+      // Každá dvojice popisek+tabulka je vlastní blok — když se stroj na
+      // stránku nevejde, `rozbalPrilisVysokyBlok()` obal rozbalí a dělí se
+      // po tabulkách, ne uprostřed ničeho.
+      var telo = '';
+      if (!strojList.length) {
+        telo = strojPrazdno('Měření nebylo zadáno.');
+      } else {
+        strojList.forEach(function(st, i) {
+          var tabM = strojeSeznamRadky(st.mereni, true);
+          var tabK = strojeSeznamRadky(st.kontroly, false);
+          telo += '<div class="stroj-blok-pdf">' +
+            (vicStroju ? strojHlavickaHtml(st, i + 1) : '') +
+            '<div>' + strojPodnadpis('Naměřené hodnoty a zkoušky') +
+              (tabM || strojPrazdno('Měření nebylo zadáno.')) + '</div>' +
+            '<div>' + strojPodnadpis('Provedené kontroly') +
+              (tabK || strojPrazdno('Kontroly nebyly zadány.')) + '</div>' +
+            '</div>';
+        });
+      }
+      strojeObsah =
+        '<div class="sec-head"><div class="sec-num">' + secBase + '.</div>' +
+        '<div class="sec-name">Naměřené hodnoty, zkoušky a provedené kontroly (dle ČSN EN 60204-1 ed.3, čl. 18)</div></div>' +
+        zkouseniHtml + telo + MEZNI;
     } else {
-      strojList.forEach(function(st, i) {
-        var hlav = vicStroju ? strojHlavickaHtml(st, i + 1) : '';
-        var tabM = strojeSeznamRadky(st.mereni, true);
-        var tabK = strojeSeznamRadky(st.kontroly, false);
-        mereniHtml += '<div class="stroj-blok-pdf">' + hlav + (tabM || '<div style="font-size:9pt;padding:0 2mm;color:#666">Měření nebylo zadáno.</div>') + '</div>';
-        kontrolyHtml += '<div class="stroj-blok-pdf">' +
-          (vicStroju ? '<div style="font-size:9pt;font-weight:bold;padding:0 2mm;margin-top:3mm">' + esc(st.nazev || ('Stroj ' + (i + 1))) + '</div>' : '') +
-          (tabK || '<div style="font-size:9pt;padding:0 2mm;color:#666">Kontroly nebyly zadány.</div>') + '</div>';
-      });
+      // Zprávy uložené před v9.49 — dvě kapitoly, přesně jako dřív.
+      var mereniHtml = '', kontrolyHtml = '';
+      if (!strojList.length) {
+        mereniHtml = strojPrazdno('Měření nebylo zadáno.');
+        kontrolyHtml = strojPrazdno('Kontroly nebyly zadány.');
+      } else {
+        strojList.forEach(function(st, i) {
+          var hlav = vicStroju ? strojHlavickaHtml(st, i + 1) : '';
+          var tabM = strojeSeznamRadky(st.mereni, true);
+          var tabK = strojeSeznamRadky(st.kontroly, false);
+          mereniHtml += '<div class="stroj-blok-pdf">' + hlav + (tabM || strojPrazdno('Měření nebylo zadáno.')) + '</div>';
+          kontrolyHtml += '<div class="stroj-blok-pdf">' +
+            (vicStroju ? '<div style="font-size:9pt;font-weight:bold;padding:0 2mm;margin-top:3mm">' + esc(st.nazev || ('Stroj ' + (i + 1))) + '</div>' : '') +
+            (tabK || strojPrazdno('Kontroly nebyly zadány.')) + '</div>';
+        });
+      }
+      strojeObsah =
+        '<div class="sec-head"><div class="sec-num">' + secBase + '.</div>' +
+        '<div class="sec-name">Naměřené hodnoty a zkoušky (dle ČSN EN 60204-1 ed.3, čl. 18)</div></div>' +
+        zkouseniHtml + mereniHtml + MEZNI +
+        '<div class="sec-head"><div class="sec-num">' + (secBase + 1) + '.</div>' +
+        '<div class="sec-name">Provedené kontroly</div></div>' +
+        kontrolyHtml;
     }
 
     var pStroje = document.createElement('div');
     pStroje.className = 'a4';
-    pStroje.innerHTML = hdr(3) +
-      '<div class="a4-content">' +
-      '<div class="sec-head"><div class="sec-num">' + secBase + '.</div>' +
-      '<div class="sec-name">Naměřené hodnoty a zkoušky (dle ČSN EN 60204-1 ed.3, čl. 18)</div></div>' +
-      (D.zkouseni ? '<div style="font-size:9.5pt;padding:0 2mm;margin:2mm 0"><strong>Výsledek zkoušení:</strong> ' + esc(D.zkouseni) + '</div>' : '') +
-      mereniHtml +
-      '<div style="font-size:8pt;padding:0 2mm;margin:2mm 0 4mm;color:#444">' +
-      'Mezní hodnoty: izolační odpor měřen při 500 V DC, nejmenší přípustná hodnota 1 MΩ (čl. 18.3). Spojitost ochranného obvodu ověřena zkušebním proudem podle čl. 18.2.2.' +
-      '</div>' +
-      '<div class="sec-head"><div class="sec-num">' + (secBase + 1) + '.</div>' +
-      '<div class="sec-name">Provedené kontroly</div></div>' +
-      kontrolyHtml +
-      '</div>' + ftr();
+    pStroje.innerHTML = hdr(3) + '<div class="a4-content">' + strojeObsah + '</div>' + ftr();
     pages.appendChild(pStroje);
   }
 
@@ -11797,7 +11861,8 @@ function generujPDF() {
     // obsah začíná až na další — zlom musí být PŘED nadpisem. Vrací true,
     // pokud se něco přesunulo (pak je potřeba stránky znovu přerozdělit).
     function jeNadpis(el) {
-      return !!el && el.classList && el.classList.contains('sec-head');
+      return !!el && el.classList &&
+        (el.classList.contains('sec-head') || el.classList.contains('stroj-hlavicka-pdf'));
     }
     function presunOsireleNadpisy() {
       var zmena = false;

@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.48 · 2026-09-15**
+**Aktuální verze: v9.49 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,44 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Stroje — měření a kontroly POHROMADĚ, jedna kapitola (v9.49)
+
+Do v9.48 to byly dvě kapitoly (nejdřív měření všech strojů, pak kontroly všech
+strojů), takže u souboru strojů se výsledky jednoho stroje rozpadly na dvě
+vzdálená místa. Uživatel to odmítl (2026-09-15): „1. stroj = výsledek měření
+a za to hned provedená kontrola. 2. stroj = …". Teď je to **jedna kapitola**
+`secBase.` „Naměřené hodnoty, zkoušky a provedené kontroly", uvnitř
+podkapitoly `secBase.1`, `secBase.2` … a v každé obě tabulky za sebou.
+
+- **Sloučení posouvá číslo kapitoly Závady a Závěru o jedna dolů**, a to by
+  rozbilo **zprávy uložené dřív** — jejich závěr odkazuje „v kapitole N".
+  Proto je to **příznak uložený ve zprávě `D.stroje.spolu`**: nová zpráva ho
+  dostane v `initStroje()`, zpráva z archivu bez něj se tiskne postaru (obě
+  větve jsou v kódu vedle sebe). Stejná pojistka jako `D.rozvStrom`.
+- **`cisloKapitolyZavady()` a `generujPDF()` musí sedět.** Funkce čte globál
+  `__strojeSpolu` (plní ho `initStroje()` a `restoreStrojeData()`), PDF čte
+  `D.stroje.spolu`. Rozejdou-li se, závěr odkáže na kapitolu, která
+  neexistuje. Hlídá to `test-stroje-spolu.js`.
+- **`dveKapitoly` se na číslování NEPOUŽÍVÁ.** Drží slučování stránek na konci
+  `generujPDF()` a to pro stroje platí pořád; číslo dává `kapMereni`.
+- **Odkaz z kapitoly Prohlídka** („podrobný výčet kontrolovaných bodů … v
+  kapitole N") míří u sloučené podoby na `secBase`, u staré na `secBase + 1`.
+- **Nadpis stroje + řádek s údaji je JEDEN blok `stroj-hlavicka-pdf`**
+  a `jeNadpis()` ho bere jako nadpis. Bez toho zůstalo jméno stroje viset na
+  konci stránky a jeho tabulka začala na další — dělič hledal jen `.sec-head`
+  a řádek s údaji za nadpisem ho zastavil.
+- **Sloučení platí i pro režim „jeden stroj"** — schválně: kdyby záviselo na
+  přepínači rozsahu, přehodilo by se číslo kapitoly Závady při každém
+  přepnutí. U jednoho stroje jsou to prostě dva popsané bloky pod sebou.
+- Test: `test-stroje-spolu.js` (13 kontrol — pořadí stroj → měření →
+  kontroly → další stroj, shoda `cisloKapitolyZavady()` s PDF, oba režimy
+  rozsahu a **zpráva bez příznaku, která se musí tisknout postaru**).
+
+**Past při testování:** `innerText` respektuje CSS `text-transform`, takže
+nadpisy vyjdou VELKÝMI PÍSMENY — porovnávat bez ohledu na velikost. A nadpis
+kapitoly sám obsahuje „provedené kontroly", takže výskyty se počítají až od
+prvního stroje dál.
 
 ## Stroj — jištění a připojení (v9.48)
 
