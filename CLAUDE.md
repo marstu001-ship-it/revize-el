@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.51 · 2026-09-15**
+**Aktuální verze: v9.52 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -62,21 +62,30 @@ být ještě ed.1? Když mám stroj z roku 2004?" Měl pravdu. **Stroj se posuzu
 podle verze normy, která platila, když byl uveden do provozu**, takže
 v seznamu musí být i verze před ed.2. České verze ČSN EN 60204-1 (33 2200):
 
-| verze | platnost |
-|---|---|
-| vydání **10/1995** | 10/1995 – 03/2000 |
-| vydání **03/2000** | 03/2000 – 06/2009 (souběžně s ed.2) |
-| **ed.2** (06/2007) | 06/2007 – **09/2021** (zrušena 14. 9. 2021) |
-| **ed.3** (02/2019) | od 02/2019, účinnost 1. 3. 2019 |
+**Datace je z karet norem na `csnonline.agentura-cas.cz` — uživatel je poslal
+jako snímky 2026-09-15 (v9.52). Je to primární zdroj, tohle už se nehádá:**
+
+| verze | kat. č. | vydána | zrušena |
+|---|---|---|---|
+| **ČSN EN 60204-1** (Elektrická zařízení **pracovních** strojů) | 17916 | 01.10.1995 | **01.04.2000** |
+| **ČSN EN 60204-1** (Elektrická zařízení strojů) | 57568 | 01.03.2000 | **01.06.2009** |
+| **ed.2** | 78751 | 01.06.2007 | **14.09.2021** |
+| **ed.3** | 506756 | 01.02.2019 (účinnost 01.03.2019) | platná |
+
+**Verze se PŘEKRÝVAJÍ** — v březnu 2000 vyšla nová, ale ta z roku 1995 platila
+až do 1. 4. 2000; ed.2 vyšla 2007, ale verze z roku 2000 dojela až 2009.
+Test proto kontroluje jen chronologii, ne že konec jedné = začátek druhé.
 
 Starší dvě verze nemají v označení „ed.", jsou to prostě další vydání téže
 ČSN — v seznamu se proto rozlišují textem `(vyd. 03/2000)` / `(vyd. 10/1995)`.
 
-Opravená datace (ověřeno u ČAS / normy.biz 2026-09-15):
+Opravená datace (v9.51 z vyhledávání, v9.52 doladěno podle karet ČSN online):
 
 - **ed.3** `od 06/2019` → **`od 02/2019`** (vydání únor 2019, účinnost 1. 3. 2019)
 - **ed.2** `2007 – 06/2019` → **`06/2007 – 09/2021`** (ed.3 ji nahradila až
   14. 9. 2021, do té doby platily souběžně)
+- **verze 10/1995** — ve v9.51 zapsaná jako „– 03/2000" podle vydání
+  nástupkyně; správně **`– 04/2000`** podle data ukončení platnosti
 - **ČSN EN ISO 13849-1 ed.2** `od 10/2023` → **`od 09/2024`** (vydání 09/2024,
   účinnost 10/2024)
 - **ČSN EN ISO 13850** — mělo chybně v názvu „ed.2", **žádné ed.2 v ČSN
@@ -94,7 +103,11 @@ do 31. 10. 2027.
 elektro položky. **Nevymýšlet — když se má datum změnit, musí být ověřené.**
 
 - Sandbox Claude Code **na csnonline.agentura-cas.cz ani normy.biz nesmí**
-  (egress proxy). Ověřovalo se přes `WebSearch`, který citace vrátí.
+  (egress proxy). `WebSearch` dá dobrý odhad, ale na **datum ukončení
+  platnosti** nestačí — to je v kartě normy a rozchází se s vydáním
+  nástupkyně. **Když jde o datum do zprávy, vyžádat si snímek karty.**
+- **ed.3 má od 3/2026 změnu A1** (kat. č. 523430, platná). V názvu normy
+  zatím není — uživatel rozhodne, jestli se má psát „ed.3 +A1".
 - Test: `test-normy-datace.js` (42 kontrol — název, datace a příznak
   „neplatná" u devíti norem, návaznost čtyř verzí 60204-1 bez díry,
   a že se zakliknutá starší verze opravdu vytiskne do PDF).
