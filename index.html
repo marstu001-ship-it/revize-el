@@ -939,7 +939,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.47<span class="ver-date"> · 2026-09-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.48<span class="ver-date"> · 2026-09-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2116,6 +2116,15 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 </datalist>
 <datalist id="dl_stroj_trida" autocomplete="off">
   <option value="I"><option value="II"><option value="III">
+</datalist>
+<datalist id="dl_stroj_jisteni" autocomplete="off">
+  <option value="jistič"><option value="pojistka"><option value="pojistkový odpínač">
+  <option value="jistič s nadproudovou spouští"><option value="motorový spouštěč">
+  <option value="jistič + proudový chránič">
+</datalist>
+<datalist id="dl_stroj_ridici" autocomplete="off">
+  <option value="24 V DC (oddělovací transformátor)"><option value="24 V AC (oddělovací transformátor)">
+  <option value="230 V AC (ze sítě)"><option value="48 V DC"><option value="bez řídicích obvodů">
 </datalist>
 <datalist id="dl_nazev_rozvadec">
   <option value="RD — rodinný dům (OEZ 18M35, IP 30/20)">
@@ -8282,6 +8291,22 @@ function addStroj(data) {
       strojPole('stroj-proud', 'Proud (A)', 'např. 16') +
       strojPole('stroj-napeti', 'Napájecí napětí (V)', 'např. 3/PE/N ~400/230 V') +
     '</div>' +
+    // Jištění a připojení stroje — doplněno dle vzoru od kolegy
+    // (pokyn uživatele 2026-09-15). Patří to k identifikaci stroje, proto
+    // je to tady: u režimu „jeden stroj" se blok stěhuje na titulní stranu.
+    '<div class="g2">' +
+      strojPole('stroj-jisteni-typ', 'Hlavní jištění stroje — typ', 'např. jistič', 'dl_stroj_jisteni') +
+      strojPole('stroj-jisteni-proud', 'Hlavní jištění — proudová hodnota (A)', 'např. 3×25', 'dl_proud_A') +
+    '</div>' +
+    '<div class="g2">' +
+      strojPole('stroj-predjisteni-typ', 'Předřazené jištění síťového přívodu — typ', 'např. jistič', 'dl_stroj_jisteni') +
+      strojPole('stroj-predjisteni-proud', 'Předřazené jištění — proudová hodnota (A)', 'např. 3×25', 'dl_proud_A') +
+    '</div>' +
+    '<div class="g3">' +
+      strojPole('stroj-ridici-napeti', 'Napětí řídicích obvodů (V)', 'ze sítě / z oddělovacího transformátoru', 'dl_stroj_ridici') +
+      strojPole('stroj-napajeno-z', 'Napájeno z rozváděče', 'např. RS 232.2', 'dl_nazev_rozvadec') +
+      strojPole('stroj-privodni-kabel', 'Přívodní kabel', 'např. CYKY 5C × 4 mm²', 'dl_kabel') +
+    '</div>' +
     '<div class="g3">' +
       strojPole('stroj-umisteni', 'Umístění', 'hala, dílna, místnost') +
       strojPole('stroj-vnejsi', 'Vnější vlivy', 'např. AA5 AB5 …', 'dl_stroj_vlivy') +
@@ -8315,9 +8340,19 @@ var STROJ_POLE_MAPA = {
   'stroj-nazev': 'nazev', 'stroj-typ': 'typ', 'stroj-vyrobce': 'vyrobce',
   'stroj-vyrcislo': 'vyrobni_cislo', 'stroj-rok': 'rok_vyroby', 'stroj-evcislo': 'ev_cislo',
   'stroj-prikon': 'prikon', 'stroj-proud': 'proud', 'stroj-napeti': 'napeti',
+  'stroj-jisteni-typ': 'jisteni_typ', 'stroj-jisteni-proud': 'jisteni_proud',
+  'stroj-predjisteni-typ': 'predjisteni_typ', 'stroj-predjisteni-proud': 'predjisteni_proud',
+  'stroj-ridici-napeti': 'ridici_napeti',
+  'stroj-napajeno-z': 'napajeno_z', 'stroj-privodni-kabel': 'privodni_kabel',
   'stroj-umisteni': 'umisteni', 'stroj-vnejsi': 'vnejsi_vlivy', 'stroj-kryti': 'kryti',
   'stroj-trida': 'trida_ochrany', 'stroj-ochrana': 'ochrana', 'stroj-poznamka': 'poznamka'
 };
+
+// „jistič" + „3×25" → „jistič 3×25 A". Jednotku doplní stromProud(), takže
+// z hodnoty „25A" nevyjde „25A A". Chybí-li jedna půlka, vypíše se ta druhá.
+function strojJisteni(typ, proud) {
+  return [String(typ || '').trim(), stromProud(proud)].filter(Boolean).join(' ');
+}
 
 function strojNastavitPole(karta, data) {
   Object.keys(STROJ_POLE_MAPA).forEach(function(cls) {
@@ -10911,7 +10946,13 @@ function generujPDF() {
         radek('umístění', st.umisteni);
       var pravy = radek('instalovaný příkon', st.prikon ? st.prikon + ' kW' : '') +
         radek('proud', st.proud ? st.proud + ' A' : '') +
-        radek('napájecí napětí', st.napeti) + radek('krytí', st.kryti) +
+        radek('napájecí napětí', st.napeti) +
+        radek('hlavní jištění stroje', strojJisteni(st.jisteni_typ, st.jisteni_proud)) +
+        radek('předřazené jištění přívodu', strojJisteni(st.predjisteni_typ, st.predjisteni_proud)) +
+        radek('napětí řídicích obvodů', st.ridici_napeti) +
+        radek('napájeno z rozváděče', st.napajeno_z) +
+        radek('přívodní kabel', st.privodni_kabel) +
+        radek('krytí', st.kryti) +
         radek('třída ochrany', st.trida_ochrany) + radek('vnější vlivy', st.vnejsi_vlivy);
       if (!levy && !pravy) return '';
       return '<div class="r2" style="margin-bottom:2.5mm">' +
@@ -11452,6 +11493,10 @@ function generujPDF() {
         ['rok výroby', st.rok_vyroby], ['evidenční číslo', st.ev_cislo],
         ['umístění', st.umisteni], ['instalovaný příkon', st.prikon ? st.prikon + ' kW' : ''],
         ['proud', st.proud ? st.proud + ' A' : ''], ['napájecí napětí', st.napeti],
+        ['hlavní jištění stroje', strojJisteni(st.jisteni_typ, st.jisteni_proud)],
+        ['předřazené jištění přívodu', strojJisteni(st.predjisteni_typ, st.predjisteni_proud)],
+        ['napětí řídicích obvodů', st.ridici_napeti],
+        ['napájeno z rozváděče', st.napajeno_z], ['přívodní kabel', st.privodni_kabel],
         ['krytí', st.kryti], ['třída ochrany', st.trida_ochrany],
         ['vnější vlivy', st.vnejsi_vlivy], ['poznámka', st.poznamka]
       ].filter(function(u) { return u[1]; })

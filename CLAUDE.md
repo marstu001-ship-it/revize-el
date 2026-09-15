@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.47 · 2026-09-15**
+**Aktuální verze: v9.48 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,36 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Stroj — jištění a připojení (v9.48)
+
+Sedm kolonek doplněných podle vzoru od kolegy (pokyn uživatele 2026-09-15,
+žlutě vyznačené řádky ve snímku): **hlavní jištění stroje** (typ + proudová
+hodnota), **předřazené jištění síťového přívodu** (typ + proudová hodnota),
+**napětí řídicích obvodů**, **napájeno z rozváděče** a **přívodní kabel**.
+Řádek „izolační odpor přívodu" byl ve vzoru **přeškrtnutý — nedělat.**
+
+- **Bydlí to na kartě stroje** (`addStroj`), ne v samostatném bloku titulky.
+  Je to údaj o stroji, takže u režimu „soubor strojů" ho má každý stroj svůj,
+  a u režimu „jeden stroj" se to na titulní stranu dostane samo — `#stroje-blok`
+  se tam stěhuje celý.
+- **Nový klíč = i `STROJ_POLE_MAPA`**, jinak se hodnota posbírá do formuláře,
+  ale neuloží se do dat (a po načtení z archivu zmizí).
+- **Jednotku „A" doplňuje `strojJisteni()` přes `stromProud()`** — z hodnoty
+  „25A" nevyjde „25A A". Chybí-li typ nebo proud, vypíše se ta druhá půlka.
+- **Prázdná kolonka se do PDF netiskne** (`radek()` vrátí prázdno) — jinak by
+  u každé zprávy visely prázdné řádky.
+- **PDF je na DVOU místech a musí se měnit obě**: pravý sloupec „Technické
+  specifikace" na titulní straně (jeden stroj) a `strojHlavickaHtml()`
+  v podkapitole (soubor strojů).
+- Nápovědy: `dl_stroj_jisteni` (jistič / pojistka / …) a `dl_stroj_ridici`
+  (24 V DC z oddělovacího transformátoru / 230 V ze sítě / …) jsou nové;
+  proudové hodnoty jedou přes stávající `dl_proud_A`, rozváděč přes
+  `dl_nazev_rozvadec`, kabel přes `dl_kabel`.
+- Elektro i LPS se nezměnily (`porovnani2.js` — klíč `stroje` je z porovnání
+  dat vyňatý, text PDF vychází znak po znaku stejně).
+- Test: `test-stroj-jisteni.js` (15 kontrol — formulář, data, návrat
+  z archivu, PDF u jednoho stroje i u souboru, prázdné kolonky, „A A").
 
 ## Archiv — u stroje se ukazuje NÁZEV a TYP (v9.47)
 
