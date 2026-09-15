@@ -11,8 +11,19 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%231c3a5e'/><text x='256' y='340' text-anchor='middle' font-size='280' fill='%23fff'>⚡</text></svg>">
 <title>Revize EL – Revizní zprávy</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- Knihovny z cdnjs mají kontrolní otisk (SRI): prohlížeč spustí soubor, JEN
+     když sedí bajt po bajtu. Kdyby někdo cdnjs podvrhl, skript se nenačte a
+     generování PDF hlásí srozumitelnou chybu (viz kontrola v generujPDF).
+     Verze jsou připíchnuté napevno, takže se otisk sám od sebe nezmění —
+     PŘI ZMĚNĚ VERZE KNIHOVNY SE MUSÍ PŘEPOČÍTAT I OTISK, jinak program
+     přijde o PDF. U písem z fonts.googleapis.com otisk nejde: Google vrací
+     každému prohlížeči jiné CSS. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+        integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+        integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 /* ═══ RESET ═══ */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -928,7 +939,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.45<span class="ver-date"> · 2026-09-14</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.46<span class="ver-date"> · 2026-09-15</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1742,7 +1753,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div id="ai_local_fields" style="display:none;margin-top:.5rem;padding:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:3px">
       <div class="f" style="margin-bottom:.5rem">
         <label>URL endpointu <span style="font-size:.6rem;color:var(--muted)">(OpenAI-compatible /v1/chat/completions)</span></label>
-        <input type="text" id="ai_local_url" placeholder="https://martin--mac-mini.tail6ec3f3.ts.net/v1/chat/completions" autocomplete="off">
+        <input type="text" id="ai_local_url" placeholder="https://muj-pocitac.example/v1/chat/completions" autocomplete="off">
       </div>
       <div class="f">
         <label>Název modelu <span style="font-size:.6rem;color:var(--muted)">(přesně jak v Ollama)</span></label>
@@ -13906,6 +13917,20 @@ function zipNavod(nestazeno, offlineHotovo) {
   return t.join('\r\n');
 }
 
+// Z offline verze se MUSÍ vyhodit kontrolní otisk (integrity) u knihoven.
+// Otisk hlídá soubor stažený z cdnjs; místní kopie v knihovny/ je sice stejná,
+// ale otevře-li se index-offline.html rovnou z disku (file://), prohlížeč
+// kontrolu vyhodnotí jako nesplněnou a skript nespustí — a offline běh je
+// přesně to, kvůli čemu ZIP existuje.
+function zipBezOtisku(html) {
+  return html.replace(/<script\b[^>]*>/gi, function(tag) {
+    if (!/src\s*=\s*["']knihovny\//i.test(tag)) return tag;
+    return tag.replace(/\s+integrity\s*=\s*("[^"]*"|'[^']*')/gi, '')
+              .replace(/\s+crossorigin\s*=\s*("[^"]*"|'[^']*'|\S+)/gi, '')
+              .replace(/\s+referrerpolicy\s*=\s*("[^"]*"|'[^']*'|\S+)/gi, '');
+  });
+}
+
 async function stahnoutKodZip() {
   var btn = document.getElementById('btn-zip-kodu');
   var puvodni = btn ? btn.textContent : '';
@@ -13928,6 +13953,7 @@ async function stahnoutKodZip() {
     if (ext.nahrady.length) {
       var html = new TextDecoder().decode(indexHtml);
       ext.nahrady.forEach(function(par) { html = html.split(par[0]).join(par[1]); });
+      html = zipBezOtisku(html);
       polozky.push({ nazev: 'index-offline.html', data: new TextEncoder().encode(html) });
     }
     polozky.push({ nazev: 'JAK-TO-ROZJET.txt',

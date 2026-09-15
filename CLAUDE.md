@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.45 · 2026-09-14**
+**Aktuální verze: v9.46 · 2026-09-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,49 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Kontrolní otisky knihoven — SRI (v9.46)
+
+Obě knihovny z cdnjs (`index.html` ř. 14–26) mají `integrity` + `crossorigin`.
+Prohlížeč soubor spustí, **jen když sedí bajt po bajtu** — kdyby někdo cdnjs
+podvrhl, skript se nenačte. Odpověď na otázku uživatele na bezpečnost
+(2026-09-15): repozitář je veřejný a program se sám aktualizuje, takže cesta,
+kudy by mohl přijít cizí kód, stojí za utěsnění.
+
+- **PŘI ZMĚNĚ VERZE KNIHOVNY SE MUSÍ PŘEPOČÍTAT OTISK.** Jinak se knihovna
+  nenačte a program **přijde o generování PDF** — tedy o svou hlavní funkci.
+  Verze jsou v URL připíchnuté napevno, takže se obsah sám od sebe nezmění.
+- **Otisk se počítá ze SPRÁVNÉHO zdroje.** cdnjs si soubory tahá sám a
+  u každé knihovny odjinud — je to v `cdnjs/packages` na GitHubu
+  (`packages/<písmeno>/<název>.json`, klíč `autoupdate`):
+  - **jspdf** → `source: git`, repozitář MrRio/jsPDF, složka `dist`, tedy
+    `raw.githubusercontent.com/MrRio/jsPDF/v<verze>/dist/jspdf.umd.min.js`,
+  - **html2canvas** → `source: npm`, tedy `dist/` z balíčku na
+    registry.npmjs.org.
+
+  Výpočet: `openssl dgst -sha384 -binary SOUBOR | openssl base64 -A`.
+  (Sandbox Claude Code na cdnjs nesmí, proto ta oklika. Kdo na cdnjs dosáhne,
+  ať si stáhne rovnou tu URL, co je v `index.html`.)
+- **U písem z `fonts.googleapis.com` otisk NEJDE** — Google vrací každému
+  prohlížeči jiné CSS, otisk by nikdy neseděl.
+- **Offline varianta v ZIPu otisk NESMÍ mít.** `zipBezOtisku()` ho
+  z `index-offline.html` vyhazuje u skriptů mířících do `knihovny/`: otevře-li
+  se soubor rovnou z disku (`file://`), prohlížeč kontrolu neprojde a skript
+  nespustí — a offline běh je přesně to, kvůli čemu ZIP existuje.
+- **Test `test-zip-kodu.js` nesmí porovnávat řádek proti řádku podle pořadí.**
+  Odstraněním atributů se tag smrskne a všechno pod ním se posune; kontrola
+  jede přes `diff` a ptá se „změnily se JEN odkazy na knihovny?".
+- Service worker měl `mode: 'cors'` u `URLS_OPTIONAL` už dřív a neukládá
+  odpovědi se `status !== 200`, takže v cache nikdy neleží neprůhledná
+  (opaque) odpověď, na které by otisk selhal. **Při zásahu do `sw.js` to
+  nechat tak.**
+- Test: `test-sri.js` (10 kontrol — se správnými bajty se knihovna načte,
+  po změně **jediného bitu** se nenačte, offline varianta otisk nemá).
+
+**Veřejný repozitář:** `index.html` ř. 1745 měl jako náznak skutečnou
+Tailscale adresu uživatelova Mac mini. Nahrazeno obecným
+`https://muj-pocitac.example/…`. **Do náznaků a příkladů nepatří nic
+skutečného** — repozitář je veřejný a `CLAUDE.md` se nasazuje s ním.
 
 ## AI funkce — stav
 
