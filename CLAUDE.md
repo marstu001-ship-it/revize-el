@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.56 · 2026-09-16**
+**Aktuální verze: v9.57 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,58 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Postranní archiv ve formuláři — jako seznam pošty (v9.57)
+
+**Zadání uživatele (2026-09-16, snímek Outlooku):** „píšu zprávu a překliknu
+si to na druhou zprávu a zároveň ten archiv mohu schovat, komu by vadil na
+noťasu." Tlačítko **📚 Archiv** v drobečkové navigaci formuláře otevře vlevo
+sloupec se zprávami; **klik zprávu rovnou otevře** (rozhodnutí uživatele —
+nabízel jsem náhled s potvrzením, chtěl chování Outlooku) a **«** panel sbalí.
+
+- **Panel bydlí MIMO `#screen-form`, a to je zásadní.** Delegovaní posluchači
+  `input` a `change` na `#screen-form` nastavují `__formDirty` a spouští
+  `autoSave()` — psaní do hledacího pole uvnitř by rozepsanou zprávu
+  značkovalo jako změněnou a nabízelo ji k uložení. Hledání proto má vlastní
+  větev v globálním `input` posluchači (`e.target.id === 'fa-hledat'`).
+- **Přepíná se přes `attemptLeaveForm()`** — dialog Zůstat / Zahodit / Uložit.
+  Nikdy nesmí vzniknout cesta, která rozepsanou zprávu zahodí potichu.
+- **Zůstává se na tomtéž tabu.** `novaZprava()` natvrdo přepíná na
+  `tab-titulni`, takže otevření zprávy tě dřív vždycky vyhodilo na titulku.
+  `formArchivObnovitTab()` krok vrátí — ale **jen když ho cílová zpráva má**:
+  elektro, LPS a stroje mají různé sady tabů, a `tab-popis` u zprávy o stroji
+  neexistuje. Nenajde-li se tlačítko ve `aktivniTabBar()`, zůstane se na
+  titulce; jinak by visela prázdná obrazovka.
+- **Adresuje se přes `uid`, ne přes index do `archivu`** (ten se mění s
+  řazením i filtrem). `data-idx` je jen záloha pro staré záznamy bez `uid` —
+  ty ho dostanou až v `otevritZpravu()`.
+- **Sbalení se pamatuje v `localStorage` (`revize_el_form_archiv`), NE ve
+  `STORE`.** Je to vlastnost konkrétního zařízení: na velkém monitoru panel
+  nevadí, na notebooku zabírá obrazovku. Přenášet tuhle volbu zálohou na
+  druhý počítač by bylo špatně — proto se pravidlo „nový klíč = čtyři místa"
+  neuplatňuje.
+- **Překreslení se veze na `renderArchiv()`** (první řádek funkce, před
+  všemi `return`). Tím se panel sveze s uložením, připnutím, dokončením
+  i smazáním a nemusí se to hlídat na deseti místech.
+- **Pod 1400 px leží panel PŘES obsah**, nad ním obsah odsune
+  (`body.fa-open #screen-form{padding-left:280px}`). Tabulka měření má
+  šestnáct sloupců — ukousnout jí 280 px by ji rozsypalo.
+- Tlačítko i panel jsou **mimo `.tab-panel`**, takže je pravidlo
+  `#screen-form.form-readonly .tab-panel button{display:none}` neschová
+  u dokončené zprávy. Třídu `ro-ok` tedy nepotřebují (test to hlídá).
+- **`archivHay(z)`** — text, ve kterém se fulltextově hledá, je vytažený
+  z `renderArchiv()` do vlastní funkce. Archiv na hlavní straně i panel
+  hledají přes ni, aby se dvě kopie nerozešly.
+- Řazení jako v Outlooku: **🔨 Rozpracované · 📌 Připnuté · 🕘 Naposledy
+  otevřené (5) · pak po rocích revize**, nejnovější nahoře, „bez data" dolů.
+  Řetězy revizí se v panelu **neschovávají** — vnořenou historii má archiv
+  na hlavní straně.
+- U zprávy o stroji se ukáže **název a typ stroje** (`archivMistoBunka`
+  z v9.47), ne jen umístění.
+- Test: `test-form-archiv.js` (30 kontrol — hledání neoznačí zprávu jako
+  změněnou, zachování tabu, spadnutí na titulku u jiného typu, dialog
+  u neuložených změn, panel mimo formulář, sbalení přes restart, zamčená
+  zpráva, překryv na úzkém okně).
 
 ## AI sken štítku psal kabel do špatného sloupce (v9.56)
 
