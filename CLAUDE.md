@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.54 · 2026-09-16**
+**Aktuální verze: v9.55 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,40 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Rychlé zadávání hodnot z papíru (v9.55)
+
+Druhá půlka měřicího listu: v terénu se píše tužkou, doma se to musí dostat
+do programu. Hledat buňky v sedmnáctisloupcové tabulce je otrava, proto
+tlačítko **„⌨️ Rychlé zadávání"** v tabu Měření — projde **jen měřené buňky**
+v tomtéž pořadí jako vytištěný list, velké pole, **Enter** skočí na další,
+**Shift+Enter** zpět, **Esc** konec. U kontrol stroje **klávesy 1/2/3**.
+
+- **Buňky se adresují přes `fillCilovyInput(tr, vizualniSloupec)`, NIKDY přes
+  `querySelectorAll('input')[i]`.** Řádek obvodu má 16 polí, hlavička chrániče
+  15 (Ch./Typ je `<select>`, proto ten posun) a řádky `rcd-mereni` a `info`
+  mají sloučené buňky. `fillCilovyInput` počítá **vizuální** sloupec, u
+  sloučené buňky vrátí `null` a **readonly pole taky přeskočí** — takže se
+  procházka sama vyhne „jinému řádku" i sloupci Fáze. Nic se nemuselo
+  vymýšlet, jen správně použít.
+- **`RZ_JEN_RCD`** — vybavovací proud, časy a dotykové napětí se nabízejí
+  **jen u chrániče**. U běžného jističe se chránič neměří a bez tohohle by to
+  bylo osm stisků na obvod místo čtyř. (Vyšlo najevo až z testu.)
+- Sloupce se dají vypnout stejně jako u listu; předvolba se bere ze
+  `STORE.teren.sloupce`, ať papír a zadávání sedí.
+- Tlačítko **NEMÁ `ro-ok`** — na rozdíl od měřicího listu zapisuje, takže se
+  u dokončené zprávy musí schovat (dělá to CSS pravidlo
+  `#screen-form.form-readonly .tab-panel button {display:none}`). Navíc
+  `rychleZadaniOtevrit()` na začátku kontroluje `window.__formReadOnly`.
+- Zápis jde přes `inp.value` + `dispatchEvent(new Event('input'))`, ať se
+  nastaví `__formDirty` a rozjede autosave; u `<select>` i `change`.
+- Test: `test-rychle-zadani.js` (20 kontrol — kam hodnoty opravdu spadnou
+  u obvodu, u hlavičky chrániče i u podřádku, že „jiný řádek" zůstane
+  nedotčený, Shift+Enter, Esc, zamčená zpráva, klávesy u strojů).
+
+**Past v testu:** číslo řádku u „jiného řádku" vyplňuje `renumberRows`, ne
+zadávání — kontrola „řádek zůstal nedotčený" se proto nesmí dívat na první
+sloupec.
 
 ## Měřicí list do Excelu — vlastní zapisovač .xlsx (v9.54)
 

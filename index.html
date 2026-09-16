@@ -951,7 +951,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.54<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.55<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2609,6 +2609,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div style="display:flex;gap:.75rem;margin-top:1rem;margin-bottom:1rem;flex-wrap:wrap">
     <button class="add-row" data-action="addRozvadec" style="border-color:var(--accent2);color:var(--accent2);font-size:.7rem;padding:.5rem 1.2rem">+ Přidat další rozváděč</button>
     <button class="add-row ro-ok" data-action="terenOtevrit" style="border-color:var(--gold);color:var(--gold);font-size:.7rem;padding:.5rem 1.2rem" title="Vytiskne tabulku se všemi okruhy a prázdnými buňkami — vezmete si ji do terénu">📋 Měřicí list do terénu</button>
+    <button class="add-row" data-action="rychleZadaniOtevrit" style="border-color:var(--gold);color:var(--gold);font-size:.7rem;padding:.5rem 1.2rem" title="Projde jen měřené buňky v pořadí vytištěného listu — Enter skočí na další">⌨️ Rychlé zadávání</button>
     <button class="add-row" id="btn-razeni-rozvadecu" data-action="toggleRazeniRozvadecu" style="font-size:.7rem;padding:.5rem 1.2rem" title="Skryje obvody a umožní změnit pořadí rozváděčů přetažením nebo šipkami">↕ Seřadit rozváděče</button>
   </div>
   <div class="info-box" style="font-size:.76rem">
@@ -2900,6 +2901,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div id="stroje-mereni-hosty"></div>
     <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap">
     <button class="add-row ro-ok" data-action="terenOtevrit" style="border-color:var(--gold);color:var(--gold);font-size:.7rem;padding:.5rem 1.2rem" title="Vytiskne tabulku se všemi okruhy a prázdnými buňkami — vezmete si ji do terénu">📋 Měřicí list do terénu</button>
+    <button class="add-row" data-action="rychleZadaniOtevrit" style="border-color:var(--gold);color:var(--gold);font-size:.7rem;padding:.5rem 1.2rem" title="Projde jen měřené buňky v pořadí vytištěného listu — Enter skočí na další">⌨️ Rychlé zadávání</button>
     </div>
   </div>
 </div>
@@ -2988,6 +2990,27 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div style="display:flex;gap:.5rem;justify-content:flex-end">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="terenZavrit">Zrušit</button>
       <button class="btn btn-gold" data-action="terenVytvorit">📋 Vytvořit list</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RYCHLÉ ZADÁVÁNÍ HODNOT Z PAPÍRU -->
+<div class="modal-overlay" id="modal-rz">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">⌨️ Rychlé zadávání hodnot</div>
+    <div class="info-box" style="margin-bottom:.8rem;font-size:.8rem">Projde <strong>jen měřené buňky</strong> v tomtéž pořadí jako vytištěný list. <strong>Enter</strong> zapíše a skočí dál, <strong>Shift+Enter</strong> zpět, <strong>Esc</strong> konec. Prázdné pole se jen přeskočí.</div>
+    <div class="f" style="margin-bottom:.8rem">
+      <label>Které sloupce procházet</label>
+      <div id="rz-sloupce" style="display:flex;flex-wrap:wrap;gap:.2rem .9rem;padding:.2rem 0"></div>
+      <button class="btn btn-ghost" data-action="rychleZadaniStart" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-size:.72rem;padding:.3rem .7rem;margin-top:.3rem">↻ Použít výběr</button>
+    </div>
+    <div id="rz-telo"></div>
+    <div style="display:flex;gap:.5rem;justify-content:space-between;margin-top:1rem">
+      <button class="btn btn-ghost" data-action="rychleZadaniZpet" style="background:var(--bg);color:var(--text);border:1px solid var(--border)">← Zpět</button>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost" data-action="rychleZadaniZavrit" style="background:var(--bg);color:var(--text);border:1px solid var(--border)">Hotovo</button>
+        <button class="btn btn-gold" data-action="rychleZadaniDal">Další →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -13468,6 +13491,211 @@ async function terenExcel() {
   }
 }
 
+// ── rychlé zadávání hodnot z papíru (v9.55) ───────────────────────────────
+// Druhá půlka měřicího listu: v terénu se zapisuje tužkou, doma se to musí
+// dostat do programu. Hledat buňky v sedmnáctisloupcové tabulce je otrava,
+// tohle projde JEN měřené buňky v tomtéž pořadí jako papír — velké pole,
+// Enter skočí na další.
+var __rz = null;
+// Sloupce, které se měří JEN u proudového chrániče.
+var RZ_JEN_RCD = { vyp: 1, cas: 1, t5idn: 1, ut: 1 };
+
+// Buňky se adresují přes `fillCilovyInput(tr, vizualniSloupec)`, NIKDY přes
+// `querySelectorAll('input')[i]`: řádek obvodu má 16 polí, hlavička chrániče
+// 15 (Ch./Typ je <select>) a řádky `rcd-mereni` a `info` mají sloučené buňky.
+// fillCilovyInput počítá VIZUÁLNÍ sloupec, u sloučené buňky vrátí null
+// a readonly pole (Fáze u chrániče) taky přeskočí — přesně co potřebujeme.
+function rychleZadaniPolozky(sloupce) {
+  var out = [];
+  if (aktTyp === 'stroje') {
+    document.querySelectorAll('#stroje-container [data-stroj-id]').forEach(function(karta) {
+      var id = karta.dataset.strojId;
+      var nazev = (karta.querySelector('.stroj-nazev') || {}).value || 'Stroj';
+      [['mereni', 'Hodnota'], ['kontroly', 'Výsledek']].forEach(function(par) {
+        var blok = document.querySelector('[data-stroj-blok="' + id + '"][data-kind="' + par[0] + '"]');
+        if (!blok) return;
+        blok.querySelectorAll('tbody tr').forEach(function(tr) {
+          if (tr.dataset.rowtype === 'stroj-nadpis') return;
+          var pole = tr.querySelector(par[0] === 'mereni' ? '.stroj-hodnota' : '.stroj-vysledek');
+          if (!pole) return;
+          var text = (tr.querySelector('.stroj-text') || {}).value || '';
+          var jed = (tr.querySelector('.stroj-jednotka') || {}).value || '';
+          out.push({
+            input: pole, kde: nazev, kontext: text,
+            popis: par[1] + (jed ? ' (' + jed + ')' : ''),
+            jeSelect: pole.tagName === 'SELECT',
+            napoveda: pole.placeholder || ''
+          });
+        });
+      });
+    });
+    return out;
+  }
+
+  var kolonky = TEREN_KOLONKY.filter(function(k) {
+    return k.merene && (!sloupce || sloupce[k.klic] !== false);
+  });
+  document.querySelectorAll('#rozvadece-container [data-rozvadec-id]').forEach(function(karta) {
+    var nazev = (karta.querySelector('.rozv-nazev') || {}).value || 'Rozváděč';
+    karta.querySelectorAll('tbody tr').forEach(function(tr) {
+      var cislo = (tr.querySelector('input') || {}).value || '';
+      var obvod = '';
+      var nazevInp = fillCilovyInput(tr, 1);
+      if (nazevInp) obvod = nazevInp.value || '';
+      var jeRcd = (tr.dataset.rowtype === 'rcd-mereni' || tr.dataset.rowtype === 'rcd-header');
+      var polarita = jeRcd ? (tr.querySelectorAll('input[readonly]')[0] || {}).value || '' : '';
+      kolonky.forEach(function(k) {
+        // U BĚŽNÉHO JISTIČE se chránič neměří — nabízet u něj vybavovací
+        // proud, časy a dotykové napětí by byly čtyři zbytečné stisky
+        // na každý obvod. Ty sloupce dávají smysl jen u chrániče.
+        if (RZ_JEN_RCD[k.klic] && !jeRcd) return;
+        var inp = fillCilovyInput(tr, k.i);
+        if (!inp) return;                       // sloučená buňka nebo readonly
+        out.push({
+          input: inp, kde: nazev,
+          kontext: (cislo ? cislo + '. ' : '') + (obvod || (polarita ? 'chránič ' + polarita : '')),
+          popis: k.popis, jeSelect: false, napoveda: inp.placeholder || ''
+        });
+      });
+    });
+  });
+  return out;
+}
+
+function rychleZadaniOtevrit() {
+  if (window.__formReadOnly) { alert('Zpráva je dokončená — hodnoty do ní zapsat nejde.'); return; }
+  var ulozene = (STORE.teren || {}).sloupce || {};
+  var box = document.getElementById('rz-sloupce');
+  if (box) {
+    box.innerHTML = (aktTyp === 'stroje') ? '' : TEREN_SLOUPCE.map(function(sl) {
+      return '<label class="teren-radek" style="white-space:nowrap">' +
+        '<input type="checkbox" class="rz-sl" data-klic="' + sl.klic + '"' +
+        (ulozene[sl.klic] !== false ? ' checked' : '') + '> ' + esc(sl.popis) + '</label>';
+    }).join('');
+    box.parentNode.style.display = (aktTyp === 'stroje') ? 'none' : '';
+  }
+  document.getElementById('modal-rz').classList.add('open');
+  rychleZadaniStart();
+}
+
+function rychleZadaniStart() {
+  var sloupce = null;
+  var chk = document.querySelectorAll('#rz-sloupce .rz-sl');
+  if (chk.length) { sloupce = {}; chk.forEach(function(c) { sloupce[c.dataset.klic] = c.checked; }); }
+  var polozky = rychleZadaniPolozky(sloupce);
+  if (!polozky.length) {
+    document.getElementById('rz-telo').innerHTML =
+      '<div class="warn-box">Není co zadávat — zpráva zatím nemá žádné měřené řádky.</div>';
+    __rz = null;
+    return;
+  }
+  __rz = { polozky: polozky, i: 0 };
+  rychleZadaniVykresli();
+}
+
+function rychleZadaniVykresli() {
+  var telo = document.getElementById('rz-telo');
+  if (!__rz || !telo) return;
+  var p = __rz.polozky[__rz.i];
+  var dalsi = __rz.polozky.slice(__rz.i + 1, __rz.i + 4);
+  var vyplneno = __rz.polozky.filter(function(x) { return String(x.input.value || '').trim(); }).length;
+  telo.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;color:var(--muted);margin-bottom:.5rem">' +
+      '<span>' + esc(p.kde) + (p.kontext ? ' · ' + esc(p.kontext) : '') + '</span>' +
+      '<span>' + (__rz.i + 1) + ' / ' + __rz.polozky.length + ' · vyplněno ' + vyplneno + '</span>' +
+    '</div>' +
+    '<div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:.9rem">' +
+      '<div style="height:3px;background:var(--gold);border-radius:2px;width:' +
+      Math.round((__rz.i / __rz.polozky.length) * 100) + '%"></div></div>' +
+    '<div style="font-size:1.1rem;font-weight:600;margin-bottom:.35rem">' + esc(p.popis) + '</div>' +
+    (p.jeSelect
+      ? '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem">' +
+        STROJE_VYSLEDKY.filter(Boolean).map(function(v, n) {
+          return '<button class="btn btn-ghost rz-volba" data-action="rychleZadaniVolba" data-hodnota="' + esc(v) + '" ' +
+            'style="background:var(--bg);color:var(--text);border:1px solid var(--border)">' +
+            (n + 1) + ' — ' + esc(v) + '</button>';
+        }).join('') + '</div>'
+      : '') +
+    '<input type="text" id="rz-pole" inputmode="decimal" autocomplete="off" ' +
+      'style="width:100%;font-size:1.5rem;padding:.6rem .8rem;text-align:center;font-family:var(--mono);' +
+      'border:2px solid var(--gold);border-radius:3px"' +
+      (p.napoveda ? ' placeholder="' + esc(p.napoveda) + '"' : '') + '>' +
+    (dalsi.length
+      ? '<div style="margin-top:.8rem;font-size:.75rem;color:var(--muted);line-height:1.6">Dál: ' +
+        dalsi.map(function(x) { return esc(x.popis) + (x.kontext ? ' <span style="opacity:.7">(' + esc(x.kontext) + ')</span>' : ''); }).join(' → ') +
+        '</div>'
+      : '<div style="margin-top:.8rem;font-size:.75rem;color:var(--gold)">Poslední hodnota — Enterem zadávání zavřete.</div>');
+  var pole = document.getElementById('rz-pole');
+  pole.value = p.input.value || '';
+  pole.focus();
+  pole.select();
+}
+
+// Zapíše, co je v poli, do skutečné buňky tabulky.
+function rychleZadaniZapis() {
+  if (!__rz) return;
+  var pole = document.getElementById('rz-pole');
+  if (!pole) return;
+  var p = __rz.polozky[__rz.i];
+  if (p.input.value !== pole.value) {
+    p.input.value = pole.value;
+    // `input` událost nastaví __formDirty a rozjede autosave
+    p.input.dispatchEvent(new Event('input', { bubbles: true }));
+    if (p.jeSelect) p.input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+function rychleZadaniPosun(delta) {
+  if (!__rz) return;
+  rychleZadaniZapis();
+  var novy = __rz.i + delta;
+  if (novy < 0) { __rz.i = 0; rychleZadaniVykresli(); return; }
+  if (novy >= __rz.polozky.length) { rychleZadaniZavrit(); return; }
+  __rz.i = novy;
+  rychleZadaniVykresli();
+}
+
+function rychleZadaniVolba(el) {
+  if (!__rz) return;
+  var pole = document.getElementById('rz-pole');
+  if (pole) pole.value = el.dataset.hodnota || '';
+  rychleZadaniPosun(1);
+}
+
+function rychleZadaniZavrit() {
+  if (__rz) rychleZadaniZapis();
+  var m = document.getElementById('modal-rz');
+  if (m) m.classList.remove('open');
+  if (__rz) {
+    var vyplneno = __rz.polozky.filter(function(x) { return String(x.input.value || '').trim(); }).length;
+    showToast('✓ Zadávání hotovo — vyplněno ' + vyplneno + ' z ' + __rz.polozky.length + ' hodnot', { timeout: 6000 });
+  }
+  __rz = null;
+}
+
+// Klávesy: Enter/Tab dál, Shift+… zpět, Esc konec, u kontrol 1/2/3.
+document.addEventListener('keydown', function(e) {
+  var m = document.getElementById('modal-rz');
+  if (!m || !m.classList.contains('open') || !__rz) return;
+  if (e.key === 'Enter' || e.key === 'Tab') {
+    e.preventDefault();
+    rychleZadaniPosun(e.shiftKey ? -1 : 1);
+    return;
+  }
+  if (e.key === 'Escape') { e.preventDefault(); rychleZadaniZavrit(); return; }
+  var p = __rz.polozky[__rz.i];
+  if (p && p.jeSelect && /^[1-9]$/.test(e.key)) {
+    var volby = STROJE_VYSLEDKY.filter(Boolean);
+    var v = volby[parseInt(e.key, 10) - 1];
+    if (v) {
+      e.preventDefault();
+      var pole = document.getElementById('rz-pole');
+      if (pole) pole.value = v;
+      rychleZadaniPosun(1);
+    }
+  }
+}, true);
+
 // ── lišta náhledu ─────────────────────────────────────────────────────────
 function terenNazevSouboru() {
   var ev = (document.getElementById('f_ev_cislo') || {}).value || 'list';
@@ -18888,6 +19116,12 @@ document.addEventListener('click', function(e) {
     case 'terenNahledTisk': terenNahledTisk(); break;
     case 'terenNahledUlozit': terenNahledUlozit(); break;
     case 'terenExcel': terenExcel(); break;
+    case 'rychleZadaniOtevrit': rychleZadaniOtevrit(); break;
+    case 'rychleZadaniStart': rychleZadaniStart(); break;
+    case 'rychleZadaniZavrit': rychleZadaniZavrit(); break;
+    case 'rychleZadaniDal': rychleZadaniPosun(1); break;
+    case 'rychleZadaniZpet': rychleZadaniPosun(-1); break;
+    case 'rychleZadaniVolba': rychleZadaniVolba(el); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;
