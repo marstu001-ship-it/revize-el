@@ -951,7 +951,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.55<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.56<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1050,6 +1050,22 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-09-16">
+    <div class="scard-title">📋 Měřicí list do terénu <span class="nov-datum">16. 9. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Konec vypisování okruhů tužkou na papír. Vepíšete do programu obvody, program vytiskne <strong>tabulku se všemi okruhy a prázdnými buňkami na naměřené hodnoty</strong> — tu si vezmete do terénu a doma hodnoty přepíšete zpátky.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>📋 Měřicí list do terénu</strong> — tlačítko v tabu <strong>Měření</strong>. Vyberete, které rozváděče (u strojů které stroje) jdete měřit, a jestli chcete vyšší řádky, aby se do buněk dalo psát tužkou. Na listu je i místo na datum měření, přístroj a mřížka napětí, kmitočtu, impedance a zkratového proudu pro L1–L3.</li>
+        <li><strong>U strojů</strong> si vyberete jen ty stroje, které jdete měřit. Kontroly mají prázdný čtvereček ☐ k zaškrtnutí.</li>
+        <li><strong>Sloupce si můžete vypnout</strong> — když RCD neměříte, list se zúží a do zbylých buněk se líp píše.</li>
+        <li><strong>Hodnoty z minulé revize slabě šedě</strong> (volitelně) — u zprávy navázané přes 🔗 se dají předtisknout, takže v terénu hned vidíte, jestli se něco zhoršilo.</li>
+        <li><strong>📊 Do Excelu</strong> — místo tisku si list stáhnete jako sešit .xlsx, jeden list na rozváděč. Dá se upravit a vytisknout z Excelu; hlavička se drží při rolování i na každé tištěné straně.</li>
+        <li><strong>⌨️ Rychlé zadávání</strong> — až se vrátíte, tímhle hodnoty přepíšete zpátky. Projde <strong>jen měřené buňky</strong> ve stejném pořadí jako papír: velké pole, <strong>Enter</strong> zapíše a skočí na další, <strong>Shift+Enter</strong> zpět, <strong>Esc</strong> konec. U kontrol stroje stačí <strong>1 / 2 / 3</strong>.</li>
+      </ul>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Nápad kolegy Jiřího Roubalíka.</div>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-09-10">
@@ -9992,19 +10008,29 @@ function pouzitAiPanel() {
 }
 
 // Přidá běžný řádek měření s předvyplněnými hodnotami z AI
+// Zapíše hodnotu do buňky podle VIZUÁLNÍHO sloupce (0–15), ne podle pořadí
+// `<input>` v řádku. Řádek obvodu má 16 polí, hlavička chrániče 15 (Ch./Typ
+// je <select>) — na tom rozdílu se rozbil zápis kabelu z AI skenu.
+function vyplnSloupec(tr, sloupec, hodnota) {
+  if (!hodnota) return;
+  var inp = fillCilovyInput(tr, sloupec);
+  if (inp) inp.value = hodnota;
+}
+
 function addMereniRowFromData(tbody, d) {
   addMereniRowTo(tbody);
   var rows = tbody.querySelectorAll('tr[data-rowtype="obvod"]');
   var tr = rows[rows.length - 1];
   if (!tr) return;
-  var inps = tr.querySelectorAll('input');
-  // Sloupce: Č, Název, Typ-pol, Ch, A, IΔn, Zsm, Riso, Fáze, Vyp, Čas, 5×, Ut, Kabel
-  if (d.cislo && inps[0]) inps[0].value = d.cislo;
-  if (d.nazev && inps[1]) inps[1].value = d.nazev;
-  if (d.typ_pol && inps[2]) inps[2].value = d.typ_pol;
-  if (d.ch && inps[3]) inps[3].value = d.ch;
-  if (d.proud && inps[4]) inps[4].value = d.proud;
-  if (d.kabel && inps[13]) inps[13].value = d.kabel;
+  // Adresovat přes VIZUÁLNÍ sloupec, ne přes pořadí inputů. Do v9.55 se tu
+  // počítalo pořadí a komentář u toho vynechával Isc a Rpe — kabel proto
+  // padal o dva sloupce vedle, do „5×IΔn tvyp. ms".
+  vyplnSloupec(tr, 0, d.cislo);
+  vyplnSloupec(tr, 1, d.nazev);
+  vyplnSloupec(tr, 2, d.typ_pol);
+  vyplnSloupec(tr, 3, d.ch);
+  vyplnSloupec(tr, 4, d.proud);
+  vyplnSloupec(tr, 15, d.kabel);
   if (typeof renumberRows === 'function') renumberRows(tbody);
 }
 
@@ -10022,16 +10048,16 @@ function addRcdRowFromData(tbody, d) {
   var headers = tbody.querySelectorAll('tr[data-rowtype="rcd-header"]');
   var tr = headers[headers.length - 1];
   if (!tr) return;
-  var inps = tr.querySelectorAll('input');
-  if (d.cislo && inps[0]) inps[0].value = d.cislo;
-  if (d.nazev && inps[1]) inps[1].value = d.nazev;
-  if (d.typ_pol && inps[2]) inps[2].value = d.typ_pol;
-  // inps[3] je sklik (Ch type A/AC/B/F) — řešen samostatně přes select
+  // Vizuální sloupce sedí i tady, přestože hlavička chrániče má o jedno
+  // textové pole míň — Ch./Typ je <select>, ten se plní zvlášť.
+  vyplnSloupec(tr, 0, d.cislo);
+  vyplnSloupec(tr, 1, d.nazev);
+  vyplnSloupec(tr, 2, d.typ_pol);
   var sel = tr.querySelector('select');
   if (sel && d.ch && (d.ch === 'A' || d.ch === 'AC' || d.ch === 'B' || d.ch === 'F')) sel.value = d.ch;
-  if (d.proud && inps[3]) inps[3].value = d.proud;
-  if (d.idn && inps[4]) inps[4].value = d.idn;
-  if (d.kabel && inps[12]) inps[12].value = d.kabel;
+  vyplnSloupec(tr, 4, d.proud);
+  vyplnSloupec(tr, 5, d.idn);
+  vyplnSloupec(tr, 15, d.kabel);
   if (typeof renumberRows === 'function') renumberRows(tbody);
 }
 

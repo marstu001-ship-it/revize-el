@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.55 · 2026-09-16**
+**Aktuální verze: v9.56 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,29 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## AI sken štítku psal kabel do špatného sloupce (v9.56)
+
+`addMereniRowFromData()` a `addRcdRowFromData()` počítaly **pořadí `<input>`**
+a komentář u toho **vynechával `Isc` a `Rpe`** — kabel proto padal o dva
+sloupce vedle, do **„5×IΔn tvyp. ms"**. Latentní chyba: AI funkce jsou
+schované přes `.ai-feature` a tlačítka se ukazují jen s API klíčem, takže se
+na to nepřišlo. Našlo se to při průzkumu k měřicímu listu.
+
+- Opraveno **stejně jako v9.55** — přes **vizuální sloupec**
+  (`vyplnSloupec(tr, sloupec, hodnota)` → `fillCilovyInput`), ne přes pořadí
+  polí. Tím je celá třída téhle chyby pryč: řádek obvodu má 16 polí, hlavička
+  chrániče 15 (Ch./Typ je `<select>`).
+- **Číslo řádku přepíše `renumberRows()`** — značka z AI („FA1") se do sloupce
+  Č. neudrží, pokud má rozváděč zapnuté auto-číslování. **Je to správné
+  chování**, ne chyba; test to tak i kontroluje.
+- Test: `test-ai-sken.js` (19 kontrol — kam padne kabel u obvodu i u hlavičky
+  chrániče, že se nic nevlije do měřených sloupců, a karta v Novinkách).
+
+**Karta v Novinkách k měřicímu listu** (v9.56, schváleno uživatelem): dvě
+staré karty k AI funkcím `data-nov-datum` **nemají odjakživa** — datum mají
+jen v titulku a je nejstarší, takže pulsování 📰 neovlivní. Test proto hlídá,
+aby jich nepřibývalo, místo aby vyžadoval nulu.
 
 ## Rychlé zadávání hodnot z papíru (v9.55)
 
