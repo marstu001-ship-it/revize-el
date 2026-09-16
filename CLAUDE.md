@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.57 · 2026-09-16**
+**Aktuální verze: v9.58 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -55,7 +55,7 @@ jste nic neudělali.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
 
-## Postranní archiv ve formuláři — jako seznam pošty (v9.57)
+## Postranní archiv ve formuláři — jako seznam pošty (v9.57, karta v9.58)
 
 **Zadání uživatele (2026-09-16, snímek Outlooku):** „píšu zprávu a překliknu
 si to na druhou zprávu a zároveň ten archiv mohu schovat, komu by vadil na
@@ -102,10 +102,22 @@ nabízel jsem náhled s potvrzením, chtěl chování Outlooku) a **«** panel s
   na hlavní straně.
 - U zprávy o stroji se ukáže **název a typ stroje** (`archivMistoBunka`
   z v9.47), ne jen umístění.
-- Test: `test-form-archiv.js` (30 kontrol — hledání neoznačí zprávu jako
+- Test: `test-form-archiv.js` (35 kontrol — hledání neoznačí zprávu jako
   změněnou, zachování tabu, spadnutí na titulku u jiného typu, dialog
   u neuložených změn, panel mimo formulář, sbalení přes restart, zamčená
-  zpráva, překryv na úzkém okně).
+  zpráva, překryv na úzkém okně, karta v Novinkách).
+
+**Karta v Novinkách** (v9.58, schváleno uživatelem) leží nad kartou
+k měřicímu listu a má **stejné datum 2026-09-16** — na pulsování 📰 to nemá
+vliv, bere se maximum. Dvě věci, na které při psaní testů narazit:
+
+1. **Karty se v testu nesmí hledat podle indexu.** `test-ai-sken.js` čekal
+   měřicí list na `karty[0]` a nová karta ho posunula. Hledá se **podle
+   titulku**.
+2. **Hlouběji v Novinkách (kolem 05–06/2026) mají dvě staré karty datum mimo
+   pořadí.** Je to tak odjakživa a nijak nevadí; kontrola „karty jdou od
+   nejnovější" proto kouká **jen na čelo seznamu**. Rovnat cizí staré karty
+   při přidávání nové do toho nepatří.
 
 ## AI sken štítku psal kabel do špatného sloupce (v9.56)
 
