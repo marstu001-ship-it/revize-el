@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.63 · 2026-09-16**
+**Aktuální verze: v9.64 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -168,7 +168,7 @@ slovník `POJMY` — tabulka **`DRUHY_ZPRAVY`**:
 vymezení předmětu je ve vlastní kapitole. Kontrola se musí dívat na celý
 `#pdf-pages`, ne na `.a4-titulni`.
 
-## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.60)
+## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.64)
 
 **Zadání uživatele (2026-09-16, snímek Outlooku):** „píšu zprávu a překliknu
 si to na druhou zprávu a zároveň ten archiv mohu schovat, komu by vadil na
@@ -209,8 +209,23 @@ nabízel jsem náhled s potvrzením, chtěl chování Outlooku) a **«** panel s
 - **`archivHay(z)`** — text, ve kterém se fulltextově hledá, je vytažený
   z `renderArchiv()` do vlastní funkce. Archiv na hlavní straně i panel
   hledají přes ni, aby se dvě kopie nerozešly.
-- Řazení jako v Outlooku: **🔨 Rozpracované · 📌 Připnuté · 🕘 Naposledy
-  otevřené (5) · pak po rocích revize**, nejnovější nahoře, „bez data" dolů.
+- **Seznam je PLOCHÝ a seřazený podle ev. čísla sestupně — žádné oddíly**
+  (v9.64). Do v9.63 tu byly skupiny „Rozpracované / Připnuté / Naposledy
+  otevřené / po rocích" a **klik na zprávu ji přesunul mezi naposledy
+  otevřené**: zmizela ze svého místa a všechno pod ní poskočilo. Uživatel to
+  odmítl (2026-09-16): „extrémně nepřehledné a nepříjemné… ať jsou seřazené
+  podle čísel a nemění se, člověk si je vyfiltruje přece sám, a poslední
+  otevřené bych z tohoto postranního archivu odebral."
+  - **Rozpracovanou zprávu pozná zlatý proužek a štítek 🔨, připnutou 📌** —
+    informace zůstala, jen se s ní nehýbe. Špendlík se do řádku musel
+    doplnit, když oddíl „Připnuté" zmizel.
+  - **`last_opened_at` se pořád zapisuje** — panel „Naposledy otevřené"
+    na hlavní straně na něm stojí a ten zůstává.
+  - **`cisloPorovnat(a, b)`** řadí „jak by to udělal člověk": číselné úseky
+    porovnává jako čísla, takže `RE-26-9` stojí před `RE-26-10`. Zpráva bez
+    čísla padá nakonec.
+  - **Test hlídá, že se po kliknutí pořadí nezmění** — to je jádro celé
+    stížnosti, ne kosmetika.
   Řetězy revizí se v panelu **neschovávají** — vnořenou historii má archiv
   na hlavní straně.
 - U zprávy o stroji se ukáže **název a typ stroje** (`archivMistoBunka`
@@ -259,7 +274,7 @@ typ zruší. Kombinuje se s hledáním.
 - Prázdný výsledek pojmenuje **obojí** („Nic neodpovídá hledání a filtru
   Stroje."), ať je jasné, co seznam vyprázdnilo.
 
-- Test: `test-form-archiv.js` (62 kontrol — hledání neoznačí zprávu jako
+- Test: `test-form-archiv.js` (69 kontrol — hledání neoznačí zprávu jako
   změněnou, zachování tabu, spadnutí na titulku u jiného typu, dialog
   u neuložených změn, panel mimo formulář, sbalení přes restart, zamčená
   zpráva, překryv na úzkém okně, karta v Novinkách).

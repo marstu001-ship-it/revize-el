@@ -658,10 +658,6 @@ body.fa-tahne iframe{pointer-events:none}
 .fa-typ:hover{color:var(--text);border-color:var(--muted)}
 .fa-typ.fa-typ-on{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:600}
 .fa-seznam{flex:1;overflow:auto;padding-bottom:1.5rem}
-.fa-skupina{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);background:var(--bg);padding:.3rem .7rem;
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:1}
 .fa-radek{padding:.45rem .7rem;border-bottom:1px solid var(--border);cursor:pointer;
   border-left:3px solid transparent;line-height:1.3}
 .fa-radek:hover{background:var(--bg)}
@@ -1015,7 +1011,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.63<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.64<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -16066,6 +16062,9 @@ function formArchivRadek(z, i) {
   // je každý ušetřený řádek znát a ✅ samotné na řádku vypadá ztraceně.
   var vysledek = z.vysledek === 'schopno' ? ' ✅' : (z.vysledek === 'neschopno' ? ' ❌' : '');
   var znacky = '';
+  // Oddíl „Připnuté" v panelu není (v9.64), takže špendlík musí být vidět
+  // u řádku — jinak by se informace ztratila.
+  if (z.pinned) znacky += '<span title="Připnutá zpráva">📌</span> ';
   if (z.stav === 'aktivni') znacky += '<span class="badge-rozprac">🔨 rozprac.</span> ';
   if (zk && !z.nehlidat) {
     znacky += '<span class="badge-konci">' + (zk.proslo
@@ -16144,54 +16143,39 @@ function formArchivRender() {
       '</div>';
     return;
   }
-  var html = '';
-  if (q) {
-    html += '<div class="fa-skupina">Nalezeno ' + vse.length + '</div>';
-    vse.forEach(function(it) { html += formArchivRadek(it.z, it.i); });
-    box.innerHTML = html;
-    return;
+  // JEDEN PLOCHÝ SEZNAM SEŘAZENÝ PODLE ČÍSLA — žádné oddíly.
+  // Do v9.63 tu byly skupiny „Rozpracované / Připnuté / Naposledy otevřené
+  // / po rocích" a **klik na zprávu ji přesunul mezi naposledy otevřené**,
+  // takže zmizela ze svého místa a všechno pod ní poskočilo. Uživatel to
+  // odmítl (2026-09-16): „extrémně nepřehledné… ať jsou seřazené podle
+  // čísel a nemění se, člověk si je vyfiltruje přece sám."
+  // Rozpracovaná zpráva se pozná zlatým proužkem a štítkem 🔨, připnutá
+  // špendlíkem — informace zůstala, jen se s ní nehýbe.
+  vse.sort(function(a, b) { return cisloPorovnat(b.z.ev_cislo, a.z.ev_cislo); });
+  box.innerHTML = vse.map(function(it) { return formArchivRadek(it.z, it.i); }).join('');
+}
+
+// Porovnání evidenčních čísel „jak by to udělal člověk": číselné úseky se
+// porovnávají jako čísla, takže RE-26-9 stojí před RE-26-10 (a ne za ním,
+// jak by vyšlo z prostého porovnání řetězců). Zpráva bez čísla jde nakonec.
+function cisloPorovnat(a, b) {
+  a = String(a || ''); b = String(b || '');
+  if (!a !== !b) return a ? 1 : -1;            // bez čísla vždy dolů
+  var ra = a.match(/\d+|\D+/g) || [], rb = b.match(/\d+|\D+/g) || [];
+  for (var i = 0; i < Math.max(ra.length, rb.length); i++) {
+    var x = ra[i], y = rb[i];
+    if (x === undefined) return -1;
+    if (y === undefined) return 1;
+    var cx = /^\d/.test(x), cy = /^\d/.test(y);
+    if (cx && cy) {
+      var n = parseInt(x, 10) - parseInt(y, 10);
+      if (n) return n < 0 ? -1 : 1;
+    } else {
+      var c = x.localeCompare(y, 'cs');
+      if (c) return c < 0 ? -1 : 1;
+    }
   }
-  // Řetězy revizí se v panelu NESCHOVÁVAJÍ — v seznamu pošty taky vidíte
-  // každou zprávu. Historii objektu vnořenou pod nástupcem má archiv
-  // na hlavní straně.
-  var pouzite = {};
-  function sekce(nadpis, filtr) {
-    var list = vse.filter(function(it) { return !pouzite[it.i] && filtr(it.z); });
-    if (!list.length) return;
-    html += '<div class="fa-skupina">' + nadpis + '</div>';
-    list.forEach(function(it) { pouzite[it.i] = true; html += formArchivRadek(it.z, it.i); });
-  }
-  sekce('🔨 Rozpracované', function(z) { return z.stav === 'aktivni'; });
-  sekce('📌 Připnuté', function(z) { return !!z.pinned; });
-  // Naposledy otevřené se řadí podle času otevření, ne podle pořadí
-  // v archivu — proto zvlášť, ne přes sekce().
-  var recent = vse.filter(function(it) { return !pouzite[it.i] && it.z.last_opened_at; })
-    .sort(function(a, b) {
-      return String(b.z.last_opened_at || '').localeCompare(String(a.z.last_opened_at || ''));
-    }).slice(0, 5);
-  if (recent.length) {
-    html += '<div class="fa-skupina">🕘 Naposledy otevřené</div>';
-    recent.forEach(function(it) { pouzite[it.i] = true; html += formArchivRadek(it.z, it.i); });
-  }
-  // Zbytek po ROCÍCH REVIZE — tak se zpráva hledá („loňská revize té haly"),
-  // ne podle toho, kdy se do programu zapsala.
-  var roky = {}, poradi = [];
-  vse.forEach(function(it) {
-    if (pouzite[it.i]) return;
-    var r = it.z.datum ? String(it.z.datum).slice(0, 4) : 'bez data';
-    if (!roky[r]) { roky[r] = []; poradi.push(r); }
-    roky[r].push(it);
-  });
-  poradi.sort(function(a, b) {
-    if (a === 'bez data') return 1;          // bez data až úplně dolů
-    if (b === 'bez data') return -1;
-    return a < b ? 1 : (a > b ? -1 : 0);     // nejnovější rok nahoře
-  });
-  poradi.forEach(function(r) {
-    html += '<div class="fa-skupina">' + esc(r) + '</div>';
-    roky[r].forEach(function(it) { html += formArchivRadek(it.z, it.i); });
-  });
-  box.innerHTML = html;
+  return 0;
 }
 
 // Přepnutí na jinou zprávu z panelu.
