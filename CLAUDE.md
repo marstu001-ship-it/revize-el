@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.53 · 2026-09-15**
+**Aktuální verze: v9.54 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,64 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Měřicí list do Excelu — vlastní zapisovač .xlsx (v9.54)
+
+Kolega chtěl list i „exportovaný v Excelu pro případné úpravy". **`.xlsx` je
+ZIP s XML uvnitř**, takže na něj stačí `zipVytvor()` z v9.42 — žádná knihovna
+z CDN, funguje to i offline.
+
+- **`zipVytvor(polozky, mime)`** — volitelný druhý parametr. Bez něj Blob dál
+  vychází jako `application/zip` (hlídá `test-zip-kodu.js`).
+- **`[Content_Types].xml` MUSÍ být první položka** v poli — některé starší
+  čtečky soubor jinak odmítnou. `zipVytvor` pořadí zachovává.
+- **Řetězce jdou do buněk jako `inlineStr`** → odpadá `sharedStrings.xml`
+  a celý sešit je jeden průchod bez tabulky řetězců.
+- **Číslo musí do Excelu jít jako ČÍSLO** (`xlsxJeCislo`), jinak u každé buňky
+  svítí zelený roh „číslo uložené jako text" a nejde s ním počítat. Česká
+  desetinná čárka se přepisuje na tečku.
+- **Název listu**: Excel zakazuje `: \ / ? * [ ]`, max 31 znaků a **dva listy
+  téhož jména sešit rozbijí** — dva rozváděče „RD" jsou běžná věc, proto
+  `xlsxNazevListu()` duplicity přečísluje na `RD~2`.
+- **Výplň 0 musí být `none` a výplň 1 `gray125`** — to OOXML vyžaduje, i když
+  je nepoužiješ.
+- **Řídicí znaky se z textu musí vyhodit** (`XLSX_RIDICI`) — v XML 1.0 jsou
+  nepřípustné a Excel by soubor odmítl otevřít.
+- `_xlnm.Print_Titles` = hlavička se opakuje na každé tištěné straně,
+  `<pane state="frozen">` ji drží při rolování, `fitToWidth` ji vejde na šířku.
+- **`TEREN_KOLONKY`** drží sloupce na jednom místě (vizuální index + klíč
+  v datech + šířka + zda je měřený). Test hlídá, že sedí s `TEREN_MERENE`.
+  V Excelu stačí jednořádková hlavička — sloučené „Jmenovité hodnoty jištění"
+  by v tabulce, kde se filtruje a řadí, jen překážely.
+- **`ulozitSoubor` — nový typ souboru = NOVÝ ŘÁDEK v `TYPY_SOUBORU`.** Dřív to
+  byl ternár, který znal jen JSON a ZIP a **všechno ostatní nabídl jako
+  `.pdf`** — Chrome by u sešitu navrhl `mericilist.pdf`.
+- Test: `test-xlsx.js` (28 kontrol — soubor se **otevírá přes openpyxl**,
+  ne jen rozbaluje: názvy listů, zmrazený panel, šířky, prázdné měřené buňky,
+  čísla jako čísla).
+
+**LibreOffice jako druhá čtečka nefunguje** — v kontejneru neotevře ani
+referenční soubor vyrobený openpyxl (chybí Java a filtr pro xlsx). Test si to
+proto **nejdřív ověří na referenčním souboru** a když LibreOffice selže i tam,
+kontrolu přeskočí. Bez té kalibrace by test hlásil vadu našeho sešitu, i když
+je v pořádku.
+
+### Název souboru s háčky prohlížeč ZAHODÍ (opraveno u příležitosti v9.54)
+
+Ověřeno v Chromiu 2026-09-16: u odkazu `<a download="Zpráva.pdf">` prohlížeč
+**název zahodí celý** a soubor uloží jako `download` — **bez přípony**, takže
+ho pak nic neotevře. Týká se to `Plán_revizí….pdf`, `RZ_…_Rodinný_dům_….pdf`
+i JSON zprávy — všeho, co má v názvu diakritiku.
+
+- **Projeví se to jen na náhradní cestě** `stahnoutSoubor()` — tedy na
+  **telefonu, ve Firefoxu a v Safari**. Systémový dialog „Uložit jako"
+  (`showSaveFilePicker`, Chrome/Edge na PC) diakritiku zvládne, tam se hezký
+  název nechává.
+- Opraveno v `stahnoutSoubor()` přes **`bezpecnyNazevSouboru()`** — jedno
+  místo, kterým procházejí všechna stažení. Odháčkuje přes
+  `normalize('NFD')` a odstranění diakritických znamének.
+- **Nové názvy souborů proto nemusí řešit diakritiku** — ale ani se na to
+  nesmí spoléhat u `showSaveFilePicker`, ten dostává původní název.
 
 ## Měřicí list do terénu (v9.53)
 

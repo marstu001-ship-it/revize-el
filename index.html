@@ -951,7 +951,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.53<span class="ver-date"> · 2026-09-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.54<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2958,6 +2958,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="pbtn" data-action="terenOtevrit" style="background:#8a6d1f;border-color:#8a6d1f" title="Vrátit se k výběru, co má být na listu">⚙️ Změnit výběr</button>
       <button class="pbtn" data-action="terenNahledTisk" style="background:#b5291c;border-color:#b5291c" title="Vytiskne rovnou ve vyšší kvalitě, nic se do počítače neukládá">🖨️ Tisk přímo</button>
       <button class="pbtn" data-action="terenNahledUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
+      <button class="pbtn" data-action="terenExcel" style="background:#1d6f42;border-color:#1d6f42" title="Sešit s prázdnými buňkami — jeden list na rozváděč, dá se upravit a vytisknout z Excelu">📊 Do Excelu</button>
     </div>
   </div>
   <div class="pdf-pages" id="teren-pdf-pages"></div>
@@ -12107,6 +12108,15 @@ var __ulozitSouborLock = 0;
 // opts.primoStazeni = true → přeskočí výběr složky i sdílení a soubor
 // rovnou stáhne. Používá se u hotového e-mailu (.eml), který uživatel
 // otevře jedním klikem přímo z lišty stahování.
+var TYPY_SOUBORU = {
+  'application/zip':  { popis: 'ZIP archiv',  pripona: '.zip',  mime: 'application/zip' },
+  'application/json': { popis: 'JSON soubor', pripona: '.json', mime: 'application/json' },
+  'application/pdf':  { popis: 'PDF soubor',  pripona: '.pdf',  mime: 'application/pdf' },
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    { popis: 'Excel (xlsx)', pripona: '.xlsx',
+      mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+};
+
 async function ulozitSoubor(blob, filename, opts) {
   opts = opts || {};
   // Pojistka proti dvojímu stažení (Safari umí click/share zduplikovat)
@@ -12117,15 +12127,15 @@ async function ulozitSoubor(blob, filename, opts) {
   if (!opts.primoStazeni && 'showSaveFilePicker' in window) {
     var souborVybran = false;
     try {
-      var isJson = blob.type === 'application/json';
-      var isZip = blob.type === 'application/zip';
+      // Typ v dialogu „Uložit jako" se řídí MIME blobu. Co tu není, spadne
+      // do PDF — proto NOVÝ TYP SOUBORU = NOVÝ ŘÁDEK ZDE, jinak prohlížeč
+      // nabídne .pdf (na tom by se rozbil export měřicího listu do Excelu).
+      var t = TYPY_SOUBORU[blob.type] || TYPY_SOUBORU['application/pdf'];
+      var accept = {};
+      accept[t.mime] = [t.pripona];
       var handle = await window.showSaveFilePicker({
         suggestedName: filename,
-        types: [isZip
-          ? { description: 'ZIP archiv',  accept: { 'application/zip':  ['.zip']  } }
-          : isJson
-          ? { description: 'JSON soubor', accept: { 'application/json': ['.json'] } }
-          : { description: 'PDF soubor',  accept: { 'application/pdf':  ['.pdf']  } }]
+        types: [{ description: t.popis, accept: accept }]
       });
       souborVybran = true;
       var writable = await handle.createWritable();
@@ -12174,11 +12184,24 @@ async function ulozitSoubor(blob, filename, opts) {
 }
 
 // Klasické stažení do složky Stažené soubory.
+// Prohlížeč u odkazu `download` NÁZEV S HÁČKY ZAHODÍ CELÝ a soubor uloží
+// jako „download" — bez přípony, takže ho pak nic neotevře. Ověřeno
+// v Chromiu 2026-09-16: „Zpráva.pdf" i „Plán_revizí.pdf" skončí jako
+// „download". Týká se to jen téhle náhradní cesty (telefon, Firefox,
+// Safari); systémový dialog „Uložit jako" diakritiku zvládne, tam se
+// hezký název nechává.
+function bezpecnyNazevSouboru(n) {
+  return String(n || 'soubor')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // á→a, ř→r, ů→u …
+    .replace(/[^\w.\- ]+/g, '_').replace(/\s+/g, '_')
+    .replace(/_+/g, '_').replace(/^_|_$/g, '') || 'soubor';
+}
+
 function stahnoutSoubor(blob, filename) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = filename;
+  a.download = bezpecnyNazevSouboru(filename);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -13062,6 +13085,7 @@ function terenVytvorit() {
   // Volby (ne výběr rozváděčů) si program pamatuje do příště.
   STORE.teren = { sloupce: sloupce, vyssi: v.vyssi, poznamka: v.poznamka, minule: v.minule };
   saveStore();
+  window.__terenVyber = v;   // Excel exportuje tentýž výběr
   terenZavrit();
   terenVykreslit(getData(), v);
 }
@@ -13291,10 +13315,163 @@ function terenStrojTabulka(polozky, kind, pad, v) {
   return t;
 }
 
+// ── export měřicího listu do Excelu (v9.54) ───────────────────────────────
+// Sloupce na JEDNOM místě. `i` je vizuální index, na který se odkazuje
+// `renderTiskRows` (viz `o.skryte`), `klic` je klíč v datech řádku.
+// V Excelu stačí JEDNOŘÁDKOVÁ hlavička — sloučené „Jmenovité hodnoty
+// jištění" by v tabulce, kde se filtruje a řadí, jen překážely.
+var TEREN_KOLONKY = [
+  { i: 0,  klic: 'c',     popis: 'Č.',                sirka: 5  },
+  { i: 1,  klic: 'n',     popis: 'Název obvodu',      sirka: 30 },
+  { i: 2,  klic: 'typ',   popis: 'Značka',            sirka: 12 },
+  { i: 3,  klic: 'ch',    popis: 'Ch./Typ',           sirka: 8  },
+  { i: 4,  klic: 'a',     popis: 'A',                 sirka: 7  },
+  { i: 5,  klic: 'idn',   popis: 'IΔn',               sirka: 7  },
+  { i: 6,  klic: 'isc',   popis: 'Isc (kA)',          sirka: 8,  merene: true },
+  { i: 7,  klic: 'zsm',   popis: 'Zsm max (Ω)',       sirka: 10, merene: true },
+  { i: 8,  klic: 'riso',  popis: 'Riso (MΩ)',         sirka: 9,  merene: true },
+  { i: 9,  klic: 'rpe',   popis: 'Rpe (Ω)',           sirka: 8,  merene: true },
+  { i: 10, klic: 'faze',  popis: 'Fáze',              sirka: 7  },
+  { i: 11, klic: 'vyp',   popis: 'Vyp. (mA)',         sirka: 9,  merene: true },
+  { i: 12, klic: 'cas',   popis: 'čas (ms)',          sirka: 9,  merene: true },
+  { i: 13, klic: 't5idn', popis: '5×IΔn tvyp. (ms)',  sirka: 12, merene: true },
+  { i: 14, klic: 'ut',    popis: 'Ut (V)',            sirka: 8,  merene: true },
+  { i: 15, klic: 'kabel', popis: 'Kabel typ, průřez', sirka: 22 }
+];
+
+// Sešit pro elektro i pro stroje. Vrací pole listů pro `xlsxVytvor`.
+function terenExcelListy(D, v) {
+  var meta = [
+    ['Místo:', D.misto || ''],
+    ['Ev. číslo:', D.ev_cislo || ''],
+    ['Technik:', D.rt_jmeno || ''],
+    ['Měřeno dne:', ''],
+    ['Přístroj:', '']
+  ];
+  var listy = [];
+
+  if (aktTyp === 'stroje') {
+    var stroje = (D.stroje && D.stroje.seznam) || [];
+    v.vybrane.forEach(function(idx) {
+      var st = stroje[idx];
+      if (!st) return;
+      var radky = meta.map(function(m) { return m.slice(); });
+      radky.push(['Stroj:', st.nazev || ('Stroj ' + (idx + 1)), st.typ || '', st.umisteni || '']);
+      radky.push([]);
+      var hlavicky = [];
+      if (v.mereni) {
+        hlavicky.push(radky.length + 1);
+        radky.push(['Měření — položka', 'Hodnota', 'Jednotka', 'Poznámka']);
+        (st.mereni || []).forEach(function(p) {
+          if (p.rowtype === 'stroj-nadpis') { radky.push([p.text || '', '', '', '']); return; }
+          radky.push([p.text || '', '', p.jednotka || '', '']);
+        });
+      }
+      if (v.kontroly) {
+        radky.push([]);
+        hlavicky.push(radky.length + 1);
+        radky.push(['Kontrola — položka', 'Provedeno', 'Výsledek', 'Poznámka']);
+        (st.kontroly || []).forEach(function(p) {
+          if (p.rowtype === 'stroj-nadpis') { radky.push([p.text || '', '', '', '']); return; }
+          radky.push([p.text || '', '', '', '']);
+        });
+      }
+      listy.push({
+        nazev: st.nazev || ('Stroj ' + (idx + 1)),
+        radky: radky,
+        sirky: [52, 14, 12, 26],
+        hlavicky: hlavicky.length ? hlavicky : [meta.length + 3],
+        zamrazitPo: hlavicky.length ? hlavicky[0] : 0
+      });
+    });
+    return listy;
+  }
+
+  var skryte = {};
+  terenSkryteSloupce(v).forEach(function(i) { skryte[i] = true; });
+  var kolonky = TEREN_KOLONKY.filter(function(k) { return !skryte[k.i]; });
+  var predD = v.minule ? terenPredchozi() : null;
+  var rozvs = D.rozvadece || [];
+
+  v.vybrane.forEach(function(idx) {
+    var rozv = rozvs[idx];
+    if (!rozv) return;
+    var radky = meta.map(function(m) { return m.slice(); });
+    radky.push(['Rozváděč:', rozv.nazev || '', rozv.umisteni || '']);
+    if (rozv.privod) radky.push(['Přívod:', rozv.privod]);
+    if (rozv.hlavniJistic) radky.push(['Hlavní jistič:', rozv.hlavniJistic]);
+    radky.push([]);
+    // Svorky rozváděče — taky naměřené hodnoty, proto prázdné
+    radky.push(['Na svorkách:', 'L-PEN (V)', 'f (Hz)', 'Z (Ω)', 'I_k (kA)']);
+    ['L1', 'L2', 'L3'].forEach(function(f) { radky.push([f, '', '', '', '']); });
+    radky.push([]);
+
+    var hlavickaRadek = radky.length + 1;
+    radky.push(kolonky.map(function(k) { return k.popis; }).concat(v.poznamka ? ['Poznámka'] : []));
+
+    var minule = predD ? terenMinuleProRozvadec(rozv, predD) : null;
+    (rozv.mereni || []).forEach(function(m, ri) {
+      var r;
+      if (m.rowtype === 'info') {
+        // „Jiný řádek" nemá sloupce — popis do názvu obvodu, hodnota na konec
+        r = kolonky.map(function(k) {
+          if (k.klic === 'c') return m.c || '';
+          if (k.klic === 'n') return m.popis || '';
+          if (k.klic === 'kabel') return m.hodnota || '';
+          return '';
+        });
+      } else {
+        r = kolonky.map(function(k) {
+          if (!k.merene) return m[k.klic] || '';
+          var min = minule && minule[ri] && minule[ri][k.klic];
+          return min ? '(' + min + ')' : '';   // minulá hodnota v závorce
+        });
+      }
+      if (v.poznamka) r.push('');
+      radky.push(r);
+    });
+
+    listy.push({
+      nazev: rozv.nazev || ('Rozváděč ' + (idx + 1)),
+      radky: radky,
+      sirky: kolonky.map(function(k) { return k.sirka; }).concat(v.poznamka ? [26] : []),
+      hlavicky: [hlavickaRadek],
+      zamrazitPo: hlavickaRadek
+    });
+  });
+  return listy;
+}
+
+function terenNazevXlsx() {
+  var ev = (document.getElementById('f_ev_cislo') || {}).value || 'list';
+  return 'Měřicí_list_' + String(ev).replace(/[^\w\-]+/g, '_') + '.xlsx';
+}
+
+async function terenExcel() {
+  var v = window.__terenVyber;
+  if (!v) { alert('Nejdřív vyberte, co má být na listu.'); return; }
+  var btn = document.querySelector('[data-action="terenExcel"]');
+  var puvodni = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Skládám…'; }
+  try {
+    var listy = terenExcelListy(getData(), v);
+    if (!listy.length) { alert('Není co exportovat.'); return; }
+    var blob = await xlsxVytvor(listy);
+    var ulozeno = await ulozitSoubor(blob, terenNazevXlsx());
+    if (ulozeno === false) return;
+    showToast('✓ Měřicí list uložen do Excelu — ' + listy.length +
+      (listy.length === 1 ? ' list' : (listy.length < 5 ? ' listy' : ' listů')), { timeout: 7000 });
+  } catch (e) {
+    alert('Export do Excelu se nezdařil: ' + ((e && e.message) || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = puvodni; }
+  }
+}
+
 // ── lišta náhledu ─────────────────────────────────────────────────────────
 function terenNazevSouboru() {
   var ev = (document.getElementById('f_ev_cislo') || {}).value || 'list';
-  return 'Mericí_list_' + String(ev).replace(/[^\w\-]+/g, '_') + '.pdf';
+  return 'Měřicí_list_' + String(ev).replace(/[^\w\-]+/g, '_') + '.pdf';
 }
 function terenStranky() {
   return Array.prototype.slice.call(document.querySelectorAll('#teren-pdf-pages .a4'));
@@ -14383,7 +14560,9 @@ async function zipKomprimuj(data) {
 
 // polozky = [{ nazev, data: Uint8Array }] → Blob se ZIPem.
 // Všechno je pod 4 GB, takže žádné ZIP64.
-async function zipVytvor(polozky) {
+// `mime` je volitelný: bez něj Blob dál vychází jako application/zip,
+// s ním se dá týmž zapisovačem vyrobit i .xlsx (je to taky ZIP).
+async function zipVytvor(polozky, mime) {
   var casti = [], central = [], offset = 0;
   var d = new Date();
   var dosCas = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF;
@@ -14438,7 +14617,174 @@ async function zipVytvor(polozky) {
   konec.setUint32(12, cdVelikost, true);
   konec.setUint32(16, offset, true);
   return new Blob(casti.concat(central, [new Uint8Array(konec.buffer)]),
-                  { type: 'application/zip' });
+                  { type: mime || 'application/zip' });
+}
+
+// ═══ ZÁPIS .xlsx VLASTNÍM KÓDEM (v9.54) ══════════════════════════════════
+// .xlsx je ZIP s XML uvnitř, takže na něj stačí `zipVytvor()` z v9.42 —
+// žádná knihovna z CDN. Skládá se minimální OOXML: řetězce jdou do buněk
+// jako `inlineStr`, takže odpadá sharedStrings.xml.
+
+// Řídicí znaky jsou v XML 1.0 nepřípustné a Excel by soubor odmítl otevřít.
+var XLSX_RIDICI = new RegExp('[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]', 'g');
+
+function xmlEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(XLSX_RIDICI, '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// A, B, … Z, AA, AB …
+function xlsxSloupec(i) {
+  var s = '';
+  i = i + 1;
+  while (i > 0) { var z = (i - 1) % 26; s = String.fromCharCode(65 + z) + s; i = Math.floor((i - z) / 26); }
+  return s;
+}
+
+// Název listu: Excel zakazuje : \ / ? * [ ], nesnese víc než 31 znaků
+// a DVA LISTY STEJNÉHO JMÉNA sešit rozbijí (dva rozváděče „RD" se stane).
+function xlsxNazevListu(nazev, pouzite) {
+  var n = String(nazev || 'List').replace(/[:\\\/?*\[\]]/g, '-').trim().slice(0, 31) || 'List';
+  if (!pouzite[n.toLowerCase()]) { pouzite[n.toLowerCase()] = true; return n; }
+  for (var i = 2; i < 100; i++) {
+    var k = n.slice(0, 28) + '~' + i;
+    if (!pouzite[k.toLowerCase()]) { pouzite[k.toLowerCase()] = true; return k; }
+  }
+  return n.slice(0, 28) + '~x';
+}
+
+// Číslo se má do Excelu dostat jako ČÍSLO, ne text — jinak u každé buňky
+// svítí zelený roh „číslo uložené jako text" a nejde s ním počítat.
+// Česká desetinná čárka se musí přepsat na tečku.
+function xlsxJeCislo(v) {
+  return typeof v === 'number' || /^-?\d+(?:[.,]\d+)?$/.test(String(v).trim());
+}
+
+function xlsxBunka(adresa, hodnota, styl) {
+  var v = (hodnota == null) ? '' : hodnota;
+  if (v === '') return '<c r="' + adresa + '" s="' + styl + '"/>';
+  if (xlsxJeCislo(v)) {
+    return '<c r="' + adresa + '" s="' + styl + '"><v>' + String(v).trim().replace(',', '.') + '</v></c>';
+  }
+  return '<c r="' + adresa + '" s="' + styl + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(v) + '</t></is></c>';
+}
+
+// listy: [{ nazev, radky: [[…]], sirky: [n], hlavicky: [1-based], zamrazitPo }]
+async function xlsxVytvor(listy) {
+  var pouzite = {};
+  var nazvy = listy.map(function(l) { return xlsxNazevListu(l.nazev, pouzite); });
+
+  var listyXml = listy.map(function(l) {
+    var hlavicky = {};
+    (l.hlavicky || [1]).forEach(function(r) { hlavicky[r] = true; });
+    var sirky = l.sirky || [];
+    var sloupcu = l.radky.reduce(function(m, r) { return Math.max(m, r.length); }, 1);
+    var cols = sirky.length
+      ? '<cols>' + sirky.map(function(w, i) {
+          return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>';
+        }).join('') + '</cols>'
+      : '';
+    var prvniHlavicka = (l.hlavicky || [1])[0];
+    var radky = l.radky.map(function(r, ri) {
+      var cislo = ri + 1;
+      var jeHl = !!hlavicky[cislo];
+      // Nad hlavičkou je jen popis zprávy — ten bez rámečků.
+      var styl = jeHl ? 2 : (cislo > prvniHlavicka ? 1 : 0);
+      var bunky = r.map(function(h, ci) { return xlsxBunka(xlsxSloupec(ci) + cislo, h, styl); }).join('');
+      return '<row r="' + cislo + '"' + (jeHl ? ' ht="30" customHeight="1"' : '') + '>' + bunky + '</row>';
+    }).join('');
+    var zamrazit = l.zamrazitPo
+      ? '<pane ySplit="' + l.zamrazitPo + '" topLeftCell="A' + (l.zamrazitPo + 1) +
+        '" activePane="bottomLeft" state="frozen"/>'
+      : '';
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' +
+      '<dimension ref="A1:' + xlsxSloupec(sloupcu - 1) + Math.max(1, l.radky.length) + '"/>' +
+      '<sheetViews><sheetView workbookViewId="0">' + zamrazit + '</sheetView></sheetViews>' +
+      '<sheetFormatPr defaultRowHeight="14.5"/>' + cols +
+      '<sheetData>' + radky + '</sheetData>' +
+      '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>' +
+      '<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>' +
+      '</worksheet>';
+  });
+
+  // Hlavička se opakuje na každé tištěné straně
+  var defNames = listy.map(function(l, li) {
+    var r = (l.hlavicky || [1])[0];
+    return '<definedName name="_xlnm.Print_Titles" localSheetId="' + li + '">' +
+      "'" + nazvy[li].replace(/'/g, "''") + "'!$" + r + ':$' + r + '</definedName>';
+  }).join('');
+
+  var workbook = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<sheets>' + nazvy.map(function(n, i) {
+      return '<sheet name="' + xmlEsc(n) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>';
+    }).join('') + '</sheets>' +
+    (defNames ? '<definedNames>' + defNames + '</definedNames>' : '') +
+    '</workbook>';
+
+  var wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    nazvy.map(function(n, i) {
+      return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>';
+    }).join('') +
+    '<Relationship Id="rId' + (nazvy.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+    '</Relationships>';
+
+  // Výplň 0 musí být `none` a výplň 1 `gray125` — to OOXML vyžaduje.
+  var ram = '<border><left style="thin"><color rgb="FF999999"/></left><right style="thin"><color rgb="FF999999"/></right>' +
+            '<top style="thin"><color rgb="FF999999"/></top><bottom style="thin"><color rgb="FF999999"/></bottom><diagonal/></border>';
+  var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<fonts count="2"><font><sz val="10"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="10"/><name val="Calibri"/></font></fonts>' +
+    '<fills count="3"><fill><patternFill patternType="none"/></fill>' +
+    '<fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFE8E8E8"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' + ram + '</borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="3">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">' +
+    '<alignment vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+    '<alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '</cellXfs></styleSheet>';
+
+  var contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+    nazvy.map(function(n, i) {
+      return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+    }).join('') +
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+    '</Types>';
+
+  var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+    '</Relationships>';
+
+  var enc = new TextEncoder();
+  // [Content_Types].xml MUSÍ být první položka — některé starší čtečky
+  // jinak soubor odmítnou. zipVytvor pořadí zachovává.
+  var polozky = [
+    { nazev: '[Content_Types].xml', data: enc.encode(contentTypes) },
+    { nazev: '_rels/.rels', data: enc.encode(rels) },
+    { nazev: 'xl/workbook.xml', data: enc.encode(workbook) },
+    { nazev: 'xl/_rels/workbook.xml.rels', data: enc.encode(wbRels) },
+    { nazev: 'xl/styles.xml', data: enc.encode(styles) }
+  ];
+  listyXml.forEach(function(x, i) {
+    polozky.push({ nazev: 'xl/worksheets/sheet' + (i + 1) + '.xml', data: enc.encode(x) });
+  });
+  return zipVytvor(polozky, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
 // Stažení jednoho souboru. ČASOVÝ LIMIT JE NUTNÝ: nedostupná síť (firemní
@@ -18541,6 +18887,7 @@ document.addEventListener('click', function(e) {
     case 'terenNahledZpet': terenNahledZpet(); break;
     case 'terenNahledTisk': terenNahledTisk(); break;
     case 'terenNahledUlozit': terenNahledUlozit(); break;
+    case 'terenExcel': terenExcel(); break;
     case 'addZavada': addZavada(); break;
     case 'potvrditRevize': potvrditRevize(); break;
     case 'closeRevize': closeModal('modal-revize'); break;
