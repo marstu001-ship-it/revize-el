@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.58 · 2026-09-16**
+**Aktuální verze: v9.59 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -55,7 +55,7 @@ jste nic neudělali.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
 
-## Postranní archiv ve formuláři — jako seznam pošty (v9.57, karta v9.58)
+## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.59)
 
 **Zadání uživatele (2026-09-16, snímek Outlooku):** „píšu zprávu a překliknu
 si to na druhou zprávu a zároveň ten archiv mohu schovat, komu by vadil na
@@ -102,7 +102,29 @@ nabízel jsem náhled s potvrzením, chtěl chování Outlooku) a **«** panel s
   na hlavní straně.
 - U zprávy o stroji se ukáže **název a typ stroje** (`archivMistoBunka`
   z v9.47), ne jen umístění.
-- Test: `test-form-archiv.js` (35 kontrol — hledání neoznačí zprávu jako
+### Filtr typu v panelu (v9.59)
+
+Pokyn uživatele: „když mám otevřenou kartu stroje, potřeboval bych filtr,
+abych si ukázal jen ty stroje." Řádek tlačítek pod hledáním —
+**Vše 7 · Elektro 4 · LPS 2 · Stroje 1**, jeden klik zúží, druhý klik na týž
+typ zruší. Kombinuje se s hledáním.
+
+- **Pořadí tlačítek se bere z `TYPY_ZPRAV`, NE z pořadí v archivu** — jinak
+  by se přeskládala, kdykoli přibude zpráva jiného typu, a člověk by musel
+  pokaždé hledat, kde je které. Test to hlídá **fixturou, kde je stroj
+  v archivu první** — se seřazeným archivem by kontrola prošla i u vadného
+  kódu.
+- **Počty se počítají z CELÉHO archivu, ne z vyfiltrovaného seznamu.** Jinak
+  by kliknutím na Stroje ostatní volby zmizely a nebylo by se jak vrátit.
+- **Je-li v archivu jediný typ, řádek se vůbec nekreslí** — v úzkém sloupci
+  nemá smysl nabízet volbu, která nic nedělá.
+- **Filtr se drží jen v paměti (`__faTyp`), NE v localStorage.** Zúžení „jen
+  stroje" dává smysl, dokud se na strojích pracuje; uložené natrvalo by po
+  týdnu vypadalo, jako by v archivu zprávy chyběly.
+- Prázdný výsledek pojmenuje **obojí** („Nic neodpovídá hledání a filtru
+  Stroje."), ať je jasné, co seznam vyprázdnilo.
+
+- Test: `test-form-archiv.js` (45 kontrol — hledání neoznačí zprávu jako
   změněnou, zachování tabu, spadnutí na titulku u jiného typu, dialog
   u neuložených změn, panel mimo formulář, sbalení přes restart, zamčená
   zpráva, překryv na úzkém okně, karta v Novinkách).

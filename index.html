@@ -638,6 +638,14 @@ body.fa-open #screen-form{padding-left:280px}
 .fa-x:hover{color:var(--text);border-color:var(--muted)}
 .fa-hledat{margin:.5rem .7rem;padding:.35rem .5rem;font-size:.78rem;font-family:var(--sans);
   border:1px solid var(--border-dark);border-radius:3px;background:var(--bg);color:var(--text)}
+/* Filtr typu — jeden klik, ať se v panelu dá zúžit seznam třeba jen
+   na stroje. Ukazují se jen typy, které v archivu opravdu jsou. */
+.fa-typy{display:flex;flex-wrap:wrap;gap:.25rem;padding:0 .7rem .5rem}
+.fa-typ{background:var(--bg);border:1px solid var(--border-dark);color:var(--muted);
+  font-family:var(--mono);font-size:.6rem;letter-spacing:.04em;text-transform:uppercase;
+  padding:.2rem .45rem;border-radius:3px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fa-typ:hover{color:var(--text);border-color:var(--muted)}
+.fa-typ.fa-typ-on{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:600}
 .fa-seznam{flex:1;overflow:auto;padding-bottom:1.5rem}
 .fa-skupina{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
   color:var(--muted);background:var(--bg);padding:.3rem .7rem;
@@ -996,7 +1004,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.58<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.59<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1024,6 +1032,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   </div>
   <input type="text" id="fa-hledat" class="fa-hledat" autocomplete="off"
          placeholder="🔍 Hledat (ev. číslo, místo…)">
+  <div class="fa-typy" id="fa-typy"></div>
   <div class="fa-seznam" id="fa-seznam"></div>
 </aside>
 
@@ -15666,16 +15675,64 @@ function formArchivRadek(z, i) {
     '</div>';
 }
 
+// Filtr typu (v9.59). Drží se jen v paměti, ne v localStorage: zúžení
+// „jen stroje" dává smysl, dokud se na strojích pracuje. Uložené natrvalo
+// by po týdnu vypadalo, jako by v archivu zprávy chyběly.
+var __faTyp = '';
+
+function formArchivTyp(typ) {
+  __faTyp = (typ === __faTyp) ? '' : (typ || '');
+  formArchivRender();
+}
+
+// Ukazují se JEN typy, které v archivu opravdu jsou — v úzkém sloupci nemá
+// smysl nabízet „LPS (0)". Proto se počítá vždy z celého archivu, ne
+// z vyfiltrovaného seznamu: jinak by kliknutím na Stroje ostatní volby
+// zmizely a nebylo by se jak vrátit.
+function formArchivTypy(celkem) {
+  var box = document.getElementById('fa-typy');
+  if (!box) return;
+  var pocty = {};
+  archiv.forEach(function(z) {
+    if (!z.data) return;
+    var t = TYPY_ZPRAV[z.typ] ? z.typ : 'elektro';
+    pocty[t] = (pocty[t] || 0) + 1;
+  });
+  // Pořadí tlačítek se bere z TYPY_ZPRAV, NE z pořadí v archivu — jinak by
+  // se přeskládala, kdykoli přibude zpráva jiného typu, a člověk by musel
+  // pokaždé hledat, kde je které.
+  var poradi = Object.keys(TYPY_ZPRAV).filter(function(t) { return pocty[t]; });
+  if (poradi.length < 2) { box.innerHTML = ''; return; }   // jeden typ = není co filtrovat
+  box.innerHTML =
+    '<button class="fa-typ' + (__faTyp ? '' : ' fa-typ-on') + '" data-action="formArchivTyp" data-typ="">' +
+      'Vše ' + celkem + '</button>' +
+    poradi.map(function(t) {
+      return '<button class="fa-typ' + (__faTyp === t ? ' fa-typ-on' : '') + '" ' +
+        'data-action="formArchivTyp" data-typ="' + t + '" ' +
+        'title="Ukázat jen zprávy typu ' + esc(typInfo(t).label) + '">' +
+        esc(typInfo(t).label) + ' ' + pocty[t] + '</button>';
+    }).join('');
+}
+
 function formArchivRender() {
   var box = document.getElementById('fa-seznam');
   if (!box) return;
   var q = ((document.getElementById('fa-hledat') || {}).value || '').trim().toLowerCase();
   var vse = [];
   archiv.forEach(function(z, i) { if (z.data) vse.push({ z: z, i: i }); });
+  formArchivTypy(vse.length);
+  if (__faTyp) {
+    vse = vse.filter(function(it) {
+      return (TYPY_ZPRAV[it.z.typ] ? it.z.typ : 'elektro') === __faTyp;
+    });
+  }
   if (q) vse = vse.filter(function(it) { return archivHay(it.z).indexOf(q) !== -1; });
   if (!vse.length) {
     box.innerHTML = '<div class="fa-prazdno">' +
-      (q ? 'Nic neodpovídá hledání.' : 'Archiv je zatím prázdný — uložené zprávy se objeví tady.') +
+      (q || __faTyp
+        ? 'Nic neodpovídá' + (q ? ' hledání' : '') + (q && __faTyp ? ' a' : '') +
+          (__faTyp ? ' filtru ' + esc(typInfo(__faTyp).label) : '') + '.'
+        : 'Archiv je zatím prázdný — uložené zprávy se objeví tady.') +
       '</div>';
     return;
   }
@@ -19428,6 +19485,7 @@ document.addEventListener('click', function(e) {
     case 'otevritZpravu': otevritZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'formArchivPrepnout': formArchivPrepnout(); break;
     case 'formArchivZavrit': formArchivZavrit(); break;
+    case 'formArchivTyp': formArchivTyp(el.getAttribute('data-typ')); break;
     case 'formArchivOtevrit':
       formArchivOtevrit(el.getAttribute('data-uid'), parseInt(el.getAttribute('data-idx')));
       break;
