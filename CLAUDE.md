@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.60 · 2026-09-16**
+**Aktuální verze: v9.61 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,59 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## U kontroly stroje není „výchozí" ani „výchozí souhrnná" (v9.61)
+
+Uživatel si všiml (2026-09-16): „u strojů nám visí možnost druh kontroly —
+výchozí, pravidelná, to by u kontroly asi nemělo být." Měl pravdu.
+**„Výchozí" a „Výchozí souhrnná" jsou pojmy ČSN 33 1500 pro REVIZI**
+vyhrazeného el. zařízení. Kontrola pracovního stroje jede podle
+**NV č. 378/2001 Sb. § 4** (ověřeno ve znění předpisu, ne odhadem):
+
+- **odst. 1** — kontrola bezpečnosti provozu zařízení **před uvedením
+  do provozu**, podle průvodní dokumentace výrobce,
+- **odst. 2** — **následná** kontrola **nejméně jednou za 12 měsíců**
+  v rozsahu dle místního provozního bezpečnostního předpisu.
+
+Nabídka se proto vybírá podle klíče `pojmy` v `TYPY_ZPRAV`, stejně jako
+slovník `POJMY` — tabulka **`DRUHY_ZPRAVY`**:
+
+| sada | volby | výchozí |
+|---|---|---|
+| `revize` (elektro, LPS) | Výchozí · Výchozí souhrnná · Pravidelná · Mimořádná | Pravidelná |
+| `kontrola` (stroje) | Pravidelná · Před uvedením do provozu · Mimořádná | Pravidelná |
+
+- **Nabídku přestavuje `aplikovatPojmy()`**, a jen při SKUTEČNÉ změně sady
+  (hlídá `data-sada` na `<select>`). Elektro a LPS sdílejí `revize`, takže
+  se u nich rozbalovátko nesahá vůbec — `porovnani2.js` vychází znak
+  po znaku stejně.
+- **`normalizujDruh(typ, druh)` je nutnost, ne kosmetika.** Přiřazení
+  hodnoty, kterou `<select>` v nabídce nemá, ho nechá **PRÁZDNÝ**
+  (`selectedIndex === -1`) a zpráva by se vytiskla bez druhu v nadpisu
+  („ZPRÁVA O KONTROLE…" místo „…O PRAVIDELNÉ KONTROLE…"). Volá se
+  ve `nacistData()` u `f_druh` a při přestavbě nabídky.
+- **Staré zprávy o strojích s „Výchozí" se překlápějí na „Pravidelná"**
+  (rozhodnutí uživatele 2026-09-16 — upozorňoval jsem, že to mění nadpis
+  už vydané zprávy, a přesto to tak chtěl). Překlopení se děje **při
+  načtení do formuláře**, ne hromadnou migrací archivu: pouhé otevření
+  zprávy uložená data nepřepíše, projeví se to až uložením. Elektro a LPS
+  si „Výchozí souhrnnou" drží dál.
+- **„Před uvedením do provozu" nejde do nadpisu PŘED podstatné jméno.**
+  Česky to je „ZPRÁVA O KONTROLE … PRACOVNÍHO STROJE **PŘED UVEDENÍM
+  DO PROVOZU**", ne „ZPRÁVA O PŘED UVEDENÍM DO PROVOZU KONTROLE".
+  Řeší to tabulka **`DRUH_ZA`** + `druhZaNadpisem()` / `druhZaVeVete()` —
+  předsádka (`druhVNadpisu`) pro takový druh vyjde prázdná a text se
+  přilepí dozadu. U všech druhů elektro i LPS vracejí prázdno, takže
+  se jejich PDF nezměnilo.
+- Pole **„důvod mimořádné revize"** se pořád ukazuje jen u „Mimořádná" —
+  po přestavbě nabídky se proto volá `updateDuvodMimoradne()`.
+- Test: `test-druh-stroje.js` (23 kontrol — obě sady, přepínání typů tam
+  a zpět, nadpis i věta o předmětu pro všechny tři druhy, stará zpráva
+  s „Výchozí", že elektro zůstalo nedotčené).
+
+**Past v testu:** věta „Předmětem … bylo…" **NENÍ na titulní straně** —
+vymezení předmětu je ve vlastní kapitole. Kontrola se musí dívat na celý
+`#pdf-pages`, ne na `.a4-titulni`.
 
 ## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.60)
 

@@ -1015,7 +1015,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.60<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.61<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3581,8 +3581,47 @@ function pojmy(typ) { return POJMY[typInfo(typ).pojmy] || POJMY.revize; }
 // Přepíše popisky ve formuláři podle typu zprávy. Mění se VŽDY jen první
 // textový uzel prvku — za ním v HTML bývá <span> s poznámkou pod čarou,
 // o který nechceme přijít.
+// ═══ DRUH ZPRÁVY ════════════════════════════════════════════════════════
+// „Výchozí" a „Výchozí souhrnná" jsou pojmy ČSN 33 1500 pro REVIZI
+// vyhrazeného el. zařízení — u kontroly pracovního stroje nemají co dělat
+// (pokyn uživatele 2026-09-16). NV č. 378/2001 Sb. § 4 zná:
+//   odst. 1 — kontrola bezpečnosti provozu zařízení PŘED UVEDENÍM DO PROVOZU
+//   odst. 2 — NÁSLEDNÁ kontrola nejméně jednou za 12 měsíců (= pravidelná)
+// Sadu vybírá klíč `pojmy` v TYPY_ZPRAV, stejně jako slovník POJMY.
+var DRUHY_ZPRAVY = {
+  revize:   { volby: ['Výchozí', 'Výchozí souhrnná', 'Pravidelná', 'Mimořádná'], vychozi: 'Pravidelná' },
+  kontrola: { volby: ['Pravidelná', 'Před uvedením do provozu', 'Mimořádná'],    vychozi: 'Pravidelná' }
+};
+
+function druhySady(typ) { return DRUHY_ZPRAVY[typInfo(typ).pojmy] || DRUHY_ZPRAVY.revize; }
+
+// Druh, který do sady nepatří, se překlopí na výchozí. Zprávy o strojích
+// uložené do v9.60 mohly mít „Výchozí" — rozhodnutí uživatele 2026-09-16 je
+// překlopit je na „Pravidelná". **Bez tohohle by přiřazení hodnoty, která
+// v nabídce není, nechalo `<select>` PRÁZDNÝ** a zpráva by se vytiskla
+// bez druhu v nadpisu („ZPRÁVA O KONTROLE…" místo „…O PRAVIDELNÉ KONTROLE…").
+function normalizujDruh(typ, druh) {
+  var s = druhySady(typ);
+  return (s.volby.indexOf(druh) !== -1) ? druh : s.vychozi;
+}
+
 function aplikovatPojmy(typ) {
   var P = pojmy(typ), V = POJMY.revize, K = POJMY.kontrola;
+  // Nabídka druhů podle sady pojmů. Přepisuje se jen při SKUTEČNÉ změně
+  // sady (`data-sada`) — elektro a LPS sdílejí „revize", takže se u nich
+  // rozbalovátko nesahá vůbec.
+  var sd = document.getElementById('f_druh');
+  var sada = typInfo(typ).pojmy;
+  if (sd && sd.dataset.sada !== sada) {
+    var puvodni = sd.value;
+    var s = druhySady(typ);
+    sd.innerHTML = s.volby.map(function(v) {
+      return '<option value="' + esc(v) + '"' + (v === s.vychozi ? ' selected' : '') + '>' + esc(v) + '</option>';
+    }).join('');
+    sd.dataset.sada = sada;
+    sd.value = normalizujDruh(typ, puvodni);
+    updateDuvodMimoradne();
+  }
   document.querySelectorAll('[data-term]').forEach(function(el) {
     var klic = el.dataset.term;
     if (!P[klic]) return;
@@ -10982,6 +11021,18 @@ function druhVNadpisu(druh) {
   return m[druh] || '';
 }
 
+// Druhy, které se do češtiny nevejdou PŘED podstatné jméno („zpráva
+// o PRAVIDELNÉ kontrole"), ale ZA ně („zpráva o kontrole … před uvedením
+// do provozu"). Předsádka pro ně vyjde prázdná a přidá se tenhle dovětek.
+var DRUH_ZA = {
+  'Před uvedením do provozu': {
+    nadpis: ' PŘED UVEDENÍM DO PROVOZU',
+    veta: ' před uvedením do provozu'
+  }
+};
+function druhZaNadpisem(druh) { return (DRUH_ZA[druh] || {}).nadpis || ''; }
+function druhZaVeVete(druh) { return (DRUH_ZA[druh] || {}).veta || ''; }
+
 // Druh revize ve 2. pádu do věty „Předmětem … revize bylo…".
 function druhVeVete(druh) {
   var m = {
@@ -11109,9 +11160,10 @@ function generujPDF() {
   var PJ = pojmy(D.typ);
   var nadpis = isStrojePdf
     ? ('ZPRÁVA O ' + druhVNadpisu(D.druh) + PJ.nadpisAkce + ' ELEKTRICKÉHO ZAŘÍZENÍ ' +
-       (vicStroju ? 'PRACOVNÍCH STROJŮ' : 'PRACOVNÍHO STROJE'))
+       (vicStroju ? 'PRACOVNÍCH STROJŮ' : 'PRACOVNÍHO STROJE') + druhZaNadpisem(D.druh))
     : ('ZPRÁVA O ' + druhVNadpisu(D.druh) + PJ.nadpisAkce + ' ' +
-       (isLpsPdf ? 'OCHRANY PŘED BLESKEM (LPS)' : 'VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ'));
+       (isLpsPdf ? 'OCHRANY PŘED BLESKEM (LPS)' : 'VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ') +
+       druhZaNadpisem(D.druh));
   // Co program složil sám — panel nastavení tisku to ukazuje jako náznak
   // v polích, aby bylo vidět, co se vlastně přepisuje.
   window.__pdfVychoziTexty = { nadpis: nadpis };
@@ -11318,12 +11370,13 @@ function generujPDF() {
   // Návětí („Předmětem revize je:" apod.) tučně pro přehlednost;
   // uživatelský obsah zůstává escapovaný, \n zachovává white-space:pre-line.
   var vymHtml = esc(isStrojePdf
-    ? ('Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + ' bylo elektrické zařízení ' +
+    ? ('Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + druhZaVeVete(D.druh) +
+       ' bylo elektrické zařízení ' +
        (vicStroju ? 'pracovních strojů výslovně uvedených' : 'pracovního stroje výslovně uvedeného') +
        ' v této zprávě.')
     : isLpsPdf
-    ? 'Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + ' byl systém ochrany před bleskem (LPS) výslovně uvedený v této zprávě.'
-    : 'Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + ' bylo VEZ výslovně uvedené v této zprávě.');
+    ? 'Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + druhZaVeVete(D.druh) + ' byl systém ochrany před bleskem (LPS) výslovně uvedený v této zprávě.'
+    : 'Předmětem ' + druhVeVete(D.druh) + PJ.predmetemAkce + druhZaVeVete(D.druh) + ' bylo VEZ výslovně uvedené v této zprávě.');
   // Důvod se tiskne jen u mimořádné revize (ČSN 33 1500 čl. 2.5) a stojí
   // před vymezením předmětu — čtenář musí hned vědět, proč revize vznikla.
   if (D.druh === 'Mimořádná' && D.duvod_mimoradne) {
@@ -14223,7 +14276,11 @@ function nacistData(D) {
   if (selOd && idOd) selOd.value = idOd;
   // Fill form fields
   var fields = {
-    'f_ev_cislo': D.ev_cislo, 'f_vytisk': D.vytisk, 'f_druh': D.druh,
+    // Druh projde normalizací — zpráva o stroji uložená do v9.60 mohla mít
+    // „Výchozí"/„Výchozí souhrnná" (pojmy ČSN 33 1500), které v nabídce
+    // u kontroly nejsou. Překlopí se na „Pravidelná" (rozhodnutí uživatele
+    // 2026-09-16); bez toho by <select> zůstal prázdný.
+    'f_ev_cislo': D.ev_cislo, 'f_vytisk': D.vytisk, 'f_druh': normalizujDruh(aktTyp, D.druh),
     'f_misto': D.misto, 'f_adresa': D.adresa,
     'f_zahajeni': D.zahajeni, 'f_preruseni_od': D.preruseni_od, 'f_preruseni_do': D.preruseni_do,
     'f_ukonceni': D.ukonceni, 'f_vypracovani': D.vypracovani, 'f_pristi': D.pristi,
