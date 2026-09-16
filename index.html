@@ -666,16 +666,24 @@ body.fa-tahne iframe{pointer-events:none}
 html.dark .fa-radek.fa-akt{background:#3a2420}
 .fa-r1{display:flex;justify-content:space-between;gap:.4rem;font-family:var(--mono);
   font-size:.66rem;color:var(--muted);white-space:nowrap}
-.fa-r1 b{color:var(--text);overflow:hidden;text-overflow:ellipsis;font-weight:600}
-.fa-r1 > span:last-child{display:flex;align-items:center;gap:.3rem;flex:0 0 auto}
+/* Rozvržení prvního řádku: štítek typu a ev. číslo se NESMÍ ořezávat —
+   seznam je podle čísla seřazený, je to hlavní údaj. Tlačítka taky ne, ta
+   by se jinak nedala trefit. Ustupuje jediné DATUM. */
+.fa-r1 b{color:var(--text);font-weight:600;flex:0 0 auto;white-space:nowrap}
+.fa-r1 > span[class^="badge"]{flex:0 0 auto}
+.fa-datum{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* Výsledek (✅/❌) se ořezávat nesmí — proto je mimo `.fa-datum`. */
+.fa-vysl{flex:0 0 auto}
+.fa-akce{display:flex;align-items:center;gap:.15rem;flex:0 0 auto;margin-left:auto}
 /* Kopírovat — v klidu jen tence naznačené, ať seznam nevypadá jako pult
    s tlačítky; po najetí na řádek zvýrazní. Na dotykovém displeji :hover
    není, proto je vidět vždycky (jen slabě) a nikdy se neschovává úplně. */
 .fa-kopie{background:transparent;border:1px solid transparent;color:var(--muted);
-  border-radius:3px;cursor:pointer;font-size:.8rem;line-height:1;padding:.1rem .3rem;
-  opacity:.45;transition:all .15s}
+  border-radius:3px;cursor:pointer;font-size:.75rem;line-height:1;padding:.1rem .22rem;
+  opacity:.45;transition:all .15s;flex:0 0 auto}
 .fa-radek:hover .fa-kopie{opacity:1;border-color:var(--border-dark)}
 .fa-kopie:hover{background:var(--surface);color:var(--accent2);border-color:var(--accent2)}
+.fa-smazat:hover{color:var(--accent);border-color:var(--accent)}
 .fa-r2{font-size:.82rem;color:var(--text);margin-top:.15rem;overflow:hidden}
 .fa-r3{margin-top:.15rem;font-size:.68rem;color:var(--muted)}
 .fa-prazdno{padding:1.2rem .7rem;font-size:.78rem;color:var(--muted);line-height:1.5}
@@ -1020,7 +1028,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.65<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.66<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -16085,10 +16093,17 @@ function formArchivRadek(z, i) {
       ' data-uid="' + esc(z.uid || '') + '" data-idx="' + i + '"' +
       (akt ? ' title="Tuhle zprávu máte otevřenou"' : '') + '>' +
     '<div class="fa-r1"><span class="' + typInfo(z.typ).badge + '">' + typInfo(z.typ).label + '</span>' +
-      '<b>' + esc(z.ev_cislo || '—') + '</b><span>' + fmtDate(z.datum) + vysledek +
-      '<button class="fa-kopie" data-action="formArchivKopirovat" ' +
-        'data-uid="' + esc(z.uid || '') + '" data-idx="' + i + '" ' +
-        'title="Vytvořit novou zprávu jako kopii této">\u29c9</button>' +
+      '<b>' + esc(z.ev_cislo || '—') + '</b>' +
+      '<span class="fa-datum">' + fmtDate(z.datum) + '</span>' +
+      (vysledek ? '<span class="fa-vysl">' + vysledek + '</span>' : '') +
+      '<span class="fa-akce">' +
+        '<button class="fa-kopie" data-action="formArchivKopirovat" ' +
+          'data-uid="' + esc(z.uid || '') + '" data-idx="' + i + '" ' +
+          'title="Vytvořit novou zprávu jako kopii této">\u29c9</button>' +
+        (akt ? '' :
+          '<button class="fa-kopie fa-smazat" data-action="formArchivSmazat" ' +
+            'data-uid="' + esc(z.uid || '') + '" data-idx="' + i + '" ' +
+            'title="Smazat zprávu z archivu">\u2715</button>') +
       '</span></div>' +
     '<div class="fa-r2">' + archivMistoBunka(z, true) + '</div>' +
     (znacky ? '<div class="fa-r3">' + znacky + '</div>' : '') +
@@ -16258,6 +16273,22 @@ function formArchivKopirovat(uid, idx) {
     formArchivRender();
     showToast('Nová zpráva ' + cislo + ' — vyplňte místo revize.');
   });
+}
+
+// ✕ v postranním archivu. Adresuje se přes uid jako všechno ostatní v panelu.
+function formArchivSmazat(uid, idx) {
+  // **Otevřenou zprávu smazat nejde.** Formulář by ji dál držel v paměti
+  // a první další uložení (Ctrl+S, generování PDF) by ji do archivu vrátilo
+  // — vypadalo by to, že mazání nefunguje. Radši to rovnou řekneme.
+  if (uid && uid === window.__openZpravaUid) {
+    showToast('Tuhle zprávu máte otevřenou — přepněte se nejdřív na jinou.');
+    return;
+  }
+  var i = -1;
+  if (uid) archiv.forEach(function(z, n) { if (i < 0 && z.uid === uid) i = n; });
+  if (i < 0 && idx >= 0 && archiv[idx] && (!uid || !archiv[idx].uid)) i = idx;
+  if (i < 0) { showToast('Tahle zpráva už v archivu není.'); formArchivRender(); return; }
+  smazatZpravu(i);
 }
 
 // Vrátí formulář na tentýž krok, na kterém uživatel byl. Typy zpráv mají
@@ -16807,12 +16838,30 @@ function navazatZpravu(i) {
   showScreen('form');
 }
 
+// Smazání zprávy z archivu. **Dotaz zprávu jmenuje** (dřív tu bylo jen
+// holé „Smazat zprávu?", u kterého člověk nevěděl kterou) a po smazání
+// zůstává 8 vteřin nabídka ZPĚT — u vydané revizní zprávy je omyl drahý
+// a tlačítko ✕ sedí v seznamu hned vedle řádku, na který se kliká.
 function smazatZpravu(i) {
-  if (!confirm('Smazat zprávu?')) return;
+  var z = archiv[i];
+  if (!z) return;
+  var popis = (z.ev_cislo || '') + (z.misto ? ' · ' + String(z.misto).split('\n')[0] : '');
+  if (!popis) popis = 'bez označení';
+  if (!confirm('Smazat zprávu ' + popis + '?')) return;
   archiv.splice(i, 1);
   STORE.archiv = archiv;
   saveStore();
   renderArchiv();
+  showToast('Zpráva ' + popis + ' smazána', {
+    actionLabel: 'ZPĚT', timeout: 8000,
+    action: function() {
+      archiv.splice(Math.min(i, archiv.length), 0, z);
+      STORE.archiv = archiv;
+      saveStore();
+      renderArchiv();
+      showToast('Zpráva ' + popis + ' vrácena do archivu');
+    }
+  });
 }
 
 function delRow(btn) {
@@ -19938,6 +19987,10 @@ document.addEventListener('click', function(e) {
     case 'formArchivKopirovat':
       e.stopPropagation();   // jinak by klik zprávu rovnou otevřel
       formArchivKopirovat(el.getAttribute('data-uid'), parseInt(el.getAttribute('data-idx')));
+      break;
+    case 'formArchivSmazat':
+      e.stopPropagation();
+      formArchivSmazat(el.getAttribute('data-uid'), parseInt(el.getAttribute('data-idx')));
       break;
     case 'formArchivOtevrit':
       formArchivOtevrit(el.getAttribute('data-uid'), parseInt(el.getAttribute('data-idx')));

@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.65 · 2026-09-16**
+**Aktuální verze: v9.66 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -168,7 +168,7 @@ slovník `POJMY` — tabulka **`DRUHY_ZPRAVY`**:
 vymezení předmětu je ve vlastní kapitole. Kontrola se musí dívat na celý
 `#pdf-pages`, ne na `.a4-titulni`.
 
-## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.65)
+## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.66)
 
 **Zadání uživatele (2026-09-16, snímek Outlooku):** „píšu zprávu a překliknu
 si to na druhou zprávu a zároveň ten archiv mohu schovat, komu by vadil na
@@ -263,6 +263,39 @@ s číslováním, jak má technik nastaveno."
 - CSS `.fa-kopie`: v klidu jen slabě naznačené, po najetí na řádek
   zvýrazní. **Neschovává se úplně** — na dotykovém displeji `:hover` není.
 
+### ✕ Smazat zprávu (v9.66)
+
+- **Otevřenou zprávu smazat NEJDE** a tlačítko se u ní ani nenabízí.
+  Formulář by ji dál držel v paměti a první další uložení (Ctrl+S,
+  generování PDF) by ji do archivu vrátilo — vypadalo by to, že mazání
+  nefunguje. `formArchivSmazat()` to navíc odmítne i kdyby se tlačítko
+  někde objevilo.
+- **`smazatZpravu(i)` je pořád jedna funkce pro obě místa** (hlavní archiv
+  i panel) — panel si jen přeloží `uid` na index. Při té příležitosti
+  dostala dvě věci, ze kterých těží i hlavní archiv:
+  1. **dotaz zprávu JMENUJE** (dřív holé „Smazat zprávu?", u kterého
+     člověk nevěděl kterou),
+  2. **8 vteřin nabídka ZPĚT** v toastu, která ji vrátí na původní index.
+     U vydané revizní zprávy je omyl drahý a ✕ sedí hned vedle řádku,
+     na který se kliká.
+- `e.stopPropagation()` jako u ⧉.
+
+### Rozvržení řádku — co smí ustoupit (v9.66)
+
+Dvě tlačítka v 280px sloupci ubrala místo a **ev. číslo se začalo ořezávat
+(„RE-26-…")** — při řazení PODLE ČÍSLA ta nejhorší věc, co se může uříznout.
+První řádek má proto čtyři části a jen jedna z nich se smí smrsknout:
+
+| část | chování |
+|---|---|
+| štítek typu, `<b>` s ev. číslem | `flex:0 0 auto` — nikdy neustoupí |
+| `.fa-datum` | `flex:0 1 auto; overflow:hidden` — **jediné, co se ořízne** |
+| `.fa-vysl` (✅/❌) | `flex:0 0 auto` — proto je MIMO `.fa-datum` |
+| `.fa-akce` (⧉ ✕) | `flex:0 0 auto; margin-left:auto` |
+
+Test tři z toho měří přímo (`scrollWidth > clientWidth`, pravá hrana
+tlačítek proti hraně řádku) — na pohled to vypadá dobře i když se ořezává.
+
 ### Roztažení panelu myší (v9.60)
 
 Pokyn uživatele: „aby šla oddělovací čára jako v Outlooku uchopit a roztáhnout
@@ -307,7 +340,7 @@ typ zruší. Kombinuje se s hledáním.
 - Prázdný výsledek pojmenuje **obojí** („Nic neodpovídá hledání a filtru
   Stroje."), ať je jasné, co seznam vyprázdnilo.
 
-- Test: `test-form-archiv.js` (83 kontrol — hledání neoznačí zprávu jako
+- Test: `test-form-archiv.js` (96 kontrol — hledání neoznačí zprávu jako
   změněnou, zachování tabu, spadnutí na titulku u jiného typu, dialog
   u neuložených změn, panel mimo formulář, sbalení přes restart, zamčená
   zpráva, překryv na úzkém okně, karta v Novinkách).
