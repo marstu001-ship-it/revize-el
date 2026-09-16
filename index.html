@@ -626,10 +626,21 @@ th[data-action="toggleAutoCislovani"]:hover .cisl-ico{background:var(--gold);
   padding:.22rem .55rem;border-radius:3px;cursor:pointer;transition:all .15s}
 .fa-btn:hover{color:var(--text);border-color:var(--muted)}
 .fa-btn.fa-btn-on{background:var(--accent2);border-color:var(--accent2);color:#fff}
-.form-archiv{position:fixed;left:0;top:54px;bottom:0;width:280px;z-index:250;
+/* Šířku drží proměnná --fa-sirka, aby ji sdílel panel i odsazení obsahu
+   a stačilo ji při tažení přepsat na jednom místě. */
+.form-archiv{position:fixed;left:0;top:54px;bottom:0;width:var(--fa-sirka,280px);z-index:250;
   background:var(--surface);border-right:1px solid var(--border-dark);
   flex-direction:column;font-family:var(--sans)}
-body.fa-open #screen-form{padding-left:280px}
+body.fa-open #screen-form{padding-left:var(--fa-sirka,280px)}
+/* Dělicí čára k uchopení — jako v Outlooku. Zóna přesahuje přes okraj
+   na obě strany, aby se trefila i nepřesnou myší. */
+.fa-resize{position:absolute;top:0;bottom:0;right:-3px;width:7px;cursor:col-resize;z-index:2}
+.fa-resize::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:1px;
+  background:transparent;transition:background .15s}
+.fa-resize:hover::after,body.fa-tahne .fa-resize::after{background:var(--accent2);width:3px;left:2px}
+/* Při tažení nesmí prohlížeč označovat text pod kurzorem */
+body.fa-tahne{user-select:none;cursor:col-resize}
+body.fa-tahne iframe{pointer-events:none}
 .fa-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;
   padding:.5rem .7rem;border-bottom:1px solid var(--border);font-family:var(--mono);
   font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -1004,7 +1015,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.59<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.60<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1034,6 +1045,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
          placeholder="🔍 Hledat (ev. číslo, místo…)">
   <div class="fa-typy" id="fa-typy"></div>
   <div class="fa-seznam" id="fa-seznam"></div>
+  <div class="fa-resize" id="fa-resize" title="Táhnutím změníte šířku panelu · dvojklik vrátí výchozí"></div>
 </aside>
 
 <!-- ═══════════════════════════════════════════════
@@ -15631,6 +15643,76 @@ function formArchivZapnut() {
 function formArchivPrepnout() { formArchivNastavit(!formArchivZapnut()); }
 function formArchivZavrit() { formArchivNastavit(false); }
 
+// ── Šířka panelu: dělicí čára se dá chytit a roztáhnout (v9.60) ─────────
+// Ukládá se vedle sbalení a ze stejného důvodu do localStorage, ne do
+// STORE: kolik místa panel smí zabrat, je věc toho displeje.
+var FA_SIRKA_KLIC = 'revize_el_form_archiv_sirka';
+var FA_SIRKA_VYCHOZI = 280;
+var FA_SIRKA_MIN = 200;
+
+// Horní mez se počítá z okna, ne napevno: formuláři musí vždycky zbýt
+// kus obrazovky, jinak by se dal panel roztáhnout přes celou zprávu.
+function formArchivSirkaMax() {
+  return Math.max(FA_SIRKA_MIN, Math.min(760, window.innerWidth - 320));
+}
+
+function formArchivSirkaUlozena() {
+  var v = 0;
+  try { v = parseInt(localStorage.getItem(FA_SIRKA_KLIC), 10); } catch(e) {}
+  return (v > 0) ? v : FA_SIRKA_VYCHOZI;
+}
+
+// `uloz` je false během tažení — do localStorage se zapisuje až na konci,
+// ne na každý pixel pohybu myší.
+function formArchivSirkaNastav(px, uloz) {
+  px = Math.round(Math.max(FA_SIRKA_MIN, Math.min(formArchivSirkaMax(), px || FA_SIRKA_VYCHOZI)));
+  document.documentElement.style.setProperty('--fa-sirka', px + 'px');
+  if (uloz) { try { localStorage.setItem(FA_SIRKA_KLIC, String(px)); } catch(e) {} }
+  return px;
+}
+
+function formArchivSirkaObnov() { formArchivSirkaNastav(formArchivSirkaUlozena(), false); }
+
+(function() {
+  var tahne = false;
+  var uchyt = function() { return document.getElementById('fa-resize'); };
+  document.addEventListener('pointerdown', function(e) {
+    if (e.target !== uchyt()) return;
+    tahne = true;
+    document.body.classList.add('fa-tahne');
+    // setPointerCapture drží události u úchytu, i když kurzor uteče nad
+    // formulář — bez toho se tažení „utrhne", jakmile přejedeš přes pole.
+    try { e.target.setPointerCapture(e.pointerId); } catch(err) {}
+    e.preventDefault();
+  });
+  document.addEventListener('pointermove', function(e) {
+    if (!tahne) return;
+    formArchivSirkaNastav(e.clientX, false);
+    e.preventDefault();
+  });
+  ['pointerup', 'pointercancel'].forEach(function(ev) {
+    document.addEventListener(ev, function(e) {
+      if (!tahne) return;
+      tahne = false;
+      document.body.classList.remove('fa-tahne');
+      formArchivSirkaNastav(e.clientX, true);
+    });
+  });
+  // Dvojklik na čáru = zpátky na výchozích 280 px
+  document.addEventListener('dblclick', function(e) {
+    if (e.target !== uchyt()) return;
+    formArchivSirkaNastav(FA_SIRKA_VYCHOZI, true);
+  });
+  // Zmenšení okna nesmí nechat panel širší, než kolik je teď dovoleno —
+  // jinak by na notebooku zabral obrazovku a formulář by se nevešel.
+  window.addEventListener('resize', function() {
+    if (!formArchivZapnut()) return;
+    var max = formArchivSirkaMax();
+    if (formArchivSirkaUlozena() > max) formArchivSirkaNastav(max, false);
+    else formArchivSirkaObnov();
+  });
+}());
+
 function formArchivNastavit(on) {
   try { localStorage.setItem(FA_KLIC, on ? '1' : '0'); } catch(e) {}
   if (on) formArchivRender();
@@ -15645,6 +15727,7 @@ function formArchivAktualizovat() {
   var form = document.getElementById('screen-form');
   var naFormulari = !!(form && form.classList.contains('active'));
   var vidi = naFormulari && formArchivZapnut();
+  if (vidi) formArchivSirkaObnov();
   el.style.display = vidi ? 'flex' : 'none';
   document.body.classList.toggle('fa-open', vidi);
   var btn = document.getElementById('btn-form-archiv');
