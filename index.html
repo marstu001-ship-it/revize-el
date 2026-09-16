@@ -473,7 +473,7 @@ td.dnd-num-cell input{padding-left:15px}
   display:flex;gap:.45rem;align-items:center;padding:.18rem 0;cursor:pointer}
 /* `.f input` dává VŠEM polím width:100% + padding + rámeček; zaškrtávátko
    se tím roztáhlo přes celý dialog a text vytlačilo na okraj. */
-.teren-radek input[type=checkbox]{width:auto!important;flex:0 0 auto;margin:0!important;
+.teren-radek input[type=checkbox],.teren-radek input[type=radio]{width:auto!important;flex:0 0 auto;margin:0!important;
   padding:0!important;border:none!important;background:none!important}
 .teren-radek strong{font-weight:600}
 .teren-radek .tm{color:var(--muted);font-size:.78rem}
@@ -1015,7 +1015,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.62<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.63<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1858,7 +1858,11 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <strong>Ve výchozím nastavení se nic nemění</strong> — každá nová zpráva dostane první
       číslo řady a vy si ho přepíšete, přesně jako dosud.</div>
     <div class="g2">
-      <div class="f span2"><label>Šablona čísla</label>
+      <div class="f span2"><label>Styl čísla</label>
+        <div id="rt_cislo_predlohy" style="margin-top:.2rem"></div>
+      </div>
+      <div class="f span2" id="rt_cislo_vlastni_wrap" style="display:none;margin-top:-.4rem">
+        <label>Vlastní šablona</label>
         <input type="text" id="rt_cislo_format" placeholder="{TYP}-{RR}-{NNNN}" autocomplete="off">
         <div style="font-size:.7rem;color:var(--muted);line-height:1.8;margin-top:.45rem">
           <strong>{TYP}</strong> = RE u elektro a hromosvodu, RS u strojů ·
@@ -4983,6 +4987,19 @@ function novaZprava(typ) {
 // Kdo chce automatiku, zaškrtne si ji.
 var CISLO_VYCHOZI = '{TYP}-{RR}-{NNNN}';
 
+// Hotové styly k zakliknutí — psát značky ručně je otrava (pokyn uživatele
+// 2026-09-16: „to se ale blbě píše"). Kdo si mezi nimi nevybere, přepne si
+// poslední volbu „Vlastní" a napíše si šablonu sám.
+// **První položka MUSÍ být `CISLO_VYCHOZI`** — je to stav, ve kterém program
+// běžel dosud, a `cisloPredlohyRender()` ji podle toho označí.
+var CISLO_PREDLOHY = [
+  { s: '{TYP}-{RR}-{NNNN}',  popis: 'druh, rok a čtyřmístné pořadové číslo' },
+  { s: '{TYP}-{RR}-{NNNNN}', popis: 'totéž s pětimístným číslem' },
+  { s: '{RRRR}/{NNN}',       popis: 'rok lomeno pořadové číslo' },
+  { s: '{NNN}/{RRRR}',       popis: 'pořadové číslo lomeno rok' },
+  { s: '{TYP} {NNNN}',       popis: 'bez roku — řada běží pořád dál' }
+];
+
 // Skloňování počtu zpráv — jedno místo pro archiv i pro ukázku číslování.
 function pocetZprav(n) {
   return n + (n === 1 ? ' zpráva' : (n >= 2 && n <= 4 ? ' zprávy' : ' zpráv'));
@@ -5086,6 +5103,56 @@ function cisloPridelit() {
   showToast('Přiděleno číslo ' + d);
 }
 
+// Seznam předloh k zakliknutí. U každé se ukazuje SKUTEČNÉ příští číslo
+// spočítané z archivu, ne jen zápis šablony — technik má vidět, co dostane.
+function cisloPredlohyRender() {
+  var box = document.getElementById('rt_cislo_predlohy');
+  if (!box) return;
+  var akt = cisloSablona();
+  var jeVlastni = !CISLO_PREDLOHY.some(function(p) { return p.s === akt; });
+  box.innerHTML = CISLO_PREDLOHY.map(function(p, i) {
+    // Ukazuje se PRVNÍ číslo řady, ne příští volné. Příští volné by u dvou
+    // předloh vyšlo stejně (`{NNNN}` chytá i delší čísla, takže u archivu
+    // s RE-26-10005 dá čtyř- i pětimístná předloha RE-26-10006) a seznam by
+    // nabízel dva na pohled shodné řádky. Takhle je vidět TVAR čísla;
+    // příští volné číslo pro vybraný styl říká ukázka pod seznamem.
+    var ukazka = cisloSlozit('elektro', 1, p.s);
+    return '<label class="teren-radek">' +
+      '<input type="radio" name="rt_cislo_styl" data-action="cisloPredloha" ' +
+        'data-sablona="' + esc(p.s) + '"' + (!jeVlastni && p.s === akt ? ' checked' : '') + '>' +
+      '<strong style="font-family:var(--mono)">' + esc(ukazka) + '</strong>' +
+      '<span class="tm">' + esc(p.popis) + (i === 0 ? ' — jako dosud' : '') + '</span>' +
+      '</label>';
+  }).join('') +
+    '<label class="teren-radek">' +
+      '<input type="radio" name="rt_cislo_styl" data-action="cisloVlastni"' +
+        (jeVlastni ? ' checked' : '') + '>' +
+      '<strong>✏️ Vlastní</strong><span class="tm">napíšu si šablonu sám</span>' +
+    '</label>';
+  var wrap = document.getElementById('rt_cislo_vlastni_wrap');
+  if (wrap) wrap.style.display = jeVlastni ? '' : 'none';
+}
+
+// Kliknutí na hotovou předlohu.
+function cisloPredloha(el) {
+  if (!STORE.technik) STORE.technik = {};
+  STORE.technik.cislo_format = el.getAttribute('data-sablona') || '';
+  saveStore();
+  var pole = document.getElementById('rt_cislo_format');
+  if (pole) pole.value = STORE.technik.cislo_format;
+  cisloPredlohyRender();
+  cisloUkazka();
+}
+
+// Přepnutí na vlastní šablonu — pole se odkryje a rovnou se do něj skočí.
+function cisloVlastni() {
+  var wrap = document.getElementById('rt_cislo_vlastni_wrap');
+  if (wrap) wrap.style.display = '';
+  var pole = document.getElementById('rt_cislo_format');
+  if (pole) { pole.focus(); pole.select(); }
+  cisloUkazka();
+}
+
 // Živá ukázka v Nastavení — ať je předem vidět, co se bude dít.
 function cisloUkazka() {
   var box = document.getElementById('rt_cislo_ukazka');
@@ -5148,6 +5215,9 @@ function nacistTechnika() {
         saveStore();
         cisloUkazka();
       });
+      // Opuštěním pole se seznam přerovná — napsaná šablona se může
+      // trefit do některé předlohy a pak má svítit ona.
+      cf.addEventListener('blur', function() { cisloPredlohyRender(); });
     }
   }
   var ca = document.getElementById('rt_cislo_auto');
@@ -5163,6 +5233,7 @@ function nacistTechnika() {
       });
     }
   }
+  cisloPredlohyRender();
   cisloUkazka();
   // Razítko + podpis — pokud uloženy, zobrazit náhled
   renderRazitkoPreview();
@@ -19816,6 +19887,8 @@ document.addEventListener('click', function(e) {
     case 'formArchivPrepnout': formArchivPrepnout(); break;
     case 'formArchivZavrit': formArchivZavrit(); break;
     case 'cisloPridelit': cisloPridelit(); break;
+    case 'cisloPredloha': cisloPredloha(el); break;
+    case 'cisloVlastni': cisloVlastni(); break;
     case 'formArchivTyp': formArchivTyp(el.getAttribute('data-typ')); break;
     case 'formArchivOtevrit':
       formArchivOtevrit(el.getAttribute('data-uid'), parseInt(el.getAttribute('data-idx')));

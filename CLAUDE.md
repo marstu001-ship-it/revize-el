@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.62 · 2026-09-16**
+**Aktuální verze: v9.63 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -55,7 +55,7 @@ jste nic neudělali.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
 
-## Vlastní číslování zpráv (v9.62)
+## Vlastní číslování zpráv (v9.62, předlohy v9.63)
 
 Pokyn uživatele 2026-09-16: „ať si každý technik nastaví vlastní styl
 číslování zpráv, **defaultně to bude jak to je teď, ať není nikdo
@@ -74,6 +74,22 @@ Karta **🔢 Číslování zpráv** v Nastavení, hned pod profilem technika.
   celý smysl výchozí hodnoty; hlídají to první tři kontroly testu.
 - Značky: `{TYP}` (prefix z `TYPY_ZPRAV` — RE / RS), `{RR}`, `{RRRR}`,
   `{N…}` (kolik N, tolik míst). Kolem nich libovolný text.
+- **Styl se vybírá kliknutím z předloh, ne psaním značek** (v9.63, pokyn
+  uživatele „to se ale blbě píše"). Pět hotových stylů v `CISLO_PREDLOHY`
+  + šestá volba **✏️ Vlastní**, která teprve odkryje pole se šablonou.
+  **První předloha MUSÍ být `CISLO_VYCHOZI`** — `cisloPredlohyRender()` ji
+  označuje popiskem „jako dosud".
+  - **U předlohy se ukazuje PRVNÍ číslo řady, ne příští volné.** Příští
+    volné by u archivu s `RE-26-10005` vyšlo u čtyř- i pětimístné předlohy
+    stejně (`RE-26-10006`, protože `{NNNN}` chytá i delší čísla) a seznam by
+    nabízel dva na pohled shodné řádky. Takhle je vidět TVAR čísla; příští
+    volné číslo pro vybraný styl říká ukázka pod seznamem. **Test to hlídá**
+    („všech pět předloh je navzájem různých") — na tohle se přišlo až testem.
+  - Napíše-li uživatel ve „Vlastní" text shodný s některou předlohou,
+    `blur` seznam přerovná a označí ji.
+  - **`.teren-radek` CSS muselo dostat i `input[type=radio]`** — pravidlo
+    zneškodňující `.f input{width:100%}` znalo jen `checkbox` a přepínač by
+    se roztáhl přes celou kartu. Přesně ta past z v9.53.
 - **Rok v šabloně = roční reset řady.** `cisloRegex()` dosazuje za rok
   dnešek natvrdo, takže loňská čísla do letošní řady nespadnou. Šablona bez
   roku = řada běží dál. Vyplývá to samo, není to zvláštní větev.
@@ -95,9 +111,9 @@ Karta **🔢 Číslování zpráv** v Nastavení, hned pod profilem technika.
   je to tak i dnes a vyplývá to ze `{TYP}`.
 - **`pocetZprav(n)`** — skloňování („1 zpráva / 2 zprávy / 5 zpráv") na
   jednom místě pro archiv i ukázku. Dřív to byl inline ternár v `renderArchiv`.
-- Test: `test-cislovani.js` (25 kontrol — výchozí chování beze změny,
+- Test: `test-cislovani.js` (40 kontrol — výchozí chování beze změny,
   automatika, vlastní šablony, roční reset, pětimístná řada, tlačítko ⟳,
-  zamčená zpráva, „Navázat", živá ukázka, restart).
+  zamčená zpráva, „Navázat", živá ukázka, předlohy, restart).
 
 ## U kontroly stroje není „výchozí" ani „výchozí souhrnná" (v9.61)
 
