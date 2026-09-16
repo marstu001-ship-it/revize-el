@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.61 · 2026-09-16**
+**Aktuální verze: v9.62 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,50 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Vlastní číslování zpráv (v9.62)
+
+Pokyn uživatele 2026-09-16: „ať si každý technik nastaví vlastní styl
+číslování zpráv, **defaultně to bude jak to je teď, ať není nikdo
+překvapen**, a ostatní ať si to nastaví — například zaškrtne políčko, každá
+nová zpráva bude další poslední číslo." Je to bod 1–3 odsouhlaseného návrhu
+z 2026-07-15; **body 4–7 (převzaté zprávy od kolegů) se NEDĚLALY** a čekají
+dál.
+
+Karta **🔢 Číslování zpráv** v Nastavení, hned pod profilem technika.
+
+- **Šablona je v `STORE.technik.cislo_format`, ne ve vlastním klíči STORE** —
+  veze se tím se zálohou i s obnovou a **pravidlo „nový klíč = čtyři místa"
+  se neuplatní**. Totéž `cislo_auto` (zaškrtávátko).
+- **Výchozí `{TYP}-{RR}-{NNNN}` + automatika vypnutá dává BAJT PO BAJTU to,
+  co program dělal do v9.61** — `novaZprava()` nabídne `RE-26-0001`. To je
+  celý smysl výchozí hodnoty; hlídají to první tři kontroly testu.
+- Značky: `{TYP}` (prefix z `TYPY_ZPRAV` — RE / RS), `{RR}`, `{RRRR}`,
+  `{N…}` (kolik N, tolik míst). Kolem nich libovolný text.
+- **Rok v šabloně = roční reset řady.** `cisloRegex()` dosazuje za rok
+  dnešek natvrdo, takže loňská čísla do letošní řady nespadnou. Šablona bez
+  roku = řada běží dál. Vyplývá to samo, není to zvláštní větev.
+- **`{NNNN}` musí chytat i DELŠÍ čísla (`\d{4,}`, ne `\d{4}`).** Jinak by se
+  řada po 9999 zasekla — a hlavně: uživatel má pětimístná čísla
+  (`RE-26-10001`), kterým by program svou vlastní řadu vůbec neviděl.
+  **Tím se mění, co nabídne „Navázat"** (dřív regex `^RE-rr-(\d{4})$` jeho
+  řadu ignoroval a nabízel `RE-26-0001`) — uživatel byl upozorněn.
+- **Šablona bez `{N…}` nic nevymýšlí** — `cisloDalsi()` vrátí `null`,
+  „Navázat" nechá číslo staré zprávy a ukázka v Nastavení varuje.
+- **Živá ukázka (`cisloUkazka()`) je ta pojistka proti překvapení** —
+  ukazuje příští číslo obou řad, kolik zpráv v archivu do řady spadá,
+  a co dostane nová zpráva. Překresluje se při psaní i při zaškrtnutí.
+- **Tlačítko ⟳ u pole Ev. číslo** přidělí další volné číslo na vyžádání,
+  i s vypnutou automatikou. **Nemá `ro-ok`** — zapisuje, takže se
+  u dokončené zprávy musí schovat; `cisloPridelit()` navíc kontroluje
+  `window.__formReadOnly`.
+- Elektro a LPS **sdílejí řadu** (obojí má prefix RE), stroje mají vlastní —
+  je to tak i dnes a vyplývá to ze `{TYP}`.
+- **`pocetZprav(n)`** — skloňování („1 zpráva / 2 zprávy / 5 zpráv") na
+  jednom místě pro archiv i ukázku. Dřív to byl inline ternár v `renderArchiv`.
+- Test: `test-cislovani.js` (25 kontrol — výchozí chování beze změny,
+  automatika, vlastní šablony, roční reset, pětimístná řada, tlačítko ⟳,
+  zamčená zpráva, „Navázat", živá ukázka, restart).
 
 ## U kontroly stroje není „výchozí" ani „výchozí souhrnná" (v9.61)
 
@@ -695,8 +739,10 @@ panel scan + závada scan u všech 3 providerů, ke kterým má klíč.**
 
 ## 📌 ODSOUHLASENÝ NÁVRH — čeká na "udělej to" od uživatele
 
-**Vlastní číslování zpráv + převzaté zprávy od kolegů** (návrh schválen
-k zapamatování 2026-07-15, uživatel se k němu vrátí):
+**Převzaté zprávy od kolegů.** ⚠️ **Body 1–3 (vlastní číslování) jsou
+HOTOVÉ ve v9.62** — viz oddíl „Vlastní číslování zpráv" výš. Zbývají
+body 4–7, které řeší import cizí zprávy; uživatel si je nechal na potom.
+Původní znění návrhu (schválen 2026-07-15):
 
 1. **Šablona čísla zprávy v profilu technika** (`STORE.technik.cislo_format`):
    značky `{RR}` (rok 2cif.), `{RRRR}` (rok 4cif.), `{NNNN}` (pořadové

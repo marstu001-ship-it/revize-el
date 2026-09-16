@@ -1015,7 +1015,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.61<span class="ver-date"> · 2026-09-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.62<span class="ver-date"> · 2026-09-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1852,6 +1852,31 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <span style="font-size:.72rem;color:var(--muted)">Tip: profil se ukládá průběžně, tlačítko je jen pro klid duše.</span>
     </div>
   </div>
+  <div class="scard">
+    <div class="scard-title">🔢 Číslování zpráv</div>
+    <div class="info-box">Jak si program skládá evidenční číslo nové zprávy.
+      <strong>Ve výchozím nastavení se nic nemění</strong> — každá nová zpráva dostane první
+      číslo řady a vy si ho přepíšete, přesně jako dosud.</div>
+    <div class="g2">
+      <div class="f span2"><label>Šablona čísla</label>
+        <input type="text" id="rt_cislo_format" placeholder="{TYP}-{RR}-{NNNN}" autocomplete="off">
+        <div style="font-size:.7rem;color:var(--muted);line-height:1.8;margin-top:.45rem">
+          <strong>{TYP}</strong> = RE u elektro a hromosvodu, RS u strojů ·
+          <strong>{RR}</strong> = rok dvojčíslím (26) ·
+          <strong>{RRRR}</strong> = rok čtyřmístně (2026) ·
+          <strong>{NNNN}</strong> = pořadové číslo; kolik napíšete N, tolik bude míst (0001).<br>
+          Kolem značek může být libovolný text. <strong>Je-li v šabloně rok, řada se každý rok
+          vrací na jedničku</strong>; bez roku běží dál. Máte-li delší čísla (RE-26-10001),
+          program je pozná taky.
+        </div>
+      </div>
+      <div class="f span2" style="margin-top:-.3rem">
+        <label class="teren-radek"><input type="checkbox" id="rt_cislo_auto">
+          Nové zprávě rovnou přidělit další volné číslo řady</label>
+      </div>
+    </div>
+    <div class="info-box" id="rt_cislo_ukazka" style="margin-top:.2rem"></div>
+  </div>
   <div class="scard ai-feature">
     <div class="scard-title">🤖 AI rozpoznávání závad <span style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem">vyfotíte závadu, AI navrhne popis + kategorii + normu</span></div>
     <p style="font-size:.85rem;line-height:1.6;margin-bottom:.8rem;color:var(--muted)">
@@ -2368,7 +2393,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="scard">
     <div class="scard-title">Základní identifikace <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">NV 190/2022 Sb. §10 odst.1 písm.e)</span></div>
     <div class="g3">
-      <div class="f"><label>Ev. číslo zprávy</label><input type="text" id="f_ev_cislo" placeholder="RE-26-0001"></div>
+      <div class="f"><label>Ev. číslo zprávy</label><div style="display:flex;gap:.35rem;align-items:stretch"><input type="text" id="f_ev_cislo" placeholder="RE-26-0001" style="flex:1;min-width:0"><button class="btn btn-ghost" data-action="cisloPridelit" title="Přidělit další volné číslo řady podle šablony z Nastavení" style="background:var(--bg);color:var(--text);border:1px solid var(--border-dark);flex:0 0 auto;padding:0 .7rem;font-size:.9rem">⟳</button></div></div>
       <div class="f"><label>Výtisk č.</label><input type="text" id="f_vytisk" value="1"></div>
       <div class="f"><label data-term="f-druh">Druh revize <span class="req">*</span></label>
         <select id="f_druh"><option value="Výchozí">Výchozí</option><option value="Výchozí souhrnná">Výchozí souhrnná</option><option value="Pravidelná" selected>Pravidelná</option><option value="Mimořádná">Mimořádná</option></select></div>
@@ -4730,12 +4755,11 @@ function novaZprava(typ) {
   addDokumentace();
   renderChecklist();
   var d = new Date().toISOString().split('T')[0];
-  var rok = new Date().getFullYear().toString().slice(-2);
   ['f_zahajeni','f_ukonceni','f_vypracovani','f_predano_datum'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.value = d;
   });
   var evCislo = document.getElementById('f_ev_cislo');
-  if (evCislo) evCislo.value = typInfo(typ).prefix + '-' + rok + '-0001';
+  if (evCislo) evCislo.value = cisloProNovou(typ);
   renderNapetoveCheckboxy(aktPodtyp);
   renderOchranaCheckboxy();
   // Předmět revize dle podtypu — jen pro elektro; LPS má vlastní pole f_lps_predmet_je
@@ -4949,6 +4973,150 @@ function novaZprava(typ) {
   showScreen('form');
 }
 
+// ═══ ČÍSLOVÁNÍ ZPRÁV ════════════════════════════════════════════════════
+// Šablona bydlí v profilu technika (`STORE.technik.cislo_format`), takže
+// se veze se zálohou i s obnovou — žádný nový klíč do STORE nepřibyl.
+//
+// **Výchozí hodnota dává PŘESNĚ to, co program dělal do v9.61** — nová
+// zpráva dostane `RE-26-0001` a technik si ji přepíše. Pokyn uživatele
+// 2026-09-16: „defaultně to bude jak to je teď, ať není nikdo překvapen."
+// Kdo chce automatiku, zaškrtne si ji.
+var CISLO_VYCHOZI = '{TYP}-{RR}-{NNNN}';
+
+// Skloňování počtu zpráv — jedno místo pro archiv i pro ukázku číslování.
+function pocetZprav(n) {
+  return n + (n === 1 ? ' zpráva' : (n >= 2 && n <= 4 ? ' zprávy' : ' zpráv'));
+}
+
+function cisloSablona() {
+  var t = ((STORE.technik || {}).cislo_format || '').trim();
+  return t || CISLO_VYCHOZI;
+}
+function cisloAuto() { return !!(STORE.technik || {}).cislo_auto; }
+
+// Rozloží šablonu na kousky — buď `{text:…}`, nebo `{znacka:…}`.
+function cisloKousky(sablona) {
+  var out = [], re = /\{(TYP|RRRR|RR|N+)\}/g, last = 0, m;
+  while ((m = re.exec(sablona))) {
+    if (m.index > last) out.push({ text: sablona.slice(last, m.index) });
+    out.push({ znacka: m[1] });
+    last = m.index + m[0].length;
+  }
+  if (last < sablona.length) out.push({ text: sablona.slice(last) });
+  return out;
+}
+
+function cisloSlozit(typ, n, sablona) {
+  var r4 = String(new Date().getFullYear());
+  return cisloKousky(sablona || cisloSablona()).map(function(k) {
+    if (k.znacka === undefined) return k.text;
+    if (k.znacka === 'TYP') return typInfo(typ).prefix;
+    if (k.znacka === 'RRRR') return r4;
+    if (k.znacka === 'RR') return r4.slice(-2);
+    var s = String(n);
+    while (s.length < k.znacka.length) s = '0' + s;   // {NNNN} → 0007
+    return s;
+  }).join('');
+}
+
+function cisloEscRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// Regex, kterým se v archivu hledají čísla TÉŽE řady. Rok je dosazený
+// natvrdo za dnešek — šablona s rokem tedy znamená řadu, která se každý
+// rok vrací na jedničku; bez roku běží řada dál.
+// Vrátí `null`, když šablona nemá `{N…}` — pak není co počítat.
+function cisloRegex(typ, sablona) {
+  var r4 = String(new Date().getFullYear());
+  var maCislo = false;
+  var re = cisloKousky(sablona || cisloSablona()).map(function(k) {
+    if (k.znacka === undefined) return cisloEscRe(k.text);
+    if (k.znacka === 'TYP') return cisloEscRe(typInfo(typ).prefix);
+    if (k.znacka === 'RRRR') return cisloEscRe(r4);
+    if (k.znacka === 'RR') return cisloEscRe(r4.slice(-2));
+    maCislo = true;
+    // DELŠÍ číslo se musí chytit taky (`\d{4,}`, ne `\d{4}`) — jinak by se
+    // řada po 9999 zasekla a technikovi, který má pětimístná čísla
+    // (RE-26-10001), by program jeho vlastní řadu vůbec neviděl.
+    return '(\\d{' + k.znacka.length + ',})';
+  }).join('');
+  return maCislo ? new RegExp('^' + re + '$') : null;
+}
+
+// Nejvyšší pořadové číslo řady v archivu. Vrací { max, pocet } nebo null.
+function cisloRadaStav(typ, sablona) {
+  var re = cisloRegex(typ, sablona);
+  if (!re) return null;
+  var max = 0, pocet = 0;
+  archiv.forEach(function(z) {
+    var m = (z.ev_cislo || '').match(re);
+    if (!m) return;
+    pocet++;
+    max = Math.max(max, parseInt(m[1], 10));
+  });
+  return { max: max, pocet: pocet };
+}
+
+function cisloDalsi(typ, sablona) {
+  var s = cisloRadaStav(typ, sablona);
+  return s ? cisloSlozit(typ, s.max + 1, sablona) : null;
+}
+
+// Číslo pro novou zprávu. Bez zaškrtnuté volby nabídne PRVNÍ číslo řady,
+// tedy přesně to, co program dělal dosud.
+function cisloProNovou(typ) {
+  if (cisloAuto()) {
+    var d = cisloDalsi(typ);
+    if (d) return d;
+  }
+  return cisloSlozit(typ, 1);
+}
+
+// Tlačítko ⟳ u pole ev. čísla — přidělit další volné číslo na vyžádání.
+function cisloPridelit() {
+  if (window.__formReadOnly) return;
+  var el = document.getElementById('f_ev_cislo');
+  if (!el) return;
+  var d = cisloDalsi(aktTyp);
+  if (!d) {
+    showToast('Šablona čísla nemá značku {NNNN} — doplňte ji v Nastavení → Číslování zpráv.');
+    return;
+  }
+  el.value = d;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  showToast('Přiděleno číslo ' + d);
+}
+
+// Živá ukázka v Nastavení — ať je předem vidět, co se bude dít.
+function cisloUkazka() {
+  var box = document.getElementById('rt_cislo_ukazka');
+  if (!box) return;
+  var pole = document.getElementById('rt_cislo_format');
+  var sab = ((pole || {}).value || '').trim() || CISLO_VYCHOZI;
+  var stav = cisloRadaStav('elektro', sab);
+  if (!stav) {
+    box.innerHTML = '<strong>⚠ Šablona nemá značku {NNNN}</strong> — program nepozná, kde je pořadové ' +
+      'číslo, takže ho nebude umět přidělit. Číslo si u každé zprávy napíšete sám.';
+    box.style.background = '#fff6e8';
+    box.style.borderColor = '#f0c48a';
+    return;
+  }
+  var strojeStav = cisloRadaStav('stroje', sab);
+  box.style.background = '';
+  box.style.borderColor = '';
+  box.innerHTML =
+    '<div>Příští číslo elektro / hromosvod: <strong>' + esc(cisloSlozit('elektro', stav.max + 1, sab)) + '</strong>' +
+      ' <span style="color:var(--muted)">(v archivu ' + pocetZprav(stav.pocet) + ' této řady)</span></div>' +
+    '<div style="margin-top:.25rem">Příští číslo u strojů: <strong>' +
+      esc(cisloSlozit('stroje', (strojeStav ? strojeStav.max : 0) + 1, sab)) + '</strong>' +
+      ' <span style="color:var(--muted)">(' + pocetZprav(strojeStav ? strojeStav.pocet : 0) + ')</span></div>' +
+    '<div style="margin-top:.35rem;color:var(--muted)">' +
+      (cisloAuto()
+        ? 'Nová zpráva tohle číslo dostane rovnou.'
+        : 'Nová zpráva dostane <strong>' + esc(cisloSlozit('elektro', 1, sab)) +
+          '</strong> jako dosud; další volné číslo si vyžádáte tlačítkem ⟳ u pole Ev. číslo.') +
+    '</div>';
+}
+
 function nacistTechnika() {
   var t = STORE.technik || {};
   var TECHNIK_FIELDS = ['jmeno','osvedceni','opravneni','ulice','mesto','psc','ico','dic','mobil','email','firma'];
@@ -4967,6 +5135,35 @@ function nacistTechnika() {
       });
     }
   });
+  // Číslování zpráv — šablona i zaškrtávátko se ukládají průběžně,
+  // stejně jako ostatní pole profilu, a živá ukázka se překreslí hned.
+  var cf = document.getElementById('rt_cislo_format');
+  if (cf) {
+    cf.value = t.cislo_format || '';
+    if (!cf.dataset.autosaveWired) {
+      cf.dataset.autosaveWired = '1';
+      cf.addEventListener('input', function() {
+        if (!STORE.technik) STORE.technik = {};
+        STORE.technik.cislo_format = cf.value;
+        saveStore();
+        cisloUkazka();
+      });
+    }
+  }
+  var ca = document.getElementById('rt_cislo_auto');
+  if (ca) {
+    ca.checked = !!t.cislo_auto;
+    if (!ca.dataset.autosaveWired) {
+      ca.dataset.autosaveWired = '1';
+      ca.addEventListener('change', function() {
+        if (!STORE.technik) STORE.technik = {};
+        STORE.technik.cislo_auto = ca.checked;
+        saveStore();
+        cisloUkazka();
+      });
+    }
+  }
+  cisloUkazka();
   // Razítko + podpis — pokud uloženy, zobrazit náhled
   renderRazitkoPreview();
   renderPodpisPreview();
@@ -16039,7 +16236,7 @@ function renderArchiv() {
   if (countEl) {
     countEl.textContent = anyFilter
       ? (filtered.length + ' z ' + archiv.length)
-      : (archiv.length + (archiv.length === 1 ? ' zpráva' : (archiv.length < 5 ? ' zprávy' : ' zpráv')));
+      : pocetZprav(archiv.length);
   }
   if (filtered.length === 0) {
     c.innerHTML = '<div class="archiv-empty">Žádné zprávy neodpovídají filtru.</div>';
@@ -16439,18 +16636,11 @@ function navazatZpravu(i) {
   if (!old || !old.data) { alert('Tato zpráva nemá uložená data ke kopírování.'); return; }
   // Deep copy dat
   var D = JSON.parse(JSON.stringify(old.data));
-  // Najdi nejvyšší pořadové číslo v archivu pro aktuální rok a zvedni o 1
-  var rok = new Date().getFullYear().toString().slice(-2);
-  var prefix = typInfo(D.typ).prefix;
-  var pattern = new RegExp('^' + prefix + '-' + rok + '-(\\d{4})$');
-  var maxN = 0;
-  archiv.forEach(function(z) {
-    var m = (z.ev_cislo || '').match(pattern);
-    if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
-  });
-  var nextStr = String(maxN + 1);
-  while (nextStr.length < 4) nextStr = '0' + nextStr;
-  D.ev_cislo = prefix + '-' + rok + '-' + nextStr;
+  // Další volné číslo MÉ řady podle šablony z profilu (Nastavení →
+  // Číslování zpráv). Nemá-li šablona {NNNN}, nechá se číslo staré zprávy —
+  // program si ho nemá kde vzít a vymýšlet si ho nebude.
+  var noveCislo = cisloDalsi(D.typ);
+  if (noveCislo) D.ev_cislo = noveCislo;
   // Přepsat data na dnešek
   var d = new Date().toISOString().split('T')[0];
   D.zahajeni = d;
@@ -19625,6 +19815,7 @@ document.addEventListener('click', function(e) {
     case 'otevritZpravu': otevritZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'formArchivPrepnout': formArchivPrepnout(); break;
     case 'formArchivZavrit': formArchivZavrit(); break;
+    case 'cisloPridelit': cisloPridelit(); break;
     case 'formArchivTyp': formArchivTyp(el.getAttribute('data-typ')); break;
     case 'formArchivOtevrit':
       formArchivOtevrit(el.getAttribute('data-uid'), parseInt(el.getAttribute('data-idx')));
