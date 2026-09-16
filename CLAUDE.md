@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.64 · 2026-09-16**
+**Aktuální verze: v9.65 · 2026-09-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -168,7 +168,7 @@ slovník `POJMY` — tabulka **`DRUHY_ZPRAVY`**:
 vymezení předmětu je ve vlastní kapitole. Kontrola se musí dívat na celý
 `#pdf-pages`, ne na `.a4-titulni`.
 
-## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.64)
+## Postranní archiv ve formuláři — jako seznam pošty (v9.57–v9.65)
 
 **Zadání uživatele (2026-09-16, snímek Outlooku):** „píšu zprávu a překliknu
 si to na druhou zprávu a zároveň ten archiv mohu schovat, komu by vadil na
@@ -230,6 +230,39 @@ nabízel jsem náhled s potvrzením, chtěl chování Outlooku) a **«** panel s
   na hlavní straně.
 - U zprávy o stroji se ukáže **název a typ stroje** (`archivMistoBunka`
   z v9.47), ne jen umístění.
+### ⧉ Kopírovat → nová zpráva (v9.65)
+
+Pokyn uživatele 2026-09-16: „potřebuji, aby v postranním archivu bylo
+tlačítko zkopírovat / vytvořit jako novou zprávu — **pro navázání slouží
+hlavní archiv**, tady se to rovnou zkopíruje a založí nová zpráva
+s číslováním, jak má technik nastaveno."
+
+- **Kopie NENÍ „Navázat".** `navazatZpravu()` dělá NÁSTUPCE: nastaví
+  `__predchudceUid` (stará zpráva se vnoří do řetězu revizí objektu),
+  zapíše `predchozi` = datum ukončení staré a překlopí výchozí revizi
+  na pravidelnou. `formArchivKopirovat()` **žádný řetěz nedělá** — je to
+  samostatná zpráva pro JINÝ objekt, která si půjčuje jen rozpis obvodů,
+  přístroje a texty. `predchozi` i `pristi` se proto **mažou**.
+- **Naměřené hodnoty a závady se vyprazdňují stejně jako u Navázat.**
+  Vydat zprávu s hodnotami naměřenými na jiném objektu je to nejhorší, co
+  se tu může stát. Dělá to **`vycistitNamerene(D)`** — **jedno místo pro obě
+  cesty schválně**; kdyby se rozešly, jedna z nich by cizí měření pustila
+  ven. (Vytaženo z `navazatZpravu()`, která ho teď volá taky.)
+- **Číslo se bere ze šablony technika** (`cisloDalsi()` → v9.62), takže
+  kopie zapadne do jeho řady. Fallback na první číslo řady, kdyby šablona
+  neměla `{NNNN}`.
+- **Ptá se a ukazuje, co udělá** — dialog jmenuje zdrojovou zprávu, nové
+  číslo i to, že hodnoty budou prázdné. Tlačítko sedí těsně vedle řádku,
+  na který se kliká kvůli otevření; bez potvrzení by překlep zakládal
+  zprávy do archivu.
+- **`e.stopPropagation()` v delegaci je nutnost** — bez něj by klik na ⧉
+  zprávu zároveň otevřel (řádek má vlastní `data-action`). Test to hlídá.
+- Jde i přes `attemptLeaveForm()`, takže rozdělaná zpráva projde dialogem.
+- Kopie se rovnou uloží do archivu (jako u Navázat), aby nezmizela při
+  návratu na hlavní stranu.
+- CSS `.fa-kopie`: v klidu jen slabě naznačené, po najetí na řádek
+  zvýrazní. **Neschovává se úplně** — na dotykovém displeji `:hover` není.
+
 ### Roztažení panelu myší (v9.60)
 
 Pokyn uživatele: „aby šla oddělovací čára jako v Outlooku uchopit a roztáhnout
@@ -274,7 +307,7 @@ typ zruší. Kombinuje se s hledáním.
 - Prázdný výsledek pojmenuje **obojí** („Nic neodpovídá hledání a filtru
   Stroje."), ať je jasné, co seznam vyprázdnilo.
 
-- Test: `test-form-archiv.js` (69 kontrol — hledání neoznačí zprávu jako
+- Test: `test-form-archiv.js` (83 kontrol — hledání neoznačí zprávu jako
   změněnou, zachování tabu, spadnutí na titulku u jiného typu, dialog
   u neuložených změn, panel mimo formulář, sbalení přes restart, zamčená
   zpráva, překryv na úzkém okně, karta v Novinkách).
