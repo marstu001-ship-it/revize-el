@@ -1142,7 +1142,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.70<span class="ver-date"> · 2026-09-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.71<span class="ver-date"> · 2026-09-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1272,6 +1272,24 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <p>Přehled funkcí a jak je používat</p>
   </div>
 
+  <div class="scard" data-nov-datum="2026-09-17">
+    <div class="scard-title">🔌 Revize elektrických spotřebičů <span class="nov-datum">17. 9. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Nový, <strong>čtvrtý typ zprávy</strong> podle <strong>ČSN 33 1600 ed.2</strong> — vedle strojů na výběru druhu revize. Je to jednolistový protokol, ne zpráva členěná do kapitol, takže se vyplňuje jinak než ostatní: <strong>co vidíte na obrazovce, to vyjde z tiskárny</strong>. Žádné kroky, žádné překvapení v náhledu.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Vyplňujete rovnou hotový protokol</strong> — hlavičku, tabulku spotřebičů, vysvětlivky i podpis. Šedý text v buňce je <strong>nápověda, ne hodnota</strong>; do zprávy se nedostane a prázdná buňka se vytiskne jako <code>---</code>.</li>
+        <li><strong>Lhůta 6 / 12 / 24 měsíců</strong> se volí pro celý protokol (spotřebiče s jinou lhůtou patří na vlastní protokol) a <strong>datum příští revize se z ní dopočítá</strong>. Zapíšete-li termín ručně, program ho nepřepíše.</li>
+        <li><strong>Vyplňování jako v Excelu:</strong> <strong>Enter</strong> nebo <strong>↓</strong> skočí o řádek níž ve stejném sloupci, <strong>Shift+Enter</strong> nebo <strong>↑</strong> zpět, <strong>šipky ← →</strong> do vedlejší buňky a <strong>Ctrl+D</strong> převezme hodnotu z buňky nad kurzorem. Enter na posledním řádku rovnou založí další.</li>
+        <li><strong>⧉ u řádku zkopíruje spotřebič i s hodnotami</strong> — deset stejných zdrojů se liší jen výrobním číslem.</li>
+        <li><strong>+ Přidat prodlužovací přívod</strong> předvyplní třídu II, skupinu C a sestavu PP.</li>
+        <li><strong>Podbarvení</strong> si vyberete z palety nad protokolem a hned vidíte, jak to bude vypadat. Volba se uloží u té zprávy.</li>
+        <li><strong>Místo vystavení</strong> („v ……… dne:") je pole v protokolu — revizi děláte u zákazníka, ne v kanceláři. Necháte-li ho prázdné, doplní se město z vašeho profilu.</li>
+        <li>Náhled, tisk i uložení PDF jako u ostatních zpráv. Protokol se tiskne <strong>na šířku</strong> a při větším počtu spotřebičů se sám rozdělí na strany s opakovanou hlavičkou.</li>
+      </ul>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Podle vzoru kolegy Jiřího Roubalíka.</div>
+    </div>
+  </div>
+
   <div class="scard" data-nov-datum="2026-09-16">
     <div class="scard-title">📚 Postranní archiv přímo ve zprávě <span class="nov-datum">16. 9. 2026</span></div>
     <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Tlačítkem <strong>📚 Archiv</strong> vlevo nahoře si ve zprávě otevřete boční seznam všech zpráv — jako složku pošty v Outlooku.</p>
@@ -1280,7 +1298,11 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <li><strong>Kliknutím se rovnou přepnete na jinou zprávu</strong> — a zůstanete na stejném kroku, na kterém jste byli. Jste-li v <em>Měření</em>, otevře se vám <em>Měření</em>.</li>
         <li><strong>Tlačítkem «</strong> se panel schová, když na menší obrazovce překáží. Program si to zapamatuje pro každý počítač zvlášť — na velkém monitoru vám může zůstat otevřený, na notebooku schovaný.</li>
         <li><strong>Nahoře se dá hledat</strong> podle ev. čísla, místa i objednatele; u zpráv o strojích taky podle názvu a typu stroje.</li>
-        <li>Seznam začíná <strong>rozpracovanými</strong>, pak jdou <strong>připnuté</strong>, <strong>naposledy otevřené</strong> a nakonec zprávy po rocích.</li>
+        <li>Seznam je <strong>seřazený podle ev. čísla</strong> a kliknutím se nepřeskládá — zprávy zůstávají tam, kde jste je našli. Rozpracovanou poznáte podle zlatého proužku a značky 🔨, připnutou podle 📌.</li>
+        <li><strong>Filtr podle typu</strong> pod hledáním — Vše · Elektro · LPS · Stroje · Spotřebiče. Jeden klik seznam zúží, druhý klik na tentýž typ ho zruší; kombinuje se s hledáním.</li>
+        <li><strong>Oddělovací čáru můžete chytit myší a panel si roztáhnout</strong>, jak potřebujete. Dvojklik na ni vrátí původní šířku.</li>
+        <li><strong>⧉ u zprávy založí novou jako její kopii</strong> — převezme rozpis obvodů, přístroje a texty, ale <strong>naměřené hodnoty a závady vyprázdní</strong> a přidělí další číslo podle vašeho nastavení. (Pro navázání na předchozí revizi téhož objektu slouží dál <strong>🔗 Navázat</strong> v hlavním archivu.)</li>
+        <li><strong>✕ zprávu smaže</strong> — dotaz ji pojmenuje a po smazání máte 8 vteřin na <strong>Zpět</strong>. Právě otevřenou zprávu smazat nejde.</li>
         <li>Máte-li v otevřené zprávě neuložené změny, program se jako vždycky zeptá, jestli je uložit — kliknutím v panelu o nic nepřijdete.</li>
       </ul>
     </div>

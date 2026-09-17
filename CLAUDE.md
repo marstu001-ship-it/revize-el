@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.70 · 2026-09-17**
+**Aktuální verze: v9.71 · 2026-09-17**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,37 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Karty v Novinkách ke spotřebičům a k archivu (v9.71)
+
+Uživatel schválil 2026-09-17 („novinky ano"). Dvě věci:
+
+1. **Nová karta „🔌 Revize elektrických spotřebičů"** (`data-nov-datum`
+   **2026-09-17**) — nový typ zprávy, lhůty, ovládání z klávesnice, ⧉ kopie
+   řádku, podbarvení, místo vystavení.
+2. **Karta k postrannímu archivu (v9.58) se OPRAVILA a doplnila.** Tvrdila
+   „seznam začíná rozpracovanými, pak připnuté, naposledy otevřené a nakonec
+   zprávy po rocích" — **od v9.64 to tak není** (uživatel oddíly odmítl), takže
+   karta lhala. Přibyly k ní filtr typu, roztažení myší, ⧉ kopie a ✕ smazání.
+   **Datum se nechalo 2026-09-16** — je to doplnění existující karty, ne nová
+   funkce; posouvat ho dopředu by vypadalo, že archiv je nový.
+
+**Dva testy spadly a nebyla to chyba programu** — `test-form-archiv.js`
+a `test-ai-sken.js` hlídaly svou kartu **napevno podle indexu** a novější
+karta je posunula. Přesně past popsaná u v9.58. Opraveno tak, aby se to
+nemohlo opakovat:
+
+- karta se hledá **podle titulku**, ne podle indexu,
+- pořadí se ověřuje **skutečným nárokem**: nad kartou nesmí stát nic
+  staršího a pod ní nic novějšího (ne „je druhá" — karet se stejným datem
+  může být víc),
+- **pulsování 📰 se porovnává přes `>=`, ne `===`**. `getNovinkyLatest()`
+  vrací **maximum přes všechny karty**, takže rovnost s datem konkrétní
+  karty platí jen do první novější.
+
+Test: `test-novinky.js` (21 kontrol — karta nahoře, datum v atributu
+i v titulku, čelo seznamu seřazené, karet bez data nepřibylo, obsah obou
+karet, rozsvícené tlačítko 📰).
 
 ## Spotřebiče — vyplňování jako v Excelu a vzhled podle vzoru (v9.70)
 
