@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.69 · 2026-09-17**
+**Aktuální verze: v9.70 · 2026-09-17**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,79 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Spotřebiče — vyplňování jako v Excelu a vzhled podle vzoru (v9.70)
+
+**Zadání uživatele 2026-09-17** (k v9.69): „V tabulce chybí zkopírovat řádek,
+chybí funkce z excelu pro snažší vyplňování — například kopírování hodnot pod
+sebou, posun šipkami nebo enterem v okénkách. Nemožnost přepsat, že jsem dělal
+zprávu někde jinde, třeba u zákazníka, ne podle adresy technika. Naše zpráva
+z programu je vizuálně hnusná, vzor od Jirky z Illka je pěknější — to by
+z části vyřešila funkce barevného pozadí, co máme jinde."
+
+### Ovládání z klávesnice
+
+`spotrKlavesa()` na **hostiteli listu** (ne na tabulce — ta se překresluje
+a posluchač by se s ní ztratil):
+
+| klávesa | co dělá |
+|---|---|
+| **Enter** / **↓** | stejný sloupec, další řádek |
+| **Shift+Enter** / **↑** | o řádek zpět |
+| **← →** | vedlejší sloupec — **jen když je kurzor na konci textu** |
+| **Ctrl+D** | převezme hodnotu z buňky NAD kurzorem (vyplnění sloupce) |
+| **⧉ u řádku** | kopie řádku i s hodnotami hned pod originál |
+
+- **Šipky ← → nesmí přeskakovat buňky bezpodmínečně.** V Excelu ano, ale tady
+  jsou to textová pole — jinak by nešlo opravit překlep uprostřed slova.
+  Proto se kouká na `selectionStart/End`. U `<select>` se do nich nesahá
+  vůbec, tam si je bere prohlížeč na přepínání voleb.
+- **Enter na posledním řádku založí další**, aby šlo psát spotřebič za
+  spotřebičem bez sahání po myši. **Prázdnota řádku se pozná JEN z psaných
+  polí, ne z rozbalovátek** — nový řádek má předvyplněnou sestavu, metodu,
+  chod i hodnocení (P/V/V/V), takže „má aspoň jednu hodnotu" je vždycky
+  pravda a Enter by zakládal řádky donekonečna. (Našel to test.)
+- **Sloupec s tlačítky ⧉ ✕ musí mít vlastní `<col>` v `<colgroup>`** —
+  `table-layout:fixed` dá buňce bez něj nulovou šířku a tlačítka se
+  poskládají pod sebe. `spotrTabulkaHlavicka(o)` ho přidává jen při `o.edit`.
+
+### Místo vystavení je pole zprávy
+
+V podpisu „v ……… dne: ………" bylo město z **profilu technika**. Revize se ale
+dělá u zákazníka. Použije se proto stávající pole **`f_predano_misto`**
+(„Předáno v (město)"), které se stěhuje do listu jako ostatní —
+`SPOTR_PRENOS`. Prázdné pole spadne zpátky na `STORE.technik.mesto`, takže
+komu to dosud vyhovovalo, nic se nemění.
+
+### Vzhled
+
+1. **Písmo je bezpatkové.** `.a4` má `font-family: Courier Prime…` pro
+   všechny typy zpráv a vedle sázeného vzoru od kolegy vypadal protokol jako
+   výpis z jehličkové tiskárny. Přepisuje to **`.sp-sheet, .a4.a4-spotrebice`**
+   → `var(--sans)`. **Dvě třídy schválně:** `.a4` stojí v souboru NÍŽ, takže
+   při shodné specificitě vyhrává a PDF by se tisklo psacím strojem, i když
+   na obrazovce ne. **Elektro, LPS ani stroje se nezměnily** (`porovnani2.js`
+   znak po znaku).
+2. **Podbarvení hlaviček a vysvětlivek** ze **stejného nastavení jako
+   u ostatních zpráv** (`tiskNastaveni` → `pozadiTisku`), takže nevzniká
+   druhé úložiště barev a volba se se zprávou uloží do archivu.
+   - **Barva se bere PŘÍMO, ne přes `pboxOdstin()`.** Ten ji míchá na 85 %
+     bílé (u ostatních zpráv má být podbarvení jen náznak) — po předlohách
+     z `TISK_BARVY`, které jsou samy o sobě světlé, by nezbylo nic.
+   - Paleta šesti vzorků je **v liště nad protokolem**, ne ve vyskakovacím
+     okně — mění se živě v tom, co se tiskne.
+   - **`SPOTR_BARVA_VYCHOZI = '#f2f2f2'`** — nová zpráva o spotřebičích má
+     podbarvení rovnou, aby vypadala jako vzor. Je to jen výchozí hodnota:
+     kdo klikne na „bílá", tomu u té zprávy bílá zůstane (`pozadiTisku: ''`).
+   - Kolonky s údaji zůstávají **bílé**, ať se v nich čte — stejný princip
+     jako `pbox-tint` jinde.
+3. `--sp-tint` dědí z `--pdf-bg`, které se nastavuje na **kontejneru** stránek
+   (podědí ho i strany vzniklé až při stránkování) a na `.sp-sheet`.
+
+Test: `test-spotrebice.js` **78 kontrol** (nově: kopie řádku, všech pět
+kláves, past s předvyplněnými rozbalovátky, místo vystavení ve zprávě
+i v PDF, že protokol není monospace na obrazovce ani v PDF, podbarvení
+shodné na obou místech, zrušení barvy i výběr jiné).
 
 ## Spotřebiče — FORMULÁŘ JE PROTOKOL (v9.69)
 
@@ -131,7 +204,7 @@ zásadní chyba, ne kosmetika. Datum „v … dne:" je v editaci přihrádka pro
 
 - **`collectPristroje()` je nová funkce** vytažená z `getData()` — protokol
   potřebuje seznam přístrojů za běhu, ne až při skládání PDF.
-- Test: `test-spotrebice.js` (62 kontrol — nově: jediný tab, pole opravdu
+- Test: `test-spotrebice.js` (nově: jediný tab, pole opravdu
   bydlí v listu a vrací se domů, nikde vodorovný posuvník, list široký
   přesně 281 mm, měřítko na úzkém okně i s roztaženým archivem, karta
   přístrojů se půjčí a vrátí, podpisová čára a oba popisky v PDF).

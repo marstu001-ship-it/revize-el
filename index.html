@@ -699,13 +699,29 @@ html.dark .fa-radek.fa-akt{background:#3a2420}
    (`spotrPrizpusobit()`), místo aby se posouval vodorovně — vodorovný
    posuvník byl to, co uživatel výslovně odmítl. */
 .sp-sheet-wrap{overflow:hidden}
+/* **Písmo je bezpatkové, ne psací stroj.** Vzor od kolegy (Illko) je sázený
+   Calibri a vedle něj vypadal náš monospace protokol jako výpis z jehličkové
+   tiskárny — uživatel to odmítl 2026-09-17 („naše zpráva z programu je
+   vizuálně hnusná"). Týká se to POUZE spotřebičů: `.a4` má monospace dál,
+   takže elektro, LPS ani stroje se nezměnily. */
+/* `.a4.a4-spotrebice` — dvě třídy schválně: pravidlo `.a4{font-family:…
+   monospace}` stojí v souboru NÍŽ, takže při shodné specificitě vyhrává
+   a protokol by se vytiskl psacím strojem, i když na obrazovce nebyl. */
+.sp-sheet,.a4.a4-spotrebice{font-family:var(--sans);
+  --sp-tint:var(--pdf-bg,#fff)}
 .sp-sheet{width:281mm;transform-origin:top left;background:#fff;color:#000;
   border:1px solid var(--border-dark);box-shadow:0 4px 20px rgba(0,0,0,.18);
-  padding:1.4rem 1.6rem 1.8rem;font-family:'Courier Prime','Courier New',Courier,monospace}
+  padding:1.4rem 1.6rem 1.8rem}
 html.dark .sp-sheet{background:#f7f6f2}
 .sp-lista{margin:0 auto .8rem;display:flex;gap:1rem;
   align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
 .sp-lista-vlevo{display:flex;flex-direction:column;gap:.2rem;min-width:260px;flex:1}
+.sp-lista-vpravo{display:flex;gap:1rem;align-items:flex-end}
+.sp-barvy-obal{display:flex;flex-direction:column;gap:.25rem}
+.sp-barvy{display:flex;gap:.25rem}
+.sp-barva{width:22px;height:22px;border:1px solid var(--border-dark);border-radius:3px;
+  cursor:pointer;padding:0}
+.sp-barva.je{outline:2px solid var(--accent2);outline-offset:1px}
 .sp-lista select{width:100%;padding:.35rem .5rem;font-size:.82rem;
   border:1px solid var(--border-dark);border-radius:3px;background:var(--surface);color:var(--text)}
 /* Kolonky hlavičky — do přihrádek se stěhují SKUTEČNÁ pole zprávy. */
@@ -741,11 +757,22 @@ html.dark .sp-sheet{background:#f7f6f2}
 .sp-podpis-popisky{display:flex;justify-content:space-between;gap:1rem;
   padding-top:1mm;font-size:7.5pt}
 .sp-podpis-ev{font-size:7pt;color:#333}
-/* Křížek u řádku — v tisku tenhle sloupec vůbec není. */
-.sp-del{border:none!important;width:18px;padding:0 0 0 3px!important;background:transparent}
-.sp-x{background:transparent;border:1px solid transparent;color:#bbb;cursor:pointer;
+/* Tlačítka u řádku — v tisku tenhle sloupec vůbec není. */
+.sp-del{border:none!important;background:transparent!important;white-space:nowrap;
+  padding:0 0 0 4px!important;text-align:right}
+.sp-x{background:transparent;border:1px solid transparent;color:#c9c6bf;cursor:pointer;
   font-size:.75rem;line-height:1;padding:.1rem .2rem;border-radius:3px}
-tr:hover > .sp-del .sp-x{color:var(--accent);border-color:var(--accent)}
+tr:hover > .sp-del .sp-x{color:var(--accent2);border-color:var(--border-dark)}
+tr:hover > .sp-del .sp-x-del:hover{color:#fff;background:var(--accent);border-color:var(--accent)}
+tr:hover > .sp-del .sp-x-kopie:hover{color:#fff;background:var(--accent2);border-color:var(--accent2)}
+
+/* Podbarvení jako ve vzoru: hlavičky tabulky a vysvětlivky dostanou nádech
+   zvolené barvy, kolonky s údaji zůstanou BÍLÉ, aby se v nich četlo.
+   Stejný princip jako `pbox-tint` u ostatních zpráv. */
+.sp-sheet .sp-hlavicka .sp-slot,.a4-spotrebice .sp-hlavicka span[style]{background:#fff}
+table.spotr-tab th,.sp-pristroje th{background:var(--sp-tint,#fff)!important}
+.sp-vysv table td{background:var(--sp-tint,#fff)}
+.sp-vysv table td:nth-child(2n){background:#fff}
 
 table.spotr-tab{width:100%;table-layout:fixed;border-collapse:collapse;
   font-size:6.6pt;line-height:1.15}
@@ -1115,7 +1142,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.69<span class="ver-date"> · 2026-09-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.70<span class="ver-date"> · 2026-09-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3210,6 +3237,10 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <span id="sp-odberatel-slot"></span>
     </div>
     <div class="sp-lista-vpravo">
+      <div class="sp-barvy-obal">
+        <label style="font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Podbarvení</label>
+        <div id="sp-barvy" class="sp-barvy"></div>
+      </div>
       <button class="btn btn-ghost" data-action="spotrPristrojeOtevrit" style="background:var(--bg);color:var(--text);border:1px solid var(--border-dark)">🔧 Měřicí přístroje</button>
     </div>
   </div>
@@ -16381,7 +16412,7 @@ var SPOTR_PRIVOD = { trida: 'II', skupina: 'C', sestava: 'PP', metoda: 'V',
 // Pole zprávy, která se stěhují do protokolu. Stěhují se SKUTEČNÉ prvky,
 // ne kopie — jinak by vznikly dva zdroje pravdy.
 var SPOTR_PRENOS = ['f_provozovatel', 'f_ev_cislo', 'f_zahajeni', 'f_pristi',
-                    'f_misto', 'f_sp_lhuta', 'f_vypracovani'];
+                    'f_misto', 'f_sp_lhuta', 'f_predano_misto', 'f_vypracovani'];
 
 var SPOTR_CELKEM = SPOTR_SLOUPCE.reduce(function(a, c) { return a + c.sirka; }, 0);
 
@@ -16447,16 +16478,21 @@ function spotrTh(c, extra) {
 // ne v buňkách** — první řádek má sloučené buňky (colspan) a `table-layout:fixed`
 // z nich šířky jednotlivých sloupců neodvodí, takže by se druhý řádek hlavičky
 // s daty nezarovnal (a přesně to se napoprvé stalo).
-function spotrTabulkaHlavicka() {
+function spotrTabulkaHlavicka(o) {
   var cg = '<colgroup>' + SPOTR_SLOUPCE.map(function(c, i) {
     return '<col style="width:' + spotrProc(i) + '">';
-  }).join('') + '</colgroup>';
+  }).join('') +
+    // Sloupec s tlačítky ⧉ ✕ existuje jen na obrazovce a MUSÍ mít vlastní
+    // `<col>`: `table-layout:fixed` dá buňce bez něj nulovou šířku a obě
+    // tlačítka se poskládají pod sebe.
+    ((o && o.edit) ? '<col style="width:46px">' : '') + '</colgroup>';
   var r1 = '<tr>';
   SPOTR_SKUPINY.forEach(function(g) {
     var od = spotrSloupec(g.od), po = spotrSloupec(g.po);
     if (g.h) r1 += '<th colspan="' + (po - od + 1) + '">' + esc(g.h) + '</th>';
     else for (var i = od; i <= po; i++) r1 += spotrTh(SPOTR_SLOUPCE[i], ' rowspan="2"');
   });
+  if (o && o.edit) r1 += '<th class="sp-del" rowspan="2"></th>';
   r1 += '</tr><tr>';
   SPOTR_SKUPINY.forEach(function(g) {
     if (!g.h) return;
@@ -16494,8 +16530,11 @@ function spotrRadekHtml(r, o) {
         ' autocomplete="off" style="text-align:' + (vlevo ? 'left' : 'center') + '"></td>';
     }
   });
-  html += (o.edit ? '<td class="sp-del"><button class="sp-x" data-action="delSpotrebic" ' +
-    'title="Smazat řádek">✕</button></td>' : '') + '</tr>';
+  html += (o.edit ? '<td class="sp-del">' +
+    '<button class="sp-x sp-x-kopie" data-action="copySpotrebic" ' +
+      'title="Zkopírovat řádek i s hodnotami">⧉</button>' +
+    '<button class="sp-x sp-x-del" data-action="delSpotrebic" ' +
+      'title="Smazat řádek">✕</button></td>' : '') + '</tr>';
   return html;
 }
 
@@ -16548,7 +16587,12 @@ function spotrPodpisHtml(D, o) {
   var podpis = (pdfOpts.podpis && t.podpis)
     ? '<img src="' + t.podpis + '" style="max-height:16mm;max-width:55mm" alt="podpis">' : '';
   return '<div class="sp-podpis">' +
-    '<div class="sp-podpis-datum">v ' + esc(t.mesto || '……………………') + ' dne: ' +
+    '<div class="sp-podpis-datum">v ' +
+      // Místo vystavení je POLE ZPRÁVY (`f_predano_misto`), ne město z profilu
+      // technika — revize se dělá u zákazníka, ne v kanceláři (pokyn
+      // uživatele 2026-09-17). Prázdné pole spadne zpět na profil.
+      (o.edit ? spotrKolonka(o, 'f_predano_misto', '42mm', '', true)
+              : esc(D.predano_misto || t.mesto || '……………………')) + ' dne: ' +
       (o.edit ? spotrKolonka(o, 'f_vypracovani', '30mm', '', true)
               : esc(fmtDate(D.vypracovani || D.ukonceni || D.zahajeni) || '……………')) + '</div>' +
     '<div class="sp-podpis-blok">' +
@@ -16565,6 +16609,41 @@ function spotrPodpisHtml(D, o) {
         '<div>podpis</div>' +
       '</div>' +
     '</div></div>';
+}
+
+// ── Barevné podbarvení ─────────────────────────────────────────────────
+// Vzor od kolegy má hlavičky a vysvětlivky podbarvené a vedle něj vypadal
+// náš protokol holý (pokyn uživatele 2026-09-17). Bere se ze **stejného
+// nastavení jako u ostatních zpráv** (`tiskNastaveni` → `pozadiTisku`,
+// odstín přes `pboxOdstin`), takže nevzniká druhé úložiště barev a volba
+// se se zprávou uloží i do archivu.
+// **Barva se bere přímo, ne přes `pboxOdstin()`.** Ten ji míchá na 85 % bílé
+// (u ostatních zpráv má být podbarvení okének jen náznak), ale ve vzoru je
+// podbarvení jasně vidět — přes 85 % bílé by po něm nezbylo nic. Předlohy
+// v `TISK_BARVY` jsou samy o sobě dost světlé.
+function spotrOdstin(D) {
+  return tiskNastaveni(D).pozadiTisku || '#fff';
+}
+
+function spotrBarvyHtml() {
+  var akt = (window.__tiskZpravy || {}).pozadiTisku ||
+            ((STORE.tisk || {}).pozadiTisku || '');
+  return TISK_BARVY.map(function(b) {
+    return '<button type="button" class="sp-barva' + (b.h === akt ? ' je' : '') +
+      '" data-action="spotrBarva" data-barva="' + b.h + '" title="' + esc(b.n) + '"' +
+      ' style="background:' + (b.h || '#fff') + '"></button>';
+  }).join('');
+}
+
+function spotrBarva(el) {
+  var z = window.__tiskZpravy || (window.__tiskZpravy = {});
+  z.pozadiTisku = el.dataset.barva || '';
+  window.__formDirty = true;
+  var host = document.getElementById('spotrebice-list');
+  var sheet = host && host.querySelector('.sp-sheet');
+  if (sheet) sheet.style.setProperty('--pdf-bg', spotrOdstin(getData()));
+  var lista = document.getElementById('sp-barvy');
+  if (lista) lista.innerHTML = spotrBarvyHtml();
 }
 
 // ── Formulář = protokol ────────────────────────────────────────────────
@@ -16597,11 +16676,17 @@ function renderSpotrebiceList(D) {
       spotrVysvetlivkyHtml(D) +
       spotrPodpisHtml(D, o) +
     '</div></div>';
+  host.querySelector('.sp-sheet').style.setProperty('--pdf-bg', spotrOdstin(D));
+  var barvy = document.getElementById('sp-barvy');
+  if (barvy) barvy.innerHTML = spotrBarvyHtml();
   // hlavičku tabulky vložit až teď (thead musí být před tbody)
   var tab = host.querySelector('.spotr-tab');
-  tab.insertAdjacentHTML('afterbegin', spotrTabulkaHlavicka());
+  tab.insertAdjacentHTML('afterbegin', spotrTabulkaHlavicka(o));
   spotrPrenosPoli(true);
   spotrPrizpusobit();
+  // Posluchač patří na HOSTITELE, ne na tabulku — ta se překresluje
+  // a posluchač by se s ní ztratil.
+  if (!host.__spotrKlavesy) { host.__spotrKlavesy = 1; host.addEventListener('keydown', spotrKlavesa); }
 }
 
 // List má šířku papíru (281 mm). Do užšího okna se **zmenší celý najednou**,
@@ -16679,6 +16764,103 @@ function delSpotrebic(el) {
   });
 }
 
+// Kopie řádku i s hodnotami, hned pod originál. U spotřebičů je to ta
+// nejčastější operace — deset stejných zdrojů se liší jen výrobním číslem.
+function copySpotrebic(el) {
+  var tr = el.closest('tr');
+  if (!tr) return;
+  var r = {};
+  tr.querySelectorAll('.sp-pole').forEach(function(p) { r[p.dataset.k] = p.value || ''; });
+  tr.insertAdjacentHTML('afterend', spotrRadekHtml(r, { edit: true }));
+  window.__formDirty = true;
+  var novy = tr.nextElementSibling;
+  var prvni = novy && novy.querySelector('.sp-pole');
+  if (prvni) { prvni.focus(); if (prvni.select) prvni.select(); }
+}
+
+// ── Ovládání z klávesnice jako v tabulkovém procesoru ───────────────────
+// Pokyn uživatele 2026-09-17: „chybí funkce z excelu pro snažší vyplňování —
+// například kopírování hodnot pod sebou, posun šipkami nebo enterem."
+//
+// **Šipky ← → se chovají jako v poli, ne jako v Excelu** — přeskočí do
+// vedlejší buňky, teprve až je kurzor na konci textu. Jinak by v tabulce
+// nešlo opravit překlep uprostřed slova.
+function spotrBunky(tr) {
+  return Array.prototype.slice.call(tr.querySelectorAll('.sp-pole'));
+}
+
+function spotrSkok(pole, dRadek, dSloupec) {
+  var tr = pole.closest('tr');
+  var tb = tr && tr.parentNode;
+  if (!tb) return false;
+  var sl = spotrBunky(tr).indexOf(pole);
+  if (dSloupec) {
+    var vedle = spotrBunky(tr)[sl + dSloupec];
+    if (!vedle) return false;
+    vedle.focus();
+    if (vedle.select) vedle.select();
+    return true;
+  }
+  var radky = Array.prototype.slice.call(tb.children);
+  var cil = radky[radky.indexOf(tr) + dRadek];
+  if (!cil) return false;
+  var bunka = spotrBunky(cil)[sl];
+  if (!bunka) return false;
+  bunka.focus();
+  if (bunka.select) bunka.select();
+  return true;
+}
+
+// Ctrl+D = převzít hodnotu z buňky NAD kurzorem (jako v Excelu). Tím se
+// vyplní sloupec, kde se hodnota opakuje — třída, skupina, napětí…
+function spotrVyplnitShora(pole) {
+  var tr = pole.closest('tr');
+  var tb = tr && tr.parentNode;
+  if (!tb) return;
+  var radky = Array.prototype.slice.call(tb.children);
+  var nad = radky[radky.indexOf(tr) - 1];
+  if (!nad) return;
+  var zdroj = spotrBunky(nad)[spotrBunky(tr).indexOf(pole)];
+  if (!zdroj) return;
+  pole.value = zdroj.value;
+  pole.dispatchEvent(new Event('input', { bubbles: true }));
+  if (pole.tagName === 'SELECT') pole.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function spotrKlavesa(e) {
+  var pole = e.target;
+  if (!pole.classList || !pole.classList.contains('sp-pole')) return;
+  var je = pole.tagName !== 'SELECT';
+  if (e.key === 'd' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault(); spotrVyplnitShora(pole); return;
+  }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (e.shiftKey) { spotrSkok(pole, -1, 0); return; }
+    // Enter na posledním řádku založí další — aby šlo psát jeden spotřebič
+    // za druhým bez sahání po myši. Prázdný řádek se neplodí.
+    if (!spotrSkok(pole, 1, 0)) {
+      // **Prázdnota se poznává jen z PSANÝCH polí, ne z rozbalovátek.**
+      // Nový řádek má předvyplněnou sestavu, metodu, chod i hodnocení
+      // (P/V/V/V), takže „má aspoň jednu hodnotu" je vždycky pravda —
+      // a Enter by zakládal řádky donekonečna.
+      var tr = pole.closest('tr');
+      var psane = spotrBunky(tr).filter(function(x) { return x.tagName !== 'SELECT'; });
+      if (psane.some(function(x) { return (x.value || '').trim(); })) addSpotrebic();
+    }
+    return;
+  }
+  if (e.key === 'ArrowDown') { if (spotrSkok(pole, 1, 0)) e.preventDefault(); return; }
+  if (e.key === 'ArrowUp') { if (spotrSkok(pole, -1, 0)) e.preventDefault(); return; }
+  // U rozbalovátka si šipky ← → bere prohlížeč na přepínání voleb.
+  if (!je) return;
+  var naZacatku = pole.selectionStart === 0 && pole.selectionEnd === 0;
+  var naKonci = pole.selectionStart === pole.value.length &&
+                pole.selectionEnd === pole.value.length;
+  if (e.key === 'ArrowLeft' && naZacatku) { if (spotrSkok(pole, 0, -1)) e.preventDefault(); }
+  else if (e.key === 'ArrowRight' && naKonci) { if (spotrSkok(pole, 0, 1)) e.preventDefault(); }
+}
+
 // ── Data ────────────────────────────────────────────────────────────────
 function collectSpotrebiceData() {
   var out = { lhuta: gv('f_sp_lhuta') || '24', seznam: [] };
@@ -16703,13 +16885,22 @@ function restoreSpotrebiceData(S) {
   var D = { spotrebice: S, ev_cislo: gv('f_ev_cislo'), misto: gv('f_misto'),
             zahajeni: gv('f_zahajeni'), pristi: gv('f_pristi'),
             provozovatel: gv('f_provozovatel'), vypracovani: gv('f_vypracovani'),
+            predano_misto: gv('f_predano_misto'),
+            tisk: Object.assign({}, window.__tiskZpravy || {}),
             pristroje: collectPristroje() };
   renderSpotrebiceList(D);
   if (!(S.seznam || []).length) addSpotrebic();
   spotrLhutaZmena(true);
 }
 
+// Podbarvení, se kterým protokol vypadá jako vzor od kolegy. Je to jen
+// VÝCHOZÍ hodnota nové zprávy — kdo ho nechce, klikne na „bílá" a u té
+// zprávy už zůstane bílé (volba se ukládá do `D.tisk` jako u ostatních typů).
+var SPOTR_BARVA_VYCHOZI = '#f2f2f2';
+
 function initSpotrebice() {
+  var z = window.__tiskZpravy || (window.__tiskZpravy = {});
+  if (z.pozadiTisku === undefined) z.pozadiTisku = SPOTR_BARVA_VYCHOZI;
   restoreSpotrebiceData({ lhuta: '24', seznam: [] });
 }
 
@@ -16791,13 +16982,16 @@ function spotrebiceVykreslit(D) {
   var box = document.getElementById('spotrebice-pdf-pages');
   if (!box) return 0;
   box.innerHTML = '';
+  // Barva se nastaví na KONTEJNERU — podědí ji i stránky, které vzniknou
+  // teprve při stránkování.
+  box.style.setProperty('--pdf-bg', spotrOdstin(D));
   var o = { edit: false };
   var radky = spotrebiceRadky(D);
   var LIMIT = 188;                       // mm uvnitř paddingu (210 − 8 − 6 − rezerva)
   var mmNaPx = 0;
   function novaStrana() {
     var d = document.createElement('div');
-    d.className = 'a4 a4-landscape';
+    d.className = 'a4 a4-landscape a4-spotrebice';
     d.style.minHeight = '0';             // jinak každá „naměří" 210 mm
     d.innerHTML = '<div class="a4-content" style="padding:8mm 8mm 6mm"></div>';
     box.appendChild(d);
@@ -20935,6 +21129,8 @@ document.addEventListener('click', function(e) {
     case 'addSpotrebic': addSpotrebic(); break;
     case 'addSpotrebicPrivod': addSpotrebicPrivod(); break;
     case 'delSpotrebic': delSpotrebic(el); break;
+    case 'copySpotrebic': copySpotrebic(el); break;
+    case 'spotrBarva': spotrBarva(el); break;
     case 'spotrPristrojeOtevrit': spotrPristrojeOtevrit(); break;
     case 'spotrPristrojeZavrit': spotrPristrojeZavrit(); break;
     case 'spotrebiceNahledZpet': spotrebiceNahledZpet(); break;
