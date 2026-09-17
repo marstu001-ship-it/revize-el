@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.72 · 2026-09-17**
+**Aktuální verze: v9.73 · 2026-09-17**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,59 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Nápověda u voleb ve spotřebičích (v9.73)
+
+Pokyn uživatele 2026-09-17: „jsem hlava děravá a potřebuju, aby u rozbalovacího
+okénka namířil myší na jednotlivé třídy, aby se tam zobrazila nápověda, jaké
+spotřebiče jsou jaká třída, ať vím, co tam dát, stejně tak u skupiny atd."
+
+### Nativní `<option title>` na to NESTAČÍ
+
+Bublinu u položky **rozbaleného** seznamu kreslí operační systém, ne stránka —
+Chrome ji na Linuxu ani na Macu nezobrazí. Ověřeno, než se cokoli psalo.
+Proto **vlastní nabídka** (`.sp-volby`), která u KAŽDÉ volby rovnou ukáže
+vysvětlení: nic se nemusí hledat myší a funguje to i na dotykovém displeji.
+
+- **`<select>` v DOM ZŮSTÁVÁ** a je pořád jediným držitelem hodnoty. Nativní
+  popup se jen nepustí ke slovu (`preventDefault` na `mousedown`), takže sběr
+  dat, Ctrl+D, procházení klávesnicí i tisk fungují **beze změny**.
+- Nabídka bydlí v `document.body`, ne v listu — `overflow:hidden` na
+  `.sp-sheet-wrap` (kvůli zmenšení listu) by ji jinak uřízl. Umísťuje se
+  podle `getBoundingClientRect()` a **při nedostatku místa se překlopí nad
+  buňku**.
+- Zavírá se klepnutím jinam, Escapem i rolováním; šipky vybírají, Enter
+  potvrdí. **Fokus je na nabídce**, takže se šipky neperou se `spotrKlavesa`
+  (ta reaguje jen na `.sp-pole`).
+- **`title` na `<select>`** říká, co v buňce je teď — tam nativní bublina
+  funguje, protože visí nad prvkem, ne nad položkou popupu.
+- Selecty mimo tabulku (lhůta v hlavičce, odběratel v liště) nemají třídu
+  `sp-pole`, takže si nativní rozbalovátko drží.
+
+**Past, kterou našel až test:** `spotrNabidkaOtevrit()` zapomněla přiřadit
+`__spotrNabidka = box`, takže `spotrNabidkaZavrit()` neměla co zavřít —
+nabídka nešla zavřít vůbec a při každém dalším otevření by v `body` přibyla
+další. Testy na zavírání jsou proto tři (výběr, Esc, klepnutí jinam).
+
+### Odkud se berou texty
+
+- **Sestava, metoda, zkouška chodu a celkové hodnocení se PARSUJÍ Z LEGENDY
+  protokolu** (`spotrLegendaMapa()` nad `SPOTR_VYSVETLIVKY`, položky 4) 5) 6)).
+  Jeden zdroj pravdy: kdyby se text legendy upravil, nápověda se veze s ním
+  a nemůžou se rozejít. Metoda se skládá **ze dvou položek „6)"** — vzor je
+  má dvě, protože legenda pokračuje do dalšího sloupce.
+- **Třída ochrany** (`SPOTR_TRIDY`) — I / II / III podle ČSN EN 61140,
+  poznámka o prodlužovacích přívodech je z legendy, položka 8).
+- **Skupina A–E** (`SPOTR_SKUPINY_VOLBY`) — ČSN 33 1600 ed.2 kap. 4.
+  ⚠️ **Znění NENÍ opsané z normy** — sandbox na `csnonline.agentura-cas.cz`
+  nesmí (viz oddíl u v9.51). Je to popis podle obecné znalosti té tabulky;
+  vzor od kolegy ho potvrzuje jen zčásti (kancelářská technika = E,
+  trafopáječka = C). **Uživatel byl upozorněn, ať si znění ověří** —
+  skupina určuje lhůtu, takže špatný popis by vedl ke špatnému termínu.
+- **Test hlídá, že žádná nabízená volba nezůstala bez vysvětlení** — přidat
+  volbu do `SPOTR_SLOUPCE` a zapomenout na nápovědu tedy neprojde.
+
+Test: `test-spotrebice.js` **103 kontrol**.
 
 ## Výrobní číslo přístroje se do protokolu nedostalo (v9.72)
 

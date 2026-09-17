@@ -722,6 +722,18 @@ html.dark .sp-sheet{background:#f7f6f2}
 .sp-barva{width:22px;height:22px;border:1px solid var(--border-dark);border-radius:3px;
   cursor:pointer;padding:0}
 .sp-barva.je{outline:2px solid var(--accent2);outline-offset:1px}
+/* Nabídka voleb s vysvětlením u každé položky. Leží v `body`, aby ji
+   nezařízl `overflow:hidden` na obalu zmenšeného listu. */
+.sp-volby{position:fixed;z-index:4000;background:var(--surface);color:var(--text);
+  border:1px solid var(--border-dark);border-radius:5px;box-shadow:0 8px 28px rgba(0,0,0,.28);
+  padding:.25rem;max-width:min(560px,calc(100vw - 16px));max-height:60vh;overflow:auto;outline:none}
+.sp-volba{display:flex;gap:.6rem;align-items:baseline;width:100%;text-align:left;
+  background:none;border:0;border-radius:4px;padding:.4rem .5rem;cursor:pointer;
+  font-family:inherit;font-size:.82rem;color:inherit}
+.sp-volba:hover,.sp-volba.je{background:var(--accent2);color:#fff}
+.sp-volba-kod{flex:0 0 2.6rem;font-family:var(--mono);font-weight:700;font-size:.85rem}
+.sp-volba-popis{flex:1;line-height:1.35;opacity:.85}
+.sp-volba:hover .sp-volba-popis,.sp-volba.je .sp-volba-popis{opacity:1}
 .sp-lista select{width:100%;padding:.35rem .5rem;font-size:.82rem;
   border:1px solid var(--border-dark);border-radius:3px;background:var(--surface);color:var(--text)}
 /* Kolonky hlavičky — do přihrádek se stěhují SKUTEČNÁ pole zprávy. */
@@ -1142,7 +1154,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.72<span class="ver-date"> · 2026-09-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.73<span class="ver-date"> · 2026-09-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -16451,6 +16463,67 @@ var SPOTR_PRIVOD = { trida: 'II', skupina: 'C', sestava: 'PP', metoda: 'V',
 var SPOTR_PRENOS = ['f_provozovatel', 'f_ev_cislo', 'f_zahajeni', 'f_pristi',
                     'f_misto', 'f_sp_lhuta', 'f_predano_misto', 'f_vypracovani'];
 
+// ── Nápověda k rozbalovátkům ────────────────────────────────────────────
+// Pokyn uživatele 2026-09-17: „jsem hlava děravá a potřebuju, aby u
+// rozbalovacího okénka namířil myší na jednotlivé třídy, aby se zobrazila
+// nápověda, jaké spotřebiče jsou jaká třída, ať vím, co tam dát."
+//
+// **Nativní `<option title>` na to NESTAČÍ** — bublinu u položky rozbaleného
+// seznamu Chrome na Linuxu ani na Macu nevykresluje (popup kreslí systém).
+// Proto vlastní nabídka, která u KAŽDÉ volby rovnou ukáže vysvětlení — nic
+// se nemusí hledat myší a funguje to i na dotykovém displeji.
+
+// Sloupce, které vysvětluje legenda protokolu, si text BEROU Z NÍ. Jeden
+// zdroj pravdy: kdyby se text v legendě upravil, nápověda se veze s ním
+// a nemůžou se rozejít.
+function spotrLegendaMapa(cislo) {
+  var out = {};
+  SPOTR_VYSVETLIVKY.forEach(function(sloupec) {
+    sloupec.forEach(function(p) {
+      if (p[0] !== cislo) return;
+      String(p[1]).split('\n').forEach(function(r) {
+        var m = r.match(/^\s*(\S+)\s+-\s+(.+)$/);
+        if (m) out[m[1]] = m[2].trim();
+      });
+    });
+  });
+  return out;
+}
+
+// Třída ochrany — ČSN EN 61140 / ČSN 33 2000-4-41. Poznámka u prodlužovacích
+// přívodů je z legendy protokolu, položka 8).
+var SPOTR_TRIDY = {
+  'I':   'spotřebič s ochranným vodičem — kovové neživé části jsou spojené s PE, ' +
+         'vidlice má ochranný kolík (lednice, konvice, PC, pračka, UPS)',
+  'II':  'spotřebič s dvojitou nebo zesílenou izolací — bez ochranného vodiče, ' +
+         'značka dvojitého čtverce ▫ (vrtačky, nabíječky, síťové zdroje, ' +
+         'plastová svítidla). Platí i pro prodlužovací přívody.',
+  'III': 'spotřebič napájený z bezpečného malého napětí SELV — nepřipojuje se ' +
+         'přímo na síť (např. zařízení napájené ze zdroje 12 V / 24 V)'
+};
+
+// Skupiny dle ČSN 33 1600 ed.2 kap. 4 — určují lhůtu opakované revize.
+var SPOTR_SKUPINY_VOLBY = {
+  'A': 'spotřebiče poskytované formou pronájmu dalšímu provozovateli nebo uživateli',
+  'B': 'spotřebiče používané ve venkovním prostoru (stavby, zemědělské práce apod.)',
+  'C': 'spotřebiče používané při průmyslové a řemeslné činnosti ve vnitřních prostorách',
+  'D': 'spotřebiče používané ve veřejně přístupných prostorách (školy, kluby, hotely apod.)',
+  'E': 'spotřebiče používané při administrativní činnosti'
+};
+
+var SPOTR_NAPOVEDA = {
+  trida: SPOTR_TRIDY,
+  skupina: SPOTR_SKUPINY_VOLBY,
+  sestava: spotrLegendaMapa('5)'),
+  metoda: spotrLegendaMapa('6)'),
+  chod: spotrLegendaMapa('4)'),
+  hodnoceni: spotrLegendaMapa('4)')
+};
+
+function spotrNapoveda(k, v) {
+  return ((SPOTR_NAPOVEDA[k] || {})[v] || '');
+}
+
 var SPOTR_CELKEM = SPOTR_SLOUPCE.reduce(function(a, c) { return a + c.sirka; }, 0);
 
 function spotrSloupec(k) {
@@ -16730,7 +16803,23 @@ function renderSpotrebiceList(D) {
   spotrPrizpusobit();
   // Posluchač patří na HOSTITELE, ne na tabulku — ta se překresluje
   // a posluchač by se s ní ztratil.
-  if (!host.__spotrKlavesy) { host.__spotrKlavesy = 1; host.addEventListener('keydown', spotrKlavesa); }
+  if (!host.__spotrKlavesy) {
+    host.__spotrKlavesy = 1;
+    host.addEventListener('keydown', spotrKlavesa);
+    // Nativní rozbalovátko se nesmí otevřít — místo něj vlastní nabídka
+    // s vysvětlením u každé volby.
+    host.addEventListener('mousedown', function(e) {
+      var sel = e.target.closest && e.target.closest('select.sp-pole');
+      if (!sel) return;
+      e.preventDefault();
+      sel.focus();
+      spotrNabidkaOtevrit(sel);
+    });
+    host.addEventListener('change', function(e) {
+      if (e.target.classList && e.target.classList.contains('sp-pole')) spotrNapovedaBubliny(host);
+    });
+  }
+  spotrNapovedaBubliny(host);
 }
 
 // List má šířku papíru (281 mm). Do užšího okna se **zmenší celý najednou**,
@@ -16759,6 +16848,16 @@ function spotrPrizpusobit() {
   if (__spotrPozorovatel) { try { __spotrPozorovatel.disconnect(); } catch (e) {} __spotrPozorovatel.observe(sheet); }
 }
 window.addEventListener('resize', function() { spotrPrizpusobit(); });
+// Nabídka voleb se zavře kliknutím jinam, rolováním i Escapem.
+document.addEventListener('mousedown', function(e) {
+  if (__spotrNabidka && !e.target.closest('.sp-volby') && !e.target.closest('select.sp-pole')) {
+    spotrNabidkaZavrit(false);
+  }
+}, true);
+window.addEventListener('scroll', function() { spotrNabidkaZavrit(false); }, true);
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && __spotrNabidka) spotrNabidkaZavrit(true);
+});
 
 // Přestěhuje skutečná pole zprávy do přihrádek v protokolu (a zpátky).
 // Původní místo si každý prvek pamatuje, aby se návrat trefil přesně —
@@ -16820,6 +16919,85 @@ function copySpotrebic(el) {
   var novy = tr.nextElementSibling;
   var prvni = novy && novy.querySelector('.sp-pole');
   if (prvni) { prvni.focus(); if (prvni.select) prvni.select(); }
+}
+
+// ── Vlastní nabídka s vysvětlením u každé volby ─────────────────────────
+// Nativní rozbalovátko se otevřít nesmí (`preventDefault` na `mousedown`),
+// ale **`<select>` v DOM zůstává** a je pořád jediným držitelem hodnoty —
+// takže sběr dat, Ctrl+D i procházení klávesnicí fungují beze změny.
+var __spotrNabidka = null;
+
+function spotrNabidkaZavrit(vratitFokus) {
+  if (!__spotrNabidka) return;
+  var sel = __spotrNabidka.__sel;
+  __spotrNabidka.remove();
+  __spotrNabidka = null;
+  if (vratitFokus && sel) sel.focus();
+}
+
+function spotrNabidkaOtevrit(sel) {
+  spotrNabidkaZavrit(false);
+  var k = sel.dataset.k;
+  var volby = Array.prototype.map.call(sel.options, function(o) { return o.value; });
+  var box = document.createElement('div');
+  box.className = 'sp-volby';
+  box.tabIndex = -1;
+  box.__sel = sel;
+  box.innerHTML = volby.map(function(v) {
+    var pop = spotrNapoveda(k, v);
+    return '<button type="button" class="sp-volba' + (v === sel.value ? ' je' : '') +
+      '" data-v="' + esc(v) + '">' +
+      '<span class="sp-volba-kod">' + (v ? esc(v) : '—') + '</span>' +
+      '<span class="sp-volba-popis">' + (v ? esc(pop) : 'nevyplněno') + '</span></button>';
+  }).join('');
+  document.body.appendChild(box);
+  __spotrNabidka = box;      // bez toho by ji `spotrNabidkaZavrit` nenašla
+
+  // Umístění: pod buňku, a když dole není místo, nad ni.
+  var r = sel.getBoundingClientRect();
+  var v = box.getBoundingClientRect();
+  var levy = Math.min(Math.max(8, r.left), window.innerWidth - v.width - 8);
+  box.style.left = levy + 'px';
+  box.style.top = (r.bottom + v.height + 8 > window.innerHeight && r.top > v.height + 8
+    ? r.top - v.height - 2 : r.bottom + 2) + 'px';
+
+  var vyber = function(hodnota) {
+    sel.value = hodnota;
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    spotrNabidkaZavrit(true);
+  };
+  box.addEventListener('click', function(e) {
+    var b = e.target.closest('.sp-volba');
+    if (b) { e.preventDefault(); e.stopPropagation(); vyber(b.dataset.v); }
+  });
+  // Klávesnice: šipky vybírají, Enter potvrdí, Esc zavře. Fokus je na
+  // nabídce, takže se to nepere s procházením tabulky (`spotrKlavesa`
+  // reaguje jen na `.sp-pole`).
+  box.addEventListener('keydown', function(e) {
+    var tl = Array.prototype.slice.call(box.querySelectorAll('.sp-volba'));
+    var i = tl.indexOf(box.querySelector('.sp-volba.je'));
+    if (e.key === 'Escape') { e.preventDefault(); spotrNabidkaZavrit(true); return; }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); if (tl[i]) vyber(tl[i].dataset.v); return;
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    var j = Math.max(0, Math.min(tl.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)));
+    tl.forEach(function(x) { x.classList.remove('je'); });
+    tl[j].classList.add('je');
+    tl[j].scrollIntoView({ block: 'nearest' });
+  });
+  box.focus();
+}
+
+// Bublina u samotné buňky říká, co v ní teď je — na to nativní `title`
+// stačí, protože visí nad `<select>`, ne nad položkou rozbaleného seznamu.
+function spotrNapovedaBubliny(host) {
+  host.querySelectorAll('select.sp-pole').forEach(function(sel) {
+    var pop = spotrNapoveda(sel.dataset.k, sel.value);
+    sel.title = pop ? sel.value + ' — ' + pop : 'Klepnutím vyberete z nabídky s vysvětlivkami';
+  });
 }
 
 // ── Ovládání z klávesnice jako v tabulkovém procesoru ───────────────────
