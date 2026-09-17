@@ -1045,7 +1045,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.67<span class="ver-date"> · 2026-09-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.68<span class="ver-date"> · 2026-09-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1893,14 +1893,21 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <strong>Ve výchozím nastavení se nic nemění</strong> — každá nová zpráva dostane první
       číslo řady a vy si ho přepíšete, přesně jako dosud.</div>
     <div class="g2">
-      <div class="f span2"><label>Styl čísla</label>
+      <div class="f span2"><label>Nastavuji pro</label>
+        <div id="rt_cislo_rozsah" class="fa-typy" style="padding:0;margin-top:.2rem"></div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem">
+          Typ s vlastní šablonou má u sebe <strong>•</strong>. Co si u typu nenastavíte,
+          bere se z „Výchozí pro všechny".
+        </div>
+      </div>
+      <div class="f span2" style="margin-top:-.3rem"><label>Styl čísla</label>
         <div id="rt_cislo_predlohy" style="margin-top:.2rem"></div>
       </div>
       <div class="f span2" id="rt_cislo_vlastni_wrap" style="display:none;margin-top:-.4rem">
         <label>Vlastní šablona</label>
         <input type="text" id="rt_cislo_format" placeholder="{TYP}-{RR}-{NNNN}" autocomplete="off">
         <div style="font-size:.7rem;color:var(--muted);line-height:1.8;margin-top:.45rem">
-          <strong>{TYP}</strong> = RE u elektro a hromosvodu, RS u strojů ·
+          <strong>{TYP}</strong> = RE u elektro a hromosvodu, RS u strojů, RSP u spotřebičů ·
           <strong>{RR}</strong> = rok dvojčíslím (26) ·
           <strong>{RRRR}</strong> = rok čtyřmístně (2026) ·
           <strong>{NNNN}</strong> = pořadové číslo; kolik napíšete N, tolik bude míst (0001).<br>
@@ -5128,9 +5135,38 @@ function pocetZprav(n) {
   return n + (n === 1 ? ' zpráva' : (n >= 2 && n <= 4 ? ' zprávy' : ' zpráv'));
 }
 
-function cisloSablona() {
-  var t = ((STORE.technik || {}).cislo_format || '').trim();
-  return t || CISLO_VYCHOZI;
+// Šablona se dá nastavit **zvlášť pro každý typ zprávy** (pokyn uživatele
+// 2026-09-17 „můžeš šablonu per typ") — kolega má u spotřebičů holé `000013`,
+// ale u elektro revizí `RE-26-0001`.
+//
+// `cislo_format` je SPOLEČNÁ výchozí šablona, `cislo_format_typ[typ]` je
+// odchylka konkrétního typu. **Pořadí je: odchylka → společná → `CISLO_VYCHOZI`**,
+// takže kdo si dosud nastavil jen společnou, nic se mu nezměnilo.
+function cisloSablona(typ) {
+  var t = STORE.technik || {};
+  if (typ) {
+    var vl = ((t.cislo_format_typ || {})[typ] || '').trim();
+    if (vl) return vl;
+  }
+  return (t.cislo_format || '').trim() || CISLO_VYCHOZI;
+}
+
+// Má daný typ vlastní šablonu, nebo dědí společnou?
+function cisloMaVlastni(typ) {
+  return !!(((STORE.technik || {}).cislo_format_typ || {})[typ] || '').trim();
+}
+
+// Zapíše šablonu pro rozsah: '' = společná, jinak konkrétní typ.
+// Prázdná hodnota u typu = odchylku zrušit (typ se vrátí ke společné).
+function cisloUlozSablonu(rozsah, hodnota) {
+  if (!STORE.technik) STORE.technik = {};
+  if (!rozsah) { STORE.technik.cislo_format = hodnota; }
+  else {
+    if (!STORE.technik.cislo_format_typ) STORE.technik.cislo_format_typ = {};
+    if (String(hodnota || '').trim()) STORE.technik.cislo_format_typ[rozsah] = hodnota;
+    else delete STORE.technik.cislo_format_typ[rozsah];
+  }
+  saveStore();
 }
 function cisloAuto() { return !!(STORE.technik || {}).cislo_auto; }
 
@@ -5148,7 +5184,7 @@ function cisloKousky(sablona) {
 
 function cisloSlozit(typ, n, sablona) {
   var r4 = String(new Date().getFullYear());
-  return cisloKousky(sablona || cisloSablona()).map(function(k) {
+  return cisloKousky(sablona || cisloSablona(typ)).map(function(k) {
     if (k.znacka === undefined) return k.text;
     if (k.znacka === 'TYP') return typInfo(typ).prefix;
     if (k.znacka === 'RRRR') return r4;
@@ -5168,7 +5204,7 @@ function cisloEscRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function cisloRegex(typ, sablona) {
   var r4 = String(new Date().getFullYear());
   var maCislo = false;
-  var re = cisloKousky(sablona || cisloSablona()).map(function(k) {
+  var re = cisloKousky(sablona || cisloSablona(typ)).map(function(k) {
     if (k.znacka === undefined) return cisloEscRe(k.text);
     if (k.znacka === 'TYP') return cisloEscRe(typInfo(typ).prefix);
     if (k.znacka === 'RRRR') return cisloEscRe(r4);
@@ -5226,43 +5262,91 @@ function cisloPridelit() {
   showToast('Přiděleno číslo ' + d);
 }
 
-// Seznam předloh k zakliknutí. U každé se ukazuje SKUTEČNÉ příští číslo
-// spočítané z archivu, ne jen zápis šablony — technik má vidět, co dostane.
+// Který rozsah se právě nastavuje: '' = společná šablona pro všechny typy,
+// jinak klíč typu z TYPY_ZPRAV.
+var __cisloRozsah = '';
+
+function cisloRozsah(el) {
+  __cisloRozsah = el.getAttribute('data-rozsah') || '';
+  cisloRozsahyRender();
+  cisloPredlohyRender();
+  cisloUkazka();
+}
+
+// Přepínač rozsahu — „Výchozí pro všechny" + jeden za každý typ zprávy.
+// U typu s vlastní šablonou svítí tečka, ať je na první pohled vidět,
+// kde je odchylka.
+function cisloRozsahyRender() {
+  var box = document.getElementById('rt_cislo_rozsah');
+  if (!box) return;
+  var polozky = [{ k: '', popis: 'Výchozí pro všechny' }].concat(
+    Object.keys(TYPY_ZPRAV).map(function(t) { return { k: t, popis: typInfo(t).label }; }));
+  box.innerHTML = polozky.map(function(o) {
+    return '<button class="fa-typ' + (__cisloRozsah === o.k ? ' fa-typ-on' : '') + '" ' +
+      'data-action="cisloRozsah" data-rozsah="' + esc(o.k) + '">' + esc(o.popis) +
+      (o.k && cisloMaVlastni(o.k) ? ' •' : '') + '</button>';
+  }).join('');
+}
+
+// Seznam předloh k zakliknutí — psát značky ručně je otrava (pokyn uživatele
+// 2026-09-16: „to se ale blbě píše"). Kdo si mezi nimi nevybere, přepne si
+// poslední volbu „Vlastní" a napíše si šablonu sám.
+// **První předloha MUSÍ být `CISLO_VYCHOZI`** — je to stav, ve kterém program
+// běžel dosud, a `cisloPredlohyRender()` ji podle toho označí.
 function cisloPredlohyRender() {
   var box = document.getElementById('rt_cislo_predlohy');
   if (!box) return;
-  var akt = cisloSablona();
-  var jeVlastni = !CISLO_PREDLOHY.some(function(p) { return p.s === akt; });
-  box.innerHTML = CISLO_PREDLOHY.map(function(p, i) {
+  // U konkrétního typu je první volbou „jako výchozí" = žádná odchylka.
+  var dedi = !!__cisloRozsah && !cisloMaVlastni(__cisloRozsah);
+  var akt = __cisloRozsah
+    ? (cisloMaVlastni(__cisloRozsah) ? cisloSablona(__cisloRozsah) : null)
+    : cisloSablona();
+  var typProUkazku = __cisloRozsah || 'elektro';
+  var jeVlastni = akt !== null && !CISLO_PREDLOHY.some(function(p) { return p.s === akt; });
+  var html = '';
+  if (__cisloRozsah) {
+    html += '<label class="teren-radek">' +
+      '<input type="radio" name="rt_cislo_styl" data-action="cisloPredlohaDedit"' +
+        (dedi ? ' checked' : '') + '>' +
+      '<strong style="font-family:var(--mono)">' + esc(cisloSlozit(typProUkazku, 1, cisloSablona())) + '</strong>' +
+      '<span class="tm">jako výchozí pro všechny typy</span></label>';
+  }
+  html += CISLO_PREDLOHY.map(function(p, i) {
     // Ukazuje se PRVNÍ číslo řady, ne příští volné. Příští volné by u dvou
-    // předloh vyšlo stejně (`{NNNN}` chytá i delší čísla, takže u archivu
-    // s RE-26-10005 dá čtyř- i pětimístná předloha RE-26-10006) a seznam by
-    // nabízel dva na pohled shodné řádky. Takhle je vidět TVAR čísla;
-    // příští volné číslo pro vybraný styl říká ukázka pod seznamem.
-    var ukazka = cisloSlozit('elektro', 1, p.s);
+    // předloh vyšlo stejně (`{NNNN}` chytá i delší čísla) a seznam by nabízel
+    // dva na pohled shodné řádky. Takhle je vidět TVAR čísla.
+    var ukazka = cisloSlozit(typProUkazku, 1, p.s);
     return '<label class="teren-radek">' +
       '<input type="radio" name="rt_cislo_styl" data-action="cisloPredloha" ' +
         'data-sablona="' + esc(p.s) + '"' + (!jeVlastni && p.s === akt ? ' checked' : '') + '>' +
       '<strong style="font-family:var(--mono)">' + esc(ukazka) + '</strong>' +
-      '<span class="tm">' + esc(p.popis) + (i === 0 ? ' — jako dosud' : '') + '</span>' +
+      '<span class="tm">' + esc(p.popis) + (i === 0 && !__cisloRozsah ? ' — jako dosud' : '') + '</span>' +
       '</label>';
-  }).join('') +
-    '<label class="teren-radek">' +
+  }).join('');
+  html += '<label class="teren-radek">' +
       '<input type="radio" name="rt_cislo_styl" data-action="cisloVlastni"' +
         (jeVlastni ? ' checked' : '') + '>' +
       '<strong>✏️ Vlastní</strong><span class="tm">napíšu si šablonu sám</span>' +
     '</label>';
+  box.innerHTML = html;
   var wrap = document.getElementById('rt_cislo_vlastni_wrap');
   if (wrap) wrap.style.display = jeVlastni ? '' : 'none';
+  var pole = document.getElementById('rt_cislo_format');
+  if (pole) pole.value = (akt === null) ? '' : akt;
 }
 
 // Kliknutí na hotovou předlohu.
 function cisloPredloha(el) {
-  if (!STORE.technik) STORE.technik = {};
-  STORE.technik.cislo_format = el.getAttribute('data-sablona') || '';
-  saveStore();
-  var pole = document.getElementById('rt_cislo_format');
-  if (pole) pole.value = STORE.technik.cislo_format;
+  cisloUlozSablonu(__cisloRozsah, el.getAttribute('data-sablona') || '');
+  cisloRozsahyRender();
+  cisloPredlohyRender();
+  cisloUkazka();
+}
+
+// „Jako výchozí" u konkrétního typu = odchylku zrušit.
+function cisloPredlohaDedit() {
+  cisloUlozSablonu(__cisloRozsah, '');
+  cisloRozsahyRender();
   cisloPredlohyRender();
   cisloUkazka();
 }
@@ -5277,33 +5361,48 @@ function cisloVlastni() {
 }
 
 // Živá ukázka v Nastavení — ať je předem vidět, co se bude dít.
+// Vypisuje **řádek za každý typ zprávy**, protože od v9.68 může mít každý
+// svou šablonu; jinak by nebylo poznat, která kde platí.
 function cisloUkazka() {
   var box = document.getElementById('rt_cislo_ukazka');
   if (!box) return;
   var pole = document.getElementById('rt_cislo_format');
-  var sab = ((pole || {}).value || '').trim() || CISLO_VYCHOZI;
-  var stav = cisloRadaStav('elektro', sab);
-  if (!stav) {
-    box.innerHTML = '<strong>⚠ Šablona nemá značku {NNNN}</strong> — program nepozná, kde je pořadové ' +
-      'číslo, takže ho nebude umět přidělit. Číslo si u každé zprávy napíšete sám.';
+  var wrap = document.getElementById('rt_cislo_vlastni_wrap');
+  var pisu = wrap && wrap.style.display !== 'none';
+  // Při psaní vlastní šablony se ukazuje rovnou to, co je v poli.
+  var rozepsana = pisu ? ((pole || {}).value || '').trim() : '';
+  function sabProTyp(t) {
+    if (rozepsana && (!__cisloRozsah || __cisloRozsah === t)) return rozepsana;
+    return cisloSablona(t);
+  }
+  var bezCisla = Object.keys(TYPY_ZPRAV).filter(function(t) { return !cisloRegex(t, sabProTyp(t)); });
+  if (bezCisla.length) {
+    box.innerHTML = '<strong>⚠ Šablona nemá značku {NNNN}</strong> — program nepozná, kde je ' +
+      'pořadové číslo, takže ho nebude umět přidělit (' +
+      esc(bezCisla.map(function(t) { return typInfo(t).label; }).join(', ')) +
+      '). Číslo si u těchhle zpráv napíšete sám.';
     box.style.background = '#fff6e8';
     box.style.borderColor = '#f0c48a';
     return;
   }
-  var strojeStav = cisloRadaStav('stroje', sab);
   box.style.background = '';
   box.style.borderColor = '';
-  box.innerHTML =
-    '<div>Příští číslo elektro / hromosvod: <strong>' + esc(cisloSlozit('elektro', stav.max + 1, sab)) + '</strong>' +
-      ' <span style="color:var(--muted)">(v archivu ' + pocetZprav(stav.pocet) + ' této řady)</span></div>' +
-    '<div style="margin-top:.25rem">Příští číslo u strojů: <strong>' +
-      esc(cisloSlozit('stroje', (strojeStav ? strojeStav.max : 0) + 1, sab)) + '</strong>' +
-      ' <span style="color:var(--muted)">(' + pocetZprav(strojeStav ? strojeStav.pocet : 0) + ')</span></div>' +
-    '<div style="margin-top:.35rem;color:var(--muted)">' +
+  box.innerHTML = Object.keys(TYPY_ZPRAV).map(function(t) {
+    var sab = sabProTyp(t);
+    var stav = cisloRadaStav(t, sab);
+    var vlastni = rozepsana && __cisloRozsah === t ? true : cisloMaVlastni(t);
+    return '<div style="display:flex;gap:.5rem;align-items:baseline;margin-bottom:.15rem">' +
+      '<span style="min-width:5.5rem;color:var(--muted)">' + esc(typInfo(t).label) + '</span>' +
+      '<strong style="font-family:var(--mono)">' + esc(cisloSlozit(t, stav.max + 1, sab)) + '</strong>' +
+      '<span style="color:var(--muted);font-size:.78rem">' +
+        (vlastni ? 'vlastní šablona · ' : '') + pocetZprav(stav.pocet) + ' v archivu</span>' +
+      '</div>';
+  }).join('') +
+    '<div style="margin-top:.4rem;color:var(--muted)">' +
       (cisloAuto()
         ? 'Nová zpráva tohle číslo dostane rovnou.'
-        : 'Nová zpráva dostane <strong>' + esc(cisloSlozit('elektro', 1, sab)) +
-          '</strong> jako dosud; další volné číslo si vyžádáte tlačítkem ⟳ u pole Ev. číslo.') +
+        : 'Nová zpráva dostane <strong>první číslo řady</strong> jako dosud; další volné ' +
+          'si vyžádáte tlačítkem ⟳ u pole Ev. číslo.') +
     '</div>';
 }
 
@@ -5329,18 +5428,19 @@ function nacistTechnika() {
   // stejně jako ostatní pole profilu, a živá ukázka se překreslí hned.
   var cf = document.getElementById('rt_cislo_format');
   if (cf) {
-    cf.value = t.cislo_format || '';
+    cf.value = (__cisloRozsah ? ((t.cislo_format_typ || {})[__cisloRozsah] || '') : (t.cislo_format || ''));
     if (!cf.dataset.autosaveWired) {
       cf.dataset.autosaveWired = '1';
       cf.addEventListener('input', function() {
-        if (!STORE.technik) STORE.technik = {};
-        STORE.technik.cislo_format = cf.value;
-        saveStore();
+        cisloUlozSablonu(__cisloRozsah, cf.value);
         cisloUkazka();
       });
       // Opuštěním pole se seznam přerovná — napsaná šablona se může
       // trefit do některé předlohy a pak má svítit ona.
-      cf.addEventListener('blur', function() { cisloPredlohyRender(); });
+      cf.addEventListener('blur', function() {
+        cisloRozsahyRender();
+        cisloPredlohyRender();
+      });
     }
   }
   var ca = document.getElementById('rt_cislo_auto');
@@ -5356,6 +5456,7 @@ function nacistTechnika() {
       });
     }
   }
+  cisloRozsahyRender();
   cisloPredlohyRender();
   cisloUkazka();
   // Razítko + podpis — pokud uloženy, zobrazit náhled
@@ -20577,6 +20678,8 @@ document.addEventListener('click', function(e) {
     case 'formArchivZavrit': formArchivZavrit(); break;
     case 'cisloPridelit': cisloPridelit(); break;
     case 'cisloPredloha': cisloPredloha(el); break;
+    case 'cisloPredlohaDedit': cisloPredlohaDedit(); break;
+    case 'cisloRozsah': cisloRozsah(el); break;
     case 'addSpotrebic': addSpotrebic(); break;
     case 'addSpotrebicPrivod': addSpotrebicPrivod(); break;
     case 'spotrebiceNahledZpet': spotrebiceNahledZpet(); break;

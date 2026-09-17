@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.67 · 2026-09-17**
+**Aktuální verze: v9.68 · 2026-09-17**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -130,8 +130,9 @@ s větou, která se tiskne pod tabulku.
 - `planDruh: 'T'` — v Plánu revizí se spotřebiče počítají jako technologie.
   Čtvrtá značka by si vyžádala migraci celého plánu, na to uživatel nežádal.
 - Prefix ev. čísla **`RSP`**. Kolega má v protokolech holé `000013`; kdo to
-  chce taky, přepne si šablonu v Nastavení → Číslování zpráv (v9.62).
-  **Šablona je zatím jedna pro všechny typy** — to je známé omezení.
+  chce taky, nastaví si v Nastavení → Číslování zpráv **šablonu jen pro
+  spotřebiče** (`{NNNNNN}`) — od v9.68 jde šablona nastavit per typ, takže
+  se tím elektro revize nedotkne.
 - „+ Přidat prodlužovací přívod" předvyplní třídu II, skupinu C a sestavu PP
   (`SPOTR_PRIVOD`) — ve vzoru mají všechny přívody stejný tvar.
 - Test: `test-spotrebice.js` (44 kontrol — typ, karta, 20 sloupců, nápověda
@@ -139,7 +140,7 @@ s větou, která se tiskne pod tabulku.
   proti vzoru včetně vysvětlivek, stránkování 40 spotřebičů, a že elektro
   zůstalo nedotčené).
 
-## Vlastní číslování zpráv (v9.62, předlohy v9.63)
+## Vlastní číslování zpráv (v9.62, předlohy v9.63, per typ v9.68)
 
 Pokyn uživatele 2026-09-16: „ať si každý technik nastaví vlastní styl
 číslování zpráv, **defaultně to bude jak to je teď, ať není nikdo
@@ -153,6 +154,30 @@ Karta **🔢 Číslování zpráv** v Nastavení, hned pod profilem technika.
 - **Šablona je v `STORE.technik.cislo_format`, ne ve vlastním klíči STORE** —
   veze se tím se zálohou i s obnovou a **pravidlo „nový klíč = čtyři místa"
   se neuplatní**. Totéž `cislo_auto` (zaškrtávátko).
+- **Šablona jde nastavit ZVLÁŠŤ PRO KAŽDÝ TYP** (v9.68, pokyn uživatele
+  2026-09-17 „můžeš šablonu per typ"). Kolega má u spotřebičů holé `000013`,
+  ale u elektro revizí `RE-26-0001`.
+  - `cislo_format` = **společná výchozí** šablona, `cislo_format_typ[typ]` =
+    **odchylka** konkrétního typu. Pořadí v `cisloSablona(typ)` je
+    **odchylka → společná → `CISLO_VYCHOZI`**, takže komu stačila jedna
+    šablona pro všechno, nic se nezměnilo.
+  - **`cisloSlozit` i `cisloRegex` musí volat `cisloSablona(typ)`, ne
+    `cisloSablona()`** — jinak by se číslo sice složilo podle typu, ale
+    hledalo by se v archivu podle společné šablony (nebo naopak) a řada by
+    se rozešla.
+  - V Nastavení je nad předlohami **přepínač rozsahu** (`rt_cislo_rozsah`):
+    „Výchozí pro všechny" + jeden za každý typ. **Typ s vlastní šablonou má
+    u sebe •**, ať je odchylka vidět bez proklikávání.
+  - U konkrétního typu je **první volbou „jako výchozí pro všechny typy"**
+    (`cisloPredlohaDedit`) — tím se odchylka zruší. Bez toho by nešlo
+    jednou nastavenou odchylku vzít zpět.
+  - **Živá ukázka vypisuje řádek za KAŽDÝ typ** (dřív jen elektro + stroje).
+    Když může mít každý typ svou šablonu, jinak by nebylo poznat, která kde
+    platí; u typu s odchylkou se píše „vlastní šablona".
+  - `cislo_auto` (automatické přidělení) zůstává **společné** — na to se
+    uživatel neptal.
+- Prefix typu pro `{TYP}`: **RE** elektro i LPS, **RS** stroje,
+  **RSP** spotřebiče.
 - **Výchozí `{TYP}-{RR}-{NNNN}` + automatika vypnutá dává BAJT PO BAJTU to,
   co program dělal do v9.61** — `novaZprava()` nabídne `RE-26-0001`. To je
   celý smysl výchozí hodnoty; hlídají to první tři kontroly testu.
@@ -195,7 +220,7 @@ Karta **🔢 Číslování zpráv** v Nastavení, hned pod profilem technika.
   je to tak i dnes a vyplývá to ze `{TYP}`.
 - **`pocetZprav(n)`** — skloňování („1 zpráva / 2 zprávy / 5 zpráv") na
   jednom místě pro archiv i ukázku. Dřív to byl inline ternár v `renderArchiv`.
-- Test: `test-cislovani.js` (40 kontrol — výchozí chování beze změny,
+- Test: `test-cislovani.js` (55 kontrol — výchozí chování beze změny,
   automatika, vlastní šablony, roční reset, pětimístná řada, tlačítko ⟳,
   zamčená zpráva, „Navázat", živá ukázka, předlohy, restart).
 
