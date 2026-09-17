@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.66 · 2026-09-16**
+**Aktuální verze: v9.67 · 2026-09-17**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,90 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Revize elektrických spotřebičů — ČSN 33 1600 ed.2 (v9.67)
+
+**Zadání uživatele 2026-09-17** (poslal čtyři snímky protokolů kolegy Jiřího
+Roubalíka): „Vytvoř novou kartu pro revize elektrických spotřebičů. Máme volné
+místo vedle nových strojů… Možnost zvolit, každý spotřebič se dělá v jiném
+intervalu — 6, 12, 24 měsíců. Nápovědy, šedě předvyplněné hodnoty. Jednoduché
+vyplňování. Udělej to kompletně s generováním pdf, tiskem, náhledem."
+
+Je to **čtvrtý typ zprávy** (roadmapa #10). Vstup: **šestá karta na
+`screen-podtyp`** vedle Strojů, ne dlaždice na hlavní straně — stejné
+rozhodnutí jako u strojů (2026-09-02).
+
+### NETISKNE SE PŘES `generujPDF()`
+
+**To je to hlavní, co tenhle typ odlišuje.** Vzor není zpráva členěná do
+číslovaných kapitol, ale **jednolistový protokol**: hlavička s kolonkami,
+jedna široká tabulka na šířku papíru, pod ní tabulka měřicího přístroje,
+vysvětlivky a podpis. Má proto **vlastní obrazovku `#screen-spotrebice-pdf`**
+a vlastní renderer (`spotrebiceVykreslit`) — vzor `#screen-teren-pdf` (v9.53)
+a `#screen-schema-pdf` (v9.39). `generujPDFAsk()` na to odbočí hned na
+začátku podle `TYPY_ZPRAV.spotrebice.vlastniPdf`.
+Elektro, LPS ani stroje se tím vůbec nedotklo (`porovnani2.js` znak po znaku).
+
+### Sloupce a vysvětlivky
+
+- **`SPOTR_SLOUPCE`** — 20 sloupců přesně podle vzoru, každý s klíčem v datech,
+  hlavičkou, **šířkou v mm** a buď nápovědou (`ph`), nebo výčtem voleb.
+  Součet šířek **musí zůstat pod 281 mm** (297 − 2×8 mm padding).
+- **`SPOTR_SKUPINY`** skládá sloučenou hlavičku („Inventární údaje", „údaje
+  o spotřebiči", „jmenovité hodnoty", „Podmínky měření", „Izolační stav",
+  „Výsledek zkoušek a měření").
+- **`SPOTR_VYSVETLIVKY`** = doslovné znění legendy ze vzoru ve čtyřech
+  sloupcích. **Texty norem se nemění** — včetně toho, že vzor má dvakrát
+  položku „6)" (je to pokračování do dalšího sloupce).
+- **Nápověda je POUZE `placeholder`**, nikdy hodnota — do dat ani do PDF se
+  nedostane (stejné pravidlo jako u nápověd u strojů, v9.30). Test to hlídá
+  tím, že hledá text nápovědy ve vygenerovaném protokolu.
+- Prázdná buňka se v PDF tiskne jako **`---`**, jako ve vzoru.
+
+### Tři pasti, na které to najelo
+
+1. **`obsah.querySelector('tbody')` chytal ŠPATNOU tabulku.** Hlavička
+   protokolu (`spotrHlavickaHtml`) je taky `<table><tbody>`, takže všechny
+   řádky spotřebičů spadly do ní a tabulka se vykreslila prázdná pod nimi.
+   Musí to být **`.spotr-tab tbody`**.
+2. **Šířky sloupců patří do `<colgroup>`, ne do buněk.** První řádek hlavičky
+   má sloučené buňky (colspan) a `table-layout:fixed` z nich šířky
+   jednotlivých sloupců neodvodí — druhý řádek hlavičky se pak s daty
+   nezarovná.
+3. **`.pdf-meas th` má `white-space:nowrap`** a v souboru stojí **ZA** novými
+   pravidly, takže při shodné specifičnosti vyhrává. Hlavičky proto přetékaly
+   přes sousední sloupce. Řeší to selektor **`table.spotr-tab th`**
+   (o jeden typ navíc) + `white-space:normal`.
+
+Navíc: **úzké sloupce mají hlavičku otočenou na výšku** (`th.sv > span`
+s `writing-mode:vertical-rl`) — přesně jako vzor. Bez toho se dvacet sloupců
+na šířku A4 čitelně nevejde.
+
+### Lhůta je JEDNA pro celý protokol
+
+Uživatel psal „každý spotřebič se dělá v jiném intervalu". Ve vzoru je ale
+lhůta **společná pro celý protokol** („Všechny spotřebiče zde uvedené mají
+lhůty 1x za N měsíců") a kolega má na každou lhůtu samostatný protokol
+(000013 = 24 měsíců, 000009 = 12, 000001 = 6). Je to tedy **volba 6/12/24
+na titulní straně**, ne sloupec v tabulce — per-řádek by si odporoval
+s větou, která se tiskne pod tabulku.
+
+- **Datum příští revize se dopočítá** z data revize a lhůty. **Ručně zapsaný
+  termín se nepřepisuje** — pozná se podle `dataset.spocitano`.
+
+### Ostatní
+
+- `planDruh: 'T'` — v Plánu revizí se spotřebiče počítají jako technologie.
+  Čtvrtá značka by si vyžádala migraci celého plánu, na to uživatel nežádal.
+- Prefix ev. čísla **`RSP`**. Kolega má v protokolech holé `000013`; kdo to
+  chce taky, přepne si šablonu v Nastavení → Číslování zpráv (v9.62).
+  **Šablona je zatím jedna pro všechny typy** — to je známé omezení.
+- „+ Přidat prodlužovací přívod" předvyplní třídu II, skupinu C a sestavu PP
+  (`SPOTR_PRIVOD`) — ve vzoru mají všechny přívody stejný tvar.
+- Test: `test-spotrebice.js` (44 kontrol — typ, karta, 20 sloupců, nápověda
+  jako placeholder, lhůty a dopočet termínu, kolečko archivem, protokol
+  proti vzoru včetně vysvětlivek, stránkování 40 spotřebičů, a že elektro
+  zůstalo nedotčené).
 
 ## Vlastní číslování zpráv (v9.62, předlohy v9.63)
 
@@ -1574,12 +1658,11 @@ dohledání v předchozích diskuzích), nepřerovnávám je.
    toolbar (B / I / U / seznamy / zarovnání / tabulka / obrázek).
    Alt: lightweight knihovna (Quill ~100 kB).
 
-10. **Další typy revize** (DM jich má 11): **Spotřebiče, Stroje,
-    Trafo, Osvětlení, Podlahy, Nouzové osvětlení, VN, Zdroje pro
-    svařování, Zdravotní přístroje, Univerzální.** Momentálně
-    máme jen Elektro + LPS. Každý typ = vlastní workflow (jiné
-    taby, jiné PDF). Nejdřív zvážit **Spotřebiče** (časté) a
-    **Stroje**.
+10. **Další typy revize** (DM jich má 11). ✅ **Stroje hotové (v9.30),
+    ✅ Spotřebiče hotové (v9.67).** Zbývají: **Trafo, Osvětlení,
+    Podlahy, Nouzové osvětlení, VN, Zdroje pro svařování,
+    Zdravotní přístroje, Univerzální.** Každý typ = vlastní workflow
+    (jiné taby, jiné PDF).
 
 11. **Hierarchie měřicích míst v rozváděči** — teď máme ploché
     obvody pod rozváděčem; DM má **rozváděč → místo měření →
