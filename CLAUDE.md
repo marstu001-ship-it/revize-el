@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.68 · 2026-09-17**
+**Aktuální verze: v9.69 · 2026-09-17**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,87 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Spotřebiče — FORMULÁŘ JE PROTOKOL (v9.69)
+
+**Zadání uživatele 2026-09-17** (po kritice v9.67): „v pdf má být podpis…
+u ostatních revizí je dobrý, jak člověk vyplňuje po krocích a pak se z toho
+poskládá pdf, ale tady u spotřebičů to je zmatečné. Ta výsledná karta je
+jednoduchá a chtělo by to, aby vizuál výsledného pdf byl stejný jako to, co
+vyplňuju v programu. Navíc to, že si technik musí posouvat sliderem tabulku
+v tab 2., je strašný. Udělej to pořádně… nešetři si práci."
+
+Měl pravdu ve všech třech bodech. v9.67 byla jen kopie mechaniky od strojů
+(šest tabů → sběr dat → PDF), která k jednolistovému protokolu nesedí.
+
+### Jedna sada stavebníků pro obrazovku i pro papír
+
+`spotrHlavickaHtml` · `spotrTabulkaHlavicka` · `spotrRadekHtml` ·
+`spotrPristrojeHtml` · `spotrVysvetlivkyHtml` · `spotrPodpisHtml` berou
+volbu **`o.edit`**: `true` → buňky jsou pole a kolonky hlavičky jsou
+přihrádky, `false` → text do PDF. **Neexistují dvě verze rozvržení**, takže
+se nemůžou rozejít — to je celý smysl.
+
+- **Jediný tab „Protokol"** místo šesti. Přístroje se půjčí do překryvu
+  (`#modal-sp-pristroje`), lhůta a data se nastavují přímo v hlavičce listu.
+- **`novaZprava()` aktivuje panel PRVNÍHO TLAČÍTKA daného typu**, ne natvrdo
+  `tab-titulni`. Spotřebičům by titulka nechala prázdnou obrazovku a protokol
+  by měl **nulovou šířku** (a tím i nulové měřítko).
+
+### Pole zprávy se STĚHUJÍ do listu, nekopírují
+
+`SPOTR_PRENOS` = `f_provozovatel`, `f_ev_cislo`, `f_zahajeni`, `f_pristi`,
+`f_misto`, `f_sp_lhuta`, `f_vypracovani`. `spotrPrenosPoli(doListu)` je
+přestěhuje do přihrádek `.sp-slot` a zpátky; domov si každý prvek pamatuje
+v `el.__spotrDomov`. Vzor `#stroje-blok` z v9.30 — ukládání, archiv, zálohy
+i načtení z archivu tím fungují beze změny, protože **zdroj pravdy zůstává
+jeden**.
+
+**Past, na kterou to najelo dvakrát:** cokoli, co přepíše `innerHTML` nebo
+`outerHTML` části listu, **ta přestěhovaná pole zničí** — a program pak
+`f_vypracovani` nikde nenajde. Proto `renderSpotrebiceList()` i
+`spotrObnovitOkoli()` volají **nejdřív `spotrPrenosPoli(false)`** (pole domů)
+a až pak překreslují; `spotrObnovitOkoli()` je na konci vrací zpět.
+**Přesun musí zůstat obousměrný** — jinak u elektro revize pole na titulní
+straně chybí (test to hlídá při přepnutí typu).
+
+### Šířka: A4 a zmenšení, ne posuvník
+
+`.sp-sheet` je **přesně 281 mm** (297 − 2×8 mm padding), tedy obsah tištěné
+strany. Na užší okno se **celý list zmenší** (`spotrPrizpusobit()` →
+`transform: scale`), místo aby se posouval vodorovně — vodorovný posuvník je
+to, co uživatel odmítl.
+
+- Obal `.sp-sheet-wrap` musí dostat **dopočítanou výšku**
+  (`výška × měřítko`), jinak pod zmenšeným listem zůstane díra —
+  `transform` rozvržení nemění.
+- Výška listu roste s každým spotřebičem → **`ResizeObserver`** na listu.
+- **Ve skrytém panelu má list nulové rozměry**, takže `spotrPrizpusobit()`
+  se musí volat AŽ po `showScreen`/přepnutí tabu (stejná past jako u všech
+  tří náhledů PDF). Volá se z `novaZprava()`, `switchTab()`,
+  `formArchivAktualizovat()` a `formArchivSirkaNastav()`.
+- **Postranní archiv odsouvá formulář** (`--fa-sirka`), takže přeměření patří
+  přímo do `formArchivSirkaNastav()` — ne jen na `pointerup`, ať to platí
+  i pro dvojklik a obnovení uložené šířky.
+- `#tab-spotrebice` má **vlastní `max-width` 1160 px** (běžný tab má 960) —
+  jinak by se list zmenšoval i na velkém monitoru.
+
+### Podpis v PDF (to, co chybělo)
+
+`spotrPodpisHtml()` kreslí **čáru**, nad ní razítko a podpis technika, pod ní
+vlevo „Jméno a příjmení revizního technika" + ev. č. osvědčení a vpravo
+„podpis". Ve v9.67 podpisové místo **nebylo vůbec** — u revizní zprávy je to
+zásadní chyba, ne kosmetika. Datum „v … dne:" je v editaci přihrádka pro
+`f_vypracovani`, v PDF text.
+
+### Ostatní
+
+- **`collectPristroje()` je nová funkce** vytažená z `getData()` — protokol
+  potřebuje seznam přístrojů za běhu, ne až při skládání PDF.
+- Test: `test-spotrebice.js` (62 kontrol — nově: jediný tab, pole opravdu
+  bydlí v listu a vrací se domů, nikde vodorovný posuvník, list široký
+  přesně 281 mm, měřítko na úzkém okně i s roztaženým archivem, karta
+  přístrojů se půjčí a vrátí, podpisová čára a oba popisky v PDF).
 
 ## Revize elektrických spotřebičů — ČSN 33 1600 ed.2 (v9.67)
 
@@ -135,10 +216,15 @@ s větou, která se tiskne pod tabulku.
   se tím elektro revize nedotkne.
 - „+ Přidat prodlužovací přívod" předvyplní třídu II, skupinu C a sestavu PP
   (`SPOTR_PRIVOD`) — ve vzoru mají všechny přívody stejný tvar.
-- Test: `test-spotrebice.js` (44 kontrol — typ, karta, 20 sloupců, nápověda
-  jako placeholder, lhůty a dopočet termínu, kolečko archivem, protokol
-  proti vzoru včetně vysvětlivek, stránkování 40 spotřebičů, a že elektro
-  zůstalo nedotčené).
+- Test: `test-spotrebice.js` — typ, karta, 20 sloupců, nápověda jako
+  placeholder, lhůty a dopočet termínu, kolečko archivem, protokol proti
+  vzoru včetně vysvětlivek, stránkování 40 spotřebičů, a že elektro zůstalo
+  nedotčené. **Ve v9.69 rozšířeno na 62 kontrol** — viz oddíl výš.
+
+**Pozor při čtení tohohle oddílu:** rozvržení formuláře (šest tabů, tabulka
+s vodorovným posuvníkem, karta `#scard-spotrebice-lhuta`) **platilo jen ve
+v9.67–v9.68**. Od v9.69 je formulář jeden list; sloupce, vysvětlivky, lhůta
+a rozhodnutí kolem nich dál platí beze změny.
 
 ## Vlastní číslování zpráv (v9.62, předlohy v9.63, per typ v9.68)
 
@@ -1684,7 +1770,7 @@ dohledání v předchozích diskuzích), nepřerovnávám je.
    Alt: lightweight knihovna (Quill ~100 kB).
 
 10. **Další typy revize** (DM jich má 11). ✅ **Stroje hotové (v9.30),
-    ✅ Spotřebiče hotové (v9.67).** Zbývají: **Trafo, Osvětlení,
+    ✅ Spotřebiče hotové (v9.67, přepracované v9.69).** Zbývají: **Trafo, Osvětlení,
     Podlahy, Nouzové osvětlení, VN, Zdroje pro svařování,
     Zdravotní přístroje, Univerzální.** Každý typ = vlastní workflow
     (jiné taby, jiné PDF).

@@ -518,6 +518,9 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
    (popis, závěr…) zůstávají úzké pro čitelnost dlouhých textů. */
 @media (min-width:1100px){
   #tab-mereni.tab-panel{max-width:min(1540px, calc(100vw - 2rem))}
+  /* Protokol spotřebičů je celá strana A4 na šířku — úzký sloupec pro text
+     by ho zbytečně zmenšoval. */
+  #tab-spotrebice.tab-panel{max-width:min(1160px, calc(100vw - 2rem))}
 }
 .meas-table{width:100%;min-width:900px;table-layout:fixed}
 .meas-table th.grp{background:#1F497D}
@@ -688,7 +691,64 @@ html.dark .fa-radek.fa-akt{background:#3a2420}
 .fa-smazat:hover{color:var(--accent);border-color:var(--accent)}
 /* Tabulka protokolu o revizi spotřebičů (ČSN 33 1600 ed.2) — dvacet sloupců
    na šířku A4, takže drobné písmo a zalamování v dlouhých buňkách. */
-table.spotr-tab{font-size:6.2pt;line-height:1.15}
+/* ═══ PROTOKOL O REVIZI SPOTŘEBIČŮ ═══
+   Formulář JE ten list: `.sp-sheet` je PŘESNĚ tak široký jako obsah tištěné
+   strany A4 na šířku (281 mm = 297 − 2×8 mm padding), takže rozvržení na
+   obrazovce a na papíře je totožné — „co vidíte, to se vytiskne" (pokyn
+   uživatele 2026-09-17). Na užší okno se **celý list zmenší** poměrem
+   (`spotrPrizpusobit()`), místo aby se posouval vodorovně — vodorovný
+   posuvník byl to, co uživatel výslovně odmítl. */
+.sp-sheet-wrap{overflow:hidden}
+.sp-sheet{width:281mm;transform-origin:top left;background:#fff;color:#000;
+  border:1px solid var(--border-dark);box-shadow:0 4px 20px rgba(0,0,0,.18);
+  padding:1.4rem 1.6rem 1.8rem;font-family:'Courier Prime','Courier New',Courier,monospace}
+html.dark .sp-sheet{background:#f7f6f2}
+.sp-lista{margin:0 auto .8rem;display:flex;gap:1rem;
+  align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.sp-lista-vlevo{display:flex;flex-direction:column;gap:.2rem;min-width:260px;flex:1}
+.sp-lista select{width:100%;padding:.35rem .5rem;font-size:.82rem;
+  border:1px solid var(--border-dark);border-radius:3px;background:var(--surface);color:var(--text)}
+/* Kolonky hlavičky — do přihrádek se stěhují SKUTEČNÁ pole zprávy. */
+.sp-slot{background:#fff}
+.sp-slot > input,.sp-slot > textarea,.sp-slot > select{
+  width:100%!important;border:none!important;background:transparent!important;
+  font-family:inherit!important;font-size:8pt!important;font-weight:600!important;
+  padding:0!important;margin:0!important;color:#000!important;
+  text-align:inherit;resize:none;min-height:0;height:auto}
+.sp-slot > textarea{height:1.35em;overflow:hidden;white-space:nowrap}
+.sp-slot > input:focus,.sp-slot > textarea:focus,.sp-slot > select:focus{
+  outline:2px solid var(--accent2);outline-offset:1px}
+.sp-hlavicka td{font-size:8pt}
+.sp-pridat{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0 1rem}
+.sp-zlom{text-align:center;font-size:.68rem;color:#999;letter-spacing:.06em;
+  margin:1.6rem 0 1.2rem;font-family:var(--mono)}
+.sp-pristroje{font-size:8pt}
+.sp-pristroje th{border:.3mm solid #000;padding:.8mm 1.5mm;background:#fff;color:#000;
+  font-weight:700;text-align:center;font-size:7.5pt}
+.sp-pristroje td{border:.3mm solid #000;padding:.8mm 1.5mm;font-size:8pt}
+.sp-vysv{font-size:7.2pt;line-height:1.35}
+/* Podpis: jedna čára, nad ní razítko a podpis, pod ní dva popisky —
+   vlevo jméno, vpravo „podpis". Místo na podpis ve v9.67 CHYBĚLO. */
+.sp-podpis{display:flex;justify-content:space-between;align-items:flex-end;
+  gap:2rem;margin-top:12mm;font-size:8.5pt}
+.sp-podpis-blok{min-width:95mm;max-width:110mm;flex:0 0 auto}
+.sp-podpis-obsah{display:flex;align-items:flex-end;justify-content:center;
+  gap:1rem;min-height:18mm}
+.sp-podpis-razitko{flex:0 0 auto}
+.sp-podpis-jmeno{font-weight:700;font-size:9.5pt;text-align:center;position:relative}
+.sp-podpis-img{position:absolute;left:50%;transform:translateX(-30%);bottom:-2mm}
+.sp-podpis-cara{border-top:.35mm solid #000;margin-top:1mm}
+.sp-podpis-popisky{display:flex;justify-content:space-between;gap:1rem;
+  padding-top:1mm;font-size:7.5pt}
+.sp-podpis-ev{font-size:7pt;color:#333}
+/* Křížek u řádku — v tisku tenhle sloupec vůbec není. */
+.sp-del{border:none!important;width:18px;padding:0 0 0 3px!important;background:transparent}
+.sp-x{background:transparent;border:1px solid transparent;color:#bbb;cursor:pointer;
+  font-size:.75rem;line-height:1;padding:.1rem .2rem;border-radius:3px}
+tr:hover > .sp-del .sp-x{color:var(--accent);border-color:var(--accent)}
+
+table.spotr-tab{width:100%;table-layout:fixed;border-collapse:collapse;
+  font-size:6.6pt;line-height:1.15}
 /* `.pdf-meas th` má `white-space:nowrap` — u dvaceti sloupců by hlavička
    přetekla přes sousedy. Tady se zalamuje. */
 table.spotr-tab th{font-size:5.6pt;font-weight:600;text-align:center;vertical-align:middle;
@@ -696,6 +756,16 @@ table.spotr-tab th{font-size:5.6pt;font-weight:600;text-align:center;vertical-al
   white-space:normal;word-break:break-word;hyphens:auto}
 table.spotr-tab td{padding:.6mm .5mm;border:0.25mm solid #000;vertical-align:middle;
   white-space:normal;word-break:break-word}
+/* Pole v buňce nesmí vypadat jako formulář — jinak by se list nepodobal
+   tomu, co vyjde z tiskárny. */
+table.spotr-tab td .sp-pole{width:100%;border:none;background:transparent;
+  font-family:inherit;font-size:6.6pt;padding:.3mm .2mm;color:#000;
+  border-radius:0;-webkit-appearance:none;appearance:none}
+table.spotr-tab td select.sp-pole{text-align:center;text-align-last:center;cursor:pointer}
+table.spotr-tab td .sp-pole:focus{outline:2px solid var(--accent2);outline-offset:-1px;
+  background:#eef4fc}
+table.spotr-tab td .sp-pole::placeholder{color:#b9b6ae;font-style:italic}
+table.spotr-tab tbody tr:hover td{background:#fbfaf7}
 /* Úzké sloupce mají ve vzoru hlavičku OTOČENOU na výšku — jinak se dvacet
    sloupců na šířku A4 nevejde čitelně. */
 table.spotr-tab th.sv{vertical-align:bottom;padding:.4mm 0 1mm;height:26mm}
@@ -1045,7 +1115,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.68<span class="ver-date"> · 2026-09-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.69<span class="ver-date"> · 2026-09-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1066,6 +1136,16 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
      takže psaní do hledacího pole panelu by zprávu značkovalo jako
      změněnou a nabízelo ji k uložení.
 ═══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-sp-pristroje">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-title">🔧 Měřicí přístroje</div>
+    <div id="sp-pristroje-host"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" data-action="spotrPristrojeZavrit">Hotovo</button>
+    </div>
+  </div>
+</div>
+
 <aside class="form-archiv" id="form-archiv" style="display:none">
   <div class="fa-head">
     <span>📚 Archiv zpráv</span>
@@ -2425,10 +2505,11 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <button class="tab-btn" data-tab="lps-mereni">5. Měření zemničů</button>
   <button class="tab-btn" data-tab="zaver">6. Závěr &amp; Závady</button>
 </div>
+<!-- Protokol o revizi spotřebičů má JEDINÝ krok: sám protokol. Vyplňuje se
+     přímo v jeho podobě, takže krokování „titulka → tabulka → přístroje"
+     tu jen mátlo (pokyn uživatele 2026-09-17). -->
 <div class="tab-bar" id="tab-bar-spotrebice" style="display:none">
-  <button class="tab-btn active" data-tab="titulni">1. Titulní strana</button>
-  <button class="tab-btn" data-tab="spotrebice">2. Spotřebiče</button>
-  <button class="tab-btn" data-tab="pristroje">3. Přístroje</button>
+  <button class="tab-btn active" data-tab="spotrebice">Protokol</button>
 </div>
 <div class="tab-bar" id="tab-bar-stroje" style="display:none">
   <button class="tab-btn active" data-tab="titulni">1. Titulní strana</button>
@@ -3121,28 +3202,23 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   </div>
 </div>
 
-<!-- TAB SPOTŘEBIČE (ČSN 33 1600 ed.2) -->
+<!-- TAB SPOTŘEBIČE — protokol se vyplňuje rovnou ve své tištěné podobě -->
 <div class="tab-panel" id="tab-spotrebice">
-  <div class="scard">
-    <div class="scard-title">🔌 Revidované spotřebiče <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">ČSN 33 1600 ed.2</span></div>
-    <div class="info-box">
-      Jeden řádek = jeden spotřebič, nářadí nebo prodlužovací přívod.
-      <strong>Šedý text v poli je nápověda, ne hodnota</strong> — do protokolu se nevytiskne.
-      Rozbalovátka u sloupců Třída, Skupina, Sestava, Metoda a Hodnocení mají významy
-      z vysvětlivek pod tabulkou. Nepoužitá pole nechte prázdná, vytisknou se jako
-      <span style="font-family:var(--mono)">---</span>.
+  <div class="sp-lista">
+    <div class="sp-lista-vlevo">
+      <label style="font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Odběratel z knihovny</label>
+      <span id="sp-odberatel-slot"></span>
     </div>
-    <div class="table-wrap plan-scroll" style="overflow:auto">
-      <table class="data-table" id="spotrebice-tabulka">
-        <thead id="spotrebice-hlavicka"></thead>
-        <tbody id="spotrebice-body"></tbody>
-      </table>
-    </div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem">
-      <button class="add-row" data-action="addSpotrebic">+ Přidat spotřebič</button>
-      <button class="add-row" data-action="addSpotrebicPrivod">+ Přidat prodlužovací přívod</button>
+    <div class="sp-lista-vpravo">
+      <button class="btn btn-ghost" data-action="spotrPristrojeOtevrit" style="background:var(--bg);color:var(--text);border:1px solid var(--border-dark)">🔧 Měřicí přístroje</button>
     </div>
   </div>
+  <div class="info-box" style="margin:0 auto .8rem;max-width:1400px">
+    <strong>Co vidíte, to se vytiskne.</strong> Vyplňujete rovnou hotový protokol —
+    PDF bude vypadat stejně. Šedý text v poli je <strong>nápověda, ne hodnota</strong>;
+    prázdné buňky se vytisknou jako <span style="font-family:var(--mono)">---</span>.
+  </div>
+  <div id="spotrebice-list"></div>
 </div>
 
 
@@ -4650,6 +4726,7 @@ function switchTab(id, btn) {
   if (btn) btn.classList.add('active');
   refreshStepper();
   updateTabNav();
+  if (id === 'spotrebice') spotrPrizpusobit();   // ve skrytém panelu má list nulové rozměry
   window.scrollTo(0, 0);
 }
 
@@ -5069,15 +5146,33 @@ function novaZprava(typ) {
   // o spotřebičích nehodí (napěťová soustava, ochrana, třída VTEZ, rozsah
   // a popis instalace, dokumentace), se schovají — v protokolu dle
   // ČSN 33 1600 ed.2 nic z toho není.
-  if (typ === 'spotrebice') initSpotrebice();
+  // Pole zprávy se u spotřebičů stěhují do protokolu; u ostatních typů
+  // se musí vrátit na své místo na titulní straně. **Obousměrně** — jinak
+  // by u elektro revize prostě chyběla.
+  if (typ === 'spotrebice') initSpotrebice(); else spotrPrenosPoli(false);
   ['scard-napetova', 'scard-ochrana-char', 'scard-vtez', 'scard-rozsah-popis',
    'scard-dokumentace', 'scard-d1-prohlidka', 'scard-d2-zkouseni', 'scard-d3-zkouseni-tab'
   ].forEach(function(id) {
     var sc = document.getElementById(id);
     if (sc && typ === 'spotrebice') sc.style.display = 'none';
   });
+  // Karta s lhůtou na titulce u spotřebičů NENÍ potřeba — lhůta se vybírá
+  // přímo v hlavičce protokolu. Zůstává schovaná, aby `f_sp_lhuta` mělo
+  // kde bydlet, když se protokol nezobrazuje.
   var spBlok = document.getElementById('scard-spotrebice-lhuta');
-  if (spBlok) spBlok.style.display = (typ === 'spotrebice') ? '' : 'none';
+  if (spBlok) spBlok.style.display = 'none';
+  // Výběr odběratele se u spotřebičů stěhuje nad protokol.
+  var odb = document.getElementById('f_odberatel_select');
+  var odbSlot = document.getElementById('sp-odberatel-slot');
+  if (odb && odbSlot) {
+    if (!odb.__spotrDomov) odb.__spotrDomov = { rodic: odb.parentNode, dalsi: odb.nextSibling };
+    if (typ === 'spotrebice') { if (odb.parentNode !== odbSlot) odbSlot.appendChild(odb); }
+    else if (odb.parentNode !== odb.__spotrDomov.rodic) {
+      var d = odb.__spotrDomov;
+      if (d.dalsi && d.dalsi.parentNode === d.rodic) d.rodic.insertBefore(odb, d.dalsi);
+      else d.rodic.appendChild(odb);
+    }
+  }
   // LPS specifické inicializace
   if (typ === 'lps') {
     renderLpsLpz();
@@ -5094,7 +5189,12 @@ function novaZprava(typ) {
   var activeBar = document.getElementById(typInfo(typ).bar);
   var firstTab = activeBar ? activeBar.querySelector('.tab-btn') : document.querySelector('.tab-btn');
   if (firstTab) firstTab.classList.add('active');
-  var titPanel = document.getElementById('tab-titulni'); if (titPanel) titPanel.classList.add('active');
+  // Panel se bere z PRVNÍHO TLAČÍTKA daného typu, ne natvrdo `tab-titulni`.
+  // Spotřebiče mají jediný tab („Protokol"), takže by jim natvrdo zvolená
+  // titulka nechala obrazovku prázdnou — a protokol by měl nulovou šířku.
+  var prvniId = 'tab-' + ((firstTab && firstTab.dataset.tab) || 'titulni');
+  var titPanel = document.getElementById(prvniId) || document.getElementById('tab-titulni');
+  if (titPanel) titPanel.classList.add('active');
   // Nová zpráva = průvodce od začátku: žádné prošlé kroky
   window.__tabsVisited = {};
   refreshStepper();
@@ -5105,6 +5205,7 @@ function novaZprava(typ) {
   stromNaplnitNapajenZ();
   window.__formDirty = false;
   showScreen('form');
+  if (typ === 'spotrebice') spotrPrizpusobit();  // až teď má list nenulovou šířku
 }
 
 // ═══ ČÍSLOVÁNÍ ZPRÁV ════════════════════════════════════════════════════
@@ -10838,13 +10939,20 @@ function closeModal(id) {
 
 function gv(id) { var el = document.getElementById(id); return el ? el.value : ''; }
 
-function getData() {
-  var t = STORE.technik || {};
+// Seznam měřicích přístrojů z tabulky. Vytaženo z `getData()`, protože ho
+// potřebuje i protokol spotřebičů (kreslí je do listu za běhu, ne až v PDF).
+function collectPristroje() {
   var pristroje = [];
   document.querySelectorAll('#pristroje-body tr').forEach(function(tr) {
     var inp = tr.querySelectorAll('input');
     if (inp.length >= 4) pristroje.push({ nazev: inp[0].value, vyrCislo: inp[1].value, kalibrace: inp[2].value, platnost: inp[3].value });
   });
+  return pristroje;
+}
+
+function getData() {
+  var t = STORE.technik || {};
+  var pristroje = collectPristroje();
   var rozvadece = [];
   document.querySelectorAll('#rozvadece-container .scard').forEach(function(card) {
     var nazevEl = card.querySelector('.rozv-nazev');
@@ -16181,13 +16289,27 @@ function archivMistoBunka(z, maly) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// REVIZE ELEKTRICKÝCH SPOTŘEBIČŮ — ČSN 33 1600 ed.2 (v9.67)
+// REVIZE ELEKTRICKÝCH SPOTŘEBIČŮ — ČSN 33 1600 ed.2 (v9.67, přepsáno v9.69)
 //
-// Předloha: protokoly kolegy Jiřího Roubalíka (uživatel poslal snímky
-// 2026-09-17). Je to **jednolistový protokol**, ne zpráva členěná do
-// kapitol — široká tabulka na šířku papíru, pod ní tabulka měřicího
-// přístroje, vysvětlivky a podpis. Proto má vlastní náhled
-// `#screen-spotrebice-pdf` a NEJDE přes `generujPDF()`.
+// Předloha: protokoly kolegy Jiřího Roubalíka (snímky 2026-09-17).
+//
+// **CO VYPLŇUJU, TO SE VYTISKNE.** Uživatel odmítl (2026-09-17) původní
+// podobu, kde se protokol vyplňoval v krocích jako ostatní zprávy a výsledek
+// vypadal jinak: „ta výsledná karta je jednoduchá a chtělo by to, aby vizuál
+// výsledného pdf byl stejný jako to, co vyplňuju v programu… navíc to, že si
+// technik musí posouvat sliderem tabulku, je strašný."
+//
+// Proto:
+//  1. **Jediný krok „Protokol"** — žádné taby. Protokol je jeden list.
+//  2. **Formulář JE ten list.** Kreslí ho `spotrProtokolHtml(D, o)` a stejná
+//     funkce kreslí i PDF; `o.edit` jen přepne buňky mezi poli a textem.
+//     Rozejít se nemůžou, protože je to jeden kód.
+//  3. **Šířky sloupců jsou v PROCENTECH**, ne v mm — na papíře drží poměr
+//     stejně a na obrazovce se list roztáhne přes celou šířku okna, takže
+//     **není co posouvat vodorovně**.
+//  4. Skutečná pole zprávy (`f_ev_cislo`, `f_misto`, …) se do listu
+//     **PŘESTĚHUJÍ** (`spotrPrenosPoli`), nekopírují. Ukládání, archiv,
+//     zálohy i drobečková navigace tak fungují beze změny.
 // ═══════════════════════════════════════════════════════════════════════
 
 // Lhůty opakovaných revizí dle ČSN 33 1600 ed.2 – Z2, tabulka 1. Ve vzoru
@@ -16195,33 +16317,33 @@ function archivMistoBunka(z, maly) {
 // lhůty 1x za N měsíců") — spotřebiče s jinou lhůtou patří na jiný protokol.
 var SPOTR_LHUTY = ['6', '12', '24'];
 
-// Sloupce tabulky. `k` = klíč v datech, `h` = hlavička, `sirka` = mm v PDF,
-// `ph` = šedá nápověda v poli (do PDF se NEDOSTANE), `volby` = rozbalovátko.
+// Sloupce tabulky. `k` = klíč v datech, `h` = hlavička, `sirka` = poměrová
+// šířka (mm ze vzoru; převádí se na %), `ph` = šedá nápověda v poli (do PDF
+// se NEDOSTANE), `volby` = rozbalovátko, `svisle` = hlavička na výšku.
 var SPOTR_SLOUPCE = [
   { k: 'nazev',   h: 'Název spotřebiče',   sirka: 28, ph: 'Vrtačka Makita HP 1630' },
   { k: 'oznaceni',h: 'Označení',           sirka: 11, ph: 'R-047' },
   { k: 'vyrobce', h: 'Výrobce',            sirka: 15, ph: 'Makita' },
   { k: 'rok',     h: 'Rok výroby',         sirka: 9,  ph: '2023' },
   { k: 'vyrcislo',h: 'Výrobní číslo',      sirka: 20, ph: '855362A1' },
-  { k: 'trida',   h: 'Třída',              sirka: 8,  volby: ['', 'I', 'II', 'III'] , svisle: true},
-  { k: 'skupina', h: 'Skupina',            sirka: 8,  volby: ['', 'A', 'B', 'C', 'D', 'E'],
-    tip: 'Skupina spotřebiče dle ČSN 33 1600 ed.2 kap. 4 — určuje lhůtu opakované revize.' , svisle: true},
+  { k: 'trida',   h: 'Třída',              sirka: 8,  svisle: true, volby: ['', 'I', 'II', 'III'] },
+  { k: 'skupina', h: 'Skupina',            sirka: 8,  svisle: true, volby: ['', 'A', 'B', 'C', 'D', 'E'],
+    tip: 'Skupina spotřebiče dle ČSN 33 1600 ed.2 kap. 4 — určuje lhůtu opakované revize.' },
   { k: 'un',      h: 'Un (V)',             sirka: 12, ph: '230' },
   { k: 'in',      h: 'In (A)',             sirka: 10, ph: '3' },
   { k: 'pn',      h: 'Pn (kW)',            sirka: 11, ph: '0,71' },
-  { k: 'sestava', h: 'Sestava',            sirka: 9,  volby: ['', 'S', 'P', 'O', 'PP', 'OP'],
-    tip: 'S = měřen samostatně · P = pevně připojený přívod · O = odpojitelný přívod · PP = prodlužovací přívod · OP = odpojitelný přívod' , svisle: true},
-  { k: 'delka',   h: 'Délka přívodu [m]',  sirka: 11, ph: '1,8' , svisle: true},
-  { k: 'rpe',     h: 'Odpor ochr. vodiče [Ω]', sirka: 14, ph: '0,09' , svisle: true},
-  { k: 'riso',    h: 'Izolační odpor [MΩ]',sirka: 14, ph: '>19,9' , svisle: true},
-  { k: 'metoda',  h: 'Metoda',             sirka: 10, volby: ['', 'V', 'VR', 'D', 'DR', 'U'],
-    tip: 'V = proud ochranným vodičem přímo · VR = jako rozdílový · D = dotykový přímo · DR = dotykový rozdílový · U = náhradní unikající proud' , svisle: true},
+  { k: 'sestava', h: 'Sestava',            sirka: 9,  svisle: true, volby: ['', 'S', 'P', 'O', 'PP', 'OP'],
+    tip: 'S = měřen samostatně · P = pevně připojený přívod · O = odpojitelný přívod · PP = prodlužovací přívod · OP = odpojitelný přívod' },
+  { k: 'delka',   h: 'Délka přívodu [m]',  sirka: 11, svisle: true, ph: '1,8' },
+  { k: 'rpe',     h: 'Odpor ochr. vodiče [Ω]', sirka: 14, svisle: true, ph: '0,09' },
+  { k: 'riso',    h: 'Izolační odpor [MΩ]',sirka: 14, svisle: true, ph: '>19,9' },
+  { k: 'metoda',  h: 'Metoda',             sirka: 10, svisle: true, volby: ['', 'V', 'VR', 'D', 'DR', 'U'],
+    tip: 'V = proud ochranným vodičem přímo · VR = jako rozdílový · D = dotykový přímo · DR = dotykový rozdílový · U = náhradní unikající proud' },
   { k: 'imA',     h: 'I [mA]',             sirka: 11, ph: '0,0' },
-  { k: 'bmn',     h: 'Bezpečné malé napětí [V]', sirka: 11, ph: '---' , svisle: true},
-  { k: 'chod',    h: 'Zkouška chodu / vyhodnocení', sirka: 12, volby: ['', 'V', 'N'] , svisle: true},
-  { k: 'hodnoceni', h: 'Celkové hodnocení',sirka: 12, volby: ['', 'V', 'N'] , svisle: true},
-  { k: 'zavady',  h: 'Zjištěné závady (vyjádření, závěry, poznámky)', sirka: 28,
-    ph: 'Vyhovuje' }
+  { k: 'bmn',     h: 'Bezpečné malé napětí [V]', sirka: 11, svisle: true, ph: '---' },
+  { k: 'chod',    h: 'Zkouška chodu / vyhodnocení', sirka: 12, svisle: true, volby: ['', 'V', 'N'] },
+  { k: 'hodnoceni', h: 'Celkové hodnocení',sirka: 12, svisle: true, volby: ['', 'V', 'N'] },
+  { k: 'zavady',  h: 'Zjištěné závady (vyjádření, závěry, poznámky)', sirka: 28, ph: 'Vyhovuje' }
 ];
 
 // Sloučená hlavička nad sloupci — přesně jako ve vzoru.
@@ -16237,7 +16359,8 @@ var SPOTR_SKUPINY = [
 ];
 
 // Vysvětlivky pod tabulkou — doslovné znění ze vzoru, rozložené do čtyř
-// sloupců jako na papíře. **Text norem se nemění.**
+// sloupců jako na papíře. **Text norem se nemění** (vzor má dvakrát „6)",
+// je to pokračování do dalšího sloupce).
 var SPOTR_VYSVETLIVKY = [
   [['1)', 'Viz ČSN 33 1600 ed. 2:2009 kapitola 4'],
    ['2)', 'Uveďte jmenovité hodnoty spotřebiče, nářadí nebo prodlužovacího přívodu'],
@@ -16250,215 +16373,89 @@ var SPOTR_VYSVETLIVKY = [
    ['8)', 'U prodlužovacích přívodů platí třída ochrany II. Zkoušky, měření a lhůty pravidelných revizí platí jako by se jednalo o třídu ochrany I.(ČSN v33 1600 ed.2 změna Z2 - Tabulka 1, poznámka 6)']]
 ];
 
-// Hodnoty, které se u prodlužovacího přívodu předvyplní — ve vzoru mají
-// všechny stejný tvar (třída II s odkazem na poznámku 8, skupina C, PP).
+// Prodlužovací přívod — ve vzoru mají všechny stejný tvar.
 var SPOTR_PRIVOD = { trida: 'II', skupina: 'C', sestava: 'PP', metoda: 'V',
                      riso: '>19,9', imA: '0,0', bmn: '---', chod: 'V',
                      hodnoceni: 'V', zavady: 'Vyhovuje' };
+
+// Pole zprávy, která se stěhují do protokolu. Stěhují se SKUTEČNÉ prvky,
+// ne kopie — jinak by vznikly dva zdroje pravdy.
+var SPOTR_PRENOS = ['f_provozovatel', 'f_ev_cislo', 'f_zahajeni', 'f_pristi',
+                    'f_misto', 'f_sp_lhuta', 'f_vypracovani'];
+
+var SPOTR_CELKEM = SPOTR_SLOUPCE.reduce(function(a, c) { return a + c.sirka; }, 0);
 
 function spotrSloupec(k) {
   for (var i = 0; i < SPOTR_SLOUPCE.length; i++) if (SPOTR_SLOUPCE[i].k === k) return i;
   return -1;
 }
+function spotrProc(i) { return (SPOTR_SLOUPCE[i].sirka / SPOTR_CELKEM * 100).toFixed(3) + '%'; }
 
-// ── Formulář ────────────────────────────────────────────────────────────
-function renderSpotrebiceHlavicka() {
-  var th = document.getElementById('spotrebice-hlavicka');
-  if (!th) return;
-  var r1 = '<tr><th rowspan="2" style="width:26px"></th>';
-  SPOTR_SKUPINY.forEach(function(g) {
-    var n = spotrSloupec(g.po) - spotrSloupec(g.od) + 1;
-    r1 += g.h
-      ? '<th colspan="' + n + '">' + esc(g.h) + '</th>'
-      : '<th colspan="' + n + '" rowspan="2">' +
-        SPOTR_SLOUPCE.slice(spotrSloupec(g.od), spotrSloupec(g.po) + 1)
-          .map(function(c) { return esc(c.h); }).join('</th><th rowspan="2">') + '</th>';
-  });
-  r1 += '<th rowspan="2" style="width:30px"></th></tr>';
-  var r2 = '<tr>';
-  SPOTR_SKUPINY.forEach(function(g) {
-    if (!g.h) return;                       // ty už jsou vypsané s rowspan=2
-    SPOTR_SLOUPCE.slice(spotrSloupec(g.od), spotrSloupec(g.po) + 1).forEach(function(c) {
-      r2 += '<th' + (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' + esc(c.h) + '</th>';
-    });
-  });
-  r2 += '</tr>';
-  th.innerHTML = r1 + r2;
+// ── Stavebník protokolu — JEDNA funkce pro obrazovku i tisk ─────────────
+// `o.edit` = true → buňky jsou pole a kolonky hlavičky jsou přihrádky,
+// do kterých se přestěhují skutečné prvky formuláře.
+
+function spotrKolonka(o, id, sirka, obsah, stred) {
+  var st = 'display:inline-block;min-width:' + sirka + ';border:0.35mm solid #000;' +
+    'padding:.6mm 1.5mm;vertical-align:middle' + (stred ? ';text-align:center' : '');
+  return o.edit
+    ? '<span class="sp-slot" data-slot="' + id + '" style="' + st + '"></span>'
+    : '<span style="' + st + '">' + (obsah || '&nbsp;') + '</span>';
 }
 
-function addSpotrebicRow(data) {
-  var tb = document.getElementById('spotrebice-body');
-  if (!tb) return null;
-  data = data || {};
-  var tr = document.createElement('tr');
-  tr.dataset.rowtype = 'spotrebic';
-  var html = '<td class="dnd-num-cell" style="text-align:center;color:#6e6a60;font-size:.7rem"></td>';
-  SPOTR_SLOUPCE.forEach(function(c) {
-    var v = data[c.k] || '';
-    if (c.volby) {
-      html += '<td><select class="sp-pole" data-k="' + c.k + '"' +
-        (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' +
-        c.volby.map(function(o) {
-          return '<option value="' + esc(o) + '"' + (o === v ? ' selected' : '') + '>' +
-            (o || '—') + '</option>';
-        }).join('') + '</select></td>';
-    } else {
-      // Nápověda je POUZE placeholder — do dat ani do PDF se nedostane
-      // (stejné pravidlo jako u nápověd u strojů, v9.30).
-      html += '<td><input type="text" class="sp-pole" data-k="' + c.k + '" value="' + esc(v) + '"' +
-        (c.ph ? ' placeholder="' + esc(c.ph) + '"' : '') + ' autocomplete="off"></td>';
-    }
-  });
-  tr.innerHTML = html;
-  tr.appendChild(mkDelTd());
-  tb.appendChild(tr);
-  initRowDnd(tr, tb);
-  renumberSpotrebice();
-  window.__formDirty = true;
-  return tr;
-}
-
-function addSpotrebic() { addSpotrebicRow({ sestava: 'P', metoda: 'V', chod: 'V', hodnoceni: 'V' }); }
-function addSpotrebicPrivod() {
-  var tr = addSpotrebicRow(Object.assign({ nazev: 'Prodlužovací přívod' }, SPOTR_PRIVOD));
-  if (tr) { var i = tr.querySelector('input'); if (i) { i.focus(); i.select(); } }
-}
-
-// Číslování řádků je jen vizuální pomůcka, do dat ani do PDF nejde —
-// ve vzoru tabulka sloupec s pořadím nemá.
-// `deleteRowsWithUndo` volá `onChange`; u tabulky spotřebičů se musí
-// přečíslovat, jinak zůstanou díry v pořadí.
-function renumberSpotrebice() {
-  var tb = document.getElementById('spotrebice-body');
-  if (!tb) return;
-  Array.prototype.forEach.call(tb.children, function(tr, i) {
-    var c = tr.querySelector('td.dnd-num-cell');
-    if (c) c.textContent = (i + 1);
-  });
-}
-
-// ── Data ────────────────────────────────────────────────────────────────
-function collectSpotrebiceData() {
-  var out = { lhuta: gv('f_sp_lhuta') || '24', seznam: [] };
-  var tb = document.getElementById('spotrebice-body');
-  if (tb) {
-    Array.prototype.forEach.call(tb.children, function(tr) {
-      var r = {};
-      var prazdny = true;
-      tr.querySelectorAll('.sp-pole').forEach(function(el) {
-        r[el.dataset.k] = el.value || '';
-        if (el.value) prazdny = false;
-      });
-      if (!prazdny) out.seznam.push(r);      // úplně prázdný řádek se neukládá
-    });
-  }
-  return out;
-}
-
-function restoreSpotrebiceData(S) {
-  var tb = document.getElementById('spotrebice-body');
-  if (tb) tb.innerHTML = '';
-  S = S || {};
-  var lh = document.getElementById('f_sp_lhuta');
-  if (lh) lh.value = SPOTR_LHUTY.indexOf(String(S.lhuta)) >= 0 ? String(S.lhuta) : '24';
-  (S.seznam || []).forEach(function(r) { addSpotrebicRow(r); });
-  if (!(S.seznam || []).length) addSpotrebic();
-  spotrLhutaZmena(true);
-}
-
-function initSpotrebice() {
-  renderSpotrebiceHlavicka();
-  var tb = document.getElementById('spotrebice-body');
-  if (tb) tb.innerHTML = '';
-  addSpotrebic();
-  spotrLhutaZmena(true);
-}
-
-// Datum příští revize se dopočítá z data revize a zvolené lhůty. Přepisuje
-// se jen tehdy, když je pole prázdné nebo když ho spočítal program —
-// **ručně zapsaný termín se nepřepisuje** (technik může mít důvod).
-function spotrLhutaZmena(jenDopocet) {
-  var pristi = document.getElementById('f_pristi');
-  var zahaj = document.getElementById('f_zahajeni');
-  var lh = document.getElementById('f_sp_lhuta');
-  var info = document.getElementById('sp-lhuta-info');
-  if (info && lh) {
-    info.textContent = 'Lhůta opakovaných revizí (ČSN 33 1600 ed.2 – Z2 – tabulka 1): 1× ' +
-      lh.value + ' měsíců';
-  }
-  if (!pristi || !zahaj || !lh || !zahaj.value) return;
-  var rucne = pristi.value && pristi.value !== (pristi.dataset.spocitano || '');
-  if (jenDopocet && rucne) return;
-  var d = new Date(zahaj.value);
-  if (isNaN(d.getTime())) return;
-  d.setMonth(d.getMonth() + parseInt(lh.value, 10));
-  var iso = d.toISOString().slice(0, 10);
-  pristi.value = iso;
-  pristi.dataset.spocitano = iso;
-  pristi.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
-// ── PDF / náhled ────────────────────────────────────────────────────────
-// Kreslí se do vlastní obrazovky, NE přes generujPDF() — ta skládá zprávu
-// z číslovaných kapitol a zapisuje do archivu; protokol o spotřebičích je
-// jiný druh dokumentu. Stejný vzor jako měřicí list (v9.53) a schéma (v9.39).
-var __spotrZpet = 'form';
-
-function spotrPole(id) { return (document.getElementById(id) || {}).value || ''; }
-
-function spotrHlavickaHtml(D, strana, stran) {
+function spotrHlavickaHtml(D, o, stran) {
   var S = D.spotrebice || {};
   var t = STORE.technik || {};
   var firma = D.provozovatel || t.firma || t.jmeno || '';
-  var radek = function(popis, hodnota, sirka) {
-    return '<tr><td style="padding:.4mm 2mm .4mm 0;white-space:nowrap;font-weight:600">' +
-      esc(popis) + '</td><td style="padding:.4mm 0">' +
-      '<span style="display:inline-block;min-width:' + (sirka || 60) + 'mm;border:0.35mm solid #000;' +
-      'padding:.6mm 1.5mm;font-weight:600">' + (esc(hodnota) || '&nbsp;') + '</span></td></tr>';
+  var pop = function(x) {
+    return '<td style="padding:.4mm 2mm .4mm 0;white-space:nowrap;font-weight:600;' +
+      'vertical-align:middle">' + esc(x) + '</td>';
   };
   return '<div style="text-align:center;font-size:11pt;font-weight:700;margin-bottom:2mm">' +
       'Revize elektrických spotřebičů</div>' +
-    '<table style="border-collapse:collapse;font-size:8pt;margin-bottom:2mm"><tbody>' +
-      radek('Firma:', firma, 130) +
-      '<tr><td style="padding:.4mm 2mm .4mm 0;white-space:nowrap;font-weight:600">Protokol číslo:</td>' +
-        '<td style="padding:.4mm 0"><span style="display:inline-block;min-width:38mm;border:0.35mm solid #000;' +
-        'padding:.6mm 1.5mm;text-align:center;font-weight:700">' + (esc(D.ev_cislo) || '&nbsp;') + '</span>' +
-        '<span style="margin-left:2mm;font-weight:600">o OPAKOVANÝCH REVIZÍCH elektrických spotřebičů ' +
-        'provedených podle ČSN 33 1600 ed.2</span></td></tr>' +
-      radek('Datum opakované revize:', fmtDate(D.zahajeni), 30) +
-      radek('Datum příští revize:', fmtDate(D.pristi), 30) +
-      '<tr><td style="padding:.4mm 2mm .4mm 0;white-space:nowrap;font-weight:600">Budova, místnosti:</td>' +
-        '<td style="padding:.4mm 0"><span style="display:inline-block;min-width:70mm;border:0.35mm solid #000;' +
-        'padding:.6mm 1.5mm;text-align:center">' + (esc(String(D.misto || '').split('\n')[0]) || '&nbsp;') + '</span>' +
-        '<span style="margin-left:2mm">Lhůta opakovaných revizí (ČSN 33 1600 ed.2 – Z2 – Tabulka 1):' +
-        '<strong style="margin-left:6mm">1x&nbsp;&nbsp;&nbsp;' + esc(S.lhuta || '24') +
-        '&nbsp;&nbsp;měsíců</strong></span></td></tr>' +
-      radek('Počet stran:', String(stran), 14) +
+    '<table class="sp-hlavicka" style="border-collapse:collapse;font-size:8pt;margin-bottom:2.5mm"><tbody>' +
+      '<tr>' + pop('Firma:') + '<td style="padding:.4mm 0">' +
+        spotrKolonka(o, 'f_provozovatel', '150mm', esc(String(firma).split('\n').join(' '))) + '</td></tr>' +
+      '<tr>' + pop('Protokol číslo:') + '<td style="padding:.4mm 0">' +
+        spotrKolonka(o, 'f_ev_cislo', '42mm', esc(D.ev_cislo), true) +
+        '<span style="margin-left:2mm;font-weight:600">o OPAKOVANÝCH REVIZÍCH elektrických ' +
+        'spotřebičů provedených podle ČSN 33 1600 ed.2</span></td></tr>' +
+      '<tr>' + pop('Datum opakované revize:') + '<td style="padding:.4mm 0">' +
+        spotrKolonka(o, 'f_zahajeni', '34mm', esc(fmtDate(D.zahajeni)), true) + '</td></tr>' +
+      '<tr>' + pop('Datum příští revize:') + '<td style="padding:.4mm 0">' +
+        spotrKolonka(o, 'f_pristi', '34mm', esc(fmtDate(D.pristi)), true) + '</td></tr>' +
+      '<tr>' + pop('Budova, místnosti:') + '<td style="padding:.4mm 0;white-space:nowrap">' +
+        spotrKolonka(o, 'f_misto', '62mm', esc(String(D.misto || '').split('\n')[0]), true) +
+        '<span style="margin-left:2mm">Lhůta opakovaných revizí ' +
+        '(ČSN 33 1600 ed.2 – Z2 – Tabulka 1):</span> ' +
+        (o.edit ? spotrKolonka(o, 'f_sp_lhuta', '26mm', '', true)
+                : '<strong style="margin-left:4mm">1x&nbsp;&nbsp;' + esc(S.lhuta || '24') +
+                  '&nbsp;&nbsp;měsíců</strong>') + '</td></tr>' +
+      (o.edit ? '' : '<tr>' + pop('Počet stran:') + '<td style="padding:.4mm 0">' +
+        '<span style="display:inline-block;min-width:16mm;border:0.35mm solid #000;' +
+        'padding:.6mm 1.5mm;text-align:center">' + stran + '</span></td></tr>') +
     '</tbody></table>';
+}
+
+function spotrTh(c, extra) {
+  return c.svisle
+    ? '<th class="sv"' + extra + '><span>' + esc(c.h) + '</span></th>'
+    : '<th' + extra + (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' + esc(c.h) + '</th>';
 }
 
 // Dvouřádková hlavička jako ve vzoru. **Šířky sloupců musí být v `<colgroup>`,
 // ne v buňkách** — první řádek má sloučené buňky (colspan) a `table-layout:fixed`
 // z nich šířky jednotlivých sloupců neodvodí, takže by se druhý řádek hlavičky
 // s daty nezarovnal (a přesně to se napoprvé stalo).
-function spotrTh(c, extra) {
-  return c.svisle
-    ? '<th class="sv"' + extra + '><span>' + esc(c.h) + '</span></th>'
-    : '<th' + extra + '>' + esc(c.h) + '</th>';
-}
-
 function spotrTabulkaHlavicka() {
-  var cg = '<colgroup>' + SPOTR_SLOUPCE.map(function(c) {
-    return '<col style="width:' + c.sirka + 'mm">';
+  var cg = '<colgroup>' + SPOTR_SLOUPCE.map(function(c, i) {
+    return '<col style="width:' + spotrProc(i) + '">';
   }).join('') + '</colgroup>';
   var r1 = '<tr>';
   SPOTR_SKUPINY.forEach(function(g) {
     var od = spotrSloupec(g.od), po = spotrSloupec(g.po);
-    if (g.h) {
-      r1 += '<th colspan="' + (po - od + 1) + '">' + esc(g.h) + '</th>';
-    } else {
-      for (var i = od; i <= po; i++) r1 += spotrTh(SPOTR_SLOUPCE[i], ' rowspan="2"');
-    }
+    if (g.h) r1 += '<th colspan="' + (po - od + 1) + '">' + esc(g.h) + '</th>';
+    else for (var i = od; i <= po; i++) r1 += spotrTh(SPOTR_SLOUPCE[i], ' rowspan="2"');
   });
   r1 += '</tr><tr>';
   SPOTR_SKUPINY.forEach(function(g) {
@@ -16470,13 +16467,54 @@ function spotrTabulkaHlavicka() {
   return cg + '<thead>' + r1 + '</tr></thead>';
 }
 
-function spotrRadekHtml(r) {
-  return '<tr>' + SPOTR_SLOUPCE.map(function(c) {
+// Jeden řádek. V režimu úprav jsou v buňkách pole, v tisku text —
+// **je to jeden a týž řádek tabulky**, proto vypadá obojí stejně.
+function spotrRadekHtml(r, o) {
+  var html = '<tr data-rowtype="spotrebic">';
+  SPOTR_SLOUPCE.forEach(function(c) {
     var v = (r[c.k] || '').trim();
-    // Prázdná buňka se ve vzoru tiskne jako „---", ne jako díra.
-    return '<td style="text-align:' + (c.k === 'nazev' || c.k === 'zavady' ? 'left' : 'center') + '">' +
-      (v ? esc(v) : '---') + '</td>';
-  }).join('') + '</tr>';
+    var vlevo = (c.k === 'nazev' || c.k === 'zavady');
+    if (!o.edit) {
+      // Prázdná buňka se ve vzoru tiskne jako „---", ne jako díra.
+      html += '<td style="text-align:' + (vlevo ? 'left' : 'center') + '">' +
+        (v ? esc(v) : '---') + '</td>';
+      return;
+    }
+    if (c.volby) {
+      html += '<td><select class="sp-pole" data-k="' + c.k + '"' +
+        (c.tip ? ' title="' + esc(c.tip) + '"' : '') + '>' +
+        c.volby.map(function(x) {
+          return '<option value="' + esc(x) + '"' + (x === v ? ' selected' : '') + '>' +
+            (x || '—') + '</option>';
+        }).join('') + '</select></td>';
+    } else {
+      // Nápověda je POUZE placeholder — do dat ani do PDF se nedostane.
+      html += '<td><input type="text" class="sp-pole" data-k="' + c.k + '" ' +
+        'value="' + esc(v) + '"' + (c.ph ? ' placeholder="' + esc(c.ph) + '"' : '') +
+        ' autocomplete="off" style="text-align:' + (vlevo ? 'left' : 'center') + '"></td>';
+    }
+  });
+  html += (o.edit ? '<td class="sp-del"><button class="sp-x" data-action="delSpotrebic" ' +
+    'title="Smazat řádek">✕</button></td>' : '') + '</tr>';
+  return html;
+}
+
+function spotrPristrojeHtml(D, o) {
+  var radky = (D.pristroje || []).filter(function(p) { return p.nazev || p.vyrobni || p.kalibrace; });
+  var telo = radky.length
+    ? radky.map(function(p) {
+        return '<tr><td>' + esc(p.nazev || '') + '</td><td style="text-align:center">' +
+          esc(p.vyrobni || '') + '</td><td style="text-align:center">' +
+          esc(p.kalibrace || '') + '</td></tr>';
+      }).join('')
+    : '<tr><td>&nbsp;</td><td></td><td></td></tr>';
+  return '<table class="sp-pristroje" style="border-collapse:collapse;margin-bottom:5mm">' +
+    '<colgroup><col style="width:70mm"><col style="width:42mm"><col style="width:60mm"></colgroup>' +
+    '<thead><tr><th>Použitý měřící přístroj</th><th>Výrobní číslo</th>' +
+    '<th>čís. kalibr. listu</th></tr></thead><tbody>' + telo + '</tbody></table>' +
+    (o.edit ? '<div style="margin:-3mm 0 5mm;font-size:.72rem;color:var(--muted)">' +
+      'Přístroje se berou z profilu technika — upravit je jde tlačítkem ' +
+      '<strong>🔧 Měřicí přístroje</strong> nad protokolem.</div>' : '');
 }
 
 function spotrVysvetlivkyHtml(D) {
@@ -16488,117 +16526,326 @@ function spotrVysvetlivkyHtml(D) {
           esc(p[1]).replace(/\n/g, '<br>') + '</div>';
       }).join('') + '</td>';
   }).join('');
-  return '<div style="font-size:7.2pt;line-height:1.35">' +
+  return '<div class="sp-vysv">' +
     '<div style="font-weight:700;margin-bottom:1.5mm">Vysvětlivky:</div>' +
-    '<div style="margin-bottom:1mm">Všechny spotřebiče nebo prodlužovací přívody zde uvedené mají lhůty ' +
-      '1x za ' + esc(S.lhuta || '24') + ' měsíců - dle normy ČSN 33-1600 ed.2 změna Z2 - Tabulka 1</div>' +
+    '<div style="margin-bottom:1mm">Všechny spotřebiče nebo prodlužovací přívody zde uvedené mají ' +
+      'lhůty 1x za ' + esc(S.lhuta || '24') + ' měsíců - dle normy ČSN 33-1600 ed.2 změna Z2 - Tabulka 1</div>' +
     '<div style="margin-bottom:2mm">Prodlužovací odpojitelné přívody jsou revidovány společně se ' +
       'spotřebičem, na který jsou připojeny, a mají stejné označení.</div>' +
     '<table style="border-collapse:collapse;width:100%;table-layout:fixed"><tbody><tr>' + sl +
     '</tr></tbody></table></div>';
 }
 
-function spotrPristrojeHtml(D) {
-  var radky = (D.pristroje || []).filter(function(p) { return p.nazev || p.vyrobni || p.kalibrace; });
-  if (!radky.length) return '';
-  return '<table class="pdf-meas" style="border-collapse:collapse;font-size:8pt;margin-bottom:6mm">' +
-    '<thead><tr><th style="width:55mm">Použitý měřící přístroj</th>' +
-    '<th style="width:35mm">Výrobní číslo</th><th style="width:55mm">čís. kalibr. listu</th></tr></thead><tbody>' +
-    radky.map(function(p) {
-      return '<tr><td>' + esc(p.nazev || '') + '</td><td style="text-align:center">' +
-        esc(p.vyrobni || '') + '</td><td style="text-align:center">' + esc(p.kalibrace || '') + '</td></tr>';
-    }).join('') + '</tbody></table>';
-}
-
-function spotrPodpisHtml(D) {
+// Podpisový blok. **Musí obsahovat místo na PODPIS** — chybělo to
+// (nahlásil uživatel 2026-09-17: „v pdf má být podpis"). Ve vzoru je jedna
+// čára, nad ní razítko a podpis technika, pod ní dva popisky:
+// vlevo „Jméno a příjmení revizního technika", vpravo „podpis".
+function spotrPodpisHtml(D, o) {
   var t = STORE.technik || {};
   var pdfOpts = tiskNastaveni(D);
-  var mesto = t.mesto || '';
-  return '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:10mm">' +
-    '<div style="font-size:8.5pt">v ' + esc(mesto || '…………………') + ' dne: ' +
-      esc(fmtDate(D.vypracovani || D.ukonceni || D.zahajeni)) + '</div>' +
-    '<div style="text-align:center;min-width:80mm">' +
-      ((pdfOpts.razitko && t.razitko) ? '<img class="razitko-pdf" src="' + t.razitko + '" alt="razítko">' : '') +
-      ((pdfOpts.podpis && t.podpis) ? '<img src="' + t.podpis + '" style="max-height:18mm;max-width:60mm;display:block;margin:0 auto -2mm" alt="podpis">' : '') +
-      '<div style="font-weight:700;font-size:9pt">' + esc(t.jmeno || '') + '</div>' +
-      '<div style="border-top:0.35mm solid #000;margin-top:1mm;padding-top:1mm;font-size:7.5pt">' +
-        'Jméno a příjmení revizního technika</div>' +
-      (t.osvedceni ? '<div style="font-size:7pt;color:#333">ev. č. osvědčení: ' + esc(t.osvedceni) + '</div>' : '') +
+  var razitko = (pdfOpts.razitko && t.razitko)
+    ? '<img class="razitko-pdf" src="' + t.razitko + '" alt="razítko">' : '';
+  var podpis = (pdfOpts.podpis && t.podpis)
+    ? '<img src="' + t.podpis + '" style="max-height:16mm;max-width:55mm" alt="podpis">' : '';
+  return '<div class="sp-podpis">' +
+    '<div class="sp-podpis-datum">v ' + esc(t.mesto || '……………………') + ' dne: ' +
+      (o.edit ? spotrKolonka(o, 'f_vypracovani', '30mm', '', true)
+              : esc(fmtDate(D.vypracovani || D.ukonceni || D.zahajeni) || '……………')) + '</div>' +
+    '<div class="sp-podpis-blok">' +
+      '<div class="sp-podpis-obsah">' +
+        '<div class="sp-podpis-razitko">' + razitko + '</div>' +
+        '<div class="sp-podpis-jmeno">' + esc(t.jmeno || '') +
+          (podpis ? '<div class="sp-podpis-img">' + podpis + '</div>' : '') + '</div>' +
+      '</div>' +
+      '<div class="sp-podpis-cara"></div>' +
+      '<div class="sp-podpis-popisky">' +
+        '<div>Jméno a příjmení revizního technika' +
+          (t.osvedceni ? '<div class="sp-podpis-ev">ev. č. osvědčení: ' +
+            esc(t.osvedceni) + '</div>' : '') + '</div>' +
+        '<div>podpis</div>' +
+      '</div>' +
     '</div></div>';
 }
 
-// Vykreslení náhledu. Stránkuje se **greedy jako u měřicího listu**: řádek se
-// přidá, změří se výška a když přeteče, založí se nová strana a hlavička
-// tabulky se zopakuje. `showScreen()` musí být PŘED měřením — ve skryté
-// obrazovce mají prvky nulovou velikost.
+// ── Formulář = protokol ────────────────────────────────────────────────
+function spotrebiceRadky(D) {
+  return ((D.spotrebice || {}).seznam || []).filter(function(r) {
+    return Object.keys(r).some(function(k) { return (r[k] || '').trim(); });
+  });
+}
+
+function renderSpotrebiceList(D) {
+  var host = document.getElementById('spotrebice-list');
+  if (!host) return;
+  var o = { edit: true };
+  var radky = ((D.spotrebice || {}).seznam || []);
+  // Pole zprávy bydlí UVNITŘ listu — přepsání `innerHTML` by je zničilo
+  // (a program by pak `f_vypracovani` nikde nenašel). Nejdřív tedy domů.
+  spotrPrenosPoli(false);
+  host.innerHTML =
+    '<div class="sp-sheet-wrap"><div class="sp-sheet">' +
+      spotrHlavickaHtml(D, o) +
+      '<table class="spotr-tab"><tbody id="spotrebice-body">' +
+        radky.map(function(r) { return spotrRadekHtml(r, o); }).join('') +
+      '</tbody></table>' +
+      '<div class="sp-pridat">' +
+        '<button class="add-row" data-action="addSpotrebic">+ Přidat spotřebič</button>' +
+        '<button class="add-row" data-action="addSpotrebicPrivod">+ Přidat prodlužovací přívod</button>' +
+      '</div>' +
+      '<div class="sp-zlom">— — —  konec 1. strany protokolu, dál se tiskne na druhou  — — —</div>' +
+      spotrPristrojeHtml(D, o) +
+      spotrVysvetlivkyHtml(D) +
+      spotrPodpisHtml(D, o) +
+    '</div></div>';
+  // hlavičku tabulky vložit až teď (thead musí být před tbody)
+  var tab = host.querySelector('.spotr-tab');
+  tab.insertAdjacentHTML('afterbegin', spotrTabulkaHlavicka());
+  spotrPrenosPoli(true);
+  spotrPrizpusobit();
+}
+
+// List má šířku papíru (281 mm). Do užšího okna se **zmenší celý najednou**,
+// takže si poměry drží — proto `transform: scale`, ne fluidní šířky. Obal
+// musí dostat dopočítanou výšku, jinak by pod zmenšeným listem zůstala díra.
+var __spotrPozorovatel = null;
+function spotrPrizpusobit() {
+  var wrap = document.querySelector('#spotrebice-list .sp-sheet-wrap');
+  var sheet = wrap && wrap.querySelector('.sp-sheet');
+  if (!sheet) return;
+  var k = wrap.clientWidth / sheet.offsetWidth;
+  if (!(k > 0)) return;                    // skrytá obrazovka → nulové rozměry
+  if (k > 1) k = 1;                        // zvětšovat se nebude
+  sheet.style.transform = k < 1 ? 'scale(' + k + ')' : '';
+  wrap.style.height = Math.ceil(sheet.offsetHeight * k) + 'px';
+  if (!__spotrPozorovatel && window.ResizeObserver) {
+    // Výška listu se mění s každým přidaným spotřebičem.
+    __spotrPozorovatel = new ResizeObserver(function() {
+      var w = document.querySelector('#spotrebice-list .sp-sheet-wrap');
+      var sh = w && w.querySelector('.sp-sheet');
+      if (!sh) return;
+      var k2 = Math.min(1, w.clientWidth / sh.offsetWidth);
+      if (k2 > 0) w.style.height = Math.ceil(sh.offsetHeight * k2) + 'px';
+    });
+  }
+  if (__spotrPozorovatel) { try { __spotrPozorovatel.disconnect(); } catch (e) {} __spotrPozorovatel.observe(sheet); }
+}
+window.addEventListener('resize', function() { spotrPrizpusobit(); });
+
+// Přestěhuje skutečná pole zprávy do přihrádek v protokolu (a zpátky).
+// Původní místo si každý prvek pamatuje, aby se návrat trefil přesně —
+// **přesun musí být obousměrný**, jinak u elektro revize pole chybí
+// (past zdokumentovaná u strojů ve v9.30).
+function spotrPrenosPoli(doListu) {
+  SPOTR_PRENOS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (!el.__spotrDomov) el.__spotrDomov = { rodic: el.parentNode, dalsi: el.nextSibling };
+    if (doListu) {
+      var slot = document.querySelector('.sp-slot[data-slot="' + id + '"]');
+      if (slot && el.parentNode !== slot) slot.appendChild(el);
+    } else {
+      var d = el.__spotrDomov;
+      if (d && d.rodic && el.parentNode !== d.rodic) {
+        if (d.dalsi && d.dalsi.parentNode === d.rodic) d.rodic.insertBefore(el, d.dalsi);
+        else d.rodic.appendChild(el);
+      }
+    }
+  });
+}
+
+function addSpotrebicRow(data) {
+  var tb = document.getElementById('spotrebice-body');
+  if (!tb) return null;
+  tb.insertAdjacentHTML('beforeend', spotrRadekHtml(data || {}, { edit: true }));
+  window.__formDirty = true;
+  return tb.lastElementChild;
+}
+
+function addSpotrebic() {
+  var tr = addSpotrebicRow({ sestava: 'P', metoda: 'V', chod: 'V', hodnoceni: 'V' });
+  if (tr) { var i = tr.querySelector('input'); if (i) { i.focus(); } }
+}
+function addSpotrebicPrivod() {
+  var tr = addSpotrebicRow(Object.assign({ nazev: 'Prodlužovací přívod' }, SPOTR_PRIVOD));
+  if (tr) { var i = tr.querySelector('input'); if (i) { i.focus(); i.select(); } }
+}
+
+function delSpotrebic(el) {
+  var tr = el.closest('tr');
+  if (!tr) return;
+  var tb = tr.parentNode;
+  deleteWithUndo(tr, 'Řádek smazán', function() {
+    if (!tb.children.length) addSpotrebic();
+  });
+}
+
+// ── Data ────────────────────────────────────────────────────────────────
+function collectSpotrebiceData() {
+  var out = { lhuta: gv('f_sp_lhuta') || '24', seznam: [] };
+  var tb = document.getElementById('spotrebice-body');
+  if (tb) {
+    Array.prototype.forEach.call(tb.children, function(tr) {
+      var r = {}, prazdny = true;
+      tr.querySelectorAll('.sp-pole').forEach(function(el) {
+        r[el.dataset.k] = el.value || '';
+        if (el.value) prazdny = false;
+      });
+      if (!prazdny) out.seznam.push(r);      // úplně prázdný řádek se neukládá
+    });
+  }
+  return out;
+}
+
+function restoreSpotrebiceData(S) {
+  S = S || {};
+  var lh = document.getElementById('f_sp_lhuta');
+  if (lh) lh.value = SPOTR_LHUTY.indexOf(String(S.lhuta)) >= 0 ? String(S.lhuta) : '24';
+  var D = { spotrebice: S, ev_cislo: gv('f_ev_cislo'), misto: gv('f_misto'),
+            zahajeni: gv('f_zahajeni'), pristi: gv('f_pristi'),
+            provozovatel: gv('f_provozovatel'), vypracovani: gv('f_vypracovani'),
+            pristroje: collectPristroje() };
+  renderSpotrebiceList(D);
+  if (!(S.seznam || []).length) addSpotrebic();
+  spotrLhutaZmena(true);
+}
+
+function initSpotrebice() {
+  restoreSpotrebiceData({ lhuta: '24', seznam: [] });
+}
+
+// Překreslí jen ty části protokolu, které se mění jinde než v tabulce
+// (přístroje, vysvětlivky se lhůtou, podpis). Tabulka se NEPŘEKRESLUJE —
+// uživateli by zmizel kurzor z rozepsané buňky.
+function spotrObnovitOkoli() {
+  var host = document.getElementById('spotrebice-list');
+  if (!host || !host.querySelector('.sp-sheet')) return;
+  var D = getData();
+  var o = { edit: true };
+  // Podpisový blok v sobě drží pole „Vypracování" — nejdřív ho poslat domů,
+  // jinak ho `outerHTML` zahodí a program ho pak nikde nenajde.
+  spotrPrenosPoli(false);
+  var st = host.querySelector('.sp-pristroje');
+  if (st) st.outerHTML = spotrPristrojeHtml(D, o).replace(/<div style="margin:-3mm[\s\S]*?<\/div>$/, '');
+  var v = host.querySelector('.sp-vysv');
+  if (v) v.outerHTML = spotrVysvetlivkyHtml(D);
+  var p = host.querySelector('.sp-podpis');
+  if (p) p.outerHTML = spotrPodpisHtml(D, o);
+  spotrPrenosPoli(true);
+}
+
+// Datum příští revize se dopočítá z data revize a zvolené lhůty. **Ručně
+// zapsaný termín se nepřepisuje** — pozná se podle `dataset.spocitano`.
+function spotrLhutaZmena(jenDopocet) {
+  var pristi = document.getElementById('f_pristi');
+  var zahaj = document.getElementById('f_zahajeni');
+  var lh = document.getElementById('f_sp_lhuta');
+  if (!pristi || !zahaj || !lh) return;
+  if (zahaj.value) {
+    var rucne = pristi.value && pristi.value !== (pristi.dataset.spocitano || '');
+    if (!(jenDopocet && rucne)) {
+      var d = new Date(zahaj.value);
+      if (!isNaN(d.getTime())) {
+        d.setMonth(d.getMonth() + parseInt(lh.value, 10));
+        var iso = d.toISOString().slice(0, 10);
+        pristi.value = iso;
+        pristi.dataset.spocitano = iso;
+      }
+    }
+  }
+  spotrObnovitOkoli();
+}
+
+// Přístroje se u spotřebičů needitují na vlastním kroku — otevře se
+// karta „C. Použité měřicí přístroje" v překryvu a po zavření se protokol
+// překreslí, takže je v něm změna hned vidět.
+function spotrPristrojeOtevrit() {
+  var m = document.getElementById('modal-sp-pristroje');
+  var host = document.getElementById('sp-pristroje-host');
+  var karta = document.querySelector('#tab-pristroje .scard');
+  if (!m || !host || !karta) return;
+  if (!karta.__spotrDomov) karta.__spotrDomov = { rodic: karta.parentNode, dalsi: karta.nextSibling };
+  host.appendChild(karta);
+  m.classList.add('open');
+}
+
+function spotrPristrojeZavrit() {
+  var m = document.getElementById('modal-sp-pristroje');
+  var karta = document.querySelector('#sp-pristroje-host .scard');
+  if (karta && karta.__spotrDomov) {
+    var d = karta.__spotrDomov;
+    if (d.dalsi && d.dalsi.parentNode === d.rodic) d.rodic.insertBefore(karta, d.dalsi);
+    else d.rodic.appendChild(karta);
+  }
+  if (m) m.classList.remove('open');
+  spotrObnovitOkoli();
+}
+
+// ── PDF / náhled ────────────────────────────────────────────────────────
+// Skládá se ze **stejných kusů jako formulář**, jen s `edit:false`. Proto
+// vypadá protokol na obrazovce a na papíře stejně — což bylo výslovné přání
+// (2026-09-17). Nejde přes `generujPDF()`: ta skládá zprávu z číslovaných
+// kapitol a zapisuje do archivu; tohle je jiný druh dokumentu.
+var __spotrZpet = 'form';
+
 function spotrebiceVykreslit(D) {
   var box = document.getElementById('spotrebice-pdf-pages');
   if (!box) return 0;
   box.innerHTML = '';
-  var S = D.spotrebice || {};
-  var radky = (S.seznam || []).filter(function(r) {
-    return Object.keys(r).some(function(k) { return (r[k] || '').trim(); });
-  });
-  var LIMIT = 188;                       // mm využitelné výšky uvnitř paddingu (210 − 8 − 6 − rezerva)
+  var o = { edit: false };
+  var radky = spotrebiceRadky(D);
+  var LIMIT = 188;                       // mm uvnitř paddingu (210 − 8 − 6 − rezerva)
   var mmNaPx = 0;
   function novaStrana() {
     var d = document.createElement('div');
     d.className = 'a4 a4-landscape';
     d.style.minHeight = '0';             // jinak každá „naměří" 210 mm
+    d.innerHTML = '<div class="a4-content" style="padding:8mm 8mm 6mm"></div>';
     box.appendChild(d);
     if (!mmNaPx) mmNaPx = d.getBoundingClientRect().width / 297;
     return d;
   }
   var strany = [];
-  var st = novaStrana();
-  strany.push(st);
-  st.innerHTML = '<div class="a4-content" style="padding:8mm 8mm 6mm"></div>';
-  var obsah = st.firstChild;
-  obsah.innerHTML = spotrHlavickaHtml(D, 1, 1) +
-    '<table class="pdf-meas spotr-tab" style="border-collapse:collapse;width:100%;table-layout:fixed">' +
-    spotrTabulkaHlavicka() + '<tbody></tbody></table>';
-  // POZOR: `querySelector('tbody')` by chytil tbody HLAVIČKOVÉ tabulky
-  // (spotrHlavickaHtml ji má taky) a řádky by spadly do ní — proto `.spotr-tab`.
-  var tb = obsah.querySelector('.spotr-tab tbody');
+  function zalozitTabulku(strana) {
+    var obsah = strana.firstChild;
+    obsah.innerHTML = spotrHlavickaHtml(D, o, '…') +
+      '<table class="spotr-tab">' + spotrTabulkaHlavicka() + '<tbody></tbody></table>';
+    // POZOR: `querySelector('tbody')` by chytil tbody HLAVIČKOVÉ tabulky
+    // (spotrHlavickaHtml ji má taky) a řádky by spadly do ní.
+    return obsah.querySelector('.spotr-tab tbody');
+  }
+  var st = novaStrana(); strany.push(st);
+  var tb = zalozitTabulku(st);
   radky.forEach(function(r) {
-    tb.insertAdjacentHTML('beforeend', spotrRadekHtml(r));
-    if (obsah.getBoundingClientRect().height / mmNaPx > LIMIT) {
+    tb.insertAdjacentHTML('beforeend', spotrRadekHtml(r, o));
+    if (st.firstChild.getBoundingClientRect().height / mmNaPx > LIMIT) {
       tb.removeChild(tb.lastElementChild);
       st = novaStrana(); strany.push(st);
-      st.innerHTML = '<div class="a4-content" style="padding:8mm 8mm 6mm"></div>';
-      obsah = st.firstChild;
-      obsah.innerHTML = spotrHlavickaHtml(D, strany.length, 1) +
-        '<table class="pdf-meas spotr-tab" style="border-collapse:collapse;width:100%;table-layout:fixed">' +
-        spotrTabulkaHlavicka() + '<tbody></tbody></table>';
-      tb = obsah.querySelector('.spotr-tab tbody');
-      tb.insertAdjacentHTML('beforeend', spotrRadekHtml(r));
+      tb = zalozitTabulku(st);
+      tb.insertAdjacentHTML('beforeend', spotrRadekHtml(r, o));
     }
   });
   // Poslední strana: přístroje + vysvětlivky + podpis (jako strana 2/2 vzoru)
   var posl = novaStrana(); strany.push(posl);
-  posl.innerHTML = '<div class="a4-content" style="padding:10mm 10mm 8mm"></div>';
-  posl.firstChild.innerHTML = spotrPristrojeHtml(D) + spotrVysvetlivkyHtml(D) + spotrPodpisHtml(D);
-  // Přepsat „Počet stran" a dopsat patičku, teď už je počet znám
+  posl.firstChild.style.padding = '10mm 10mm 8mm';
+  posl.firstChild.innerHTML = spotrPristrojeHtml(D, o) + spotrVysvetlivkyHtml(D) +
+    spotrPodpisHtml(D, o);
+  // „Počet stran" a patička — teď už je počet znám
   strany.forEach(function(s2, i) {
-    var c = s2.firstChild;
-    if (i < strany.length - 1) {
-      c.innerHTML = c.innerHTML.replace(
-        /(Počet stran:<\/td><td[^>]*><span[^>]*>)[^<]*/,
-        '$1' + strany.length);
-    }
+    s2.firstChild.innerHTML = s2.firstChild.innerHTML.replace(
+      /(Počet stran:<\/td><td[^>]*><span[^>]*>)…/, '$1' + strany.length);
     s2.insertAdjacentHTML('beforeend',
-      '<div style="position:absolute;bottom:4mm;left:0;right:0;text-align:center;font-size:7.5pt">' +
-      'Strana ' + (i + 1) + '/' + strany.length + '</div>');
+      '<div style="position:absolute;bottom:4mm;left:0;right:0;text-align:center;' +
+      'font-size:7.5pt">Strana ' + (i + 1) + '/' + strany.length + '</div>');
     s2.style.position = 'relative';
-    s2.style.minHeight = '210mm';        // vrátit, ať list v náhledu vypadá jako papír
+    s2.style.minHeight = '210mm';        // vrátit, ať list vypadá jako papír
   });
   return strany.length;
 }
 
 function spotrebiceNahled() {
   var D = getData();
-  if (!(D.spotrebice && (D.spotrebice.seznam || []).length)) {
-    alert('Zpráva nemá žádné spotřebiče — přidejte aspoň jeden v tabu „2. Spotřebiče".');
+  if (!spotrebiceRadky(D).length) {
+    alert('Protokol nemá žádný vyplněný spotřebič.');
     return;
   }
   try { saveToArchiv(); } catch (e) { console.error(e); }
@@ -16608,9 +16855,8 @@ function spotrebiceNahled() {
   var n = spotrebiceVykreslit(D);
   var info = document.getElementById('spotrebice-pdf-info');
   if (info) {
-    info.textContent = (D.ev_cislo || '') + ' · ' + String(D.misto || '').split('\n')[0] +
-      ' · ' + pocetZprav((D.spotrebice.seznam || []).length).replace('zpráv', 'položek')
-        .replace('zpráva', 'položka').replace('zprávy', 'položky') + ' · ' + n + ' stran';
+    info.textContent = (D.ev_cislo || '') + ' · ' +
+      String(D.misto || '').split('\n')[0] + ' · ' + n + ' stran';
   }
   window.scrollTo(0, 0);
 }
@@ -16623,8 +16869,7 @@ function spotrebiceNazevSouboru() {
     String(D.misto || '').split('\n')[0].slice(0, 30);
 }
 
-// Orientaci si `renderPagesToPDF` bere z třídy `.a4-landscape` na stránce,
-// nepředává se parametrem.
+// Orientaci si `renderPagesToPDF` bere z třídy `.a4-landscape` na stránce.
 function spotrebiceStranky() {
   return Array.prototype.slice.call(document.querySelectorAll('#spotrebice-pdf-pages .a4'));
 }
@@ -16702,6 +16947,10 @@ function formArchivSirkaNastav(px, uloz) {
   px = Math.round(Math.max(FA_SIRKA_MIN, Math.min(formArchivSirkaMax(), px || FA_SIRKA_VYCHOZI)));
   document.documentElement.style.setProperty('--fa-sirka', px + 'px');
   if (uloz) { try { localStorage.setItem(FA_SIRKA_KLIC, String(px)); } catch(e) {} }
+  // Panel odsouvá formulář — protokol spotřebičů se musí přeměřit, jinak by
+  // po roztažení panelu přetekl doprava. Tady, ať to platí pro každou cestu
+  // (tažení, dvojklik, obnovení uložené šířky), ne jen pro `pointerup`.
+  if (typeof spotrPrizpusobit === 'function') spotrPrizpusobit();
   return px;
 }
 
@@ -16766,6 +17015,9 @@ function formArchivAktualizovat() {
   document.body.classList.toggle('fa-open', vidi);
   var btn = document.getElementById('btn-form-archiv');
   if (btn) btn.classList.toggle('fa-btn-on', formArchivZapnut());
+  // Panel ubere formuláři šířku — protokol spotřebičů se musí přeměřit,
+  // jinak by po jeho otevření přetekl doprava.
+  if (typeof spotrPrizpusobit === 'function') spotrPrizpusobit();
 }
 
 function formArchivRadek(z, i) {
@@ -20682,6 +20934,9 @@ document.addEventListener('click', function(e) {
     case 'cisloRozsah': cisloRozsah(el); break;
     case 'addSpotrebic': addSpotrebic(); break;
     case 'addSpotrebicPrivod': addSpotrebicPrivod(); break;
+    case 'delSpotrebic': delSpotrebic(el); break;
+    case 'spotrPristrojeOtevrit': spotrPristrojeOtevrit(); break;
+    case 'spotrPristrojeZavrit': spotrPristrojeZavrit(); break;
     case 'spotrebiceNahledZpet': spotrebiceNahledZpet(); break;
     case 'spotrebiceNahledTisk': spotrebiceNahledTisk(); break;
     case 'spotrebiceNahledUlozit': spotrebiceNahledUlozit(); break;
