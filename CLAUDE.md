@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.71 · 2026-09-17**
+**Aktuální verze: v9.72 · 2026-09-17**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,37 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Výrobní číslo přístroje se do protokolu nedostalo (v9.72)
+
+Nahlásil uživatel 2026-09-17: „při vyplňování zprávy na spotřebiče se
+nepropisuje výrobní číslo měřáku, který má technik uložený v nastavení."
+
+`spotrPristrojeHtml()` sahala po **`p.vyrobni`**, ale klíč se jmenuje
+**`vyrCislo`** (`collectPristroje()`, `STORE.pristroje`). Platilo to od v9.67.
+Dvě škody, ne jedna:
+
+1. sloupec „Výrobní číslo" zůstal prázdný, i když měl technik přístroj
+   v profilu vyplněný,
+2. **stejný překlep byl i ve filtru** `p.nazev || p.vyrobni || p.kalibrace`,
+   takže přístroj zapsaný **jen výrobním číslem** se do protokolu nedostal
+   vůbec.
+
+Hlídají to čtyři kontroly v `test-spotrebice.js` (číslo na obrazovce, číslo
+v PDF, číslo kalibračního listu, a že přístroj jen s výrobním číslem
+nezmizí). **Nehlídat to jen na obrazovce** — formulář a PDF kreslí táž
+funkce, ale filtr se projeví až na počtu řádků.
+
+## Karta v Novinkách k číslování zpráv (v9.72)
+
+Uživatel schválil 2026-09-17. Karta k **v9.62–v9.68** (předlohy, automatika,
+tlačítko ⟳, řada per typ, roční reset, živá ukázka) — dosud žádnou neměla,
+přestože je to nová volba v Nastavení, kterou bez upozornění nikdo nenajde.
+
+**Karta výslovně říká „nic dělat nemusíte"** — to je celý smysl výchozí
+hodnoty a uživatel na tom trval („defaultně to bude jak to je teď, ať není
+nikdo překvapen"). Poznámka pod čarou upozorňuje na jedinou věc, která se
+komu s pětimístnými čísly opravdu změnila: **„Navázat" na ně nově naváže.**
 
 ## Karty v Novinkách ke spotřebičům a k archivu (v9.71)
 

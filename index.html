@@ -1142,7 +1142,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.71<span class="ver-date"> · 2026-09-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.72<span class="ver-date"> · 2026-09-17</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1270,6 +1270,21 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-09-17">
+    <div class="scard-title">🔢 Vlastní číslování zpráv <span class="nov-datum">17. 9. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">V <strong>Nastavení</strong> je nová karta <strong>🔢 Číslování zpráv</strong>, kde si nastavíte, jak mají vypadat evidenční čísla vašich zpráv. <strong>Nic dělat nemusíte</strong> — dokud si to nezměníte, program čísluje přesně jako dosud (<code>RE-26-0001</code>).</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Styl se vybírá kliknutím z hotových předloh</strong>, ne psaním značek. Komu žádná nesedí, zvolí <strong>✏️ Vlastní</strong> a napíše si tvar sám.</li>
+        <li><strong>Automatické číslování</strong> — zaškrtnete políčko a každá nová zpráva dostane rovnou další volné číslo v řadě. Bez něj funguje <strong>tlačítko ⟳ u pole Ev. číslo</strong>, které číslo přidělí, až si o ně řeknete.</li>
+        <li><strong>Každý typ revize může mít vlastní řadu.</strong> Nad předlohami se přepíná, pro co styl nastavujete — výchozí pro všechny, nebo zvlášť elektro, LPS, stroje či spotřebiče. Typ s vlastním nastavením má u sebe tečku.</li>
+        <li><strong>Má-li šablona v sobě rok, řada se každý leden vrací na jedničku.</strong> Bez roku běží dál.</li>
+        <li><strong>Živá ukázka</strong> pod seznamem pořád ukazuje, jaké číslo dostane příští zpráva a kolik zpráv v archivu do řady spadá — takže je předem vidět, co se stane.</li>
+      </ul>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Pozor: máte-li v archivu pětimístná čísla, program je nově vidí jako svou řadu a <strong>🔗 Navázat</strong> na ně naváže — dřív je přeskakoval a nabízel číslo od začátku.</div>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-09-17">
@@ -16561,11 +16576,18 @@ function spotrRadekHtml(r, o) {
 }
 
 function spotrPristrojeHtml(D, o) {
-  var radky = (D.pristroje || []).filter(function(p) { return p.nazev || p.vyrobni || p.kalibrace; });
+  // **Klíč je `vyrCislo`, ne `vyrobni`.** Po neexistujícím klíči se tu sahalo
+  // od v9.67, takže sloupec „Výrobní číslo" zůstával prázdný, i když měl
+  // technik přístroj v profilu vyplněný (nahlásil uživatel 2026-09-17) —
+  // a přístroj zapsaný JEN výrobním číslem se do protokolu nedostal vůbec,
+  // protože ho vyhodil i tenhle filtr.
+  var radky = (D.pristroje || []).filter(function(p) {
+    return p.nazev || p.vyrCislo || p.kalibrace;
+  });
   var telo = radky.length
     ? radky.map(function(p) {
         return '<tr><td>' + esc(p.nazev || '') + '</td><td style="text-align:center">' +
-          esc(p.vyrobni || '') + '</td><td style="text-align:center">' +
+          esc(p.vyrCislo || '') + '</td><td style="text-align:center">' +
           esc(p.kalibrace || '') + '</td></tr>';
       }).join('')
     : '<tr><td>&nbsp;</td><td></td><td></td></tr>';
