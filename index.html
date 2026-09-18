@@ -1163,7 +1163,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.75<span class="ver-date"> · 2026-09-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.76<span class="ver-date"> · 2026-09-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -16863,7 +16863,19 @@ document.addEventListener('mousedown', function(e) {
     spotrNabidkaZavrit(false);
   }
 }, true);
-window.addEventListener('scroll', function() { spotrNabidkaZavrit(false); }, true);
+// **Rolování UVNITŘ nabídky ji nesmí zavřít** (nahlásil uživatel 2026-09-18:
+// „když chci v tom nabídnutém seznamu zaskrolovat kolečkem, tak zmizne").
+// Posluchač je v zachytávací fázi, takže mu chodí i rolování z nabídky samé —
+// a ta je rolovatelná (`max-height:60vh;overflow:auto`). Zavřít se má jen
+// při rolování STRÁNKY, kdy by nabídka odjela od buňky.
+function rolovaniUvnitr(e, tr) {
+  var t = e && e.target;
+  return !!(t && t.closest && t.closest(tr));
+}
+window.addEventListener('scroll', function(e) {
+  if (rolovaniUvnitr(e, '.sp-volby')) return;
+  spotrNabidkaZavrit(false);
+}, true);
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && __spotrNabidka) spotrNabidkaZavrit(true);
 });
@@ -17851,7 +17863,10 @@ document.addEventListener('mousedown', function(e) {
     mistoNabidkaZavrit();
   }
 }, true);
-window.addEventListener('scroll', function() { mistoNabidkaZavrit(); }, true);
+window.addEventListener('scroll', function(e) {
+  if (rolovaniUvnitr(e, '.misto-nabidka')) return;   // viz `rolovaniUvnitr`
+  mistoNabidkaZavrit();
+}, true);
 
 function archivHay(z) {
   var d = z.data || {};

@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.75 · 2026-09-18**
+**Aktuální verze: v9.76 · 2026-09-18**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,11 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+   - **Ani POHODLNOST, která nemění ovládání, kartu nedostane**
+     (rozhodnutí uživatele 2026-09-18 u našeptávání místa: „zásadně to
+     neovlivňuje funkcionalitu, je to jen příjemné překvapení"). Zkouška:
+     *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
+     Když ne — žádná karta, i když je to milé a pracné.
 
 ## Protokol spotřebičů kradl pole jiným zprávám (v9.75)
 
@@ -130,7 +135,28 @@ jako u voleb ve spotřebičích (v9.73), sdílí i CSS `.sp-volby`.
 - Nabídka se neotevře u **dokončené (zamčené) zprávy** ani při prázdném
   archivu.
 
-Test: `test-misto-napoveda.js` (32 kontrol).
+**Do Novinek NEJDE** — rozhodnutí uživatele 2026-09-18: „zásadně to
+neovlivňuje funkcionalitu, je to jen příjemné překvapení." Je to **užitečné
+zpřesnění pravidla** z úvodu tohohle souboru: do Novinek nepatří jen opravy
+chyb, ale ani **pohodlnosti, které nemění, jak se program ovládá**. Kdo pole
+vyplňoval ručně, vyplňuje ho ručně dál; nabídka se sama objeví.
+
+### Rolování kolečkem nabídku zavíralo (v9.76)
+
+Nahlásil uživatel 2026-09-18: „když chci v tom nabídnutém seznamu zaskrolovat
+kolečkem, tak zmizne, šipky fungují." Posluchač `scroll` je v **zachytávací
+fázi** (`capture: true`), takže mu chodí i rolování z nabídky samé — a ta je
+rolovatelná (`max-height:60vh; overflow:auto`). Zavírat se má **jen při
+rolování stránky**, kdy by nabídka odjela od pole.
+
+- Řeší to `rolovaniUvnitr(e, selektor)` — u rolování dokumentu je `e.target`
+  **`document`, ne prvek**, takže se musí hlídat i existence `closest`.
+- **Stejnou chybu měla i nabídka voleb ve spotřebičích** (v9.73) — vznikla
+  kopií téhož posluchače. Opraveny obě naráz.
+- Test to zkouší **skutečným kolečkem myši** (`mouse.wheel`), ne jen
+  vyvolanou událostí, a ověřuje, že se obsah opravdu posunul.
+
+Test: `test-misto-napoveda.js` (36 kontrol), `test-spotrebice.js` (112).
 
 ## Nápověda u voleb ve spotřebičích (v9.73)
 
