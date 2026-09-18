@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.78 · 2026-09-18**
+**Aktuální verze: v9.79 · 2026-09-18**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -119,9 +119,38 @@ hodnocení = N".
 i všechny naráz do jednoho souboru („Strana 1 z 5"), nabízel jsem to,
 uživatel to zatím nechtěl.
 
-Test: `test-jeden-spotrebic.js` (36 kontrol — strana na výšku, údaje z řádku,
+Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Kolonka „Dodavatel" v protokolu spotřebiče (v9.79)
+
+Dotaz uživatele 2026-09-18: „tady v okénku dodavatel si nejsem jistý, jestli
+tam mám být revízák, jestli to není pro někoho jiného — Jirka to okénko měl
+prázdné."
+
+**„Dodavatel" = kdo revizi DODAL, tedy kdo ji fakturuje — ne dodavatel
+spotřebiče.** Proto je u něj IČO a DIČ a proto stojí vedle kolonky „Revizi
+provedl a protokol vystavil". Kolega ho má prázdný, protože je **zaměstnanec**
+a spotřebiče reviduje vlastní firmě — nikdo nikomu nic nedodává.
+
+Do v9.78 se tam psálo `t.firma || t.jmeno`, takže **jméno technika se vypsalo
+vždycky** — i tomu, kdo nefakturuje.  `spotrJedenHtml()` se proto ptá na obojí:
+
+1. vyplněná **firma** z profilu („Název firmy, pokud fakturujete přes firmu"),
+2. jinak **jméno technika, ale JEN když má v profilu IČO** — OSVČ fakturuje
+   na sebe, takže dodavatelem je on sám,
+3. jinak **prázdno** — zaměstnanec. Popisky IČO / DIČ zůstanou, aby šlo
+   okénko dopsat rukou.
+
+**Prázdná kolonka je lepší než vymyšlený dodavatel** — je to údaj
+o obchodním vztahu, ne o technikovi, a ten je v protokolu vedle v kolonce
+„Revizi provedl". Týká se to **jen protokolu jednoho spotřebiče**; seznam
+ani ostatní typy zpráv tuhle kolonku nemají.
+
+Test: `test-jeden-spotrebic.js` (40 kontrol) — všechny tři větve a k tomu, že
+jméno technika zůstává v kolonce „Revizi provedl" i tehdy, když je dodavatel
+prázdný.
 
 ## Znaky, které se na klávesnici nenapíšou — ≤ ≥ Δ (v9.77)
 

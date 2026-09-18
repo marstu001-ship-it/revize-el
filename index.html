@@ -1175,7 +1175,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.78<span class="ver-date"> · 2026-09-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.79<span class="ver-date"> · 2026-09-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -17331,6 +17331,13 @@ function spotrJedenHtml(D, r) {
       'provozu a nesmí být do odstranění závad používán.';
   var provedeno = ok ? 'Provedena s výsledkem – vyhovuje' : 'Provedena s výsledkem – NEVYHOVUJE';
 
+  // „Dodavatel" = kdo revizi DODAL (kdo ji fakturuje), ne dodavatel spotřebiče.
+  // Kdo fakturuje přes firmu, má ji v profilu; kdo fakturuje na sebe, pozná se
+  // podle IČO. Zaměstnanec nemá ani jedno — kolonka pak zůstane PRÁZDNÁ
+  // (na vyplnění rukou), místo aby se tam vypsalo jméno technika.
+  var dodavatel = String(t.firma || '').trim() ||
+                  (String(t.ico || '').trim() ? String(t.jmeno || '').trim() : '');
+
   return '' +
     // hlavička s celkovým hodnocením
     '<div style="display:flex;border:.35mm solid #000;margin-bottom:2mm">' +
@@ -17436,7 +17443,7 @@ function spotrJedenHtml(D, r) {
       '<div style="flex:1;padding:1.5mm 2mm;border-right:.35mm solid #000;font-size:8.5pt">' +
         '<div>Dodavatel:</div>' +
         '<div style="font-weight:700;min-height:6mm">' +
-          esc2(t.firma || t.jmeno) + '</div>' +
+          esc2(dodavatel) + '</div>' +
         '<div>IČO: <strong>' + esc2(t.ico) + '</strong>' +
           '<span style="margin-left:6mm">DIČ: <strong>' + esc2(t.dic) + '</strong></span></div>' +
       '</div>' +
