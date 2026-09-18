@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.73 · 2026-09-17**
+**Aktuální verze: v9.74 · 2026-09-18**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,41 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Našeptávání místa provádění z archivu (v9.74)
+
+Pokyn uživatele 2026-09-18: „u kontroly strojů na titulní straně vyplňujeme
+místo provádění kontroly — chtělo by to našeptávání místa z uložených kontrol
+z archivu, **celého místa**."
+
+**`f_misto` je `<textarea>`, takže nativní `<datalist>` NEJDE** (ten umí jen
+`<input>`) — a jít to ani nemá: místo bývá víceřádkové („Hala 3 – lisovna /
+SO 12") a nabídnout se má celé. Proto vlastní nabídka, stejný mechanismus
+jako u voleb ve spotřebičích (v9.73), sdílí i CSS `.sp-volby`.
+
+- **Dělá se to pro VŠECHNY typy zpráv, ne jen pro stroje.** Zprávy **téhož
+  typu jdou první** (dělám-li kontrolu stroje, chci vidět haly, ne rodinné
+  domy), uvnitř od nejnovější; zpráva jiného typu má u sebe štítek typu.
+- **U každého místa se ukazuje i adresa** — dvě haly téhož jména v různých
+  areálech se jinak nerozeznají. Hledat jde podle obojího.
+- **`mistoKlic()` zahazuje diakritiku, mezery, pomlčky i tečky**, takže
+  „hala3", „Hala 3" i „HALA-3" jsou totéž. Slouží k hledání **i k vyřazení
+  duplicit** — stejné místo se nenabídne dvakrát. (Že „hala3" najde „Hala 3",
+  napoprvé NEPLATILO a slíbil to jen komentář — našel to test.)
+- **Prázdná adresa se doplní z téže zprávy, vyplněná se NEPŘEPÍŠE.** Patička
+  nabídky to říká nahlas, ať to není překvapení.
+- **Posluchače jsou DELEGOVANÉ na dokumentu**, ne navázané na pole —
+  `f_misto` se u spotřebičů stěhuje do protokolu (`SPOTR_PRENOS`) a přímo
+  navázaný posluchač by se s ním rozešel. Test to zkouší i v přestěhovaném
+  poli.
+- **Výběr jede přes `mousedown`, ne `click`** — než by klik doběhl, pole by
+  ztratilo fokus, `blur` by nabídku zavřel a nevybralo by se nic.
+- **Enter vybere jen s otevřenou nabídkou.** Bez ní musí v textarea dál dělat
+  nový řádek — místo je víceřádkové. Test hlídá obojí.
+- Nabídka se neotevře u **dokončené (zamčené) zprávy** ani při prázdném
+  archivu.
+
+Test: `test-misto-napoveda.js` (32 kontrol).
 
 ## Nápověda u voleb ve spotřebičích (v9.73)
 

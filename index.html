@@ -734,6 +734,15 @@ html.dark .sp-sheet{background:#f7f6f2}
 .sp-volba-kod{flex:0 0 2.6rem;font-family:var(--mono);font-weight:700;font-size:.85rem}
 .sp-volba-popis{flex:1;line-height:1.35;opacity:.85}
 .sp-volba:hover .sp-volba-popis,.sp-volba.je .sp-volba-popis{opacity:1}
+/* Našeptávání místa provádění — sdílí vzhled s nabídkou voleb. */
+.misto-nabidka{max-width:min(620px,calc(100vw - 16px))}
+.misto-volba{align-items:flex-start}
+.misto-text{flex:1;line-height:1.35}
+.misto-adr{display:block;font-size:.72rem;opacity:.7;margin-top:.1rem}
+.misto-typ{flex:0 0 auto;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;
+  text-transform:uppercase;opacity:.65;padding-top:.15rem}
+.misto-pata{padding:.4rem .55rem .25rem;font-size:.7rem;color:var(--muted);
+  border-top:1px solid var(--border);margin-top:.2rem}
 .sp-lista select{width:100%;padding:.35rem .5rem;font-size:.82rem;
   border:1px solid var(--border-dark);border-radius:3px;background:var(--surface);color:var(--text)}
 /* Kolonky hlavičky — do přihrádek se stěhují SKUTEČNÁ pole zprávy. */
@@ -1154,7 +1163,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.73<span class="ver-date"> · 2026-09-17</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.74<span class="ver-date"> · 2026-09-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -17672,6 +17681,154 @@ function formArchivObnovitTab(tab) {
 // by se dřív nebo později rozešly a hledalo by se v každém jinak.
 // Stroje se hledají i podle názvu, typu a výrobního čísla — jinak by šlo
 // jméno stroje ve výpisu přečíst, ale ne podle něj hledat.
+// ── Našeptávání místa provádění z archivu ───────────────────────────────
+// Pokyn uživatele 2026-09-18: „u kontroly strojů na titulní straně
+// vyplňujeme místo provádění kontroly — chtělo by to našeptávání místa
+// z uložených kontrol z archivu, **celého místa**."
+//
+// **Pole je `<textarea>`, takže nativní `<datalist>` NEJDE** (ten umí jen
+// `<input>`) — a jít to ani nemá: místo bývá víceřádkové („Budova M1 –
+// SO12 / hala 3") a nabídnout se má celé, ne po řádcích. Proto vlastní
+// nabídka, jako u voleb ve spotřebičích (v9.73).
+var __mistoNabidka = null;
+
+// Klíč pro porovnávání: bez diakritiky a **bez mezer, pomlček a teček**,
+// takže „hala3", „Hala 3" i „HALA-3" jsou totéž. Stejnou volnost používá
+// program u porovnávání názvů rozváděčů. Slouží k hledání i k vyřazení
+// duplicit — dvě místa lišící se jen mezerou jsou jedno místo.
+function mistoKlic(t) {
+  return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[\s\-–—_.]/g, '');
+}
+
+// Místa z archivu: bez duplicit, **zprávy TÉHOŽ typu napřed** (dělám-li
+// kontrolu stroje, chci vidět haly, ne rodinné domy), uvnitř od nejnovější.
+// Adresa se veze s sebou — dvě haly téhož jména v různých areálech se jinak
+// nerozeznají.
+function mistaZArchivu(typ, hledane) {
+  var q = mistoKlic(hledane);
+  var videna = {}, out = [];
+  archiv.slice()
+    .sort(function(a, b) {
+      var ta = (a.typ === typ) ? 0 : 1, tb = (b.typ === typ) ? 0 : 1;
+      if (ta !== tb) return ta - tb;
+      return String(b.timestamp || '').localeCompare(String(a.timestamp || ''));
+    })
+    .forEach(function(z) {
+      var m = String(z.misto || '').trim();
+      if (!m) return;
+      var k = mistoKlic(m);
+      if (videna[k]) return;
+      // Hledá se v celém místě i v adrese.
+      if (q && (mistoKlic(m) + ' ' + mistoKlic((z.data || {}).adresa)).indexOf(q) === -1) return;
+      videna[k] = 1;
+      out.push({ misto: m, adresa: String((z.data || {}).adresa || '').trim(),
+                 typ: z.typ, cizi: z.typ !== typ });
+    });
+  return out.slice(0, 12);
+}
+
+function mistoNabidkaZavrit() {
+  if (!__mistoNabidka) return;
+  __mistoNabidka.remove();
+  __mistoNabidka = null;
+}
+
+function mistoNabidkaOtevrit(pole) {
+  mistoNabidkaZavrit();
+  if (window.__formReadOnly) return;
+  var polozky = mistaZArchivu(aktTyp, pole.value);
+  if (!polozky.length) return;
+  var box = document.createElement('div');
+  box.className = 'sp-volby misto-nabidka';
+  box.innerHTML = polozky.map(function(p, i) {
+    return '<button type="button" class="sp-volba misto-volba' + (i === 0 ? ' je' : '') +
+      '" data-i="' + i + '">' +
+      '<span class="misto-text">' + esc(p.misto).replace(/\n/g, '<br>') +
+      (p.adresa ? '<span class="misto-adr">' + esc(p.adresa.split('\n').join(', ')) + '</span>' : '') +
+      '</span>' +
+      (p.cizi ? '<span class="misto-typ">' + esc(typInfo(p.typ).label) + '</span>' : '') +
+      '</button>';
+  }).join('') +
+    '<div class="misto-pata">Vybrané místo se vloží celé. Je-li adresa prázdná, ' +
+    'doplní se z téže zprávy.</div>';
+  document.body.appendChild(box);
+  __mistoNabidka = box;
+  box.__pole = pole;
+  box.__polozky = polozky;
+
+  var r = pole.getBoundingClientRect();
+  var v = box.getBoundingClientRect();
+  box.style.left = Math.min(Math.max(8, r.left), window.innerWidth - v.width - 8) + 'px';
+  box.style.top = (r.bottom + v.height + 8 > window.innerHeight && r.top > v.height + 8
+    ? r.top - v.height - 2 : r.bottom + 2) + 'px';
+  box.style.minWidth = Math.min(r.width, window.innerWidth - 16) + 'px';
+
+  box.addEventListener('mousedown', function(e) {
+    // `mousedown` schválně, ne `click` — než by klik doběhl, ztratilo by
+    // pole fokus, `blur` by nabídku zavřel a nevybralo by se nic.
+    var b = e.target.closest('.misto-volba');
+    if (!b) { e.preventDefault(); return; }
+    e.preventDefault();
+    mistoVybrat(polozky[+b.dataset.i]);
+  });
+}
+
+function mistoVybrat(p) {
+  var pole = document.getElementById('f_misto');
+  if (!pole || !p) return;
+  pole.value = p.misto;
+  pole.dispatchEvent(new Event('input', { bubbles: true }));
+  // Adresa se doplní, JEN když je prázdná — co si uživatel napsal, se
+  // nepřepisuje. Bez toho by se místo vybralo, ale adresu by stejně
+  // musel psát ručně.
+  var adr = document.getElementById('f_adresa');
+  if (adr && !adr.value.trim() && p.adresa) {
+    adr.value = p.adresa;
+    adr.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  mistoNabidkaZavrit();
+  pole.focus();
+}
+
+function mistoNabidkaKlavesa(e) {
+  if (!__mistoNabidka) return;
+  var tl = Array.prototype.slice.call(__mistoNabidka.querySelectorAll('.misto-volba'));
+  var i = tl.indexOf(__mistoNabidka.querySelector('.misto-volba.je'));
+  if (e.key === 'Escape') { e.preventDefault(); mistoNabidkaZavrit(); return; }
+  if (e.key === 'Enter' && i >= 0) {
+    // Enter v textarea jinak dělá nový řádek — proto jen když je nabídka
+    // otevřená a něco je v ní vybrané.
+    e.preventDefault(); mistoVybrat(__mistoNabidka.__polozky[i]); return;
+  }
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  e.preventDefault();
+  var j = Math.max(0, Math.min(tl.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)));
+  tl.forEach(function(x) { x.classList.remove('je'); });
+  tl[j].classList.add('je');
+  tl[j].scrollIntoView({ block: 'nearest' });
+}
+
+// Posluchače jsou DELEGOVANÉ na dokumentu — `f_misto` se u spotřebičů
+// stěhuje do protokolu (`SPOTR_PRENOS`), takže přímo navázaný posluchač
+// by se s ním rozešel.
+document.addEventListener('focusin', function(e) {
+  if (e.target.id === 'f_misto') mistoNabidkaOtevrit(e.target);
+  else if (!e.target.closest || !e.target.closest('.misto-nabidka')) mistoNabidkaZavrit();
+});
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'f_misto') mistoNabidkaOtevrit(e.target);
+});
+document.addEventListener('keydown', function(e) {
+  if (e.target.id === 'f_misto') mistoNabidkaKlavesa(e);
+});
+document.addEventListener('mousedown', function(e) {
+  if (__mistoNabidka && !e.target.closest('.misto-nabidka') && e.target.id !== 'f_misto') {
+    mistoNabidkaZavrit();
+  }
+}, true);
+window.addEventListener('scroll', function() { mistoNabidkaZavrit(); }, true);
+
 function archivHay(z) {
   var d = z.data || {};
   var stroje = (d.stroje && d.stroje.seznam) || [];
