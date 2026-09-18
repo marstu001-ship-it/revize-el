@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.79 · 2026-09-18**
+**Aktuální verze: v9.80 · 2026-09-18**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,47 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Všechny protokoly do jednoho PDF + tlačítko na kraji řádku (v9.80)
+
+Pokyn uživatele 2026-09-18 (se snímkem se žlutou šipkou): „to generování mi hoď
+na kraj, jak jsem znázornil. Kam dáme tlačítko na vygenerování všech do jednoho
+pdf?"
+
+### 📄 patří až za ⧉ a ✕
+
+Pořadí v řádku je teď **⧉ ✕ … 📄** — úpravy seznamu vlevo, generování
+protokolu až na kraji, oddělené mezerou (`.sp-del .sp-x-pdf{margin-left:.5rem}`,
+sloupec `<col>` 68 → 84 px). Je to **jiný druh akce** než úprava řádku, takže
+nemá sedět mezi nimi. Test měří skutečné souřadnice (nejpravější tlačítko
++ mezera), ne jen pořadí v HTML.
+
+### Hromadný protokol je TŘETÍ REŽIM téhož náhledu
+
+`__spotrRezim` má nově tři hodnoty: `seznam` (na šířku) · `jeden` · **`vsechny`**
+(každý spotřebič jedna strana na výšku, všechny v jednom souboru — vzor ILLKO
+Studio „Strana 1 z 5"). Kreslí to **táž `spotrJedenHtml()`**, takže se
+jednotlivý a hromadný protokol nemůžou rozejít; lišta, tisk i ukládání jsou
+společné a liší se jen název souboru (`Protokoly_spotrebicu_…`).
+
+**Tlačítko je v liště nad náhledem, ne ve formuláři** — tam už jsou 🖨️ a 💾,
+které pro hromadný protokol platí beze změny, a je hned vidět, co se vlastně
+uloží. **Je to JEDNO tlačítko, ne dvě:** ze seznamu nabízí „📄 Protokoly po
+jednom", odkudkoli jinud „📋 Zpět na seznam" (`spotrebiceRezimBtn()`). Tim se
+zároveň **spravila cesta zpátky z protokolu jednoho spotřebiče** — dosud se
+z něj dalo odejít jen do formuláře.
+
+- **`spotrZpetZapamatovat()`** — `__spotrZpet` se přepíše jen tehdy, když se
+  přichází odjinud než z `screen-spotrebice-pdf`. Bez té podmínky by přepnutí
+  režimu nastavilo návrat na tentýž náhled a šipka „Zpět do formuláře" by
+  přestala fungovat. Test to hlídá po každém přepnutí.
+- Patička **„Strana i / N"** je jen u hromadného režimu — u jediného protokolu
+  by „Strana 1 / 1" byla šum. Sedí absolutně u spodní hrany (`position:relative`
+  na straně), ne v toku textu: obsah protokolu je kratší než strana.
+
+Test: `test-jeden-spotrebic.js` (53 kontrol) — nově pořadí i souřadnice tlačítek,
+strana na spotřebič, každý proud na svém řádku i v hromadném režimu, číslování
+stran, název souboru, přepnutí tam i zpět a že se šipka Zpět nerozbila.
 
 ## Kolonka „Dodavatel" v protokolu spotřebiče (v9.79)
 

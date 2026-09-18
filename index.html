@@ -798,6 +798,8 @@ tr:hover > .sp-del .sp-x{color:var(--accent2);border-color:var(--border-dark)}
 tr:hover > .sp-del .sp-x-del:hover{color:#fff;background:var(--accent);border-color:var(--accent)}
 tr:hover > .sp-del .sp-x-kopie:hover{color:#fff;background:var(--accent2);border-color:var(--accent2)}
 tr:hover > .sp-del .sp-x-pdf:hover{color:#fff;background:var(--gold);border-color:var(--gold)}
+/* Protokol se generuje až na kraji řádku, oddělený mezerou od úprav řádku. */
+.sp-del .sp-x-pdf{margin-left:.5rem}
 
 /* Podbarvení jako ve vzoru: hlavičky tabulky a vysvětlivky dostanou nádech
    zvolené barvy, kolonky s údaji zůstanou BÍLÉ, aby se v nich četlo.
@@ -1175,7 +1177,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.79<span class="ver-date"> · 2026-09-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.80<span class="ver-date"> · 2026-09-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3366,6 +3368,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="pdf-toolbar-title">🔌 Protokol o revizi spotřebičů — <span id="spotrebice-pdf-info"></span></div>
     <div class="pdf-actions">
       <button class="pbtn" data-action="spotrebiceNahledZpet" style="background:#555;border-color:#555">← Zpět do formuláře</button>
+      <button class="pbtn" id="sp-rezim" data-action="spotrebiceRezim" style="background:#2B579A;border-color:#2B579A"></button>
       <button class="pbtn" data-action="spotrebiceNahledTisk" style="background:#b5291c;border-color:#b5291c" title="Tiskne přímo ve vyšší kvalitě, nic se do počítače neukládá">🖨️ Tisk přímo</button>
       <button class="pbtn" data-action="spotrebiceNahledUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
     </div>
@@ -16618,7 +16621,7 @@ function spotrTabulkaHlavicka(o) {
     // Sloupec s tlačítky ⧉ ✕ existuje jen na obrazovce a MUSÍ mít vlastní
     // `<col>`: `table-layout:fixed` dá buňce bez něj nulovou šířku a obě
     // tlačítka se poskládají pod sebe.
-    ((o && o.edit) ? '<col style="width:68px">' : '') + '</colgroup>';
+    ((o && o.edit) ? '<col style="width:84px">' : '') + '</colgroup>';
   var r1 = '<tr>';
   SPOTR_SKUPINY.forEach(function(g) {
     var od = spotrSloupec(g.od), po = spotrSloupec(g.po);
@@ -16663,13 +16666,15 @@ function spotrRadekHtml(r, o) {
         ' autocomplete="off" style="text-align:' + (vlevo ? 'left' : 'center') + '"></td>';
     }
   });
+  // Úprava řádku (kopie, smazání) vlevo, **generování protokolu až na kraji**
+  // (pokyn uživatele 2026-09-18) — je to jiný druh akce, než úprava seznamu.
   html += (o.edit ? '<td class="sp-del">' +
-    '<button class="sp-x sp-x-pdf" data-action="spotrJedenNahled" ' +
-      'title="Protokol jen pro tento spotřebič (PDF na výšku)">📄</button>' +
     '<button class="sp-x sp-x-kopie" data-action="copySpotrebic" ' +
       'title="Zkopírovat řádek i s hodnotami">⧉</button>' +
     '<button class="sp-x sp-x-del" data-action="delSpotrebic" ' +
-      'title="Smazat řádek">✕</button></td>' : '') + '</tr>';
+      'title="Smazat řádek">✕</button>' +
+    '<button class="sp-x sp-x-pdf" data-action="spotrJedenNahled" ' +
+      'title="Protokol jen pro tento spotřebič (PDF na výšku)">📄</button></td>' : '') + '</tr>';
   return html;
 }
 
@@ -17554,8 +17559,7 @@ function spotrJedenNahled(el) {
   }
   var D = getData();
   try { saveToArchiv(); } catch (e) { console.error(e); }
-  var akt = document.querySelector('.screen.active');
-  __spotrZpet = akt ? akt.id.replace(/^screen-/, '') : 'form';
+  spotrZpetZapamatovat();
   __spotrRezim = 'jeden';
   __spotrJedenNazev = ((r.oznaceni || '') + ' ' + (r.nazev || '')).trim();
   showScreen('spotrebice-pdf');           // MUSÍ předcházet měření výšky
@@ -17566,6 +17570,7 @@ function spotrJedenNahled(el) {
     'style="padding:10mm 12mm">' + spotrJedenHtml(D, r) + '</div></div>';
   var info = document.getElementById('spotrebice-pdf-info');
   if (info) info.textContent = 'Protokol jednoho spotřebiče · ' + __spotrJedenNazev;
+  spotrebiceRezimBtn();
   window.scrollTo(0, 0);
 }
 
@@ -17577,8 +17582,7 @@ function spotrebiceNahled() {
     return;
   }
   try { saveToArchiv(); } catch (e) { console.error(e); }
-  var akt = document.querySelector('.screen.active');
-  __spotrZpet = akt ? akt.id.replace(/^screen-/, '') : 'form';
+  spotrZpetZapamatovat();
   showScreen('spotrebice-pdf');          // MUSÍ předcházet měření výšky
   var n = spotrebiceVykreslit(D);
   var info = document.getElementById('spotrebice-pdf-info');
@@ -17586,6 +17590,61 @@ function spotrebiceNahled() {
     info.textContent = (D.ev_cislo || '') + ' · ' +
       String(D.misto || '').split('\n')[0] + ' · ' + n + ' stran';
   }
+  spotrebiceRezimBtn();
+  window.scrollTo(0, 0);
+}
+
+// Kam se vrátit šipkou „Zpět do formuláře". **Přepnutí režimu uvnitř
+// náhledu ho nesmí přepsat** — jinak by šipka vracela na tutéž obrazovku.
+function spotrZpetZapamatovat() {
+  var akt = document.querySelector('.screen.active');
+  var id = akt ? akt.id.replace(/^screen-/, '') : 'form';
+  if (id !== 'spotrebice-pdf') __spotrZpet = id;
+}
+
+// Jedno tlačítko místo dvou: ze seznamu se přepne na protokoly po jednom
+// a odkudkoli jinud zpátky na seznam. Je to i **jediná cesta zpátky**
+// z protokolu jednoho spotřebiče, aniž by se muselo do formuláře.
+function spotrebiceRezimBtn() {
+  var b = document.getElementById('sp-rezim');
+  if (!b) return;
+  var doSeznamu = __spotrRezim !== 'seznam';
+  b.textContent = doSeznamu ? '📋 Zpět na seznam' : '📄 Protokoly po jednom';
+  b.title = doSeznamu
+    ? 'Ukázat zase seznam spotřebičů na šířku'
+    : 'Každý spotřebič jako samostatný protokol na výšku, všechny v jednom souboru';
+}
+
+function spotrebiceRezim() {
+  if (__spotrRezim === 'seznam') spotrVsechnyNahled(); else spotrebiceNahled();
+}
+
+// Všechny spotřebiče najínou — jeden protokol na stranu, jeden soubor
+// (vzor ILLKO Studio, „Strana 1 z 5"). Kreslí to táž `spotrJedenHtml()`,
+// takže se jednotlivý a hromadný protokol nemůžou rozejít.
+function spotrVsechnyNahled() {
+  var D = getData();
+  var radky = spotrebiceRadky(D);
+  if (!radky.length) { alert('Protokol nemá žádný vyplněný spotřebič.'); return; }
+  try { saveToArchiv(); } catch (e) { console.error(e); }
+  spotrZpetZapamatovat();
+  __spotrRezim = 'vsechny';
+  showScreen('spotrebice-pdf');           // MUSÍ předcházet měření výšky
+  var box = document.getElementById('spotrebice-pdf-pages');
+  box.style.setProperty('--pdf-bg', '#fff');   // protokol je na bílé, jako vzor
+  box.innerHTML = radky.map(function (r, i) {
+    return '<div class="a4 a4-spotrebice" style="position:relative">' +
+      '<div class="a4-content" style="padding:10mm 12mm">' + spotrJedenHtml(D, r) + '</div>' +
+      '<div style="position:absolute;bottom:4mm;left:0;right:0;text-align:center;' +
+      'font-size:7.5pt">Strana ' + (i + 1) + ' / ' + radky.length + '</div></div>';
+  }).join('');
+  var info = document.getElementById('spotrebice-pdf-info');
+  if (info) {
+    info.textContent = 'Protokoly po jednom · ' + (D.ev_cislo || '') + ' · ' +
+      radky.length + ' ' + (radky.length === 1 ? 'spotřebič'
+        : (radky.length < 5 ? 'spotřebiče' : 'spotřebičů'));
+  }
+  spotrebiceRezimBtn();
   window.scrollTo(0, 0);
 }
 
@@ -17595,6 +17654,10 @@ function spotrebiceNazevSouboru() {
   var D = getData();
   if (__spotrRezim === 'jeden') {
     return 'Protokol_spotrebic_' + (D.ev_cislo || '') + '_' + __spotrJedenNazev.slice(0, 40);
+  }
+  if (__spotrRezim === 'vsechny') {
+    return 'Protokoly_spotrebicu_' + (D.ev_cislo || '') + '_' +
+      String(D.misto || '').split('\n')[0].slice(0, 30);
   }
   return 'Revize_spotrebicu_' + (D.ev_cislo || '') + '_' +
     String(D.misto || '').split('\n')[0].slice(0, 30);
@@ -21906,6 +21969,7 @@ document.addEventListener('click', function(e) {
     case 'spotrJedenNahled': spotrJedenNahled(el); break;
     case 'spotrPristrojeOtevrit': spotrPristrojeOtevrit(); break;
     case 'spotrPristrojeZavrit': spotrPristrojeZavrit(); break;
+    case 'spotrebiceRezim': spotrebiceRezim(); break;
     case 'spotrebiceNahledZpet': spotrebiceNahledZpet(); break;
     case 'spotrebiceNahledTisk': spotrebiceNahledTisk(); break;
     case 'spotrebiceNahledUlozit': spotrebiceNahledUlozit(); break;
