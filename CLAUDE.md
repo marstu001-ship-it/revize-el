@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.74 · 2026-09-18**
+**Aktuální verze: v9.75 · 2026-09-18**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -54,6 +54,48 @@ jste nic neudělali.
    - Míchá-li commit funkci i opravu, do karty napiš **jen tu funkci**.
    - Oprava chyby sama o sobě = žádná karta (verzi v topbaru a
      `CACHE_NAME` bumpni normálně).
+
+## Protokol spotřebičů kradl pole jiným zprávám (v9.75)
+
+Nahlásil uživatel 2026-09-18: „jen u rozpracované zprávy elektro mi zmizelo
+okénko pro místo revize, zahájení a vypracování zprávy." Na snímku chybělo
+i **ev. číslo** a **termín příští revize** — u obou zůstalo jen tlačítko.
+
+**Byla to přesně pole ze `SPOTR_PRENOS`.** Nezničila se — **odstěhoval si je
+protokol spotřebičů**, který zůstal viset ve skrytém tabu `#tab-spotrebice`
+z dřív otevřené zprávy o spotřebičích. `spotrObnovitOkoli()` na konci volá
+`spotrPrenosPoli(true)` a to se ptalo jen na to, jestli přihrádky existují —
+ne na to, jestli je otevřená zpráva o spotřebičích. Stačilo pak v elektro
+revizi sáhnout na datum: delegovaný `change` zavolal `spotrLhutaZmena()` →
+`spotrObnovitOkoli()` → a pole odletěla do skrytého tabu.
+
+**Data se přitom NEZTRATILA** — `gv()` čte pole podle `id`, ať visí kdekoli,
+takže uložená zpráva byla pořád v pořádku. Technik je ale neviděl a nemohl
+je vyplnit. Po načtení stránky se to samo spravilo, protože se formulář
+staví z HTML znovu.
+
+Opraveno na čtyřech místech, schválně víc než jedním:
+
+1. **`spotrPrenosPoli(true)` odmítne stěhovat, když `aktTyp !== 'spotrebice'`.**
+   To je ta vlastní invarianta: pole smí v listu bydlet jen po dobu, co je
+   otevřená zpráva o spotřebičích.
+2. **`spotrObnovitOkoli()` se u jiného typu hned vrátí.**
+3. **`spotrListZahodit()`** — při přepnutí na jiný typ se list **vyhodí**,
+   takže nemá co krást. Pojistka uvnitř: zbylo-li v něm nějaké pole zprávy,
+   list se nezahodí (radši ať visí, než aby se pole zničilo).
+4. Delegovaný `change` u `f_sp_lhuta` dostal **stejnou podmínku na typ**,
+   jakou už měl `f_zahajeni`.
+
+Test: `test-spotrebice.js` (110 kontrol) — nově celé kolečko spotřebiče →
+elektro → práce v elektro zprávě → otevření zprávy z archivu, pokaždé
+s kontrolou, **kde pole fyzicky jsou** a že jsou vidět. Volá i
+`spotrObnovitOkoli()` a `spotrPrenosPoli(true)` **napřímo**, aby chyba
+neprošla jinou cestou, než jakou se na ni přišlo.
+
+**Poučení pro další stěhování prvků:** `#stroje-blok` i protokol spotřebičů
+stěhují skutečné prvky mezi místy. Takové stěhování **musí být podmíněné
+aktivním typem zprávy na OBOU koncích** — „přihrádka existuje" není důvod
+prvek přesunout.
 
 ## Našeptávání místa provádění z archivu (v9.74)
 

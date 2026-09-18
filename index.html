@@ -1163,7 +1163,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.74<span class="ver-date"> · 2026-09-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.75<span class="ver-date"> · 2026-09-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5238,7 +5238,7 @@ function novaZprava(typ) {
   // Pole zprávy se u spotřebičů stěhují do protokolu; u ostatních typů
   // se musí vrátit na své místo na titulní straně. **Obousměrně** — jinak
   // by u elektro revize prostě chyběla.
-  if (typ === 'spotrebice') initSpotrebice(); else spotrPrenosPoli(false);
+  if (typ === 'spotrebice') { initSpotrebice(); } else { spotrPrenosPoli(false); spotrListZahodit(); }
   ['scard-napetova', 'scard-ochrana-char', 'scard-vtez', 'scard-rozsah-popis',
    'scard-dokumentace', 'scard-d1-prohlidka', 'scard-d2-zkouseni', 'scard-d3-zkouseni-tab'
   ].forEach(function(id) {
@@ -16868,11 +16868,34 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && __spotrNabidka) spotrNabidkaZavrit(true);
 });
 
+// Zahodí protokol spotřebičů, když se přepne na jiný typ zprávy. **Pole se
+// musí NEJDŘÍV poslat domů** (volající to dělá), jinak by je `innerHTML`
+// zničil. Bez zahození zůstane list viset ve skrytém tabu a při každé další
+// obnově okolí si pole zase přitáhne.
+function spotrListZahodit() {
+  var host = document.getElementById('spotrebice-list');
+  if (!host) return;
+  // Pojistka: zbylo-li uvnitř pole zprávy, list se NEZAHAZUJE — radši ať
+  // tam visí, než aby se pole zničilo a technik o ně přišel.
+  var uvnitr = SPOTR_PRENOS.some(function(id) {
+    var el = document.getElementById(id);
+    return el && host.contains(el);
+  });
+  if (!uvnitr) host.innerHTML = '';
+}
+
 // Přestěhuje skutečná pole zprávy do přihrádek v protokolu (a zpátky).
 // Původní místo si každý prvek pamatuje, aby se návrat trefil přesně —
 // **přesun musí být obousměrný**, jinak u elektro revize pole chybí
 // (past zdokumentovaná u strojů ve v9.30).
 function spotrPrenosPoli(doListu) {
+  // **Do listu se pole smí přestěhovat JEN u zprávy o spotřebičích.**
+  // Bez téhle pojistky je ukradl protokol, který zůstal viset ve skrytém
+  // tabu z předchozí zprávy — u elektro revize pak zmizelo místo revize,
+  // ev. číslo i obě data (nahlásil uživatel 2026-09-18). Data se přitom
+  // neztratila: `gv()` čte pole podle `id`, ať visí kdekoli. Ale technik
+  // je neviděl a nemohl je vyplnit.
+  if (doListu && aktTyp !== 'spotrebice') return;
   SPOTR_PRENOS.forEach(function(id) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -17139,6 +17162,7 @@ function initSpotrebice() {
 // (přístroje, vysvětlivky se lhůtou, podpis). Tabulka se NEPŘEKRESLUJE —
 // uživateli by zmizel kurzor z rozepsané buňky.
 function spotrObnovitOkoli() {
+  if (aktTyp !== 'spotrebice') return;
   var host = document.getElementById('spotrebice-list');
   if (!host || !host.querySelector('.sp-sheet')) return;
   var D = getData();
@@ -21540,7 +21564,7 @@ document.addEventListener('change', function(e) {
   if (action === 'updateLhuta') updateRevizeLhuta();
   if (action === 'updZavadaKod') updZavadaKod(el);
   if (el.id === 'f_druh') updateDuvodMimoradne();
-  if (el.id === 'f_sp_lhuta') spotrLhutaZmena(false);
+  if (el.id === 'f_sp_lhuta' && aktTyp === 'spotrebice') spotrLhutaZmena(false);
   if (el.id === 'f_zahajeni' && aktTyp === 'spotrebice') spotrLhutaZmena(true);
   if (el.id === 'lps_jimaci') updateLpsMrizka();
   if (el.id === 'f_stroje_rozsah') strojeAktualizovatRozsah();
