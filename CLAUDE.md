@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.76 · 2026-09-18**
+**Aktuální verze: v9.77 · 2026-09-18**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -59,6 +59,51 @@ jste nic neudělali.
      neovlivňuje funkcionalitu, je to jen příjemné překvapení"). Zkouška:
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
+
+## Znaky, které se na klávesnici nenapíšou — ≤ ≥ Δ (v9.77)
+
+Pokyn uživatele 2026-09-18: „u strojů a spotřebičů technici nevědí, jak se
+píše na klávesnici menší, větší, nebo rovno, delta In." Nápovědy v buňkách
+ty znaky ukazují (`≤ IΔn (např. 18)`, `≥ 1`, `>19,9`), ale technik je neumí
+napsat.
+
+**Plovoucí lišta `#txt-lista` se na to použít NESMĚLA.** Má Ω µ ° ± ² Δ, ale
+uživatel ji 2026-08-31 výslovně odmítl mimo souvislý text („zobrazuje se to
+skoro všude a pěkně mě to štve"). Řešení proto nesmí nic překrývat.
+
+Dvě cesty, každá pro jiného člověka:
+
+1. **Pevný proužek POD tabulkou** (`symbolyProuzekHtml()`), u tlačítek, která
+   tam už jsou: `≤ ≥ > Δ Ω ± °`. Nikde nepřekáží, nic nepřekrývá a hlavně
+   **je vidět** — technik se nemusí ptát, jak se ten znak píše. Je
+   u **měření strojů** a u **protokolu spotřebičů**; u kontrol strojů ne,
+   tam je výsledek rozbalovátko.
+2. **Psaní zkratkou** — `<=` → `≤`, `>=` → `≥`, `+-` → `±`. Kdo nechce sahat
+   po myši, prostě píše.
+   - **Jen interpunkce, nikdy písmena.** V číselné buňce se `<=` jinak
+     vyskytnout nemůže, takže se nedá nic pokazit; kdyby se přepisovalo
+     třeba `Idn` → `IΔn`, hrozilo by, že to sežere legitimní text.
+   - **Samotné `>` se NEPŘEPISUJE** — `>19,9` je běžný zápis přesahu rozsahu
+     měřáku a je i ve vzoru od kolegy. Test to hlídá.
+   - Kouká se **jen na dva znaky před kurzorem**, takže se zbytek pole
+     nikdy nezmění.
+
+- **Platí to JEN v těch dvou tabulkách** (`symboleVhodne()` = `<input
+  type=text>` uvnitř `#stroje-mereni-hosty` nebo `#spotrebice-list`).
+  V elektro revizi ani v běžných polích se nic nepřepisuje a proužek tam
+  není — test obojí kontroluje.
+- **Znak se vkládá NA KURZOR, ne na konec.** Tlačítka proto reagují na
+  `mousedown` s `preventDefault` — na `click` by buňka ztratila kurzor dřív,
+  než se stihne zjistit, kam znak patří, a vložil by se na začátek. Stejná
+  past jako u lišty nad textovým polem (2026-08-20).
+- Bez vybrané buňky se nic nestane potichu — program **poradí**
+  („Klepněte nejdřív do buňky, kam se má znak vložit.").
+- **Funkce na hlášky se jmenuje `showToast()`, ne `toast()`** — první verze
+  na tom spadla.
+
+Test: `test-symboly.js` (20 kontrol — obě tabulky, vložení na kurzor
+i doprostřed textu, všechny tři zkratky, že `>19,9` přežije, že se mimo
+tabulky nic nepřepisuje, že v PDF proužek není).
 
 ## Protokol spotřebičů kradl pole jiným zprávám (v9.75)
 

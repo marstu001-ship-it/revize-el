@@ -722,6 +722,17 @@ html.dark .sp-sheet{background:#f7f6f2}
 .sp-barva{width:22px;height:22px;border:1px solid var(--border-dark);border-radius:3px;
   cursor:pointer;padding:0}
 .sp-barva.je{outline:2px solid var(--accent2);outline-offset:1px}
+/* Proužek se znaky, které se na klávesnici nenapíšou. Leží POD tabulkou
+   u ostatních tlačítek — plovoucí lištu uživatel mimo souvislý text odmítl. */
+.sym-proužek{display:inline-flex;align-items:center;gap:.2rem;flex-wrap:wrap;
+  padding:.1rem .35rem;border:1px dashed var(--border-dark);border-radius:4px}
+.sym-popisek{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);margin-right:.15rem}
+.sym-btn{min-width:26px;height:26px;padding:0 .25rem;cursor:pointer;
+  border:1px solid var(--border-dark);border-radius:3px;background:var(--surface);
+  color:var(--text);font-size:.9rem;line-height:1}
+.sym-btn:hover{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+@media print{.sym-proužek{display:none!important}}
 /* Nabídka voleb s vysvětlením u každé položky. Leží v `body`, aby ji
    nezařízl `overflow:hidden` na obalu zmenšeného listu. */
 .sp-volby{position:fixed;z-index:4000;background:var(--surface);color:var(--text);
@@ -1163,7 +1174,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.76<span class="ver-date"> · 2026-09-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.77<span class="ver-date"> · 2026-09-18</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -9339,6 +9350,8 @@ function strojPridatBlok(id, kind, polozky) {
       '<button class="add-row" data-action="strojPridatNadpis" data-stroj="' + id + '" data-kind="' + kind + '" style="border-color:#a87d00;color:#a87d00" title="Členicí řádek — článek normy nebo skupina">+ Přidat nadpis</button>' +
       '<button class="add-row" data-action="strojVlozitVychozi" data-stroj="' + id + '" data-kind="' + kind + '" style="border-color:var(--accent2);color:var(--accent2)">📋 Vložit výchozí položky</button>' +
       '<button class="add-row" data-action="strojUlozitVychozi" data-stroj="' + id + '" data-kind="' + kind + '" style="border-color:var(--accent2);color:var(--accent2)" title="Zapamatuje si tenhle seznam a předvyplní ho v každé další nové zprávě">💾 Uložit jako výchozí pro příští zprávy</button>' +
+      // U kontrol je výsledek rozbalovátko, tam se žádný znak nepíše.
+      (jeMereni ? symbolyProuzekHtml() : '') +
     '</div>';
   host.appendChild(div);
   var tbody = div.querySelector('tbody');
@@ -16796,6 +16809,7 @@ function renderSpotrebiceList(D) {
       '<div class="sp-pridat">' +
         '<button class="add-row" data-action="addSpotrebic">+ Přidat spotřebič</button>' +
         '<button class="add-row" data-action="addSpotrebicPrivod">+ Přidat prodlužovací přívod</button>' +
+        symbolyProuzekHtml() +
       '</div>' +
       '<div class="sp-zlom">— — —  konec 1. strany protokolu, dál se tiskne na druhou  — — —</div>' +
       spotrPristrojeHtml(D, o) +
@@ -20913,6 +20927,89 @@ function planVybraneStitek() { planHromadnaVolba('stitek'); }
 // U jednořádkových políček nabízí jen symboly (Ω, °C, …), u víceřádkových
 // i formátování — to se do textu zapíše značkami, které se při generování
 // PDF promění v tučné, kurzívu, přeškrtnuté a barvu.
+// ── Znaky, které se na klávesnici nenapíšou ─────────────────────────────
+// Pokyn uživatele 2026-09-18: „u strojů a spotřebičů technici nevědí, jak se
+// píše na klávesnici menší, větší, nebo rovno, delta In."
+//
+// **Plovoucí lišta `#txt-lista` se na to použít NESMÍ** — uživatel ji
+// 2026-08-31 výslovně odmítl mimo souvislý text („zobrazuje se to skoro
+// všude a pěkně mě to štve"). Proto pevný proužek POD tabulkou, u tlačítek,
+// která tam už jsou: nikde nepřekáží, nic nepřekrývá a je vidět, takže se
+// technik nemusí ptát, jak se ten znak píše.
+var SYMBOLY_MERENI = [
+  { z: '≤', popis: 'menší nebo rovno' },
+  { z: '≥', popis: 'větší nebo rovno' },
+  { z: '>', popis: 'větší než (přesah rozsahu měřáku)' },
+  { z: 'Δ', popis: 'delta — třeba IΔn' },
+  { z: 'Ω', popis: 'ohm' },
+  { z: '±', popis: 'plus minus' },
+  { z: '°', popis: 'stupeň' }
+];
+
+// Kdo radši píše, ať nemusí sahat po myši: **dvojice znaků se přepíše sama**.
+// Jen interpunkce, nikdy písmena — v číselné buňce se `<=` ani `>=` jinak
+// vyskytnout nemůže, takže se nedá nic pokazit.
+var SYMBOLY_ZKRATKY = [['<=', '≤'], ['>=', '≥'], ['+-', '±']];
+
+function symbolyProuzekHtml() {
+  return '<span class="sym-proužek" title="Znaky, které se na klávesnici nenapíšou — ' +
+    'klepněte do buňky a pak na znak">' +
+    '<span class="sym-popisek">Znaky:</span>' +
+    SYMBOLY_MERENI.map(function(x) {
+      return '<button type="button" class="sym-btn" data-action="vlozitSymbol" data-znak="' +
+        esc(x.z) + '" title="' + esc(x.popis + ' (' + x.z + ')') + '">' + esc(x.z) + '</button>';
+    }).join('') + '</span>';
+}
+
+// Pole, do kterého se znak vloží — poslední, ve kterém technik stál.
+var __symPole = null;
+
+function symboleVhodne(el) {
+  if (!el || el.tagName !== 'INPUT' || el.type !== 'text' || el.readOnly) return false;
+  return !!(el.closest('#stroje-mereni-hosty') || el.closest('#spotrebice-list'));
+}
+
+function vlozitSymbol(el) {
+  var znak = el.getAttribute('data-znak');
+  var pole = __symPole;
+  if (!pole || !document.contains(pole)) {
+    showToast('Klepněte nejdřív do buňky, kam se má znak vložit.');
+    return;
+  }
+  var a = pole.selectionStart, b = pole.selectionEnd;
+  if (typeof a !== 'number') { a = b = pole.value.length; }
+  pole.value = pole.value.slice(0, a) + znak + pole.value.slice(b);
+  pole.dispatchEvent(new Event('input', { bubbles: true }));
+  pole.focus();
+  try { pole.setSelectionRange(a + znak.length, a + znak.length); } catch (e) {}
+}
+
+document.addEventListener('focusin', function(e) {
+  if (symboleVhodne(e.target)) __symPole = e.target;
+});
+// **`mousedown` s `preventDefault`, jinak by pole ztratilo kurzor dřív, než
+// se stihne zjistit, kam znak patří** — a vložil by se na začátek buňky.
+// Stejná past jako u lišty nad textovým polem (2026-08-20).
+document.addEventListener('mousedown', function(e) {
+  if (e.target.closest && e.target.closest('.sym-btn')) e.preventDefault();
+});
+// Přepis zkratek při psaní. Kouká se JEN na dva znaky před kurzorem, takže
+// to nic jiného v poli nepřepíše.
+document.addEventListener('input', function(e) {
+  var el = e.target;
+  if (!symboleVhodne(el)) return;
+  var k = el.selectionStart;
+  if (typeof k !== 'number' || k < 2) return;
+  var par = el.value.slice(k - 2, k);
+  for (var i = 0; i < SYMBOLY_ZKRATKY.length; i++) {
+    if (par !== SYMBOLY_ZKRATKY[i][0]) continue;
+    var zn = SYMBOLY_ZKRATKY[i][1];
+    el.value = el.value.slice(0, k - 2) + zn + el.value.slice(k);
+    try { el.setSelectionRange(k - 1, k - 1); } catch (e2) {}
+    return;
+  }
+});
+
 var TXT_SYMBOLY = [
   { z: 'Ω', popis: 'ohm' }, { z: 'µ', popis: 'mikro' }, { z: '°', popis: 'stupeň' },
   { z: '±', popis: 'plus minus' }, { z: '²', popis: 'na druhou' }, { z: 'Δ', popis: 'delta' }
@@ -21549,6 +21646,7 @@ document.addEventListener('click', function(e) {
     case 'delSpotrebic': delSpotrebic(el); break;
     case 'copySpotrebic': copySpotrebic(el); break;
     case 'spotrBarva': spotrBarva(el); break;
+    case 'vlozitSymbol': vlozitSymbol(el); break;
     case 'spotrPristrojeOtevrit': spotrPristrojeOtevrit(); break;
     case 'spotrPristrojeZavrit': spotrPristrojeZavrit(); break;
     case 'spotrebiceNahledZpet': spotrebiceNahledZpet(); break;
