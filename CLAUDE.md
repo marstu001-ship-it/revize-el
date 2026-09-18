@@ -160,6 +160,9 @@ z něj dalo odejít jen do formuláře.
   by „Strana 1 / 1" byla šum. Sedí absolutně u spodní hrany (`position:relative`
   na straně), ne v toku textu: obsah protokolu je kratší než strana.
 
+**Do Novinek NEJDE** — uživatel kartu 2026-09-18 odmítl („ne"). Nabídl jsem mu
+znění, rozhodl se proti; **příště to už znovu nenabízet.**
+
 Test: `test-jeden-spotrebic.js` (53 kontrol) — nově pořadí i souřadnice tlačítek,
 strana na spotřebič, každý proud na svém řádku i v hromadném režimu, číslování
 stran, název souboru, přepnutí tam i zpět a že se šipka Zpět nerozbila.
