@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.77 · 2026-09-18**
+**Aktuální verze: v9.78 · 2026-09-18**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -59,6 +59,69 @@ jste nic neudělali.
      neovlivňuje funkcionalitu, je to jen příjemné překvapení"). Zkouška:
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
+
+## Protokol jen pro JEDEN spotřebič (v9.78)
+
+Nápad uživatele 2026-09-18 podle **ILLKO Studia** (poslal snímek jejich
+protokolu): „technik vyplňuje ten seznam spotřebičů, ten se tiskne
+a podepisuje, a elektronickou formou je tento protokol… není tam nic navíc
+z doplněných hodnot oproti té seznamové verzi, tak mě napadlo, že bychom
+mohli přidat tlačítko, které by z toho seznamu vygenerovalo pdf jen pro ten
+jeden spotřebič z toho řádku."
+
+**Ověřeno kolonku po kolonce a měl pravdu** — všechny naměřené hodnoty už
+v řádku jsou. Tlačítko **📄** u řádku (vedle ⧉ a ✕) vykreslí protokol
+**na výšku** do téhož náhledu (`#screen-spotrebice-pdf`); lišta, tisk
+i ukládání jsou společné, liší se jen `__spotrRezim` (`'seznam'` /
+`'jeden'`) a z něj odvozený název souboru.
+
+### Sedm proudů ILLKA = naše dvojice metoda + I [mA]
+
+`SPOTR_PROUDY` mapuje kód metody na řádek protokolu (V→IdirEq, VR→IdifEq,
+D→IdirTouch, DR→IdifTouch, U→IaltEq). **Hodnota se vytiskne JEN na řádek
+odpovídající zvolené metodě**, ostatní zůstanou prázdné — přesně jako ve
+vzoru. Nic se tím neztrácí a nemusel se přidávat ani jeden sloupec.
+
+### Výsledek se bere z POSLEDNÍHO sloupce
+
+Rozhodnutí uživatele 2026-09-18: „výsledek prohlídky kladně nebo záporně si
+vezme z našeho posledního sloupce vyhovuje/nevyhovuje ve zjištěných
+závadách." `spotrVyhovuje(r)`:
+
+1. **Výslovné `N` v „Celkovém hodnocení" přebíjí všechno.** Vytisknout
+   „vyhovuje" u spotřebiče, který technik označil jako nevyhovující, je to
+   nejhorší, co se tu může stát — proto tahle pojistka navíc.
+2. jinak se kouká na text posledního sloupce: **prázdný = bez závad**,
+   „Vyhovuje" = vyhovuje, **jakýkoli jiný text = NEVYHOVUJE** (technik tam
+   popsal závadu).
+
+Test hlídá všechny tři větve včetně kombinace „závady = Vyhovuje,
+hodnocení = N".
+
+### Co se dopočítá a co zůstalo prázdné
+
+- **„Připojení"** se skládá ze `sestava` + `un` (`SPOTR_PRIPOJENI`) —
+  „Pevně připojeným přívodem, 230 V".
+- **„Umístění"** se bere z místa protokolu (`f_misto`) — protokol pokrývá
+  jedno místo, takže platí pro každý spotřebič v něm.
+- Technik (jméno, ev. číslo, telefon, e-mail, IČO, DIČ, razítko, podpis)
+  i přístroj (název, výr. číslo, kalibrace, **platnost do**) jsou z profilu.
+  V seznamu se platnost kalibrace netiskne, tady ano.
+- **„Druh" (držený v ruce / přenosný / nepřenosný) v programu NENÍ** a nedá
+  se odvodit — `sestava` popisuje připojení přívodu, ne způsob držení.
+  Na protokolu proto **řádek chybí úplně** (lepší než trvale prázdná
+  kolonka). Uživatel na dotaz neodpověděl; **až si řekne, patří to jako
+  sloupec do tabulky, nebo do malého okna „podrobnosti" u řádku.**
+- Čárový kód vedle ID se **nedělá** — je na štítky, ne na protokol,
+  a vyžádal by si knihovnu.
+
+**Rozsah: jen jeden spotřebič z řádku** (rozhodnutí uživatele). ILLKO umí
+i všechny naráz do jednoho souboru („Strana 1 z 5"), nabízel jsem to,
+uživatel to zatím nechtěl.
+
+Test: `test-jeden-spotrebic.js` (36 kontrol — strana na výšku, údaje z řádku,
+proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
+větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
 
 ## Znaky, které se na klávesnici nenapíšou — ≤ ≥ Δ (v9.77)
 
