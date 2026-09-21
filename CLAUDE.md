@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.80 · 2026-09-18**
+**Aktuální verze: v9.81 · 2026-09-21**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,63 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Popis zmizel u strojů i u elektro revize (v9.81)
+
+Nahlásil uživatel 2026-09-21 se snímkem kapitoly 3 zprávy o stroji:
+„v záložce 2. stroj nelze žádný popis editovat" — přitom PDF tiskne
+**„Doplňte v záložce 2. Stroj."**, takže program posílal technika na místo,
+kde nic nebylo.
+
+**Karta „A. Rozsah a popis" a „Dokumentace" se schovávaly JEDNOSMĚRNĚ.**
+U spotřebičů se do nich napsalo `display:none` (v protokolu dle
+ČSN 33 1600 ed.2 nejsou) a **nikdo je už nevracel**. Stačilo tedy jednou
+otevřít zprávu o spotřebičích a od té chvíle chyběl popis:
+
+- u **strojů** v záložce 2. Stroj (odtud hlášení),
+- a stejně tak **u ELEKTRO revize** v záložce „A. Popis" — tam si toho
+  uživatel ještě nevšiml.
+
+Po načtení stránky se to samo spravilo (formulář se staví z HTML znovu),
+takže se to chovalo jako záhada. **Data se neztrácela** — pole jen nebylo
+vidět; co už bylo napsáno, se dál tisklo.
+
+Ostatní karty (`scard-napetova`, `scard-ochrana-char`, `scard-vtez`,
+`scard-d1/d2/d3`) mají **vlastní předpis pro každý typ**, takže se samy
+vracely. Ty dvě ne, proto jsou teď ve vlastním cyklu s **oběma větvemi**
+(`(typ === 'spotrebice') ? 'none' : ''`).
+
+**Poučení — totéž už bylo ve v9.75:** cokoli, co se u jednoho typu zprávy
+schová nebo přestěhuje, **musí mít i cestu zpátky**. „Schovej u X" bez
+„ukaž u ostatních" je vždycky chyba, protože formulář je jeden pro všechny
+typy a přežije přepnutí.
+
+**Test hlídal jen `scard-napetova` a `scard-vtez`** — tedy právě ty karty,
+které svůj předpis měly. `test-spotrebice.js` (116 kontrol) proto nově
+kontroluje i popis a dokumentaci, a to **u obou typů** (elektro i stroje)
+a včetně toho, že je pole opravdu **editovatelné** (vidí se `.rich-edit`,
+ne jen `<textarea>` držící hodnotu). Ověřeno, že test na starém kódu
+**spadne** — jinak by to byla jen další kontrola, která nic nehlídá.
+
+### Nápověda v poli zůstávala od elektro revize
+
+Vyšlo najevo při prohlížení opravené karty: v poli „Popis elektrického
+zařízení stroje" svítila šedá nápověda **„Přívod pro elektroinstalaci je
+proveden kabelem…"**. `richZapniPole()` si `placeholder` **jen jednou opísala**
+do `data-placeholder` editoru, takže pozdější změna podle typu zprávy se
+do něj nedostala — popisek už byl správně („Popis elektrického zařízení
+stroje"), ale nápověda uvnitř ne.
+
+Opraveno **stejně jako u `.value`**: `placeholder` je na té `<textarea>`
+odchycený přes `Object.defineProperty` a přepisuje i `data-placeholder`
+editoru. Týká se to **všech rich polí naráz** (`data-term-ph`
+v `aplikovatPojmy`, nápovědy podle podtypu v `nováZpráva`), takže to není
+záplatka na jedno pole.
+
+**Popis u stroje smýsl má** (uživatel se ptal): je to kapitola 3
+„Technický popis elektrického zařízení stroje" — hlavní vypínač, ochrana
+před úrazem, ovládací obvody, kryty a blokování, motory, značení. Celý
+text umí vložit magické tlačítko jedním klepnutím (`POPIS_STROJE`).
 
 ## Všechny protokoly do jednoho PDF + tlačítko na kraji řádku (v9.80)
 

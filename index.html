@@ -1177,7 +1177,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.80<span class="ver-date"> · 2026-09-18</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.81<span class="ver-date"> · 2026-09-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5254,11 +5254,21 @@ function novaZprava(typ) {
   // se musí vrátit na své místo na titulní straně. **Obousměrně** — jinak
   // by u elektro revize prostě chyběla.
   if (typ === 'spotrebice') { initSpotrebice(); } else { spotrPrenosPoli(false); spotrListZahodit(); }
-  ['scard-napetova', 'scard-ochrana-char', 'scard-vtez', 'scard-rozsah-popis',
-   'scard-dokumentace', 'scard-d1-prohlidka', 'scard-d2-zkouseni', 'scard-d3-zkouseni-tab'
+  ['scard-napetova', 'scard-ochrana-char', 'scard-vtez',
+   'scard-d1-prohlidka', 'scard-d2-zkouseni', 'scard-d3-zkouseni-tab'
   ].forEach(function(id) {
     var sc = document.getElementById(id);
     if (sc && typ === 'spotrebice') sc.style.display = 'none';
+  });
+  // **„A. Rozsah a popis" a „Dokumentace" se musí schovávat OBOUSMĚRNĚ.**
+  // Ostatní karty výš mají svůj vlastní předpis pro každý typ, tyhle dvě ne —
+  // schovaly se u spotřebičů a **už je nikdo nevracel**, takže po jediné
+  // otevřené zprávě o spotřebičích chyběl popis i u STROJŮ a u ELEKTRO revize
+  // (nahlásil uživatel 2026-09-21 u kapitoly 3 zprávy o stroji: „nelze žádný
+  // popis editovat"). Stejná past jako v9.75 — skrývání musí mít obě větve.
+  ['scard-rozsah-popis', 'scard-dokumentace'].forEach(function(id) {
+    var sc = document.getElementById(id);
+    if (sc) sc.style.display = (typ === 'spotrebice') ? 'none' : '';
   });
   // Karta s lhůtou na titulce u spotřebičů NENÍ potřeba — lhůta se vybírá
   // přímo v hlavičce protokolu. Zůstává schovaná, aby `f_sp_lhuta` mělo
@@ -11525,6 +11535,24 @@ function richZapniPole(ta) {
       set: function(v) {
         popis.set.call(this, v);
         if (!this.__richZapis) ed.innerHTML = richDoEditoru(v);
+      }
+    });
+  } catch (e) {}
+
+  // Stejně tak nÁPOVĚDA v prázdném poli. Editor si ji při vzniku jen
+  // opísal do `data-placeholder`, takže pozdější změna podle typu zprávy
+  // (`nováZpráva`, `aplikovatPojmy`) se do něj nedostala — u zprávy
+  // o stroji pak v poli „Popis elektrického zařízení stroje" svítila
+  // nápověda od elektro revize.
+  var ph = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'placeholder');
+  try {
+    Object.defineProperty(ta, 'placeholder', {
+      configurable: true,
+      get: function() { return ph.get.call(this); },
+      set: function(v) {
+        ph.set.call(this, v);
+        if (v) ed.setAttribute('data-placeholder', v);
+        else ed.removeAttribute('data-placeholder');
       }
     });
   } catch (e) {}
