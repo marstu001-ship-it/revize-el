@@ -1177,7 +1177,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.81<span class="ver-date"> · 2026-09-21</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.82<span class="ver-date"> · 2026-09-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4831,6 +4831,12 @@ function switchTab(id, btn) {
   refreshStepper();
   updateTabNav();
   if (id === 'spotrebice') spotrPrizpusobit();   // ve skrytém panelu má list nulové rozměry
+  // ZÁCHRANNÁ SÍŤ, ne oprava: protokol spotřebičů si půjčuje SKUTEČNÁ pole
+  // zprávy (`SPOTR_PRENOS`) a už dvakrát se stalo, že je nevrátil — technikovi
+  // pak na titulce zmizelo místo revize, ev. číslo i data (v9.75, a znovu
+  // hlášeno 2026-09-21 u strojů na starší verzi). Každé přepnutí záložky to
+  // teď samo spraví, ať už by je ukradla jakkoli.
+  if (aktTyp !== 'spotrebice') spotrPrenosPoli(false);
   window.scrollTo(0, 0);
 }
 
@@ -11830,6 +11836,38 @@ function tiskNastaveni(D) {
   return t;
 }
 
+// Titulní strana se NIKDY nedělí (`a4-titulni`), takže jako JEDINÁ může
+// přetéct. `.a4-content{flex:1}` jí dá jen zbylé místo, takže delší obsah
+// (víc zaškrtnutých norem, delší celkový posudek) přeteče PŘES patičku:
+// podpisová okénka se uříznou a popisky „podpis provozovatele" /
+// „podpis kontrolního technika" zmizí úplně. Nahlásil Jiří Roubalík
+// 2026-09-21 („chyba zobrazení, první strana").
+//
+// **Radši celý obsah nepatrně zmenšit, než nechat zmizet podpis** — bez
+// podpisu je revizní zpráva neplatný papír, kdežto o procento menší písmo
+// nikdo nepozná. Stejná technika jako u protokolu spotřebičů (v9.69):
+// `width` se o tentýž poměr zvětší, takže po zmenšení vyjde šířka zpátky
+// na 100 %.
+function titulkaVejit(p1) {
+  if (!p1) return 1;
+  var obsah = p1.querySelector('.a4-content');
+  var pat = p1.querySelector('.a4-footer');
+  if (!obsah || !pat) return 1;
+  obsah.style.transform = '';
+  obsah.style.width = '';
+  var misto = pat.getBoundingClientRect().top - obsah.getBoundingClientRect().top;
+  var treba = obsah.scrollHeight;
+  if (!(misto > 0) || !(treba > 0) || treba <= misto + 1) return 1;
+  var k = misto / treba;
+  // Pod 70 % už by to bylo na hraně čitelnosti; tolik obsahu se na titulku
+  // stejně nikdy nevejde, takže je to jen pojistka proti nesmyslu.
+  if (k < 0.7) k = 0.7;
+  obsah.style.transformOrigin = 'top left';
+  obsah.style.width = (100 / k) + '%';
+  obsah.style.transform = 'scale(' + k + ')';
+  return k;
+}
+
 function generujPDF() {
   var D = getData();
   var pdfOpts = tiskNastaveni(D);
@@ -13039,6 +13077,10 @@ function generujPDF() {
     });
     var poc = pages.querySelector('[data-pocet-listu]');
     if (poc) poc.textContent = String(totalFinal);
+
+    // AŽ NAKONEC — přečíslování mění text v hlavičce i „Počet listů",
+    // takže výška titulky je známá teprve teď.
+    titulkaVejit(pages.querySelector('.a4-titulni'));
   });
 }
 

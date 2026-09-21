@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.81 · 2026-09-21**
+**Aktuální verze: v9.82 · 2026-09-21**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,59 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Titulní strana přetékala přes patičku a uřízla PODPISY (v9.82)
+
+Nahlásil Jiří Roubalík 2026-09-21 („chyba zobrazení, první strana"): na
+titulce zprávy o stroji byla podpisová okénka uříznutá a popisky
+**„podpis provozovatele" / „podpis kontrolního technika" zmizely pod čarou
+patičky**.
+
+**Příčina: titulka se jako jediná NIKDY nedělí** (`a4-titulni` — dělit
+titulní stranu nemá smysl). Ostatní strany rozdělí stránkovač, ale titulce
+dá `.a4-content{flex:1}` **jen zbylé místo** — a je-li obsahu víc (víc
+zaškrtnutých norem, delší celkový posudek), prostě přeteče **přes patičku**.
+Stránka se nezvětší, protože flexová výška obsahu se nepočítá z jeho
+skutečné výšky.
+
+Řeší to **`titulkaVejit()`**: po stránkování změří, kolik místa nad patičkou
+zbývá, a když obsah přetečá, **zmenší ho v poměru** (`transform: scale`,
+`width` se o tentýž poměr zvětší, takže šířka vyjde zpátky na 100 %) —
+stejná technika jako u protokolu spotřebičů (v9.69).
+
+- **Radši o procento menší písmo než chybějící podpis.** Bez podpisu je
+  revizní zpráva neplatný papír; zmenšení o pár procent nikdo nepozná.
+- **Volá se až na KONCI `requestAnimationFrame` bloku** v `generujPDF()` —
+  přečíslování stran mění text v hlavičce i „Počet listů", takže výška
+  titulky je známá teprve pak. A musí to být po `showScreen('pdf')`, jinak
+  vrátí měření nuly (stará past).
+- **Když se obsah vešel, nesahá se na nic** — `transform` se vůbec
+  nenastaví, takže běžná zpráva vypadá na chlup stejně jako dřív
+  (`porovnani2.js` znak po znaku).
+- **Ověřeno, že to projde i přes `html2canvas`** — zmenšený obsah se do PDF
+  vykreslí správně (canvas vyexportován a prohlédnut, ne jen změřené DOM).
+- Dolní mez zmenšení je **70 %** — pojistka proti nesmyslu, tolik obsahu se
+  na titulku nikdy nedostane.
+
+Test: `test-titulka-podpis.js` (10 kontrol — běžná titulka se nezmenšuje,
+přeplněná ano, oba popisky zůstanou celé nad patičkou, šířka se nezuží,
+u elektro revize totéž). **Ověřeno, že na kódu před opravou spadne.**
+
+### Pole zprávy zmizelá u strojů — STARÁ VERZE, ne nová chyba
+
+Jiří současně hlásil, že po zkopírování stroje nejde editovat ev. číslo,
+místo provádění, zahájení ani vypracování. Je to **přesně chyba opravená
+ve v9.75** (protokol spotřebičů si půjčil pole a nevrátil je). Ověřeno
+pokusem: na commitu v9.74 se symptom **reprodukuje na všech cestách**
+(otevření stroje z archivu, ⧉ kopie stroje, ⧉ kopie zprávy, 🔗 navázání),
+na aktuálním kódu ani na jedné. **Kolega měl v prohlížeči starší build.**
+
+Proto přibyla **záchranná síť, ne další oprava**: `switchTab()` u každého
+přepnutí záložky zavolá `spotrPrenosPoli(false)`, pokud otevřená zpráva
+není o spotřebičích. Kdyby se pole do protokolu dostala jakoukoli budoucí
+cestou, technik je dostane zpátky **jedním klepnutím**, ne až po načtení
+stránky. Hlídá to kontrola v `test-spotrebice.js` (118 kontrol), která si
+staré chování nasimuluje násilím.
 
 ## Popis zmizel u strojů i u elektro revize (v9.81)
 
