@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.84 · 2026-09-22**
+**Aktuální verze: v9.85 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,51 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## „Zdroj el. proudu" a „Ochrana před úrazem" u stroje (v9.85)
+
+Dotaz uživatele 2026-09-23 se snímkem titulky zprávy o stroji, obě kolonky
+zakroužkované: „tyhle okénka asi u kontrole stroje nemají být, ne?"
+
+**Měl pravdu a bylo to horší, než jak to vypadalo.** Obě pole (`f_zdroj`,
+`f_ochrana`) bydlí v kartě **`scard-vtez`**, kterou `novaZprava()` u strojů
+i u LPS **schovává** (`(typ === 'elektro') ? '' : 'none'`). Technik je tedy
+neměl kde vyplnit — a titulka je přesto tiskla, takže na zprávě o stroji
+zůstávaly **navždy prázdné kolonky**. Program tiskl okénka pro údaje, které
+sám nenabízí.
+
+Věcně to sedí taky:
+
+- **Zdroj el. proudu** (ČEZ / EG.D / vlastní trafostanice) je údaj
+  o **budově**, ne o stroji. Odkud je stroj napájený, říká „napájeno
+  z rozváděče", „předřazené jištění přívodu" a „přívodní kabel" o kus výš
+  v Technických specifikacích.
+- **Ochrana před úrazem** se u stroje popisuje v **kapitole 3** (technický
+  popis — automatické odpojení, pospojování) a je i mezi zaškrtávacími
+  volbami v kartě `scard-ochrana-char`, kterou stroje mají. Krátká kolonka
+  na titulce k tomu nic nepřidává.
+
+Obojí se proto **netiskne, když `isStrojePdf`**. „Síť", „Použité normy"
+a „Datum kontroly" zůstávají; bez kolonky nad sebou nesmí „Síť" začínat
+odsazením `margin-top:1mm`, jinak se srovná špatně s levým sloupcem.
+
+**Elektro ani LPS se nedotklo** — `porovnani2.js` znak po znaku, LPS má
+vlastní větev.
+
+Test: 5 kontrol v `test-normy-stroje.js` (35) — karta se u stroje vůbec
+nenabízí, ani jedna kolonka se netiskne, „Síť"/normy/datum zůstaly, a **že
+u elektro revize obě kolonky dál jsou**.
+
+### Fixtura v test-titulka-podpis.js přestala přetékat
+
+Odebráním dvou kolonek se na titulce stroje uvolnilo místo, takže
+„přeplněná titulka" z v9.82 **už nepřetekla** a kontrola na zmenšení spadla.
+**Nebyla to chyba programu.** Při opravě vyšlo najevo, že fixtura beztak
+netestovala, co si myslela: sypala dlouhý text do **`f_zhodnoceni`**, jenže
+do titulky jde **`f_posudek_vlastni`** (přepsání posudku z panelu tisku) —
+`f_zhodnoceni` si program skládá sám a delší text v něm výšku titulky
+nezměnil. Přetékání tedy dělal jen dlouhý seznam norem. Opraveno na
+`f_posudek_vlastni`; zmenšování teď opravdu nastane u strojů i u elektro.
 
 ## Filtr typu nad archivem se skládá z TYPY_ZPRAV (v9.84)
 
