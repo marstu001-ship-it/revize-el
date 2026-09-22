@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.85 · 2026-09-23**
+**Aktuální verze: v9.86 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,53 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## „Označit vše" označilo jen 25 z 27 a mlčelo o tom (v9.86)
+
+Nahlásil uživatel 2026-09-22 se snímkem vyfiltrovaných strojů: „Pokud dám
+filtr třeba pouze stroje, ukáže se pouze 25 záznamů. Když dám vybrat vše, tak
+se nevyberou všechny stroje, ale jen ty viditelné — tak nevím, jestli to není
+chyba, já jsem se nechal nachytat 🙂. Pokud se zmáčkne zobrazit dalších 2, lze
+je potom označit, jen se to nesmí přehlédnout 🙂."
+
+**Chování bylo správně, ale program o něm mlčel.** Archiv ukazuje **prvních
+25** zpráv (`__archivLimit`) a zaškrtávátko v hlavičce označí **jen zobrazené
+řádky** — to je záměr z v9.83 a zůstává: v archivu můžou být stovky zpráv,
+které technik nevidí, a „označit vše" následované 🗑 by bylo neštěstí.
+Jenže počítadlo nad seznamem hlásilo **27 z 40**, v tabulce bylo 25 řádků
+a lišta pak „25 zpráv označeno" — a nic to nedalo do souvislosti. **Tichý
+rozdíl mezi „co filtr našel" a „co je vidět" je ta past**, ne samo omezení.
+
+Řeší to tři věci najednou, schválně víc než jedna:
+
+1. **`__archivSkryte`** — klíče zpráv, které filtru vyhovují, ale nevešly se
+   do dávky. Plní se při každém překreslení, hned vedle `__archivPoradi`.
+2. **„➕ Vybrat i zbývající N" v liště výběru** (`archivVybratSkryte`) —
+   dobere je **A ROVNOU JE UKÁŽE** (zvedne `__archivLimit`). Výběr, na který
+   se technik nemůže podívat, by byl horší než ten neúplný: u 🗑 Smazat
+   a ✓ Dokončit musí být vidět, čeho se to týká. Tlačítko je v liště, dokud
+   něco zbývá — **tohle je ta „nepřehlédnutelnost", kterou si uživatel přál**.
+3. **Hláška hned po „označit vše"** s týmž tlačítkem v ní (9 s). Řekne
+   **kolik jich filtru vyhovuje**, ne kolik zbývá — číslo z počítadla nad
+   seznamem, takže si to technik spojí: „Označeno 25 zpráv ze seznamu —
+   filtru jich vyhovuje 27. Zbytek se do seznamu nevešel."
+   Skloňování se dělá **přes `pocetZpravSklon()` a holé číslo** — „filtru
+   vyhovuje ještě 2 zprávy" je špatně česky a shoda přísudku s číslovkou
+   (1 / 2–4 / 5+) by si vyžádala třetí tabulku.
+4. Pod tlačítkem „▼ Zobrazit dalších" je navíc věta **„Zobrazeno 25 z 27 —
+   zaškrtávátko v hlavičce označí jen zobrazené."** Kdo doroluje na konec,
+   dozví se to i bez výběru.
+
+- **Vejde-li se seznam celý, nic z toho se neukáže** a „označit vše" se chová
+  přesně jako dřív — žádná hláška, žádné tlačítko navíc (hlídá test).
+- Dobírají se **jen zprávy z právě nastaveného filtru**, ne celý archiv.
+- Prázdný výsledek filtru `__archivSkryte` vynuluje a zavolá
+  `archivListaVyberu()` — jinak by po zúžení filtru zůstalo v liště viset
+  tlačítko slibující zprávy, které seznam nemá.
+
+Test: 13 kontrol v `test-hromadne.js` (41) — fixtura 27 strojů + 4 elektro
+zprávy stavěná **přímo do archivu**, ne formulářem (27× `novaZprava()` by
+test natáhlo o půl minuty).
 
 ## „Zdroj el. proudu" a „Ochrana před úrazem" u stroje (v9.85)
 

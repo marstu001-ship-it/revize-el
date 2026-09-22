@@ -1182,7 +1182,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.85<span class="ver-date"> · 2026-09-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.86<span class="ver-date"> · 2026-09-23</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1272,6 +1272,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="archiv-hromadne archiv-hromadne-skryta" id="archiv-hromadne">
       <strong id="archiv-vybrano-pocet">0 zpráv</strong>
       <span style="color:var(--muted);font-size:.72rem">označeno</span>
+      <span id="archiv-vybrano-skryte" style="display:none"></span>
       <span style="flex:1"></span>
       <button class="btn btn-ghost" data-action="archivTiskJedno" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" title="Každá strana na vlastní list">🖨️ Tisk jednostranně</button>
       <button class="btn btn-ghost" data-action="archivTiskObou" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" title="Každá zpráva začíná na novém listu — u lichého počtu stran se doplní prázdná zadní strana">🖨️ Tisk oboustranně</button>
@@ -18415,8 +18416,10 @@ function renderArchiv() {
       ? (filtered.length + ' z ' + archiv.length)
       : pocetZprav(archiv.length);
   }
+  __archivSkryte = [];
   if (filtered.length === 0) {
     c.innerHTML = '<div class="archiv-empty">Žádné zprávy neodpovídají filtru.</div>';
+    archivListaVyberu();
     return;
   }
   // Řazení: 1) rozpracované (na těch se právě pracuje), 2) zprávy, kterým
@@ -18443,6 +18446,12 @@ function renderArchiv() {
   var limit = window.__archivLimit || 25;
   var zbyva = Math.max(0, filtered.length - limit);
   var zobrazene = filtered.slice(0, limit);
+  // Zprávy, které filtru VYHOVUJÍ, ale nevešly se do zobrazené dávky.
+  // Zaškrtávátko v hlavičce označí jen to, co je vidět (v archivu můžou
+  // být stovky zpráv), takže tenhle seznam je to jediné, z čeho se dá
+  // nabídnout „označ i zbytek" — bez něj technik nepozná, že mu výběr
+  // něco vynechal (nahlásil uživatel 2026-09-22).
+  __archivSkryte = filtered.slice(limit).map(function (it) { return archivKlic(it.z, it.i); });
   // Pořadí na obrazovce drží hromadný výběr se Shiftem i pořadí tisku.
   __archivPoradi = [];
   var html = '<table class="archiv-table"><thead><tr>' +
@@ -18534,6 +18543,7 @@ function renderArchiv() {
   if (zbyva > 0) {
     html += '<div style="text-align:center;margin-top:.8rem">' +
       '<button class="add-row" data-action="archivShowMore" style="font-size:.72rem;padding:.5rem 1.4rem">▼ Zobrazit dalších ' + Math.min(25, zbyva) + ' (zbývá ' + zbyva + ')</button>' +
+      '<div style="font-size:.72rem;color:var(--muted);margin-top:.35rem">Zobrazeno ' + zobrazene.length + ' z ' + filtered.length + ' — zaškrtávátko v hlavičce označí jen zobrazené.</div>' +
       '</div>';
   }
   c.innerHTML = html;
@@ -18912,6 +18922,7 @@ function navazatZpravu(i) {
 // nebo vymazání s možností vzít smazané zprávy zpět."
 var __archivVybrane = {};
 var __archivPoradi = [];        // pořadí řádků na obrazovce (Shift + tisk)
+var __archivSkryte = [];        // vyhovují filtru, ale nevešly se do dávky
 var __archivPosledniVyber = null;
 
 // Výběr se drží PŘES `uid`, ne přes index — ten se mazáním posouvá.
@@ -18980,7 +18991,34 @@ function archivVyberVse() {
     var t = archivPodleKlice(k);
     return t ? { z: t.z, i: t.i } : { z: null, i: -1 };
   }));
+  var pocet = __archivPoradi.length;
+  var mimo = archivSkryteNevybrane().length;
+  var skryto = (__archivSkryte || []).length;
   __archivPoradi.forEach(function (k) { __archivVybrane[k] = zapnout; });
+  renderArchiv();
+  // Nejtišší možná past: filtr najde 27 zpráv, v seznamu je jich 25
+  // a „označit vše" označí právě těch 25. Řekne se to nahlas a rovnou
+  // se nabídne dobrání zbytku — tlačítko zůstane i v liště výběru.
+  if (zapnout && mimo) {
+    showToast('Označeno ' + pocetZpravSklon(pocet) + ' ze seznamu — filtru jich vyhovuje ' +
+      (pocet + skryto) + '. Zbytek se do seznamu nevešel.',
+      { actionLabel: '➕ Vybrat i zbývající ' + mimo, action: archivVybratSkryte, timeout: 9000 });
+  }
+}
+
+// Zprávy, které filtru vyhovují, nejsou v zobrazené dávce a nejsou vybrané.
+function archivSkryteNevybrane() {
+  return (__archivSkryte || []).filter(function (k) { return !__archivVybrane[k]; });
+}
+
+// „➕ Vybrat i zbývající N" — dobere zprávy pod hranicí dávky A ROVNOU JE
+// UKÁŽE. Výběr, na který se technik nemůže podívat, by byl horší než ten
+// neúplný: u 🗑 a ✓ Dokončit musí být vidět, čeho se to týká.
+function archivVybratSkryte() {
+  var pridat = __archivSkryte || [];
+  if (!pridat.length) return;
+  pridat.forEach(function (k) { __archivVybrane[k] = true; });
+  window.__archivLimit = (window.__archivLimit || 25) + pridat.length;
   renderArchiv();
 }
 
@@ -19001,6 +19039,20 @@ function archivListaVyberu() {
   lista.classList.toggle('archiv-hromadne-skryta', !n);
   var pocet = document.getElementById('archiv-vybrano-pocet');
   if (pocet) pocet.textContent = pocetZpravSklon(n);
+  var skr = document.getElementById('archiv-vybrano-skryte');
+  if (skr) {
+    var mimo = archivSkryteNevybrane().length;
+    if (n && mimo) {
+      skr.style.display = '';
+      skr.innerHTML = '<button class="btn btn-ghost" data-action="archivVybratSkryte" ' +
+        'title="Tyto zprávy filtru vyhovují, ale nevešly se do zobrazeného seznamu — přidají se do výběru a zobrazí" ' +
+        'style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)">➕ Vybrat i zbývající ' + mimo + '</button>' +
+        '<span style="color:var(--muted);font-size:.72rem;margin-left:.4rem">mimo zobrazený seznam</span>';
+    } else {
+      skr.style.display = 'none';
+      skr.innerHTML = '';
+    }
+  }
 }
 
 // ── Hromadný tisk ───────────────────────────────────────────────────
@@ -22429,6 +22481,7 @@ document.addEventListener('click', function(e) {
     case 'archivPrepnoutVyber': e.stopPropagation(); archivPrepnoutVyber(el, e); break;
     case 'archivVyberVse': e.stopPropagation(); archivVyberVse(); break;
     case 'archivZrusitVyber': archivZrusitVyber(); break;
+    case 'archivVybratSkryte': archivVybratSkryte(); break;
     case 'archivTiskJedno': archivTiskJedno(); break;
     case 'archivTiskObou': archivTiskObou(); break;
     case 'archivHromadneUzavrit': archivHromadneUzavrit(); break;
