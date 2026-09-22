@@ -1182,7 +1182,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.83<span class="ver-date"> · 2026-09-22</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.84<span class="ver-date"> · 2026-09-22</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1258,9 +1258,6 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <select id="archiv-rok" style="padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px;font-size:.85rem;background:#fff"><option value="">Všechny roky</option></select>
       <select id="archiv-typ" style="padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px;font-size:.85rem;background:#fff">
         <option value="">Všechny typy</option>
-        <option value="elektro">Elektro</option>
-        <option value="lps">LPS</option>
-        <option value="stroje">Stroje</option>
       </select>
       <select id="archiv-stav" style="padding:.4rem .5rem;border:1px solid #ccc;border-radius:2px;font-size:.85rem;background:#fff">
         <option value="">Všechny stavy</option>
@@ -1320,6 +1317,22 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="home-header">
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-09-22">
+    <div class="scard-title">🗂️ Hromadné operace v archivu <span class="nov-datum">22. 9. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">U každé zprávy v archivu je <strong>zaškrtávací políčko</strong>. Označte si víc zpráv a nad seznamem se objeví lišta s tím, co s nimi jde udělat najednou.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>🖨️ Tisk jednostranně nebo oboustranně.</strong> Při oboustranném tisku <strong>začíná každá zpráva na novém listu</strong> — má-li lichý počet stran, program za ni doplní prázdnou zadní stranu, takže na jednom papíře nikdy neskončí konec jedné zprávy a začátek druhé.</li>
+        <li><strong>Nejdřív uvidíte náhled</strong> všeho, co půjde ven, a teprve v něm volíte <em>Tisk přímo</em> nebo <em>Uložit PDF</em>. Všechny zprávy jsou v jednom souboru.</li>
+        <li><strong>✓ Dokončit</strong> označí vybrané zprávy jako hotové naráz.</li>
+        <li><strong>🗑 Smazat</strong> odebere vybrané zprávy — a hned nabídne <strong>ZPĚT</strong>, kterým je všechny vrátíte na jejich místa. Vzít zpět jde i hromadné dokončení.</li>
+        <li>Zaškrtávátko <strong>v hlavičce tabulky</strong> označí všechny právě zobrazené zprávy, <strong>Shift</strong> při klepnutí označí celý úsek.</li>
+      </ul>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:.6rem">Právě otevřenou zprávu hromadné mazání vynechá — formulář ji drží v paměti a při dalším uložení by se vrátila. Program to řekne a ostatní smaže.</p>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">Filtr nad archivem nově nabízí i <strong>Spotřebiče</strong>.</p>
+    </div>
   </div>
 
   <div class="scard" data-nov-datum="2026-09-17">
@@ -18334,6 +18347,7 @@ function renderArchiv() {
   var countEl = document.getElementById('archiv-count');
   if (!c) return;
   refreshArchivYearOptions();
+  refreshArchivTypOptions();
   renderArchivRecents();
   if (!archiv || archiv.length === 0) {
     c.innerHTML = '<div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše.</div>';
@@ -18648,6 +18662,23 @@ function vnoritVybrat(k) {
   }
   renderArchiv();
   showToast('Zpráva ' + (pripojovana.ev_cislo || '') + ' připojena jako starší revize');
+}
+
+// Filtr typu se skládá z `TYPY_ZPRAV`, ne z ručně psaných `<option>` v HTML.
+// Ty se totiž při přidání čtvrtého typu (spotřebiče, v9.67) zapomněly doplnit
+// a technik si je neměl jak vyfiltrovat — **přesně ta past, kterou popisuje
+// oddíl „Typy revizních zpráv": co se nevygeneruje z tabulky, to se zapomene.**
+// Postranní archiv to tak dělá od v9.59, hlavní archiv to dohnal až teď.
+function refreshArchivTypOptions() {
+  var sel = document.getElementById('archiv-typ');
+  if (!sel) return;
+  var current = sel.value;
+  var html = '<option value="">Všechny typy</option>';
+  Object.keys(TYPY_ZPRAV).forEach(function (t) {
+    html += '<option value="' + t + '"' + (t === current ? ' selected' : '') + '>' +
+      esc(typInfo(t).label) + '</option>';
+  });
+  sel.innerHTML = html;
 }
 
 // Naplní dropdown let v archivu unikátními roky podle datumů zpráv.

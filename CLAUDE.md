@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.83 · 2026-09-22**
+**Aktuální verze: v9.84 · 2026-09-22**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -123,6 +123,43 @@ Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řá
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
 
+## Filtr typu nad archivem se skládá z TYPY_ZPRAV (v9.84)
+
+Pokyn uživatele 2026-09-22 („dodělej filtr typu nad archivem"). Filtr měl
+`<option>` **napsané ručně v HTML** — Elektro / LPS / Stroje — a při přidání
+čtvrtého typu (spotřebiče, v9.67) se na ně zapomnělo. Technik si je proto
+nemohl vyfiltrovat, přestože je archiv normálně ukazuje.
+
+`refreshArchivTypOptions()` je teď generuje **z `TYPY_ZPRAV`**, takže pátý typ
+se doplní sám. **Přesně to říká oddíl „Typy revizních zpráv": co se nevygeneruje
+z tabulky, to se dřív nebo později zapomene.** Postranní archiv to tak dělá už
+od v9.59; hlavní archiv to dohnal až teď.
+
+- **Pořadí se bere z tabulky, ne z archivu** — jinak by se volby přeskládaly
+  podle toho, jaké zprávy zrovna existují.
+- Zvolený typ **přežije překreslení** (zachová se jako u filtru let).
+- Test: 4 kontroly v `test-hromadne.js` (nabídka i pořadí proti `TYPY_ZPRAV`,
+  že výběr opravdu zúží seznam, a že se volba překreslením neztratí).
+
+## Karta v Novinkách k hromadným operacím (v9.84)
+
+Uživatel schválil 2026-09-22 („dej do novinek"). Karta k **v9.83** —
+zaškrtávátka v archivu, tisk jednostranně/oboustranně s prázdnou zadní stranou,
+hromadné dokončení a mazání se ZPĚT, Shift pro úsek. Zmiňuje i doplněný filtr
+typu.
+
+**Dvě kontroly v `test-novinky.js` byly zastaralé a nebyla to chyba programu:**
+pinovaly kartu ke spotřebičům jako „mezi dnešními" (`index <= 1`) a tvrdily, že
+nejnovější datum v Novinkách je 2026-09-17. Nová karta obojí posunula. Přepsáno
+na **skutečný nárok**, který přežije i příští kartu:
+
+- nad kartou ke spotřebičům nesmí stát nic staršího a pod ní nic novějšího,
+- maximum přes všechny karty musí sedět **s kartou na čele** (z toho maxima se
+  odvozuje pulsování 📰, takže je to ta vlastnost, na které záleží).
+
+Je to potřetí tatáž past (v9.58, v9.71, teď): **v Novinkách se nikdy nesmí
+pinovat pozice ani konkrétní datum.**
+
 ## Hromadné operace v archivu — tisk, dokončení, smazání (v9.83)
 
 Přání uživatele 2026-09-22: „v seznamu by bylo dobré mít zaškrtávací políčko
@@ -211,9 +248,8 @@ přežití překreslení, obojí tisk včetně sudých bloků a popisu prázdné
 že tisk nepřepíše archiv, dokončení i mazání včetně ZPĚT a vynechané otevřené
 zprávy).
 
-**Známý nedodělek:** filtr typu nad archivem nemá volbu **Spotřebiče**
-(zůstalo z v9.67). Hromadného tisku se to netýká — spotřebiče se tisknou
-správně — ale vyfiltrovat si je nejde. Nahlášeno uživateli.
+~~Známý nedodělek: filtr typu nemá volbu Spotřebiče.~~ **Doděláno ve v9.84**
+— viz oddíl výš.
 
 ## Titulní strana přetékala přes patičku a uřízla PODPISY (v9.82)
 
