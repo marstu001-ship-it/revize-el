@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.87 · 2026-09-23**
+**Aktuální verze: v9.88 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,27 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Karta v Novinkách k přenosu zpráv (v9.88)
+
+Uživatel schválil 2026-09-22 („přidej"). Karta k **v9.87** — výběr v archivu,
+„📤 Soubor pro kolegu", přetažení přijatého souboru do okna, dotaz na přepsání,
+ZPĚT a hromada jednotlivých souborů naráz. Poznámka pod čarou říká, **proč se
+převzatá zpráva uloží jako dokončená** a že balík si stav nese vlastní — to je
+jediná věc, která technika může překvapit.
+
+**Kontrola „karta k hromadným operacím je úplně nahoře" (`hromIdx === 0`) byla
+zastaralá a nebyla to chyba programu** — nová karta ji posunula. Je to **počtvrté
+tatáž past** (v9.58, v9.71, v9.84, teď), přestože se pokaždé opravovala jen ta
+jedna kontrola, která zrovna spadla. Přepsáno na skutečný nárok (nad kartou nic
+staršího, pod ní nic novějšího), takže ji příští karta už nerozbije.
+
+**V Novinkách se nikdy nesmí pinovat pozice ani konkrétní datum — a platí to
+i pro kartu, kterou zrovna přidáváte.** Když se přidává nová karta, rovnou se
+musí projít kontroly té předchozí.
+
+Test: `test-novinky.js` (44 kontrol — nově datum v atributu i v titulku, časové
+pořadí a šest kusů obsahu nové karty).
 
 ## Přenos vybraných zpráv do souboru a zpátky (v9.87)
 
