@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.86 · 2026-09-23**
+**Aktuální verze: v9.87 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,84 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Přenos vybraných zpráv do souboru a zpátky (v9.87)
+
+Přání uživatele 2026-09-22 k liště hromadných operací: „vyberu zprávy jaké
+chci a přidali bychom tam uložit jako soubor pro přenos na jiné zařízení nebo
+kolegovi, co už máme přímo ve zprávě. Využilo by se, když mi kolega pošle jen
+dvacet posledních zpráv, **než jen po jedné** — a klidně ať uloží dvacet
+jednotlivých souborů."
+
+Tlačítko **„📤 Soubor pro kolegu"** v liště výběru nad archivem (stejný název
+i vzhled jako u Plánu revizí, ať se technik neučí dvoje pojmenování).
+
+### Jeden balík místo dvaceti souborů
+
+Uživatel dvacet souborů připustil, ale **smysl celé věci je „ne po jedné"** —
+takže se ukládá **jeden soubor** `Zpravy_20_RRRR-MM-DD.json`
+(`_format: 'revize-el-zpravy'`). Kolega ho otevře jedním „📂 Načíst"
+a má všech dvacet zpráv v archivu. Dvacet příloh v mailu a dvacet otevření
+by bylo přesně to, čemu se mělo předejít.
+
+- **V balíku jsou CELÉ POLOŽKY ARCHIVU, ne jen `data`.** Veze se tím stav
+  dokončenosti, připnutí, `predchudce_uid` (řetěz revizí) i čas uložení.
+  Kdyby se posílalo jen `data` (jako u jedné zprávy z formuláře), musel by
+  program stav na druhé straně vymyslet.
+- **Exportuje se KOPIE, do archivu se nesahá.** Starší záznamy `uid` nemají
+  a přidělit jim ho při exportu by byl zápis do dat za zády uživatele —
+  past z v9.39. Kopie v souboru uid dostane, originál zůstane, jak byl.
+- Hláška po uložení říká **počet i velikost** souboru (zprávy s fotkami
+  závad mají megabajty, ať to není překvapení v mailu).
+
+### Načítání jde ROVNOU DO ARCHIVU, ne přes formulář
+
+`nacistData()` umí jednu zprávu a otevře ji — dvacet zpráv by se přepsalo
+jedna přes druhou. `zpravyImportDavka()` proto skládá položky rovnou do
+`archiv`, se stejnými pravidly jako hromadné mazání:
+
+- **Ptá se dvakrát, ne jednou.** První dotaz jmenuje počty (nových / už
+  v archivu / vynechaných), druhý řeší **přepsat × nechat stávající** —
+  dohromady tři možné konce včetně úplného zrušení. Jeden `confirm` by
+  nabídl jen dva.
+- **Identita je `uid`, ne ev. číslo** (pravidlo z `saveToArchiv`) — kolegova
+  čísla se s mými klidně potkají a duplicitní ev. číslo program dovoluje.
+- **Právě otevřenou zprávu import vynechá** a řekne to: formulář ji drží
+  v paměti a první další uložení by ji vrátilo (totéž jako u ✕ a hromadného
+  mazání).
+- **Vzít zpět jde celé načtení** — před dávkou se schová kopie pole `archiv`
+  a ZPĚT ji vrátí. U dvaceti cizích zpráv je omyl drahý.
+- **Pořadí ze souboru zůstane i na čele archivu** — vkládá se odzadu.
+
+### Dvacet jednotlivých souborů taky projde
+
+Kolega může poslat i dvacet samostatných zpráv (tak se ukládaly dosud).
+**Přetažení víc souborů naráz** i **výběr víc souborů v „Načíst"**
+(`<input multiple>`) je proto sesbírá a pustí **jednou dávkou** touž cestou.
+
+- Rozbitý soubor dávku neshodí — přeskočí se a řekne se, kolik jich bylo.
+- **Samostatná zpráva se uloží jako DOKONČENÁ** (`stav: ''`), ne rozpracovaná:
+  soubor zprávy je zpráva, která už byla vydaná, a po převzetí dvaceti cizích
+  by archiv svítil samá „rozprac.". Kdo ji chce dodělat, vrátí ji mezi
+  rozpracované tlačítkem 🔨. **Balík si stav nese vlastní**, takže vlastní
+  rozdělaná zpráva přenesená mezi svými zařízeními zůstane rozpracovaná.
+- **Jediný přetažený soubor se chová přesně jako dřív** — otevře se ve
+  formuláři. Dávková cesta se zapíná až od druhého souboru (hlídá test).
+
+### Balík musí poznat KAŽDÁ cesta importu
+
+Totéž pravidlo jako u `revize-el-plan` (v9.34, bod 4): `zpracovatZpravuData()`
+(tlačítko Načíst), drag&drop i výběr víc souborů. Bez toho by balík propadl
+do `nacistData()` a program by ho otevřel jako jednu prázdnou zprávu.
+
+**Body 4–7 odsouhlaseného návrhu se tím NEDĚLALY** — štítek 📥 „převzatá",
+`puvod: 'import'` a vynechání cizích čísel z vlastní číselné řady čekají dál.
+Tohle je jen přenos; kdo chce rozlišovat vlastní a cizí zprávy, řekne si.
+
+Test: `test-prenos-zprav.js` (25 kontrol — obsah balíku, celé položky i se
+stavem, načtení do prázdného archivu, pořadí, ZPĚT, opakované načtení
+s přepsáním i bez něj, vynechaná otevřená zpráva, dvacet souborů naráz
+i s rozbitým mezi nimi, a že jediná zpráva se pořád otevře ve formuláři).
 
 ## „Označit vše" označilo jen 25 z 27 a mlčelo o tom (v9.86)
 

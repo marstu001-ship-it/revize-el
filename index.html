@@ -1182,7 +1182,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.86<span class="ver-date"> · 2026-09-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.87<span class="ver-date"> · 2026-09-23</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1276,6 +1276,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <span style="flex:1"></span>
       <button class="btn btn-ghost" data-action="archivTiskJedno" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" title="Každá strana na vlastní list">🖨️ Tisk jednostranně</button>
       <button class="btn btn-ghost" data-action="archivTiskObou" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" title="Každá zpráva začíná na novém listu — u lichého počtu stran se doplní prázdná zadní strana">🖨️ Tisk oboustranně</button>
+      <button class="btn btn-ghost" data-action="archivExportVybrane" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" title="Uloží vybrané zprávy do jednoho souboru .json — pro přenos na jiné zařízení nebo pro kolegu">📤 Soubor pro kolegu</button>
       <button class="btn btn-ghost" data-action="archivHromadneUzavrit" style="background:#fff;color:#2e7d32;border:1px solid #2e7d32">✓ Dokončit</button>
       <button class="btn btn-ghost" data-action="archivHromadneSmazat" style="background:#fff;color:var(--accent);border:1px solid var(--accent)">🗑 Smazat</button>
       <button class="btn btn-ghost" data-action="archivZrusitVyber" style="background:var(--bg);color:var(--text);border:1px solid var(--border)">✕ Zrušit výběr</button>
@@ -3781,7 +3782,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   </div>
 </div>
 
-<input type="file" id="json-input" accept=".json" style="display:none" data-action="nacistJSON">
+<input type="file" id="json-input" accept=".json" multiple style="display:none" data-action="nacistJSON">
 
 <!-- Hlasový diktát: plovoucí tlačítko + indikátor 'Poslouchám' -->
 <button id="voice-fab" class="voice-fab" data-action="toggleVoice" title="Hlasový diktát do aktivního pole (cs-CZ)" aria-label="Hlasový diktát">🎤</button>
@@ -4823,8 +4824,11 @@ window.addEventListener('drop', function(e) {
   e.preventDefault();
   __dropDepth = 0;
   showDropOverlay(false);
-  var f = e.dataTransfer.files && e.dataTransfer.files[0];
-  if (!f) return;
+  var soubory = e.dataTransfer.files;
+  if (!soubory || !soubory.length) return;
+  // Víc souborů naráz = hromada zpráv od kolegy; jde to rovnou do archivu.
+  if (soubory.length > 1) { importSouboryZprav(soubory); return; }
+  var f = soubory[0];
   if (!/\.json$/i.test(f.name)) {
     showToast('Import umí jen .json soubory (záloha nebo zpráva)');
     return;
@@ -4835,6 +4839,8 @@ window.addEventListener('drop', function(e) {
       var data = JSON.parse(ev.target.result);
       if (data && data._format === 'revize-el-plan') {
         planNacistData(data);
+      } else if (jeBalikZprav(data)) {
+        zpravyImportBalik(data);
       } else if (data && (data._format === 'revize-el-backup' || (Array.isArray(data.archiv) && !data.ev_cislo))) {
         obnovZeZalohy(data);
       } else {
@@ -15451,6 +15457,11 @@ function nacist() {
 }
 
 function nacistJSON(e) {
+  if (e.target.files && e.target.files.length > 1) {
+    importSouboryZprav(e.target.files);
+    e.target.value = '';
+    return;
+  }
   var file = e.target.files[0];
   if (!file) return;
   var reader = new FileReader();
@@ -15474,6 +15485,8 @@ function zpracovatZpravuData(D) {
   // až k nacistData() a program by se ho pokusil otevřít jako zprávu.
   // Drag&drop a tlačítko 📥 v plánu ho poznají, hlavní „Načíst" ne.
   if (D && D._format === 'revize-el-plan') { planNacistData(D); return; }
+  // Balík zpráv (v9.87) — jinak by propadl až do nacistData() jako jedna zpráva.
+  if (jeBalikZprav(D)) { zpravyImportBalik(D); return; }
   var looksLikeBackup =
     Array.isArray(D.archiv) ||
     Array.isArray(D.odberatele) ||
@@ -19238,6 +19251,183 @@ function archivHromadneUzavrit() {
 }
 
 // ── Hromadné smazání s vzetím zpět ──────────────────────────────────
+// ══ PŘENOS ZPRÁV MEZI ZAŘÍZENÍMI / KOLEGY (v9.87) ═══════════════════
+// Přání uživatele 2026-09-22: „vyberu zprávy jaké chci a uložíme je jako
+// soubor pro přenos na jiné zařízení nebo kolegovi — když mi kolega pošle
+// dvacet posledních zpráv, ať to nemusím dělat po jedné."
+//
+// Balík je JEDEN soubor s CELÝMI POLOŽKAMI ARCHIVU (ne jen `data`), takže
+// se veze i stav dokončení, připnutí a odkaz na starší revizi. Jednotlivé
+// zprávy uložené po staru (holé `D` bez obalu) balík taky přečte — když
+// jich kolega pošle dvacet, naráz se přetáhnou do okna všechny.
+var ZPRAVY_FORMAT = 'revize-el-zpravy';
+
+function jeBalikZprav(d) {
+  return !!(d && d._format === ZPRAVY_FORMAT && Array.isArray(d.zpravy));
+}
+
+// Z čehokoli, co přišlo ze souboru, udělá POLOŽKU ARCHIVU. Položka archivu
+// se pozná podle vnořeného `data`; holá zpráva má pole na sobě.
+function zpravaPolozka(x) {
+  if (!x || typeof x !== 'object') return null;
+  if (x.data && typeof x.data === 'object') {
+    var p = JSON.parse(JSON.stringify(x));
+    if (!p.uid) p.uid = genZpravaUid();
+    return p;
+  }
+  var D = x;
+  if (!(D.ev_cislo || D.misto || D.adresa || (D.typ && TYPY_ZPRAV[D.typ]))) return null;
+  return {
+    uid: genZpravaUid(),
+    typ: D.typ, podtyp: D.podtyp, ev_cislo: D.ev_cislo, misto: D.misto,
+    datum: D.zahajeni, vysledek: D.celkovy_vysledek,
+    odberatel_id: D.odberatel_id || '',
+    // Samostatný soubor zprávy = zpráva, která už byla vydaná, proto
+    // **dokončená** (`stav: ''`), ne rozpracovaná. Kdo ji chce dodělat,
+    // vrátí ji mezi rozpracované tlačítkem 🔨 — opačně by archiv po
+    // převzetí dvaceti cizích zpráv svítil samá „rozprac.".
+    stav: '', pinned: false, last_opened_at: '', odeslano_at: '',
+    predchudce_uid: '', nehlidat: false,
+    data: D, timestamp: new Date().toISOString()
+  };
+}
+
+function zpravyBalikNazev(n) {
+  return 'Zpravy_' + n + '_' + new Date().toISOString().slice(0, 10) + '.json';
+}
+
+// „📤 Soubor pro kolegu" v liště výběru nad archivem.
+function archivExportVybrane() {
+  var vyb = archivVybraneZpravy().filter(function (t) { return t.z && t.z.data; });
+  if (!vyb.length) {
+    showToast('Vyberte nejdřív zprávy — u zpráv bez uložených dat export nejde.');
+    return;
+  }
+  var balik = {
+    _format: ZPRAVY_FORMAT,
+    verze: 1,
+    vytvoreno: new Date().toISOString(),
+    odesilatel: ((STORE.technik || {}).jmeno || ''),
+    zpravy: vyb.map(function (t) {
+      // Kopie, ne originál: staré záznamy uid nemají a **do archivu se
+      // kvůli exportu nesahá** (zápis za zády uživatele je past z v9.39).
+      var p = JSON.parse(JSON.stringify(t.z));
+      if (!p.uid) p.uid = genZpravaUid();
+      return p;
+    })
+  };
+  var blob = new Blob([JSON.stringify(balik, null, 2)], { type: 'application/json' });
+  var mb = blob.size / 1048576;
+  Promise.resolve(ulozitSoubor(blob, zpravyBalikNazev(balik.zpravy.length))).then(function (ok) {
+    if (ok === false) return;
+    showToast('Uloženo ' + pocetZpravSklon(balik.zpravy.length) + ' (' +
+      (mb >= 1 ? mb.toFixed(1) + ' MB' : Math.max(1, Math.round(blob.size / 1024)) + ' kB') +
+      '). Soubor otevřete u kolegy tlačítkem 📂 Načíst.');
+  });
+}
+
+function zpravyImportBalik(data) {
+  var polozky = (data.zpravy || []).map(zpravaPolozka).filter(Boolean);
+  zpravyImportDavka(polozky, data.odesilatel ? ('od: ' + data.odesilatel) : '');
+}
+
+// Načtení několika zpráv naráz — z balíku i z hromady jednotlivých souborů.
+// **Nejde přes formulář**: `nacistData()` umí jednu zprávu a otevřel by ji,
+// takže dvacet zpráv by se přepsalo jedna přes druhou. Položky se proto
+// skládají rovnou do archivu.
+function zpravyImportDavka(polozky, popis) {
+  if (!polozky || !polozky.length) {
+    alert('V souboru nejsou žádné zprávy, které by šly načíst.');
+    return;
+  }
+  var podleUid = {};
+  archiv.forEach(function (z, i) { if (z.uid) podleUid[z.uid] = i; });
+  var nove = [], prepsat = [], otevrena = 0;
+  polozky.forEach(function (p) {
+    // Právě otevřenou zprávu přepsat nejde — formulář ji drží v paměti
+    // a první další uložení by ji vrátilo (totéž pravidlo jako u mazání).
+    if (p.uid && p.uid === window.__openZpravaUid) { otevrena++; return; }
+    if (p.uid && podleUid[p.uid] !== undefined) prepsat.push({ p: p, i: podleUid[p.uid] });
+    else nove.push(p);
+  });
+  if (!nove.length && !prepsat.length) {
+    alert(otevrena
+      ? 'Soubor obsahuje jen zprávu, kterou máte právě otevřenou — přepsat ji nejde.\nPřepněte se nejdřív na jinou zprávu.'
+      : 'V souboru nejsou žádné zprávy, které by šly načíst.');
+    return;
+  }
+  var msg = 'Načíst zprávy ze souboru do archivu?' + (popis ? '\n(' + popis + ')' : '') + '\n\n' +
+    '• Nových: ' + nove.length + '\n' +
+    (prepsat.length ? '• Už v archivu (tatáž zpráva): ' + prepsat.length + '\n' : '') +
+    (otevrena ? '• Vynechá se: ' + otevrena + ' — máte je otevřené ve formuláři\n' : '');
+  if (!confirm(msg)) return;
+  var prepisovat = false;
+  if (prepsat.length) {
+    prepisovat = confirm(prepsat.length + ' z nich už v archivu je.\n\n' +
+      'OK = PŘEPSAT je verzí ze souboru\n' +
+      'Zrušit = NECHAT stávající' +
+      (nove.length ? ' a přidat jen ' + pocetZpravSklon(nove.length) + ' nových' : ' — nenačte se nic'));
+  }
+  var zaloha = archiv.slice();
+  if (prepisovat) prepsat.forEach(function (t) { archiv[t.i] = t.p; });
+  // Odzadu, aby pořadí ze souboru zůstalo i na čele archivu.
+  for (var i = nove.length - 1; i >= 0; i--) archiv.unshift(nove[i]);
+  STORE.archiv = archiv;
+  saveStore();
+  renderArchiv();
+  renderZalohaStatus();
+  var kolik = nove.length + (prepisovat ? prepsat.length : 0);
+  showToast('Načteno ' + pocetZpravSklon(kolik) + ' do archivu.', {
+    actionLabel: 'ZPĚT', timeout: 10000,
+    action: function () {
+      archiv.length = 0;
+      zaloha.forEach(function (z) { archiv.push(z); });
+      STORE.archiv = archiv;
+      saveStore();
+      renderArchiv();
+      renderZalohaStatus();
+      showToast('Načtení vzato zpět — archiv je jako před ním.');
+    }
+  });
+}
+
+// Přetažení / výběr VÍC souborů naráz. Kolega může poslat dvacet
+// jednotlivých zpráv místo jednoho balíku a přetahovat je po jedné
+// je přesně ta otrava, kvůli které tohle vzniklo.
+function importSouboryZprav(files) {
+  var seznam = Array.prototype.slice.call(files || []).filter(function (f) {
+    return /\.json$/i.test(f.name);
+  });
+  if (!seznam.length) {
+    showToast('Import umí jen .json soubory (záloha, zpráva nebo balík zpráv).');
+    return;
+  }
+  var polozky = [], chybne = 0, hotovo = 0;
+  seznam.forEach(function (f) {
+    var r = new FileReader();
+    r.onload = function (ev) {
+      try {
+        var d = JSON.parse(ev.target.result);
+        if (jeBalikZprav(d)) (d.zpravy || []).forEach(function (x) {
+          var p = zpravaPolozka(x); if (p) polozky.push(p);
+        });
+        else {
+          var p2 = zpravaPolozka(d);
+          if (p2) polozky.push(p2); else chybne++;
+        }
+      } catch (err) { chybne++; }
+      if (++hotovo === seznam.length) dokonci();
+    };
+    r.onerror = function () { chybne++; if (++hotovo === seznam.length) dokonci(); };
+    r.readAsText(f);
+  });
+  function dokonci() {
+    if (chybne) showToast(chybne + ' ze souborů nešlo přečíst jako zprávu — přeskočeny.');
+    if (polozky.length) zpravyImportDavka(polozky, seznam.length + ' souborů');
+    else alert('Ani jeden z vybraných souborů neobsahuje zprávu.');
+  }
+}
+
 function archivHromadneSmazat() {
   var vyb = archivVybraneZpravy();
   if (!vyb.length) return;
@@ -22482,6 +22672,7 @@ document.addEventListener('click', function(e) {
     case 'archivVyberVse': e.stopPropagation(); archivVyberVse(); break;
     case 'archivZrusitVyber': archivZrusitVyber(); break;
     case 'archivVybratSkryte': archivVybratSkryte(); break;
+    case 'archivExportVybrane': archivExportVybrane(); break;
     case 'archivTiskJedno': archivTiskJedno(); break;
     case 'archivTiskObou': archivTiskObou(); break;
     case 'archivHromadneUzavrit': archivHromadneUzavrit(); break;
