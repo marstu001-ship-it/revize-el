@@ -1078,10 +1078,15 @@ html.dark .txt-btn:hover{background:var(--surface)}
 .plan-toolbar input[type=text],.plan-toolbar select{padding:.45rem .6rem;font-size:.78rem;font-family:var(--sans);
   border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)}
 .plan-scroll{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:6px;background:var(--surface)}
-.plan-hromadne{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .7rem;margin-bottom:.5rem;
+.plan-hromadne,.archiv-hromadne{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .7rem;margin-bottom:.5rem;
   border:1px solid var(--accent2);border-radius:6px;background:rgba(43,87,154,.10);font-family:var(--sans);font-size:.78rem}
-.plan-hromadne .btn{font-size:.7rem;padding:.35rem .6rem}
+.plan-hromadne .btn,.archiv-hromadne .btn{font-size:.7rem;padding:.35rem .6rem}
 .plan-hromadne-skryta{visibility:hidden}
+/* V plánu se lišta jen zprůhlední (tabulka by se jinak posunula a technik
+   by ztratil řádek, na kterém je). Nad archivem stojí sama nad seznamem,
+   tam by prázdné místo jen překáželo — proto `display:none`. */
+.archiv-hromadne-skryta{display:none}
+.archiv-check{width:15px;height:15px;padding:0;margin:0;cursor:pointer;vertical-align:middle}
 .plan-check{width:15px;height:15px;padding:0;margin:0 .4rem 0 0;flex:0 0 15px;vertical-align:middle;cursor:pointer}
 /* Objekt, ke kterému v programu není zpráva — vedený jen v plánu.
    Pořadí a váha selektorů: řádek → stav termínu → najetí myší → výběr.
@@ -1177,7 +1182,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.82<span class="ver-date"> · 2026-09-21</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.83<span class="ver-date"> · 2026-09-22</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1266,6 +1271,16 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <option value="neuvedeno">— Neuvedeno —</option>
       </select>
       <button id="archiv-clear" data-action="archivClearFilters" style="padding:.4rem .7rem;border:1px solid var(--border);border-radius:2px;background:#fff;font-size:.78rem;cursor:pointer;color:var(--muted)">Vymazat filtry</button>
+    </div>
+    <div class="archiv-hromadne archiv-hromadne-skryta" id="archiv-hromadne">
+      <strong id="archiv-vybrano-pocet">0 zpráv</strong>
+      <span style="color:var(--muted);font-size:.72rem">označeno</span>
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost" data-action="archivTiskJedno" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" title="Každá strana na vlastní list">🖨️ Tisk jednostranně</button>
+      <button class="btn btn-ghost" data-action="archivTiskObou" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" title="Každá zpráva začíná na novém listu — u lichého počtu stran se doplní prázdná zadní strana">🖨️ Tisk oboustranně</button>
+      <button class="btn btn-ghost" data-action="archivHromadneUzavrit" style="background:#fff;color:#2e7d32;border:1px solid #2e7d32">✓ Dokončit</button>
+      <button class="btn btn-ghost" data-action="archivHromadneSmazat" style="background:#fff;color:var(--accent);border:1px solid var(--accent)">🗑 Smazat</button>
+      <button class="btn btn-ghost" data-action="archivZrusitVyber" style="background:var(--bg);color:var(--text);border:1px solid var(--border)">✕ Zrušit výběr</button>
     </div>
     <div id="archiv-recents"></div>
     <div id="archiv-container"><div class="archiv-empty">Zatím žádné zprávy. Vytvořte novou výše. 👆</div></div>
@@ -3374,6 +3389,19 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     </div>
   </div>
   <div class="pdf-pages" id="spotrebice-pdf-pages"></div>
+</div>
+
+<!-- HROMADNÝ TISK VÍC ZPRÁV NAJEDNOU (v9.83) -->
+<div class="screen" id="screen-hromadny-pdf">
+  <div class="pdf-toolbar">
+    <div class="pdf-toolbar-title">🖨️ Hromadný tisk — <span id="hromadny-pdf-info"></span></div>
+    <div class="pdf-actions">
+      <button class="pbtn" data-action="hromadnyNahledZpet" style="background:#555;border-color:#555">← Zpět</button>
+      <button class="pbtn" data-action="hromadnyNahledTisk" style="background:#b5291c;border-color:#b5291c" title="Tiskne přímo ve vyšší kvalitě, nic se do počítače neukládá">🖨️ Tisk přímo</button>
+      <button class="pbtn" data-action="hromadnyNahledUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
+    </div>
+  </div>
+  <div class="pdf-pages" id="hromadny-pdf-pages"></div>
 </div>
 
 <div class="screen" id="screen-teren-pdf">
@@ -13081,6 +13109,15 @@ function generujPDF() {
     // AŽ NAKONEC — přečíslování mění text v hlavičce i „Počet listů",
     // takže výška titulky je známá teprve teď.
     titulkaVejit(pages.querySelector('.a4-titulni'));
+
+    // Stánkování běží až v `requestAnimationFrame`, takže kdo potřebuje
+    // HOTOVÉ stránky (hromadný tisk), musí počkat právě sem. Jednorázové
+    // ohlášení je lepší než hádat časovačem, za jak dlouho to doběhne.
+    if (typeof window.__pdfHotovoCb === 'function') {
+      var cb = window.__pdfHotovoCb;
+      window.__pdfHotovoCb = null;
+      cb();
+    }
   });
 }
 
@@ -14866,6 +14903,11 @@ function autoSave() {
 }
 
 function saveToArchiv() {
+  // **Při hromadném tisku se do archivu NESMÍ sáhnout.** Ten si postupně
+  // načítá jednu zprávu za druhou do formuláře, a protože `generujPDF()`
+  // i `spotrebiceNahled()` na konci ukládají, přepsal by se každé vytištěné
+  // zprávě čas uložení — a archiv by se kvůli pouhému tisku přeskládal.
+  if (window.__hromadnyTisk) return true;
   var D = getData();
   if (!D.ev_cislo && !D.misto) return false; // prázdný formulář neukládej
   // Identita zprávy = interní uid (ne ev. číslo!). Přečíslování zprávy
@@ -18376,7 +18418,12 @@ function renderArchiv() {
   var limit = window.__archivLimit || 25;
   var zbyva = Math.max(0, filtered.length - limit);
   var zobrazene = filtered.slice(0, limit);
-  var html = '<table class="archiv-table"><thead><tr><th>#</th><th>Typ</th><th>Ev. číslo</th><th>Místo</th><th>Datum</th><th>Stav</th><th></th></tr></thead><tbody>';
+  // Pořadí na obrazovce drží hromadný výběr se Shiftem i pořadí tisku.
+  __archivPoradi = [];
+  var html = '<table class="archiv-table"><thead><tr>' +
+    '<th style="width:22px"><input type="checkbox" class="archiv-check" data-action="archivVyberVse"' +
+    (archivVsechnyVybrane(zobrazene) ? ' checked' : '') + ' title="Ozna\u010dit / odzna\u010dit v\u0161echny zobrazen\u00e9"></th>' +
+    '<th>#</th><th>Typ</th><th>Ev. číslo</th><th>Místo</th><th>Datum</th><th>Stav</th><th></th></tr></thead><tbody>';
   var chainOpen = window.__archivChainOpen || {};
   zobrazene.forEach(function(it) {
     var z = it.z, i = it.i;
@@ -18389,11 +18436,18 @@ function renderArchiv() {
     var chainLen = 0, cu = z.predchudce_uid, guard = 0;
     while (cu && uidMap[cu] && guard++ < 50) { chainLen++; cu = uidMap[cu].z.predchudce_uid; }
     var rozbaleno = !!(z.uid && chainOpen[z.uid]);
+    var klic = archivKlic(z, i);
+    __archivPoradi.push(klic);
     html += '<tr' + rowCls + ' style="cursor:' + (hasData ? 'pointer' : 'default') + '"' + (hasData ? ' data-action="otevritZpravu" data-idx="' + i + '"' : '') + '>';
+    html += '<td style="text-align:center"><input type="checkbox" class="archiv-check" data-action="archivPrepnoutVyber" data-klic="' + esc(klic) + '"' +
+      (__archivVybrane[klic] ? ' checked' : '') + ' title="Ozna\u010dit zpr\u00e1vu (se Shiftem cel\u00fd \u00fasek)"></td>';
     html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
     html += '<td><span class="' + typInfo(z.typ).badge + '">' + typInfo(z.typ).label + '</span></td>';
-    html += '<td style="font-family:monospace;font-size:.8rem">' + (z.ev_cislo || '—') + '</td>';
-    html += '<td style="font-size:.85rem">' + archivMistoBunka(z, false) +
+    html += '<td data-archiv-ev="1" style="font-family:monospace;font-size:.8rem">' + (z.ev_cislo || '—') + '</td>';
+    // `data-archiv-misto` je záchytný bod pro testy: adresovat buňku pořadím
+    // (`children[3]`) se rozbije, jakmile v tabulce přibude sloupec — což se
+    // právě stalo se zaškrtávátky (v9.83).
+    html += '<td data-archiv-misto="1" style="font-size:.85rem">' + archivMistoBunka(z, false) +
       (!q && chainLen ? ' <button data-action="toggleArchivChain" data-uid="' + z.uid + '" title="Starší revize tohoto objektu — klepnutím rozbalíte/sbalíte" style="background:#fff;border:1px solid var(--accent2);color:var(--accent2);font-family:var(--mono);font-size:.72rem;font-weight:600;padding:.22rem .6rem;border-radius:3px;cursor:pointer;margin-left:.4rem;white-space:nowrap">' + (rozbaleno ? '▼' : '►') + ' ' + chainLen + ' starší</button>' : '') +
       '</td>';
     html += '<td style="font-family:monospace;font-size:.78rem;color:#6e6a60">' + fmtDate(z.datum) + (z.timestamp ? '<br><span style="font-size:.68rem;color:#aaa">' + (function(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }(z.timestamp)) + '</span>' : '') + '</td>';
@@ -18433,10 +18487,13 @@ function renderArchiv() {
       while (cu2 && uidMap[cu2] && guard2++ < 50) {
         var nit = uidMap[cu2], nz = nit.z, ni = nit.i;
         html += '<tr class="row-nested"' + (nz.data ? ' data-action="otevritZpravu" data-idx="' + ni + '" style="cursor:pointer"' : '') + '>';
+        // Starší revize v řetězu se hromadně nevybírají — jen prázdná buňka,
+        // aby sloupce seděly s hlavními řádky.
+        html += '<td></td>';
         html += '<td style="text-align:right;color:#b5af9f">↳</td>';
         html += '<td><span class="' + typInfo(nz.typ).badge + '">' + typInfo(nz.typ).label + '</span></td>';
-        html += '<td style="font-family:monospace;font-size:.78rem">' + (nz.ev_cislo || '—') + '</td>';
-        html += '<td style="font-size:.8rem;color:#6e6a60">' + archivMistoBunka(nz, true) + '</td>';
+        html += '<td data-archiv-ev="1" style="font-family:monospace;font-size:.78rem">' + (nz.ev_cislo || '—') + '</td>';
+        html += '<td data-archiv-misto="1" style="font-size:.8rem;color:#6e6a60">' + archivMistoBunka(nz, true) + '</td>';
         html += '<td style="font-family:monospace;font-size:.75rem;color:#6e6a60">' + fmtDate(nz.datum) + '</td>';
         html += '<td>' + (nz.vysledek === 'schopno' ? '✅' : (nz.vysledek === 'neschopno' ? '❌' : '—')) + '</td>';
         html += '<td style="white-space:nowrap;text-align:right">' +
@@ -18455,6 +18512,7 @@ function renderArchiv() {
       '</div>';
   }
   c.innerHTML = html;
+  archivListaVyberu();
 }
 
 // Zjistí, zda zprávě letos končí (nebo už skončila) platnost dle
@@ -18805,6 +18863,324 @@ function navazatZpravu(i) {
 // holé „Smazat zprávu?", u kterého člověk nevěděl kterou) a po smazání
 // zůstává 8 vteřin nabídka ZPĚT — u vydané revizní zprávy je omyl drahý
 // a tlačítko ✕ sedí v seznamu hned vedle řádku, na který se kliká.
+// ══ HROMADNÉ OPERACE V ARCHIVU (v9.83) ══════════════════════════════
+// Přání uživatele 2026-09-22: „v seznamu by bylo dobré mít zaškrtávací
+// políčko a po zaškrtnutí více zpráv by byla nahoře možnost na výběr →
+// jednostranný/oboustranný tisk… potom hromadné uzavření vybraných zpráv
+// nebo vymazání s možností vzít smazané zprávy zpět."
+var __archivVybrane = {};
+var __archivPoradi = [];        // pořadí řádků na obrazovce (Shift + tisk)
+var __archivPosledniVyber = null;
+
+// Výběr se drží PŘES `uid`, ne přes index — ten se mazáním posouvá.
+// Starší záznamy uid nemají, proto náhradní klíč podle pořadí; data se
+// kvůli výběru nepřepisují (uid dostanou až při otevření zprávy).
+function archivKlic(z, i) { return (z && z.uid) ? z.uid : ('#' + i); }
+
+function archivVybraneKlice() {
+  return Object.keys(__archivVybrane).filter(function (k) { return __archivVybrane[k]; });
+}
+
+function archivPodleKlice(klic) {
+  var out = null;
+  archiv.forEach(function (z, i) {
+    if (!out && archivKlic(z, i) === klic) out = { z: z, i: i };
+  });
+  return out;
+}
+
+// Vybrané zprávy V POŘADÍ, v jakém jsou na obrazovce — tisk má jít shora
+// dolů, jak to technik vidí. Co je vybrané, ale filtr to zrovna nezobrazuje,
+// se přidá za ně (výběr se filtrem neruší).
+function archivVybraneZpravy() {
+  var vyb = {}, hotovo = {}, out = [];
+  archivVybraneKlice().forEach(function (k) { vyb[k] = true; });
+  __archivPoradi.forEach(function (k) {
+    if (!vyb[k] || hotovo[k]) return;
+    var t = archivPodleKlice(k);
+    if (t) { hotovo[k] = true; out.push(t); }
+  });
+  archivVybraneKlice().forEach(function (k) {
+    if (hotovo[k]) return;
+    var t = archivPodleKlice(k);
+    if (t) { hotovo[k] = true; out.push(t); }
+  });
+  return out;
+}
+
+function archivVsechnyVybrane(zobrazene) {
+  if (!zobrazene || !zobrazene.length) return false;
+  return zobrazene.every(function (it) { return __archivVybrane[archivKlic(it.z, it.i)]; });
+}
+
+function archivPrepnoutVyber(el, e) {
+  var klic = el.getAttribute('data-klic');
+  var zapnout = el.checked;
+  // Shift + klepnutí označí celý úsek od minule vybraného řádku
+  if (e && e.shiftKey && __archivPosledniVyber && __archivPosledniVyber !== klic) {
+    var od = __archivPoradi.indexOf(__archivPosledniVyber);
+    var kam = __archivPoradi.indexOf(klic);
+    if (od >= 0 && kam >= 0) {
+      var a = Math.min(od, kam), b = Math.max(od, kam);
+      for (var i = a; i <= b; i++) __archivVybrane[__archivPoradi[i]] = zapnout;
+    }
+  } else {
+    __archivVybrane[klic] = zapnout;
+  }
+  __archivPosledniVyber = klic;
+  renderArchiv();
+}
+
+// Zaškrtávátko v hlavičce označí/odznačí VŠECHNY PRÁVĚ ZOBRAZENÉ řádky,
+// ne celý archiv — v něm můžou být stovky zpráv, které technik nevidí.
+function archivVyberVse() {
+  var zapnout = !archivVsechnyVybrane(__archivPoradi.map(function (k) {
+    var t = archivPodleKlice(k);
+    return t ? { z: t.z, i: t.i } : { z: null, i: -1 };
+  }));
+  __archivPoradi.forEach(function (k) { __archivVybrane[k] = zapnout; });
+  renderArchiv();
+}
+
+function archivZrusitVyber() {
+  __archivVybrane = {};
+  __archivPosledniVyber = null;
+  renderArchiv();
+}
+
+function pocetZpravSklon(n) {
+  return n + (n === 1 ? ' zpráva' : (n < 5 ? ' zprávy' : ' zpráv'));
+}
+
+function archivListaVyberu() {
+  var lista = document.getElementById('archiv-hromadne');
+  if (!lista) return;
+  var n = archivVybraneKlice().length;
+  lista.classList.toggle('archiv-hromadne-skryta', !n);
+  var pocet = document.getElementById('archiv-vybrano-pocet');
+  if (pocet) pocet.textContent = pocetZpravSklon(n);
+}
+
+// ── Hromadný tisk ───────────────────────────────────────────────────
+var __hromadnyZpet = 'home';
+var __hromadnyPopis = '';
+
+function archivTiskJedno() { archivHromadnyTisk(false); }
+function archivTiskObou() { archivHromadnyTisk(true); }
+
+function archivHromadnyTisk(oboustranne) {
+  var vyb = archivVybraneZpravy().filter(function (t) { return t.z && t.z.data; });
+  if (!vyb.length) {
+    showToast('Vyberte nejdřív zprávy — u zpráv bez uložených dat tisk nejde.');
+    return;
+  }
+  // Tisk si postupně načítá zprávy DO FORMULÁŘE, takže rozpracovaná práce
+  // musí projít dialogem Zůstat / Zahodit / Uložit jako všude jinde.
+  attemptLeaveForm(function () { archivHromadnyBeh(vyb, oboustranne); });
+}
+
+function hromadnyProgress(done, total, popis) {
+  pdfProgressShow(total, true);
+  var t = document.getElementById('pdf-progress-text');
+  var b = document.getElementById('pdf-progress-bar');
+  if (t) t.textContent = 'Připravuji zprávu ' + Math.min(done + 1, total) + ' z ' + total +
+    (popis ? ' — ' + popis : '') + '…';
+  if (b) b.style.width = Math.round(done / total * 100) + '%';
+}
+
+// Vykreslí JEDNU načtenou zprávu a vrátí její hotové stránky. Elektro, LPS
+// a stroje jdou přes `generujPDF()`, které stránkuje až v rAF — proto se
+// čeká na `__pdfHotovoCb`. Spotřebiče mají vlastní renderer.
+function hromadnyVykreslit(D, cb) {
+  var dokonceno = false;
+  var dokonci = function (sel) {
+    if (dokonceno) return;
+    dokonceno = true;
+    cb(Array.prototype.slice.call(document.querySelectorAll(sel)));
+  };
+  if (D.typ === 'spotrebice') {
+    spotrebiceNahled();
+    setTimeout(function () { dokonci('#spotrebice-pdf-pages .a4'); }, 60);
+    return;
+  }
+  // Pojistka: kdyby stránkování spadlo, dávka nesmí zůstat viset navždy.
+  var poj = setTimeout(function () { dokonci('#pdf-pages .a4'); }, 15000);
+  window.__pdfHotovoCb = function () {
+    clearTimeout(poj);
+    dokonci('#pdf-pages .a4');
+  };
+  generujPDF();
+}
+
+function archivHromadnyBeh(vyb, oboustranne) {
+  var box = document.getElementById('hromadny-pdf-pages');
+  if (!box) return;
+  box.innerHTML = '';
+  var akt = document.querySelector('.screen.active');
+  __hromadnyZpet = akt ? akt.id.replace(/^screen-/, '') : 'home';
+  if (__hromadnyZpet === 'hromadny-pdf') __hromadnyZpet = 'home';
+  window.__hromadnyTisk = true;     // saveToArchiv se po dobu dávky nesmí spustit
+  var prazdnych = 0, stranCelkem = 0, i = 0;
+  hromadnyProgress(0, vyb.length, vyb[0] && vyb[0].z.ev_cislo);
+
+  function dalsi() {
+    if (i >= vyb.length) { hotovo(); return; }
+    var z = vyb[i].z;
+    hromadnyProgress(i, vyb.length, z.ev_cislo || '');
+    try {
+      nacistData(JSON.parse(JSON.stringify(z.data)));
+    } catch (e) {
+      console.error(e); i++; setTimeout(dalsi, 0); return;
+    }
+    setTimeout(function () {
+      hromadnyVykreslit(z.data, function (strany) {
+        strany.forEach(function (str) { box.appendChild(str.cloneNode(true)); });
+        stranCelkem += strany.length;
+        // **Oboustranně: každá zpráva musí začít na NOVÉM LISTU.** U lichého
+        // počtu stran se proto doplní prázdná zadní strana — jinak by na
+        // jednom papíře skončil konec jedné zprávy a začátek druhé.
+        if (oboustranne && strany.length % 2 === 1) {
+          var posl = strany[strany.length - 1];
+          var prazdna = document.createElement('div');
+          prazdna.className = 'a4' + (posl && posl.classList.contains('a4-landscape') ? ' a4-landscape' : '');
+          prazdna.setAttribute('data-prazdna', '1');
+          prazdna.innerHTML = '<div style="margin:auto;text-align:center;color:#999;font-size:8pt">' +
+            '(záměrně prázdná strana)</div>';
+          box.appendChild(prazdna);
+          prazdnych++;
+        }
+        i++;
+        setTimeout(dalsi, 0);
+      });
+    }, 80);
+  }
+
+  function hotovo() {
+    window.__hromadnyTisk = false;
+    pdfProgressHide();
+    __hromadnyPopis = pocetZpravSklon(vyb.length) + ' · ' +
+      (oboustranne ? 'oboustranně' : 'jednostranně') + ' · ' + (stranCelkem + prazdnych) + ' stran' +
+      (prazdnych ? ' (z toho ' + prazdnych + ' prázdných)' : '');
+    var info = document.getElementById('hromadny-pdf-info');
+    if (info) info.textContent = __hromadnyPopis;
+    showScreen('hromadny-pdf');
+    window.scrollTo(0, 0);
+  }
+
+  setTimeout(dalsi, 0);
+}
+
+function hromadnyStranky() {
+  return Array.prototype.slice.call(document.querySelectorAll('#hromadny-pdf-pages .a4'));
+}
+
+function hromadnyNazevSouboru() {
+  return 'Revizni_zpravy_' + new Date().toISOString().slice(0, 10);
+}
+
+function hromadnyNahledZpet() { showScreen(__hromadnyZpet || 'home'); }
+
+function hromadnyNahledUlozit() {
+  var els = hromadnyStranky();
+  if (!els.length) { alert('Není co uložit.'); return; }
+  renderPagesToPDF(els, hromadnyNazevSouboru());
+}
+
+function hromadnyNahledTisk() {
+  var els = hromadnyStranky();
+  if (!els.length) { alert('Není co tisknout.'); return; }
+  var w = window.open('', '_blank');
+  if (!w) { alert('Prosím povolte vyskakovací okna — bez nich se tiskové okno neotevře.'); return; }
+  w.document.write('<!doctype html><meta charset="utf-8"><title>Revizní zprávy</title>' +
+    '<body style="font-family:sans-serif;padding:2rem;color:#555">⏳ Připravuji zprávy k tisku…</body>');
+  w.document.close();
+  Promise.resolve(renderPagesToPDF(els, hromadnyNazevSouboru(), { vratitBlob: true, kvalita: 'tisk' }))
+    .then(function (blob) {
+      if (!blob) { try { w.close(); } catch (e) {} return; }
+      var url = URL.createObjectURL(blob);
+      w.location.href = url;
+      setTimeout(function () {
+        try { w.print(); } catch (e) {}
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      }, 2500);
+    }).catch(function (err) {
+      try { w.close(); } catch (e) {}
+      alert('Chyba při přípravě tisku: ' + ((err && err.message) || err));
+    });
+}
+
+// ── Hromadné dokončení ──────────────────────────────────────────────
+function archivHromadneUzavrit() {
+  var vyb = archivVybraneZpravy();
+  if (!vyb.length) return;
+  var ke = vyb.filter(function (t) { return t.z.stav === 'aktivni'; });
+  if (!ke.length) { showToast('Vybrané zprávy už jsou dokončené.'); return; }
+  if (!confirm('Označit ' + pocetZpravSklon(ke.length) + ' jako dokončené?\n\n' +
+      'Dokončená zpráva se v archivu přestane zvýrazňovat jako rozpracovaná ' +
+      'a ve formuláři se zamkne proti úpravám. Vzít zpět to půjde hned po akci ' +
+      'i kdykoli později tlačítkem 🔨 u zprávy.')) return;
+  ke.forEach(function (t) { t.z.stav = 'ukoncena'; });
+  STORE.archiv = archiv;
+  saveStore();
+  // Je-li mezi nimi právě otevřená zpráva, musí se zamknout i formulář —
+  // jinak by archiv tvrdil „dokončená" a technik do ní dál psal.
+  if (window.__openZpravaUid && ke.some(function (t) { return t.z.uid === window.__openZpravaUid; })) {
+    setFormReadOnly(true);
+  }
+  archivZrusitVyber();
+  showToast(pocetZpravSklon(ke.length) + ' označeno jako dokončené ✓', {
+    actionLabel: 'ZPĚT', timeout: 8000,
+    action: function () {
+      ke.forEach(function (t) { t.z.stav = 'aktivni'; });
+      STORE.archiv = archiv;
+      saveStore();
+      if (window.__openZpravaUid && ke.some(function (t) { return t.z.uid === window.__openZpravaUid; })) {
+        setFormReadOnly(false);
+      }
+      renderArchiv();
+      showToast('Zprávy vráceny mezi rozpracované');
+    }
+  });
+}
+
+// ── Hromadné smazání s vzetím zpět ──────────────────────────────────
+function archivHromadneSmazat() {
+  var vyb = archivVybraneZpravy();
+  if (!vyb.length) return;
+  // **Otevřenou zprávu smazat nejde** — formulář ji dál drží v paměti
+  // a první další uložení by ji do archivu vrátilo (stejné pravidlo jako
+  // u ✕ v postranním archivu, v9.66).
+  var otevrena = vyb.filter(function (t) { return t.z.uid && t.z.uid === window.__openZpravaUid; });
+  var ke = vyb.filter(function (t) { return !(t.z.uid && t.z.uid === window.__openZpravaUid); });
+  if (!ke.length) {
+    showToast('Tuhle zprávu máte otevřenou — přepněte se nejdřív na jinou.');
+    return;
+  }
+  if (!confirm('Smazat ' + pocetZpravSklon(ke.length) + ' z archivu?' +
+      (otevrena.length ? '\n\nPrávě otevřená zpráva se vynechá — tu smazat nejde.' : '') +
+      '\n\nHned po smazání se objeví tlačítko ZPĚT, kterým je vrátíte.')) return;
+  // Mazat se musí OD NEJVYŠŠÍHO INDEXU — jinak by se po prvním smazání
+  // všechny další indexy posunuly a zmizelo by něco jiného.
+  var zalohy = ke.map(function (t) { return { z: t.z, i: t.i }; })
+                 .sort(function (a, b) { return b.i - a.i; });
+  zalohy.forEach(function (x) { archiv.splice(x.i, 1); });
+  STORE.archiv = archiv;
+  saveStore();
+  archivZrusitVyber();
+  showToast(pocetZpravSklon(zalohy.length) + ' smazáno', {
+    actionLabel: 'ZPĚT', timeout: 10000,
+    action: function () {
+      // vracet naopak — od nejnižšího indexu, ať každá sedne na své místo
+      zalohy.slice().sort(function (a, b) { return a.i - b.i; })
+        .forEach(function (x) { archiv.splice(Math.min(x.i, archiv.length), 0, x.z); });
+      STORE.archiv = archiv;
+      saveStore();
+      renderArchiv();
+      showToast(pocetZpravSklon(zalohy.length) + ' vráceno do archivu');
+    }
+  });
+}
+
 function smazatZpravu(i) {
   var z = archiv[i];
   if (!z) return;
@@ -22008,6 +22384,16 @@ document.addEventListener('click', function(e) {
     case 'copyRcdGroup': copyRcdGroup(el); break;
     case 'delRcdGroup': delRcdGroup(el); break;
     case 'delPreset': delPreset(parseInt(el.getAttribute('data-idx'))); break;
+    case 'archivPrepnoutVyber': e.stopPropagation(); archivPrepnoutVyber(el, e); break;
+    case 'archivVyberVse': e.stopPropagation(); archivVyberVse(); break;
+    case 'archivZrusitVyber': archivZrusitVyber(); break;
+    case 'archivTiskJedno': archivTiskJedno(); break;
+    case 'archivTiskObou': archivTiskObou(); break;
+    case 'archivHromadneUzavrit': archivHromadneUzavrit(); break;
+    case 'archivHromadneSmazat': archivHromadneSmazat(); break;
+    case 'hromadnyNahledZpet': hromadnyNahledZpet(); break;
+    case 'hromadnyNahledTisk': hromadnyNahledTisk(); break;
+    case 'hromadnyNahledUlozit': hromadnyNahledUlozit(); break;
     case 'smazatZpravu': e.stopPropagation(); smazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'navazatZpravu': e.stopPropagation(); navazatZpravu(parseInt(el.getAttribute('data-idx'))); break;
     case 'togglePinZpravu': e.stopPropagation(); togglePinZpravu(parseInt(el.getAttribute('data-idx'))); break;

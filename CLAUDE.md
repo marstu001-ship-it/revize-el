@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.82 · 2026-09-21**
+**Aktuální verze: v9.83 · 2026-09-22**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,98 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Hromadné operace v archivu — tisk, dokončení, smazání (v9.83)
+
+Přání uživatele 2026-09-22: „v seznamu by bylo dobré mít zaškrtávací políčko
+a po zaškrtnutí více zpráv by byla nahoře možnost na výběr → jednostranný /
+oboustranný tisk (při oboustranném se musí předlohy připravit tak, aby nebyly
+dvě různé zprávy na jednom listu). Potom hromadné uzavření vybraných zpráv
+nebo vymazání s možností vzít smazané zpět."
+
+Vzor je **výběr v Plánu revizí** (`__planVybrane`) — stejná mechanika i stejná
+lišta (`.plan-hromadne` a `.archiv-hromadne` sdílejí jedno CSS pravidlo), aby
+se technik neučil dvoje ovládání.
+
+### Oboustranně = každá zpráva začíná na NOVÉM LISTU
+
+To je jádro celé věci. Má-li zpráva **lichý počet stran**, doplní se za ni
+**prázdná zadní strana** — jinak by na jednom papíře skončil konec jedné
+zprávy a začátek druhé, což u revizních zpráv nejde (každá se předává
+a podepisuje zvlášť).
+
+- Prázdná strana **přebírá orientaci** poslední strany zprávy (`a4-landscape`
+  u seznamu spotřebičů), jinak by se list nespároval.
+- **Je na ní napsané „(záměrně prázdná strana)"** — čistě prázdný list vypadá
+  jako chyba tisku. Test to hlídá.
+- Test nekontroluje počty od oka: rozdělí náhled podle titulních stran
+  a ověří, že **každý blok má sudý počet stran**.
+
+### Tisk si zprávy půjčuje DO FORMULÁŘE
+
+Jiná cesta není: `generujPDF()` skládá stránky z `getData()`, tedy z toho, co
+je právě ve formuláři. Dávka proto pro každou vybranou zprávu zavolá
+`nacistData()`, vykreslí ji a **naklonuje hotové stránky** do vlastní obrazovky
+`#screen-hromadny-pdf`. Z toho plynou tři věci:
+
+1. **`saveToArchiv()` se po dobu dávky NESMÍ spustit.** `generujPDF()`
+   i `spotrebiceNahled()` na konci ukládají — archiv by se kvůli pouhému tisku
+   přeskládal a každá zpráva by dostala nový čas uložení. Řeší to jediný řádek
+   **přímo v `saveToArchiv()`** (`if (window.__hromadnyTisk) return true;`), ne
+   hlídání na pěti místech. Test to ověřuje počtem i čísly zpráv v archivu.
+2. **Stránkování běží až v `requestAnimationFrame`**, takže se na ně musí
+   počkat — na konci toho bloku je jednorázové ohlášení `__pdfHotovoCb`. Hádat
+   časovačem, za jak dlouho to doběhne, by u dlouhé zprávy selhalo; pojistka
+   15 s je jen proti zaseknutí, ne čekání nadarmo.
+3. **Jde to přes `attemptLeaveForm()`** — rozpracovaná zpráva musí projít
+   dialogem Zůstat / Zahodit / Uložit, protože ji tisk ve formuláři přepíše.
+
+Spotřebiče mají vlastní renderer (`spotrebiceNahled`), takže se v dávce větví
+podle `D.typ` — jinak by se nevykreslily vůbec.
+
+### Výběr se drží přes `uid`, ne přes index
+
+Index se mazáním posouvá. Starší záznamy uid nemají, ty mají náhradní klíč
+`#pořadí` — **data se kvůli výběru nepřepisují** (uid dostanou až při otevření
+zprávy; zápis do archivu za zády uživatele je past z v9.39). Klíč se na záznam
+přeloží **až při akci**, ne při zaškrtnutí.
+
+- **Mazání jde OD NEJVYŠŠÍHO INDEXU** — jinak by se po prvním smazání ostatní
+  indexy posunuly a zmizelo by něco jiného. Vracení ZPĚT naopak od nejnižšího,
+  ať každá sedne na své místo (test porovnává celé pořadí).
+- **Otevřenou zprávu hromadné mazání vynechá** a řekne to — formulář ji drží
+  v paměti a první další uložení by ji vrátilo (totéž pravidlo jako ✕
+  v postranním archivu, v9.66).
+- **Zaškrtávátko v hlavičce označí jen PRÁVĚ ZOBRAZENÉ řádky**, ne celý archiv
+  — v něm může být stovka zpráv, které technik nevidí.
+- Starší revize v rozbaleném řetězu zaškrtávátko nemají (jen prázdná buňka, ať
+  sedí sloupce) — vybírá se z hlavního seznamu.
+- Výběr **přežije překreslení archivu** (filtr, uložení jiné zprávy) a ruší se
+  až po provedené akci.
+
+### Vzít zpět jde i u dokončení
+
+Uživatel chtěl ZPĚT u mazání; dostalo ho **i hromadné dokončení**, protože
+vracet dvacet zpráv ručně tlačítkem 🔨 je stejná otrava jako je mazat. Je-li
+mezi dokončenými **právě otevřená zpráva**, zamkne se i formulář
+(`setFormReadOnly`) — jinak by archiv tvrdil „dokončená" a technik do ní dál psal.
+
+### Sloupec navíc rozbil test, který si buňky počítal
+
+`test-archiv-stroj.js` sahal na `tr.children[2]` a `children[3]` (ev. číslo
+a místo). Zaškrtávátko je posunulo o jedna a spadlo 11 kontrol — **nebyla to
+chyba programu**, je to táž past jako s kartami v Novinkách hledanými podle
+indexu (v9.58). Buňky proto dostaly **`data-archiv-ev` a `data-archiv-misto`**
+a test je hledá podle nich. Příští sloupec už nic nerozbije.
+
+Test: `test-hromadne.js` (25 kontrol — zaškrtávátka, lišta, označit vše,
+přežití překreslení, obojí tisk včetně sudých bloků a popisu prázdné strany,
+že tisk nepřepíše archiv, dokončení i mazání včetně ZPĚT a vynechané otevřené
+zprávy).
+
+**Známý nedodělek:** filtr typu nad archivem nemá volbu **Spotřebiče**
+(zůstalo z v9.67). Hromadného tisku se to netýká — spotřebiče se tisknou
+správně — ale vyfiltrovat si je nejde. Nahlášeno uživateli.
 
 ## Titulní strana přetékala přes patičku a uřízla PODPISY (v9.82)
 
