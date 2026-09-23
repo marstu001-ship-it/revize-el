@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.91 · 2026-09-23**
+**Aktuální verze: v9.92 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -225,6 +225,73 @@ formulář, stavový řádek včetně viditelnosti, počtů a času uložení, v
 čtyři zkratky, hledání s rozlišováním velikosti, nahrazení s neporušenými
 značkami, escapování, ZPĚT a zamčená zpráva).
 
+## Vložení bloku buněk z Excelu do tabulky měření (v9.92)
+
+Pokyn uživatele 2026-09-23 k bodu 1 seznamu z oddílu „🧭 PRAVIDLO": **„jo to
+uděláme"**. Technik, který má rozpis obvodů v Excelu (nebo ho dostal od
+elektrikáře), ho musel přepisovat po buňkách.
+
+**Rozbor je týž nápad jako `planRozborVlozeni`** (Plán revizí) — schránka nese
+tabulku jako text oddělený tabulátory. Nic se nevymýšlelo znovu, jen se z toho
+místo objektů plánu staví řádky měření.
+
+### Dvě pravidla, která to drží bezpečné
+
+1. **Jedna buňka se vkládá postaru.** Naše cesta se zapíná, teprve když má
+   schránka tabulátor nebo víc neprázdných řádků — jinak by dialog vyskakoval
+   i při obyčejném vložení slova do buňky. Hlídá to test.
+2. **Napřed se ukáže, co kam padne.** Cizí sešit má sloupce v jiném pořadí
+   a tiché vložení do špatného sloupce je chyba, která se najde až na
+   vytištěné zprávě.
+
+### Mapování sloupců
+
+- **Hlavička se pozná sama** (`vlozitPodleHlavicky`) — porovnávají se názvy
+  z `TEREN_KOLONKY` a `VLOZIT_ALIASY` (co bývá v cizích sešitech: „Obvod",
+  „Jištění", „Průřez"…). Stačí **dvě trefy**; u jediného sloupce stačí jedna,
+  jinak by zkopírovaný sloupec i s nadpisem dostal nadpis jako první řádek.
+- **Bez hlavičky se mapuje podle POŘADÍ od buňky, do které se vkládalo** —
+  jako v Excelu.
+- **Seznam sloupců je `TEREN_KOLONKY`**, tentýž, ze kterého se skládá měřicí
+  list i export `.xlsx`. Přidaný sloupec se tedy objeví i tady.
+- Mapování jde přenastavit rukou. **Přemapování NEPŘEKRESLUJE celý náhled** —
+  nabídka, ze které se vybíralo, by zmizela pod rukou i s fokusem a odrolovaný
+  náhled by skočil nahoru. Přebarví se jen ten jeden sloupec.
+
+**Past, kterou našel až snímek náhledu:** `vlozitKlic()` zahazovala všechno
+mimo `a–z0–9`, takže z **„IΔn" vyšlo „in"** — a to je alias jmenovitého proudu
+**„In"**. Citlivost chrániče se vlévala do sloupce A. **Delta se proto přepisuje
+na „d"** (→ `idn`), ne zahazuje. Test to hlídá zvlášť.
+
+### Co se vloží a co ne
+
+- **Prázdná buňka z Excelu NIC NEPŘEPÍŠE.** Kdo vkládá rozpis obvodů do
+  zprávy, kde už něco naměřil, o naměřené hodnoty nepřijde.
+- **Prázdné řádky na konci tabulky se použijí místo zakládání nových**
+  (`vlozitPrazdnyRadek`) — čerstvá zpráva má dva prázdné obvody a nechat je
+  viset nad vloženým rozpisem by byl nepořádek k ručnímu úklidu. Za prázdný
+  se nepovažuje číslo řádku (plní ho automatické číslování) ani `Riso` = `>20`
+  (předvyplňuje ho program).
+- **Přepisuje se jen do řádků, které představují obvod** (`obvod`,
+  `rcd-header`). Podřádky chrániče mají sloučené buňky a „jiný řádek" je volný
+  text — tam by se rozpis rozsypal nesmyslně.
+- Blok delší než tabulka **dopíše zbývající řádky**.
+- **Vložení jde vzít ZPĚT** — vrátí hodnoty i smaže nově vzniklé řádky.
+- **Sloupec Č. přepíše automatické číslování** a náhled to řekne nahlas;
+  kdo si chce čísla z Excelu udržet, přepne u rozváděče číslování na vlastní.
+- U **dokončené zprávy** se tlačítko schová (`.tab-panel button`) a Ctrl+V se
+  nechytá vůbec.
+
+Vstup je dvojí: **Ctrl+V přímo do buňky** tabulky měření a tlačítko
+**„📋 Vložit z Excelu"** u rozváděče (na dotyku a tam, kde Ctrl+V není po ruce).
+Rozváděč jde v dialogu přepnout.
+
+Test: `test-vlozit-excel.js` (27 kontrol — hlavička i mapování podle pořadí,
+IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „nevkládat",
+prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
+zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
+v uvozovkách).
+
 ## Pravý klik = kontextové menu (v9.91)
 
 Pokyn uživatele 2026-09-23 k bodu 4 seznamu z oddílu „🧭 PRAVIDLO":
@@ -357,9 +424,11 @@ líp než náš program; co se chová jako Office, nemusí se učit.
 
 Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
 
-1. **Vložení bloku buněk z Excelu do tabulky měření.** Dnes to umí jen Plán.
-   Technik, který má rozpis obvodů v Excelu, ho musí přepisovat po buňkách.
-   (Vzor: `planRozborVlozeni` — rozbor TSV ze schránky už je hotový.)
+1. ~~**Vložení bloku buněk z Excelu do tabulky měření.**~~ **HOTOVO ve v9.92**
+   — Ctrl+V do buňky i tlačítko u rozváděče, mapování sloupců s náhledem.
+   **Zbývá druhý směr:** načíst zpátky `.xlsx`, který program sám vygeneroval
+   (nápad uživatele 2026-09-23 — nechat si měřicí list vyplnit OCR/AI mimo
+   program a pak ho nahrát do zprávy).
 2. ~~**Ukotvená hlavička tabulky měření a protokolu spotřebičů.**~~ **HOTOVO ve v9.90** U čtyřiceti
    obvodů se odroluje a technik neví, který sloupec je který. V Plánu
    `position:sticky` na `thead th` funguje, jinde chybí.

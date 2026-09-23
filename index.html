@@ -1214,7 +1214,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.91<span class="ver-date"> · 2026-09-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.92<span class="ver-date"> · 2026-09-23</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2481,6 +2481,40 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-vlozit-mereni">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-title">📋 Vložit obvody z Excelu</div>
+    <div style="font-size:.85rem;line-height:1.6;padding:.2rem 0 .6rem">
+      <ol style="margin:.2rem 0 .4rem 1.3rem;padding:0">
+        <li>V Excelu označte buňky s rozpisem (klidně i s řádkem nadpisů) a dejte <strong>Ctrl+C</strong>.</li>
+        <li>Klepněte do pole níž a dejte <strong>Ctrl+V</strong> — nebo rovnou do buňky tabulky měření.</li>
+        <li>Program ukáže, který sloupec kam padne. Teprve pak se to vloží.</li>
+      </ol>
+      <div style="font-size:.78rem;color:var(--muted)">Prázdná buňka z Excelu nic nepřepíše — co už je v řádku naměřené, zůstane.
+        Vložení jde vzít zpět.</div>
+    </div>
+    <textarea id="vm-text" style="width:100%;min-height:110px;font-family:var(--mono);font-size:.72rem"
+      placeholder="Sem vložte zkopírované buňky (Ctrl+V)…" spellcheck="false"></textarea>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.5rem">
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="vlozitMereniRozebrat">🔍 Zkontrolovat, co se vloží</button>
+      <label class="teren-radek" style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
+        Do rozváděče: <select id="vm-rozvadec" autocomplete="off" style="min-width:170px"></select></label>
+      <label class="teren-radek" style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
+        <input type="checkbox" id="vm-hlavicka" data-action="vlozitMereniHlavicka">první řádek je hlavička</label>
+    </div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-top:.45rem">
+      <label class="teren-radek" style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
+        <input type="radio" name="vm-rezim" id="vm-rezim-nove" checked>přidat jako nové řádky na konec</label>
+      <label class="teren-radek" style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
+        <input type="radio" name="vm-rezim" id="vm-rezim-prepsat">přepsat od řádku, do kterého jsem vkládal</label>
+    </div>
+    <div id="vm-nahled" style="margin-top:.7rem"></div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="vlozitMereniZavrit">← Zrušit</button>
+      <button class="btn btn-gold" id="vm-potvrdit" style="display:none" data-action="vlozitMereniPotvrdit">📥 Vložit do tabulky</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-plan-vlozit">
   <div class="modal" style="max-width:820px">
     <div class="modal-title">📋 Vložit plán z Excelu</div>
@@ -4817,6 +4851,388 @@ function zkratkaPrejmenovat() {
   }
   return false;
 }
+
+// ═══ VLOŽENÍ BLOKU BUNĚK Z EXCELU DO TABULKY MĚŘENÍ (v9.92) ══════════════
+// Technik, který má rozpis obvodů v Excelu (nebo ho dostal od elektrikáře),
+// ho do v9.91 musel přepisovat po buňkách. Schránka nese tabulku jako text
+// oddělený tabulátory, takže stačí rozsekat a rozsypat do buněk — jako když
+// se v Excelu vloží blok.
+//
+// **Rozbor je týž nápad jako `planRozborVlozeni`** (Plán revizí, v9.206),
+// jen se z něj nestaví objekty plánu, ale řádky měření.
+//
+// Dvě pravidla, která drží celou věc bezpečnou:
+// 1. **Jedna buňka se vkládá postaru** — prohlížeč to zvládne sám a vyskakovat
+//    kvůli tomu s dialogem by bylo otravné. Naše cesta se zapíná, až když má
+//    schránka tabulátor nebo víc řádků.
+// 2. **Napřed se ukáže, co kam padne**, a teprve pak se vkládá. Cizí sešit má
+//    sloupce v jiném pořadí a tiché vložení do špatného sloupce je chyba,
+//    která se najde až na vytištěné zprávě.
+var __vlozeni = null;
+
+// Názvy sloupců, po kterých se hlavička pozná. Klíče sedí s TEREN_KOLONKY,
+// takže se seznam sloupců nedrží dvakrát. Aliasy jsou to, co bývá v cizích
+// sešitech; co se netrefí, si technik přemapuje v dialogu.
+var VLOZIT_ALIASY = {
+  c:     ['c', 'cislo', 'poradi', 'poc', 'num', 'nr'],
+  n:     ['nazevobvodu', 'nazev', 'obvod', 'popis', 'oznaceni', 'vyvod'],
+  typ:   ['znacka', 'typ', 'vyrobce', 'znackajistice'],
+  ch:    ['chtyp', 'ch', 'charakteristika', 'char', 'typjistice'],
+  a:     ['a', 'in', 'proud', 'jisteni', 'jmenovityproud', 'ia'],
+  idn:   ['idn', 'ian', 'proudchranice', 'citlivost'],
+  isc:   ['iscka', 'isc', 'ik', 'zkratovyproud'],
+  zsm:   ['zsmmax', 'zsm', 'zs', 'impedance', 'smycka'],
+  riso:  ['riso', 'izolacniodpor', 'izolace'],
+  rpe:   ['rpe', 'odporpe', 'spojitost'],
+  faze:  ['faze', 'polarita', 'f'],
+  vyp:   ['vypma', 'vyp', 'vybavovaciproud', 'ivyp'],
+  cas:   ['casms', 'cas', 'vybavovacicas', 'tvyp'],
+  t5idn: ['5idntvypms', '5idn', 't5idn', 'cas5idn'],
+  ut:    ['utv', 'ut', 'dotykovenapeti'],
+  kabel: ['kabeltypprurez', 'kabel', 'vodic', 'prurez', 'typkabelu']
+};
+
+function vlozitKlic(s) {
+  // **Delta se musí přepsat na „d", ne zahodit.** Jinak z „IΔn" vyjde „in"
+  // a to je alias jmenovitého proudu „In" — citlivost chrániče by se vlila
+  // do sloupce A. (Vylezlo to až na snímku náhledu.)
+  return String(s == null ? '' : s).toLowerCase()
+    .replace(/[Δδ]/g, 'd')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+// Rozseká text ze schránky na mřížku. Excel posílá buňky tabulátorem,
+// řádky koncem řádku; buňka s odřádkováním uvnitř přijde v uvozovkách.
+function vlozitRozbor(text) {
+  var radky = [], bunka = '', radek = [], vUvoz = false;
+  var t = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (var i = 0; i < t.length; i++) {
+    var z = t[i];
+    if (vUvoz) {
+      if (z === '"') {
+        if (t[i + 1] === '"') { bunka += '"'; i++; }
+        else vUvoz = false;
+      } else bunka += z;
+      continue;
+    }
+    if (z === '"' && bunka === '') { vUvoz = true; continue; }
+    if (z === '\t') { radek.push(bunka); bunka = ''; continue; }
+    if (z === '\n') { radek.push(bunka); radky.push(radek); radek = []; bunka = ''; continue; }
+    bunka += z;
+  }
+  radek.push(bunka);
+  radky.push(radek);
+  // Prázdné řádky na konci (Excel je posílá) zahodit.
+  while (radky.length && radky[radky.length - 1].every(function (x) { return !String(x).trim(); })) radky.pop();
+  var sirka = 0;
+  radky.forEach(function (r) { sirka = Math.max(sirka, r.length); });
+  radky.forEach(function (r) { while (r.length < sirka) r.push(''); });
+  return radky;
+}
+
+// Vrátí mapování „zdrojový sloupec → vizuální sloupec tabulky" podle
+// hlavičky, nebo null, když hlavička rozpoznaná není.
+function vlozitPodleHlavicky(radek) {
+  var mapa = [], trefy = 0;
+  radek.forEach(function (bunka) {
+    var k = vlozitKlic(bunka);
+    var nalez = null;
+    if (k) {
+      TEREN_KOLONKY.forEach(function (s) {
+        if (nalez !== null) return;
+        if (vlozitKlic(s.popis) === k || s.klic === k) nalez = s.i;
+        else if ((VLOZIT_ALIASY[s.klic] || []).indexOf(k) >= 0) nalez = s.i;
+      });
+    }
+    if (nalez !== null) trefy++;
+    mapa.push(nalez);
+  });
+  // Dvě trefy stačí na jistotu; u jediného sloupce (zkopírovaný sloupec
+  // i s nadpisem) musí stačit jedna, jinak by nadpis spadl do tabulky.
+  return (trefy >= 2 || (radek.length === 1 && trefy === 1)) ? mapa : null;
+}
+
+// Bez hlavičky se mapuje podle POŘADÍ od buňky, do které se vkládalo —
+// přesně jako v Excelu. Sloučené sloupce se nepřeskakují, mapuje se
+// vizuální index.
+function vlozitPodlePoradi(sirka, od) {
+  var mapa = [];
+  for (var i = 0; i < sirka; i++) {
+    var s = od + i;
+    mapa.push(s < TEREN_KOLONKY.length ? s : null);
+  }
+  return mapa;
+}
+
+function vlozitMereniOtevrit(o) {
+  o = o || {};
+  __vlozeni = { tbody: o.tbody || null, od: o.od || 0, startTr: o.startTr || null };
+  var g = function (x) { return document.getElementById(x); };
+  var sel = g('vm-rozvadec');
+  var karty = Array.prototype.slice.call(document.querySelectorAll('#rozvadece-container [data-rozvadec-id]'));
+  sel.innerHTML = karty.map(function (k, i) {
+    var nazev = (k.querySelector('.rozv-nazev') || {}).value || '';
+    return '<option value="' + esc(k.dataset.rozvadecId) + '">' +
+      esc(nazev || ('Rozváděč ' + (i + 1))) + '</option>';
+  }).join('');
+  if (__vlozeni.tbody) {
+    var karta = __vlozeni.tbody.closest('[data-rozvadec-id]');
+    if (karta) sel.value = karta.dataset.rozvadecId;
+  }
+  sel.parentNode.style.display = karty.length > 1 ? '' : 'none';
+  g('vm-text').value = o.text || '';
+  g('vm-nahled').innerHTML = '';
+  g('vm-potvrdit').style.display = 'none';
+  g('vm-rezim-nove').checked = !o.startTr;
+  g('vm-rezim-prepsat').checked = !!o.startTr;
+  g('vm-rezim-prepsat').parentNode.style.display = o.startTr ? '' : 'none';
+  g('modal-vlozit-mereni').classList.add('open');
+  if (o.text) { vlozitMereniRozebrat(); }
+  else setTimeout(function () { g('vm-text').focus(); }, 80);
+}
+
+function vlozitMereniRozebrat() {
+  var text = document.getElementById('vm-text').value;
+  var nahled = document.getElementById('vm-nahled');
+  var potvrdit = document.getElementById('vm-potvrdit');
+  if (!String(text).trim()) {
+    nahled.innerHTML = '<div class="warn-box">Nejdřív sem vložte zkopírované buňky (Ctrl+V).</div>';
+    potvrdit.style.display = 'none';
+    return;
+  }
+  var radky = vlozitRozbor(text);
+  var mapa = vlozitPodleHlavicky(radky[0] || []);
+  var hlavicka = !!mapa;
+  if (!mapa) mapa = vlozitPodlePoradi((radky[0] || []).length, (__vlozeni && __vlozeni.od) || 1);
+  __vlozeni = __vlozeni || {};
+  __vlozeni.radky = radky;
+  __vlozeni.hlavicka = hlavicka;
+  __vlozeni.mapa = mapa;
+  document.getElementById('vm-hlavicka').checked = hlavicka;
+  vlozitMereniNahled();
+}
+
+// Hlášky nad náhledem — vlastní blok, aby se daly překreslit samy.
+function vlozitMereniHlasky() {
+  var v = __vlozeni;
+  var box = document.getElementById('vm-info');
+  var potvrdit = document.getElementById('vm-potvrdit');
+  if (!box || !v || !v.radky || !v.radky.length) return;
+  var data = v.hlavicka ? v.radky.slice(1) : v.radky;
+  var mapovano = v.mapa.filter(function (x) { return x !== null; }).length;
+  var h = '<div class="info-box" style="margin:.4rem 0"><strong>Rozpoznáno:</strong> ' +
+    vlozitPocetRadku(data.length) + ', ' + v.radky[0].length + ' sloupců' +
+    (v.hlavicka ? ' — první řádek se bere jako <strong>hlavička</strong> a sloupce se podle ní spárovaly samy.'
+                : ' — hlavička nenalezena, sloupce se mapují podle pořadí. Zkontrolujte je.') + '</div>';
+  if (!mapovano) h += '<div class="warn-box">Žádný sloupec není přiřazený — nic by se nevložilo.</div>';
+  // Sloupec Č. přepíše automatické číslování — ať to není překvapení.
+  if (v.mapa.indexOf(0) >= 0 && vlozitCilovyTbody() &&
+      typeof autoCislovaniProTbody === 'function' && autoCislovaniProTbody(vlozitCilovyTbody())) {
+    h += '<div class="warn-box" style="font-size:.75rem">Sloupec <strong>Č.</strong> přepíše automatické číslování ' +
+      '(1, 2, 3…). Chcete-li si čísla z Excelu udržet, přepněte u rozváděče číslování na vlastní.</div>';
+  }
+  box.innerHTML = h;
+  potvrdit.style.display = (data.length && mapovano) ? '' : 'none';
+}
+
+// Překreslí náhled i nabídky mapování. Nabídka sloupců se skládá
+// z TEREN_KOLONKY, takže se s tabulkou nemůže rozejít.
+function vlozitMereniNahled() {
+  var v = __vlozeni;
+  var nahled = document.getElementById('vm-nahled');
+  var potvrdit = document.getElementById('vm-potvrdit');
+  if (!v || !v.radky || !v.radky.length) { nahled.innerHTML = ''; potvrdit.style.display = 'none'; return; }
+  var data = v.hlavicka ? v.radky.slice(1) : v.radky;
+  var h = '<div id="vm-info"></div>' +
+    '<div style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:4px">' +
+    '<table id="vm-tabulka" style="width:100%;border-collapse:collapse;font-size:.72rem;font-family:var(--sans)">' +
+    '<thead><tr style="background:#1F497D;color:#fff">';
+  v.mapa.forEach(function (cil, i) {
+    h += '<th style="padding:.25rem .3rem;text-align:left;font-weight:500">' +
+      '<select class="vm-mapa" data-i="' + i + '" autocomplete="off" ' +
+      'style="width:100%;font-size:.7rem;padding:.15rem">' +
+      '<option value="">— nevkládat —</option>' +
+      TEREN_KOLONKY.map(function (s) {
+        return '<option value="' + s.i + '"' + (cil === s.i ? ' selected' : '') + '>' + esc(s.popis) + '</option>';
+      }).join('') + '</select></th>';
+  });
+  h += '</tr></thead><tbody>';
+  data.slice(0, 12).forEach(function (r) {
+    h += '<tr style="border-bottom:1px solid var(--border)">';
+    v.mapa.forEach(function (cil, i) {
+      h += '<td style="padding:.2rem .3rem' + (cil === null ? ';color:var(--muted);text-decoration:line-through' : '') +
+        '">' + esc(r[i] || '') + '</td>';
+    });
+    h += '</tr>';
+  });
+  if (data.length > 12) h += '<tr><td colspan="' + v.mapa.length + '" style="padding:.25rem .4rem;color:var(--muted)">… a dalších ' + vlozitPocetRadku(data.length - 12) + '</td></tr>';
+  h += '</tbody></table></div>';
+  nahled.innerHTML = h;
+  vlozitMereniHlasky();
+}
+
+function vlozitMereniHlavicka() {
+  if (!__vlozeni || !__vlozeni.radky) return;
+  __vlozeni.hlavicka = document.getElementById('vm-hlavicka').checked;
+  // Zapnutím hlavičky se sloupce spárují podle ní, vypnutím podle pořadí.
+  var podle = __vlozeni.hlavicka ? vlozitPodleHlavicky(__vlozeni.radky[0] || []) : null;
+  __vlozeni.mapa = podle || vlozitPodlePoradi((__vlozeni.radky[0] || []).length, __vlozeni.od || 1);
+  vlozitMereniNahled();
+}
+
+// Přemapování rukou **nesmí překreslit celý náhled** — nabídka, ze které
+// se zrovna vybíralo, by zmizela pod rukou i s fokusem (a odrolovaný náhled
+// by skočil zpátky nahoru). Přebarví se proto jen ten jeden sloupec.
+function vlozitMereniMapa(sel) {
+  if (!__vlozeni || !__vlozeni.mapa) return;
+  var i = parseInt(sel.dataset.i, 10);
+  __vlozeni.mapa[i] = sel.value === '' ? null : parseInt(sel.value, 10);
+  var vypnuty = __vlozeni.mapa[i] === null;
+  var tab = document.getElementById('vm-tabulka');
+  if (tab) {
+    Array.prototype.forEach.call(tab.querySelectorAll('tbody tr'), function (tr) {
+      var td = tr.children[i];
+      if (!td || td.colSpan > 1) return;
+      td.style.color = vypnuty ? 'var(--muted)' : '';
+      td.style.textDecoration = vypnuty ? 'line-through' : '';
+    });
+  }
+  vlozitMereniHlasky();
+}
+
+// Řádky, do kterých se smí přepisovat: jen ty, co představují obvod.
+// Podřádky chrániče mají sloučené buňky a „jiný řádek" je volný text —
+// do těch by se rozpis rozsypal nesmyslně.
+function vlozitPocetRadku(n) {
+  return n + ' ' + (n === 1 ? 'řádek' : (n >= 2 && n <= 4 ? 'řádky' : 'řádků'));
+}
+
+// Je řádek prázdný? Číslo se nepočítá (plní ho automatické číslování)
+// a `Riso` má z výroby předvyplněné „>20", takže ani to není vyplnění.
+function vlozitPrazdnyRadek(tr) {
+  var prazdny = true;
+  TEREN_KOLONKY.forEach(function (s) {
+    if (!prazdny || s.i === 0) return;
+    var inp = fillCilovyInput(tr, s.i);
+    if (!inp) return;
+    var v = String(inp.value || '').trim();
+    if (!v) return;
+    if (s.klic === 'riso' && v === '>20') return;
+    prazdny = false;
+  });
+  return prazdny;
+}
+
+function vlozitCiloveRadky(tbody) {
+  return Array.prototype.filter.call(tbody.children, function (tr) {
+    return tr.dataset.rowtype === 'obvod' || tr.dataset.rowtype === 'rcd-header';
+  });
+}
+
+function vlozitMereniPotvrdit() {
+  var v = __vlozeni;
+  if (!v || !v.radky || !v.radky.length) return;
+  if (window.__formReadOnly) { showToast('Zpráva je dokončená — nejdřív ji vraťte mezi rozpracované.'); return; }
+  var karta = document.querySelector('[data-rozvadec-id="' + document.getElementById('vm-rozvadec').value + '"]');
+  var tbody = karta ? karta.querySelector('tbody') : (v.tbody || document.querySelector('#rozvadece-container tbody'));
+  if (!tbody) return;
+  var data = v.hlavicka ? v.radky.slice(1) : v.radky;
+  var prepsat = document.getElementById('vm-rezim-prepsat').checked && v.startTr && v.startTr.parentNode === tbody;
+  var cile = vlozitCiloveRadky(tbody);
+  var od = prepsat ? cile.indexOf(v.startTr) : cile.length;
+  if (od < 0) od = cile.length;
+  // **Prázdné řádky na konci se použijí místo zakládání nových.** Čerstvá
+  // zpráva má dva prázdné obvody a nechat je viset nad vloženým rozpisem
+  // by byl nepořádek, který musí technik uklidit ručně.
+  if (!prepsat) {
+    while (od > 0 && vlozitPrazdnyRadek(cile[od - 1])) od--;
+  }
+
+  var zmeny = [], nove = [];
+  data.forEach(function (r, ri) {
+    var tr = cile[od + ri];
+    if (!tr) {
+      addMereniRowTo(tbody);
+      tr = tbody.lastElementChild;
+      nove.push(tr);
+    }
+    v.mapa.forEach(function (cil, si) {
+      if (cil === null) return;
+      var hodnota = String(r[si] == null ? '' : r[si]).trim();
+      var inp = fillCilovyInput(tr, cil);
+      if (!inp) return;
+      // Prázdná buňka z Excelu NEMAŽE, co už v řádku je — kdo vkládá
+      // rozpis bez naměřených hodnot, nepřijde o to, co naměřil.
+      if (!hodnota) return;
+      zmeny.push({ inp: inp, stara: inp.value });
+      inp.value = hodnota;
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  });
+  renumberRows(tbody);
+  if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
+  window.__formDirty = true;
+  if (typeof updateUlozitStav === 'function') updateUlozitStav();
+  vlozitMereniZavrit();
+  showToast('📋 Vloženo ' + vlozitPocetRadku(data.length) + (nove.length ? ', z toho ' + nove.length + ' nových' : '') + '.', {
+    timeout: 9000,
+    actionLabel: '↩ ZPĚT',
+    action: function () {
+      zmeny.forEach(function (z) { z.inp.value = z.stara; });
+      nove.forEach(function (tr) { if (tr.parentNode) tr.parentNode.removeChild(tr); });
+      renumberRows(tbody);
+      if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
+      showToast('Vložení vzato zpět');
+    }
+  });
+}
+
+function vlozitMereniZavrit() {
+  __vlozeni = null;
+  document.getElementById('modal-vlozit-mereni').classList.remove('open');
+}
+
+// Tbody, do kterého se právě chystáme vkládat (podle nabídky v dialogu).
+function vlozitCilovyTbody() {
+  var sel = document.getElementById('vm-rozvadec');
+  var karta = sel && sel.value ? document.querySelector('[data-rozvadec-id="' + sel.value + '"]') : null;
+  if (karta) return karta.querySelector('tbody');
+  return (__vlozeni && __vlozeni.tbody) || document.querySelector('#rozvadece-container tbody');
+}
+
+// Přemapování sloupce rukou. Nabídky vznikají překreslením náhledu, takže
+// posluchač musí být delegovaný — navázaný na prvek by se s ním ztratil.
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.classList && e.target.classList.contains('vm-mapa')) vlozitMereniMapa(e.target);
+  if (e.target && e.target.id === 'vm-rozvadec') vlozitMereniNahled();
+});
+
+// Tlačítko u rozváděče — na dotyku i tam, kde Ctrl+V není po ruce.
+function vlozitExcel(el) {
+  if (window.__formReadOnly) return;
+  vlozitMereniOtevrit({ tbody: el ? getTbodyForRozvadec(el) : null, od: 1 });
+}
+
+// Ctrl+V přímo do buňky tabulky měření. **Jedna hodnota propadne
+// prohlížeči** — jinak by dialog vyskakoval i při obyčejném vložení slova.
+document.addEventListener('paste', function (e) {
+  var inp = e.target;
+  if (!inp || !inp.closest) return;
+  if (window.__formReadOnly) return;
+  var td = inp.closest('td');
+  var tr = inp.closest('tr[data-rowtype]');
+  var tbody = tr ? tr.parentNode : null;
+  if (!td || !tr || !tbody || !jeTabulkaObvodu(tbody)) return;
+  var text = (e.clipboardData || window.clipboardData).getData('text');
+  if (!text || (text.indexOf('\t') < 0 && !/\n.*\S/.test(text))) return;   // jedna buňka
+  e.preventDefault();
+  vlozitMereniOtevrit({
+    tbody: tbody, text: text,
+    od: fillVizualniSloupec(td),
+    startTr: (tr.dataset.rowtype === 'obvod' || tr.dataset.rowtype === 'rcd-header') ? tr : null
+  });
+});
 
 // ═══ PRAVÝ KLIK = KONTEXTOVÉ MENU (v9.91) ════════════════════════════════
 // Word, Excel i Outlook mají u každého řádku pravý klik; program neměl ani
@@ -7270,6 +7686,7 @@ function addRozvadec() {
     '<button class="add-row" data-action="addMereniRow" data-rozvadec="rozv-' + n + '">+ Přidat obvod</button>' +
     '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD/RCBO</button>' +
     '<button class="add-row" data-action="addInfoRow" data-rozvadec="rozv-' + n + '" style="border-color:#a87d00;color:#a87d00" title="Volný řádek pro elektroměr, stykač, pojistku, spotřebič…">+ Přidat jiný řádek</button>' +
+    '<button class="add-row" data-action="vlozitExcel" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2)" title="Vložit rozpis obvodů zkopírovaný z Excelu">📋 Vložit z Excelu</button>' +
     (STORE.aiConfig && STORE.aiConfig.provider && STORE.aiConfig.apiKey
       ? '<button class="add-row" data-action="aiPanelScan" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2);font-weight:600">🤖 Naskenovat štítek (AI)</button>'
       : '') +
@@ -23207,6 +23624,11 @@ document.addEventListener('click', function(e) {
     case 'planPridatObjekt': planPridatObjekt(); break;
     case 'planDopocitat': planDopocitat(); break;
     case 'planVlozitZExcelu': planVlozitZExcelu(); break;
+    case 'vlozitExcel': vlozitExcel(el); break;
+    case 'vlozitMereniRozebrat': vlozitMereniRozebrat(); break;
+    case 'vlozitMereniHlavicka': vlozitMereniHlavicka(); break;
+    case 'vlozitMereniPotvrdit': vlozitMereniPotvrdit(); break;
+    case 'vlozitMereniZavrit': vlozitMereniZavrit(); break;
     case 'planPrepnoutVyber': planPrepnoutVyber(el, e); break;
     case 'planVyberSlozku': planVyberSlozku(el); break;
     case 'planVyberVse': planVyberVse(); break;
