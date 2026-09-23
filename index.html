@@ -1136,6 +1136,8 @@ td.plan-bunka-slozka{text-align:center;min-width:74px;vertical-align:middle;padd
 .plan-s-zruseno{color:var(--muted);text-decoration:line-through}
 .plan-s-vic{background:var(--bg);color:var(--muted);font-weight:400}
 .plan-cislo{display:inline-block;min-width:1.7rem;text-align:right;color:var(--muted);margin-right:.35rem}
+.plan-popis{font-size:.7rem;color:var(--muted);margin-left:.45rem;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:220px;display:inline-block;vertical-align:bottom}
 .plan-nazev{cursor:pointer}
 .plan-nazev:hover{text-decoration:underline}
 .plan-stitek{display:inline-block;font-size:.6rem;color:#fff;padding:.05rem .32rem;border-radius:3px;
@@ -1182,7 +1184,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.88<span class="ver-date"> · 2026-09-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.89<span class="ver-date"> · 2026-09-23</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2230,13 +2232,15 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="scard" style="margin-bottom:.8rem">
     <div class="scard-title">🗓 Plán revizí</div>
     <div class="info-box">Přehled objektů a let, ve kterých se revize dělaly nebo mají dělat. <strong>Objekty i hotové
-      revize se berou z archivu zpráv</strong> (podle pole „Místo provádění revize"), příští termín z pole
+      revize se berou z archivu zpráv</strong> (podle pole „Místo provádění revize", <strong>u strojů
+      je objektem každý stroj</strong> podle názvu a umístění z karty stroje), příští termín z pole
       <strong>„Termín příští revize"</strong> ve zprávě. <strong>Když ve zprávě chybí, plán si ho nedomýšlí</strong> —
       označí to červeně, ať ho odpovědný člověk doplní podle skutečnosti (ve zprávě, nebo klepnutím do buňky roku).
       Vlastní řadu dopředu si můžete nechat dopočítat z lhůty u objektu (⏱ Lhůty).
       <br>Uspořádání je jako složky ve Windows: <strong>🏢 provozovatel → 🏠 budova → 📄 objekty</strong>.
-      Rozbaluje se tlačítkem <strong>+</strong> u složky, <strong>složky i objekty se přesouvají myší</strong>
-      (chytit řádek a pustit na složku). Objekty ve složce jsou seřazené <strong>podle data příští revize</strong>.
+      Rozbaluje se tlačítkem <strong>+</strong> u složky nebo v liště naráz: <strong>⊞</strong> vše ·
+      <strong>⊡</strong> jen provozovatele (budovy zůstanou sbalené) · <strong>⊟</strong> nic.
+      <strong>Složky i objekty se přesouvají myší</strong> (chytit řádek a pustit na složku). Objekty ve složce jsou seřazené <strong>podle data příští revize</strong>.
       <strong>Sbalená budova ukáže v letech všechny termíny, které pod ni patří</strong> — na jeden pohled tak
       vidíte celý objekt. Klepnutím na buňku roku termín upravíte, klepnutím na název jeho údaje.
       <br><strong>Revize, které nevznikly v programu</strong> (dělal je někdo před vámi, máte je jen na papíře),
@@ -2253,6 +2257,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planPridatObjekt">📄 + Objekt</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planVlozitZExcelu" title="Zkopírovat tabulku v Excelu a vložit sem">📋 Vložit z Excelu</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planRozbalitVse" title="Rozbalit všechny složky">⊞</button>
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planUroven" title="Rozbalit jen provozovatele — budovy zůstanou sbalené a ukážou souhrn termínů za celou budovu">⊡</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planSbalitVse" title="Sbalit všechny složky">⊟</button>
       <button class="btn btn-ghost" id="plan-btn-skryte" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObnovitSkryte" title="Vrátit do plánu objekty, které jste z něj odebral">🚫 Skryté</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planTechnici">👷 Revizní technici</button>
@@ -19780,8 +19785,43 @@ function planKlic(text) {
 }
 
 function planKlicZpravy(z) {
+  var k = planKliceZpravy(z);
+  return k.length ? k[0].klic : '';
+}
+
+// Objekt plánu pro zprávu. Obvykle jeden (místo provádění revize), ale
+// **u strojů je objektem STROJ, ne místnost** (rozhodnutí uživatele
+// 2026-09-23): každý stroj má podle NV č. 378/2001 Sb. vlastní lhůtu
+// 12 měsíců, takže se termín musí hlídat u každého zvlášť. Zpráva
+// v režimu „soubor strojů" se proto rozpadne na řádek za každý stroj
+// a technik si je pak myší zařadí do budovy.
+//
+// **Do v9.88 se stroj do plánu nedostal vůbec**, když technik nechal
+// „Místo provádění kontroly" prázdné a vyplnil jen kartu stroje —
+// zpráva neměla klíč a plán ji MLČKY přeskočil. Archiv přitom stroj
+// i jeho umístění ukazoval (v9.47), takže zpráva vypadala vyplněně.
+function planKliceZpravy(z) {
   var d = z.data || {};
-  return planKlic(z.misto || d.misto || d.adresa || '');
+  var misto = String(z.misto || d.misto || d.adresa || '').trim();
+  if (z.typ === 'stroje') {
+    var seznam = ((d.stroje || {}).seznam) || [];
+    var out = [], videl = {};
+    seznam.forEach(function (s) {
+      var nazev = String((s || {}).nazev || '').trim();
+      if (!nazev) return;                       // nevyplněný stroj nezakládá objekt
+      var kde = String((s || {}).umisteni || '').trim() || misto;
+      // Prefix `stroj:` schválně — stroj „Kuchyně" a místnost „Kuchyně"
+      // jsou dva různé objekty a nesmí splynout do jednoho řádku.
+      var klic = 'stroj:' + planKlic(nazev) + '|' + planKlic(kde);
+      if (videl[klic]) return;
+      videl[klic] = true;
+      out.push({ klic: klic, nazev: nazev, popis: kde });
+    });
+    if (out.length) return out;
+    // Zpráva o stroji bez vyplněného stroje se chová jako dřív — podle místa.
+  }
+  var k = planKlic(misto);
+  return k ? [{ klic: k, nazev: misto, popis: '' }] : [];
 }
 
 // Druh revize podle typu zprávy: elektro → S, LPS (hromosvod) → H
@@ -19812,24 +19852,31 @@ function planRadky() {
   P.objekty.forEach(function(o) {
     var r = { o: o, id: o.id, klic: o.klic || '', nazev: o.nazev || '', cislo: o.cislo || '',
               ex: !!o.ex, technik: o.technik || '', skupina: o.skupina || '', rodic: o.rodic || '',
-              poznamka: o.poznamka || '', zpravy: [], roky: {}, bezTerminu: [], vlastni: true };
+              poznamka: o.poznamka || '', popis: o.popis || '',
+              zpravy: [], roky: {}, bezTerminu: [], vlastni: true };
     if (r.klic) podleKlice[r.klic] = r;
     radky.push(r);
   });
   var skryte = {};
   (P.skryte || []).forEach(function(k) { skryte[k] = true; });
   (archiv || []).forEach(function(z, i) {
-    var klic = planKlicZpravy(z);
-    if (!klic || skryte[klic]) return;
-    var r = podleKlice[klic];
-    if (!r) {
-      r = { o: null, id: 'a:' + klic, klic: klic, nazev: (z.misto || (z.data || {}).adresa || '').trim(),
-            cislo: '', ex: false, technik: '', skupina: '', rodic: '', poznamka: '',
-            zpravy: [], roky: {}, bezTerminu: [], vlastni: false };
-      podleKlice[klic] = r;
-      radky.push(r);
-    }
-    r.zpravy.push({ z: z, i: i });
+    // Zpráva o souboru strojů patří do TOLIKA objektů, kolik má strojů.
+    planKliceZpravy(z).forEach(function (e) {
+      if (!e.klic || skryte[e.klic]) return;
+      var r = podleKlice[e.klic];
+      if (!r) {
+        r = { o: null, id: 'a:' + e.klic, klic: e.klic, nazev: e.nazev,
+              cislo: '', ex: false, technik: '', skupina: '', rodic: '', poznamka: '',
+              popis: e.popis || '',
+              zpravy: [], roky: {}, bezTerminu: [], vlastni: false };
+        podleKlice[e.klic] = r;
+        radky.push(r);
+      }
+      // Umístění stroje se u vlastního objektu doplní, ale NEPŘEPÍŠE —
+      // technik si mohl objekt pojmenovat a zařadit sám.
+      if (!r.popis && e.popis) r.popis = e.popis;
+      r.zpravy.push({ z: z, i: i });
+    });
   });
   // hotové revize a odhadnuté příští termíny z archivu
   radky.forEach(function(r) {
@@ -19960,7 +20007,8 @@ function planFiltrovat(radky) {
   var f = ((document.getElementById('plan-filtr') || {}).value || '');
   var ted = new Date().getFullYear();
   return radky.filter(function(r) {
-    if (q && planKlic(r.nazev).indexOf(q) === -1 && planKlic(r.cislo).indexOf(q) === -1) return false;
+    if (q && planKlic(r.nazev).indexOf(q) === -1 && planKlic(r.cislo).indexOf(q) === -1 &&
+        planKlic(r.popis).indexOf(q) === -1) return false;
     if (f === 'ex' && !r.ex) return false;
     if (f === 'nezadano' && r.technik) return false;
     if (f === 'chybi' && !(r.bezTerminu && r.bezTerminu.length)) return false;
@@ -20239,6 +20287,9 @@ function planRadekObjektu(r, uroven, roky, odsazeni) {
     (r.cislo ? '<span class="plan-cislo">' + esc(r.cislo) + '</span>' : '') +
     '<span class="plan-nazev" data-action="planObjekt" data-id="' + esc(r.id) + '" title="Upravit údaje objektu">' +
     esc(r.nazev || '(bez názvu)') + '</span>' +
+    // U stroje se vedle názvu ukáže jeho umístění — dokud si ho technik
+    // nezařadí do budovy, jinak by dva „Konvektomaty" nešlo rozeznat.
+    (r.popis ? '<span class="plan-popis" title="Umístění podle zprávy">' + esc(r.popis) + '</span>' : '') +
     (r.ex ? '<span class="plan-ex" title="Prostor s nebezpečím výbuchu — potřeba oprávnění pro Ex">EX</span>' : '') +
     (t ? '<span class="plan-technik" style="background:' + esc(t.barva) + '" title="' + esc(t.jmeno) + '">' +
          esc(planIniciala(t.jmeno)) + '</span>' : '') +
@@ -20436,6 +20487,19 @@ function planSlozkaSmazat() {
 function planSlozkaZavrit() {
   __planSlozkaId = null;
   document.getElementById('modal-plan-slozka').classList.remove('open');
+}
+
+// Třetí volba vedle „rozbalit vše / sbalit vše" (přání uživatele
+// 2026-09-23): otevřít JEN provozovatele a budovy nechat sbalené.
+// Sbalená budova ukazuje souhrn termínů všeho, co je pod ní, takže
+// je to ten pohled „vidím celý areál po budovách" — u sta strojů
+// je rozbalený seznam nepoužitelně dlouhý a sbalený zase neřekne nic.
+function planUroven() {
+  var P = planData();
+  planSlozky().forEach(function (s) { P.otevrene[s.id] = (s.typ === 'provozovatel'); });
+  P.otevrene['nezarazene'] = true;   // nezařazené objekty musí být vidět
+  planUlozit();
+  renderPlan();
 }
 
 function planRozbalitVse(otevrit) {
@@ -21184,6 +21248,9 @@ function planPdfStranka(cast, roky, cislo, celkem) {
     var r = polozka.radek;
     var tech = r.technik ? planTechnikById(r.technik) : null;
     h += '<tr><td class="o" style="' + odsazeni + '">' + (r.cislo ? '<b>' + esc(r.cislo) + '.</b> ' : '') + esc(r.nazev) +
+      // Umístění stroje patří i na papír — podle plánu se objíždí areál
+      // a „Konvektomat" bez budovy je na vytištěném listu k ničemu.
+      (r.popis ? ' <span style="color:#777;font-size:6.5pt">' + esc(r.popis) + '</span>' : '') +
       (r.ex ? ' <span style="background:#c0392b;color:#fff;padding:0 .8mm;font-size:6pt;font-weight:bold">EX</span>' : '') +
       (tech ? ' <span style="background:' + esc(tech.barva) + ';color:#fff;padding:0 .8mm;font-size:6pt">' +
               esc(planIniciala(tech.jmeno)) + '</span>' : '') + '</td>';
@@ -22519,6 +22586,7 @@ document.addEventListener('click', function(e) {
     case 'planPrepnoutSlozku': planPrepnoutSlozku(el); break;
     case 'planRozbalitVse': planRozbalitVse(true); break;
     case 'planSbalitVse': planRozbalitVse(false); break;
+    case 'planUroven': planUroven(); break;
     case 'planObjekt': planObjekt(el); break;
     case 'planObjektUlozit': planObjektUlozit(); break;
     case 'planObjektSmazat': planObjektSmazat(); break;

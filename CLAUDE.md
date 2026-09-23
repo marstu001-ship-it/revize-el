@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.88 · 2026-09-23**
+**Aktuální verze: v9.89 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -122,6 +122,68 @@ uživatel to zatím nechtěl.
 Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řádku,
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
+
+## Stroje se do Plánu revizí nedostaly — objektem je STROJ (v9.89)
+
+Nahlásil uživatel 2026-09-23: „myslím, že stroje se nám nepropisují do plánu."
+**Měl pravdu a příčina byla tvrdá:** plán odvozuje objekty z pole **„Místo
+provádění revize" (`f_misto`)**, jenže u stroje technik vyplňuje **kartu
+stroje** — název a *Umístění*. Když „Místo provádění kontroly" nechal prázdné,
+zpráva **neměla klíč a `planRadky()` ji MLČKY přeskočila** — v tabulce
+nepřibyl ani řádek. Ověřeno pokusem: skutečná zpráva o stroji s vyplněným
+strojem a prázdným místem dala **0 řádků plánu**.
+
+**Zákeřné na tom je, že archiv umístění stroje ukazuje** (`archivMistoBunka`,
+v9.47 — „Konvektomat / NS 301 / Budova M4 – kuchyně"), takže zpráva vypadala
+vyplněně. Jen to není pole, ze kterého plán čte.
+
+### Objektem plánu je každý stroj, ne místnost
+
+Rozhodnutí uživatele 2026-09-23 („byl by tam název stroje v objektu a ten si
+dám do budovy kuchyně"). Sedí to s **NV č. 378/2001 Sb.**: kontrola se dělá
+**u každého stroje** nejméně jednou za 12 měsíců, takže termín se musí hlídat
+po strojích. Slitý řádek „Budova M4 – kuchyně" se značkou **T** by neřekl,
+který ze šesti strojů je na řadě.
+
+- **`planKliceZpravy(z)` vrací SEZNAM objektů**, ne jeden klíč — zpráva
+  v režimu „soubor strojů" se rozpadne na **řádek za každý stroj** a všechny
+  dostanou datum i termín z té jedné zprávy. `planKlicZpravy()` zůstala jako
+  obal vracející první klíč.
+- **Klíč stroje má prefix `stroj:`** (`stroj:<název>|<umístění>`). Bez něj by
+  stroj „Kuchyně" splynul s místností „Kuchyně" do jednoho řádku. Umístění je
+  součástí klíče, takže **dva Konvektomaty v různých halách jsou dva objekty**.
+- **Zpráva o stroji bez vyplněného stroje se chová postaru** — podle místa.
+  Kdo má v archivu staré zprávy s vyplněným místem a prázdnou kartou stroje,
+  nic mu z plánu nezmizí.
+- **Umístění se ukazuje vedle názvu** (`r.popis`, šedě, `.plan-popis`) —
+  dokud si technik stroj nezařadí do budovy, jinak by dva „Konvektomaty"
+  nešlo rozeznat. Jde i **do tisku plánu**: podle papíru se objíždí areál
+  a „Konvektomat" bez budovy je na listu k ničemu.
+- **Hledání nad plánem umí i umístění**, ne jen název a číslo.
+- Zařazení do budovy dělá technik **myší** (`planPresunout`), objekt se tím
+  stane vlastním (`planZajistitObjekt`) a **klíč si nese dál**, takže se
+  s další kontrolou téhož stroje spáruje.
+- **Elektro, LPS i spotřebiče zůstaly na místě provádění** — u nich je objektem
+  budova a víc typů zpráv v ní sdílí jeden řádek (test to hlídá zvlášť).
+
+### Třetí volba rozbalení: jen provozovatele
+
+Přání uživatele u téhož zadání: „jde jen vše zabalit a vše rozbalit, chce to
+třetí možnost." V liště je teď **⊞ vše · ⊡ jen provozovatele · ⊟ nic**
+(`planUroven()`). Sbalená budova ukazuje **souhrn termínů všeho, co je pod
+ní**, takže je to ten pohled „vidím areál po budovách" — u stovky strojů je
+rozbalený seznam nepoužitelně dlouhý a úplně sbalený zase neřekne nic.
+Nezařazené objekty zůstávají otevřené, jinak by po zařazení prvního stroje
+vypadal plán prázdně.
+
+**Do Novinek to NEJDE** — plán je podle pravidla z oddílu „Plán revizí"
+jen pro uživatele a jednoho kolegu.
+
+Test: `test-plan-stroje.js` (20 kontrol — skutečná zpráva o stroji s prázdným
+místem, soubor tří strojů = tři řádky, elektro téhož místa zůstane vlastním
+řádkem, dva stejné názvy na různých místech, zpráva bez vyplněného stroje
+postaru, prefix klíče, hledání podle umístění, zařazení do budovy, všechny tři
+volby rozbalení, a že elektro + LPS + spotřebiče vycházejí beze změny).
 
 ## Karta v Novinkách k přenosu zpráv (v9.88)
 
