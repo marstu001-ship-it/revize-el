@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.89 · 2026-09-23**
+**Aktuální verze: v9.90 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -123,6 +123,108 @@ Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řá
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
 
+## Čtyři konvence z Office naráz (v9.90)
+
+Pokyn uživatele 2026-09-23 k seznamu z oddílu „🧭 PRAVIDLO": **„udělej 2., 6.,
+8., 10."** — ukotvená hlavička, klávesové zkratky, najít a nahradit, stavový
+řádek.
+
+### Ukotvená hlavička tabulky — `position:sticky` TU NEFUNGUJE
+
+Šestnáctisloupcová tabulka měření se u čtyřiceti obvodů odroluje a technik
+nevidí, který sloupec je který. Přirozené řešení (`position:sticky` na
+`thead th`) **v téhle tabulce nefunguje a stálo za to to změřit**:
+
+**`.meas-table-wrap` má `overflow-x:auto`, takže se podle specifikace
+`overflow-y` dopočítá na `auto`** — wrap se stane vlastním rolovacím rámcem,
+jenže se svisle nikdy neroluje, a přilepit se tedy hlavička nemá k čemu.
+Pokus: po odrolování stránky o 900 px byl `th` na **−18 px místo 104**.
+
+Kreslí se proto **plovoucí kopie hlavičky** (`plovouciHlavicka()`,
+`#plov-hlavicka`), přilepená pod lištu tabů:
+
+- **Hledá se tabulka, kterou právě přejíždí horní hrana** — hlavička už
+  vyjela nahoru, ale tělo tabulky ještě pokračuje. Funguje to proto pro
+  VŠECHNY tabulky ve formuláři (`.meas-table`, `.spotr-tab`, `.data-table`),
+  ne jen pro jednu.
+- **Šířky sloupců drží `<colgroup>`**, který se klonuje spolu s hlavičkou —
+  při `table-layout:fixed` se z něj šířky odvodí samy a kopie sedí na pixel
+  (test to měří, ne odhaduje).
+- **Měřítko: kopie se zmenší stejně jako předloha** (`scale`) — list
+  spotřebičů je na užším okně zmenšený `transform: scale`, takže se vykreslená
+  šířka liší od rozvržené. U běžné tabulky vyjde poměr 1 a nic se neděje.
+- **Vodorovné rolování** se chytá **posluchačem v zachytávací fázi**
+  (`document.addEventListener('scroll', …, true)`) — rolování uvnitř wrapu
+  na `window` nebublá a kopie by nad tabulkou zůstala posunutá.
+- `pointer-events:none`, aby kopie nebrala kliknutí.
+
+### Stavový řádek dole
+
+Jako ve Wordu a Excelu: typ a ev. číslo zprávy · počty (rozváděče/obvody,
+stroje, spotřebiče, závady) · **stav uložení s časem**. Nahrazuje půlku
+toastů — technik se podívá dolů místo aby čekal, jestli něco probliklo.
+
+- **Veze se na `updateUlozitStav()`**, která se volá při každé změně
+  rozpracovanosti i při přepnutí obrazovky — nemusí se to hlídat na deseti
+  místech. `saveToArchiv()` navíc zapíše čas do `window.__poslednUlozeno`.
+- Bydlí **uvnitř `#screen-form`**, takže se s formulářem sám schová; jinde
+  by matoucí visel nad archivem i nastavením.
+- Postranní archiv ho odsune stejně jako formulář (`--fa-sirka`).
+
+### Najít a nahradit (Ctrl+H)
+
+Prohledá **všechna textová pole zprávy naráz** — popis, závěr, předmět
+revize, závady, seznam příloh, poznámky. Technik jinak musí obejít šest
+záložek a vzpomenout si, kde ten překlep napsal.
+
+- **Nahrazuje se JEN v textu, ne uvnitř značek formátování**
+  (`najitVHodnote()` rozseká hodnotu podle `<...>` a sahá jen na text mezi
+  nimi). Jinak by hledané písmeno trefilo název tagu a `<strong>` by se
+  rozpadlo. Test to hlídá na hodnotě s `<strong>`.
+- **Do pole s formátováním se vkládaný text escapuje** — kdo napíše `<b>`,
+  dostane `&lt;b&gt;` jako text, ne značku.
+- **Nahrazení jde vzít ZPĚT** (jeden toast vrátí všechna pole).
+- U **dokončené zprávy se nenahrazuje** a program to řekne; hledat jde dál.
+- Psaní do okna **nesmí označit zprávu jako změněnou** — pole leží mimo
+  `#screen-form`, stejný důvod jako u hledání v postranním archivu (v9.57).
+
+### Klávesové zkratky z Office
+
+| zkratka | co dělá |
+|---|---|
+| **Ctrl+P** | tisk — ve formuláři spustí generování PDF, v náhledu klikne na „Tisk přímo" |
+| **Ctrl+F** | skočí do hledání na té obrazovce (ve formuláři otevře postranní archiv) |
+| **Ctrl+H** | Najít a nahradit |
+| **F2** | přejmenovat — ve formuláři ev. číslo, v Plánu označený objekt |
+| Ctrl+S | uložit (už od dřívějška) |
+
+- **Ctrl+P musí prohlížeči vždycky zabrat** — jeho vlastní tisk by vytiskl
+  obrazovku programu, ne zprávu.
+- **F2 nejdřív přepne na záložku, kde pole bydlí.** Technik stojí na měření,
+  ev. číslo je na titulce; bez přepnutí by se nestalo nic. **Panel má id
+  `tab-titulni`, ale tlačítko `data-tab="titulni"`** — předpona se musí
+  useknout, jinak selektor nic nenajde (na tom to napoprvé spadlo).
+- V náhledech se tiskové tlačítko hledá **podle `data-action`**, ne podle
+  názvu funkce — každý náhled má svou (`tiskZpravuPrimo`, `planNahledTisk`,
+  `schemaNahledTisk`…) a takhle se nemusí vyjmenovávat.
+
+### Past, na kterou to najelo DVAKRÁT: `style.display = ''`
+
+Plovoucí hlavička i stavový řádek mají v CSS `display:none` (než se poprvé
+umístí). Zobrazit je přes `el.style.display = ''` **nefunguje** — prázdná
+inline hodnota jen odkryje pravidlo ze stylopisu, tedy `none`. Musí to být
+výslovné `'block'` / `'flex'`.
+
+**Poučení do testů:** první verze testu kontrolovala jen `el.innerText`
+a prvek byl přitom neviditelný. **U čehokoli, co se ukazuje a schovává,
+se musí ověřit `offsetHeight` a `getComputedStyle().display`**, ne obsah.
+
+Test: `test-office.js` (28 kontrol — ukotvení pod lištou, shoda popisků
+i šířek sloupců na pixel, vodorovné rolování, schování nahoře i mimo
+formulář, stavový řádek včetně viditelnosti, počtů a času uložení, všechny
+čtyři zkratky, hledání s rozlišováním velikosti, nahrazení s neporušenými
+značkami, escapování, ZPĚT a zamčená zpráva).
+
 ## 🧭 PRAVIDLO: konvence z Wordu, Excelu a Outlooku (2026-09-23)
 
 **Pokyn uživatele:** „Vymyslel jsem několik nápadů, které mě inspirovaly
@@ -177,7 +279,7 @@ Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
 1. **Vložení bloku buněk z Excelu do tabulky měření.** Dnes to umí jen Plán.
    Technik, který má rozpis obvodů v Excelu, ho musí přepisovat po buňkách.
    (Vzor: `planRozborVlozeni` — rozbor TSV ze schránky už je hotový.)
-2. **Ukotvená hlavička tabulky měření a protokolu spotřebičů.** U čtyřiceti
+2. ~~**Ukotvená hlavička tabulky měření a protokolu spotřebičů.**~~ **HOTOVO ve v9.90** U čtyřiceti
    obvodů se odroluje a technik neví, který sloupec je který. V Plánu
    `position:sticky` na `thead th` funguje, jinde chybí.
 3. **Výběr víc řádků v tabulce měření** (Shift/Ctrl) + hromadně smazat,
@@ -187,15 +289,15 @@ Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
    (⧉ kopírovat, ✕ smazat, vložit nad/pod), u zprávy v archivu Navázat,
    Dokončit, Smazat. Ušetří to tlačítka v řádku, ne jen klávesy.
 5. **Ctrl+C / Ctrl+V nad řádky tabulky** (kopie obvodu i mezi rozváděči).
-6. **Ctrl+P = tisk, Ctrl+F = hledat v archivu, F2 = přejmenovat.** Ctrl+S
+6. ~~**Ctrl+P = tisk, Ctrl+F = hledat v archivu, F2 = přejmenovat.**~~ **HOTOVO ve v9.90** Ctrl+S
    máme, zbytek ne.
 7. **„Zkontrolovat zprávu" před tiskem** — jako kontrola dokumentu ve Wordu:
    prázdné povinné kolonky, chybějící termín příští revize, nepodepsaný
    technik, závada bez kategorie. Jedno tlačítko, seznam k proklikání.
-8. **Najít a nahradit** v textech zprávy (popis, závěr, závady).
+8. ~~**Najít a nahradit** v textech zprávy (popis, závěr, závady).~~ **HOTOVO ve v9.90**
 9. **Automatický součet** v tabulkách, kde se sčítá (spotřebiče v kW —
    roadmapa #23).
-10. **Stavový řádek** dole s tím, co program právě udělal (uloženo v 13:42,
+10. ~~**Stavový řádek** dole s tím, co program právě udělal~~ **HOTOVO ve v9.90** (uloženo v 13:42,
     12 obvodů, 3 závady) — Word/Excel to mají a nahrazuje to půlku toastů.
 
 **Uživatel má vlastní seznam nápadů** — až ho pošle, spojit s tímhle

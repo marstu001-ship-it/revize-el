@@ -1136,6 +1136,23 @@ td.plan-bunka-slozka{text-align:center;min-width:74px;vertical-align:middle;padd
 .plan-s-zruseno{color:var(--muted);text-decoration:line-through}
 .plan-s-vic{background:var(--bg);color:var(--muted);font-weight:400}
 .plan-cislo{display:inline-block;min-width:1.7rem;text-align:right;color:var(--muted);margin-right:.35rem}
+/* Plovoucí kopie hlavičky tabulky — „Ukotvit příčky" z Excelu. Nesmí brát
+   kliknutí (pointer-events:none), leží jen nad tabulkou jako informace. */
+#plov-hlavicka{position:fixed;z-index:150;overflow:hidden;pointer-events:none;display:none;
+  background:var(--surface);box-shadow:0 3px 7px rgba(0,0,0,.22)}
+#plov-hlavicka .plov-in{position:absolute;top:0;transform-origin:top left}
+#plov-hlavicka table{border-collapse:collapse}
+/* Stavový řádek dole (Word/Excel). Postranní archiv ho odsune stejně jako
+   formulář, proto sdílí --fa-sirka. */
+#stavovy-radek{position:fixed;left:0;right:0;bottom:0;height:26px;z-index:140;display:none;
+  align-items:center;gap:.55rem;padding:0 .9rem;font-family:var(--mono);font-size:.64rem;
+  background:var(--surface);border-top:1px solid var(--border);color:var(--muted);
+  white-space:nowrap;overflow:hidden}
+body.fa-open #stavovy-radek{left:var(--fa-sirka,280px)}
+#screen-form.active{padding-bottom:34px}
+#stavovy-radek .sr-oddel{opacity:.4;margin:0 .1rem}
+#stavovy-radek .sr-dirty{color:var(--gold);font-weight:600}
+#stavovy-radek .sr-ok{color:#3f8b52}
 .plan-popis{font-size:.7rem;color:var(--muted);margin-left:.45rem;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;max-width:220px;display:inline-block;vertical-align:bottom}
 .plan-nazev{cursor:pointer}
@@ -1184,7 +1201,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.89<span class="ver-date"> · 2026-09-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.90<span class="ver-date"> · 2026-09-23</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1192,6 +1209,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <button class="btn btn-ghost" id="btn-novinky" data-action="novinky">📰 Novinky</button>
     <button class="btn btn-ghost" data-action="nastaveni">⚙ Nastavení</button>
     <button class="btn btn-ghost report-only" id="btn-ulozit-archiv" data-action="ulozitDoArchivu" title="Uložit zprávu do archivu (Ctrl+S) — bez dialogů, jako disketka v Excelu">💾 Uložit</button>
+    <button class="btn btn-ghost report-only" data-action="najitOtevrit" title="Najít a nahradit v textech zprávy (Ctrl+H) — popis, závěr, závady i poznámky naráz">🔎 Najít</button>
     <button class="btn btn-ghost report-only" data-action="ulozit" title="Uložit zprávu jako soubor .json (pro přenos na jiné zařízení nebo kolegovi)">📤 Do souboru</button>
     <button class="btn btn-ghost" data-action="nacist">📂 Načíst</button>
     <button class="btn btn-gold report-only" data-action="generujPDF">📄 Generovat PDF</button>
@@ -2405,6 +2423,28 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="pdf-pages" id="plan-pdf-pages"></div>
 </div>
 
+<div class="modal-overlay" id="modal-najit">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">🔎 Najít a nahradit v textech zprávy</div>
+    <p style="font-size:.82rem;line-height:1.55;margin-bottom:.7rem">Prohledá <strong>všechna textová pole zprávy naráz</strong> — popis, závěr, předmět revize, závady, seznam příloh i poznámky. Nemusíte je obcházet po záložkách.</p>
+    <div class="f"><label>Najít</label>
+      <input type="text" id="najit-co" autocomplete="off" data-action="najitPrehled" placeholder="hledaný text"></div>
+    <div class="f"><label>Nahradit čím</label>
+      <input type="text" id="najit-cim" autocomplete="off" placeholder="nový text (prázdné = smazat)"></div>
+    <label class="teren-radek" style="display:flex;align-items:center;gap:.5rem;margin:.3rem 0 .6rem">
+      <input type="checkbox" id="najit-citlive" data-action="najitPrehled">
+      <span>Rozlišovat velká a malá písmena</span></label>
+    <div id="najit-vysledek" style="font-size:.8rem;line-height:1.5;background:var(--bg);border:1px solid var(--border);
+      border-radius:4px;padding:.5rem .7rem;max-height:30vh;overflow:auto;margin-bottom:.8rem"></div>
+    <p style="font-size:.74rem;color:var(--muted);margin-bottom:.7rem">Nahrazení jde hned vzít zpět. Formátování (tučné, barva) zůstane — nahrazuje se jen text, ne značky.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="najitZavrit">← Zavřít</button>
+      <button class="btn btn-ghost" data-action="najitPrehled" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)">🔍 Najít vše</button>
+      <button class="btn btn-gold" data-action="najitNahradit">Nahradit vše</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-plan-tisk">
   <div class="modal" style="max-width:560px">
     <div class="modal-title">📄 Tisk plánu revizí</div>
@@ -2527,6 +2567,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <span>🔒 <strong>Dokončená zpráva — jen pro čtení.</strong> Můžete ji prohlížet a generovat PDF; pole nejdou omylem změnit.</span>
   <button class="btn btn-gold" data-action="odemknoutZpravu" style="font-size:.7rem">✏️ Upravit zprávu (vrátit mezi rozpracované)</button>
 </div>
+<!-- Stavový řádek dole — bydlí UVNITŘ obrazovky formuláře, takže se s ní
+     sám schová; jinde by matoucí visel nad archivem i nastavením. -->
+<div id="stavovy-radek"></div>
 
 <!-- Sdílené datalisty pro dynamické tabulky měření a rozváděče -->
 <datalist id="dl_stroj_nazev" autocomplete="off">
@@ -4307,6 +4350,7 @@ function showScreen(id) {
   // Postranní archiv patří jen k otevřené zprávě
   if (typeof formArchivAktualizovat === 'function') formArchivAktualizovat();
   updateUlozitStav();
+  try { plovouciHlavickaPozdeji(); } catch (e) {}
   if (id === 'novinky') {
     // Otevřením Novinek je vše „přečteno" — tlačítko přestane pulsovat
     try { localStorage.setItem('revize_el_novinky_seen', getNovinkyLatest()); } catch(e) {}
@@ -4422,6 +4466,20 @@ document.addEventListener('keydown', function(e) {
       else showToast('Neuloženo — vyplňte aspoň ev. číslo nebo místo revize');
     }
   }
+  // Ctrl+P / Ctrl+F / Ctrl+H / F2 — to, co dělají v Office.
+  if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+    var k = String(e.key || '').toLowerCase();
+    if (k === 'p') { e.preventDefault(); zkratkaTisk(); return; }
+    if (k === 'f') { if (zkratkaHledat()) e.preventDefault(); return; }
+    if (k === 'h') {
+      var fm = document.getElementById('screen-form');
+      if (fm && fm.classList.contains('active')) { e.preventDefault(); najitOtevrit(); return; }
+    }
+  }
+  if (e.key === 'F2' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (zkratkaPrejmenovat()) e.preventDefault();
+    return;
+  }
   if (e.key === 'Escape') {
     var open = document.querySelectorAll('.modal-overlay.open');
     if (open.length) {
@@ -4431,6 +4489,321 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+
+// ═══ UKOTVENÁ HLAVIČKA TABULKY („Ukotvit příčky" z Excelu, v9.90) ════════
+// Šestnáctisloupcová tabulka měření se u čtyřiceti obvodů odroluje a technik
+// nevidí, který sloupec je který.
+//
+// **`position:sticky` na `thead th` TU NEFUNGUJE** a stálo za to to změřit:
+// `.meas-table-wrap` má `overflow-x:auto`, takže se `overflow-y` podle
+// specifikace dopočítá na `auto` — wrap se stane vlastním rolovacím rámcem,
+// jenže se svisle nikdy neroluje, takže se hlavička nemá k čemu přilepit.
+// (Pokus: po odrolování stránky o 900 px byl `th` na -18 px místo 104.)
+// Kreslí se proto **plovoucí kopie hlavičky** přilepená pod lištu tabů.
+var __plovTab = null;
+var __plovRaf = 0;
+
+function plovHlavickaOffset() {
+  var top = 0;
+  var tb = document.querySelector('.topbar');
+  if (tb) top = Math.max(top, tb.getBoundingClientRect().bottom);
+  var bar = aktivniTabBar();
+  if (bar && bar.offsetParent) top = Math.max(top, bar.getBoundingClientRect().bottom);
+  return top;
+}
+
+function plovouciHlavicka() {
+  var box = document.getElementById('plov-hlavicka');
+  var form = document.getElementById('screen-form');
+  if (!form || !form.classList.contains('active')) {
+    if (box) box.style.display = 'none';
+    __plovTab = null;
+    return;
+  }
+  var offset = plovHlavickaOffset();
+  var nalez = null;
+  form.querySelectorAll('table.meas-table, table.spotr-tab, table.data-table').forEach(function (t) {
+    if (nalez || !t.offsetParent || !t.tHead) return;
+    var hr = t.tHead.getBoundingClientRect();
+    var tr = t.getBoundingClientRect();
+    if (!hr.height || !tr.height) return;
+    // Hlavička už vyjela nahoru, ale tabulka pod ní ještě pokračuje.
+    if (hr.top < offset - 1 && tr.bottom > offset + hr.height + 8) {
+      nalez = { t: t, hr: hr, tr: tr };
+    }
+  });
+  if (!nalez) {
+    if (box) box.style.display = 'none';
+    __plovTab = null;
+    return;
+  }
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'plov-hlavicka';
+    box.innerHTML = '<div class="plov-in"></div>';
+    document.body.appendChild(box);
+  }
+  var wrap = nalez.t.closest('.meas-table-wrap, .sp-sheet-wrap') || nalez.t.parentNode;
+  var wr = wrap.getBoundingClientRect();
+  // **Měřítko:** list spotřebičů je zmenšený `transform: scale`, takže se
+  // vykreslená šířka liší od rozvržené. Kopie se zmenší stejným poměrem —
+  // u běžné tabulky vyjde 1 a nic se neděje.
+  var k = nalez.t.offsetWidth ? (nalez.tr.width / nalez.t.offsetWidth) : 1;
+  if (!(k > 0.2 && k < 5)) k = 1;
+  if (__plovTab !== nalez.t) {
+    __plovTab = nalez.t;
+    var klon = document.createElement('table');
+    klon.className = nalez.t.className;
+    var cg = nalez.t.querySelector('colgroup');
+    if (cg) klon.appendChild(cg.cloneNode(true));   // šířky sloupců drží colgroup
+    klon.appendChild(nalez.t.tHead.cloneNode(true));
+    klon.style.width = nalez.t.offsetWidth + 'px';
+    box.firstChild.innerHTML = '';
+    box.firstChild.appendChild(klon);
+  }
+  var levy = Math.max(wr.left, 0);
+  box.firstChild.style.transform = (k === 1 ? '' : 'scale(' + k + ')');
+  box.firstChild.style.left = Math.round(nalez.tr.left - levy) + 'px';
+  // **Výslovné `block`, ne prázdný řetězec** — v CSS má `#plov-hlavicka`
+  // `display:none`, takže vymazáním inline hodnoty by kopie zůstala skrytá.
+  box.style.display = 'block';
+  box.style.left = Math.round(levy) + 'px';
+  box.style.top = Math.round(offset) + 'px';
+  box.style.width = Math.round(Math.min(wr.width, window.innerWidth - levy)) + 'px';
+  box.style.height = Math.ceil(nalez.hr.height) + 'px';
+}
+
+function plovouciHlavickaPozdeji() {
+  if (__plovRaf) return;
+  __plovRaf = requestAnimationFrame(function () { __plovRaf = 0; plovouciHlavicka(); });
+}
+window.addEventListener('scroll', plovouciHlavickaPozdeji, { passive: true });
+window.addEventListener('resize', plovouciHlavickaPozdeji);
+// Zachytávací fáze kvůli VODOROVNÉMU rolování uvnitř `.meas-table-wrap` —
+// kopie se musí posunout s ním, jinak by sloupce nad tabulkou nesouhlasily.
+document.addEventListener('scroll', plovouciHlavickaPozdeji, true);
+
+// ═══ STAVOVÝ ŘÁDEK DOLE (jako ve Wordu a Excelu, v9.90) ══════════════════
+// Word i Excel mají dole proužek s tím, na čem člověk stojí a jestli je
+// uloženo. Nahrazuje půlku toastů: technik se kdykoli podívá dolů místo
+// aby čekal, jestli něco probliklo.
+function stavovyRadek() {
+  var el = document.getElementById('stavovy-radek');
+  if (!el) return;
+  var form = document.getElementById('screen-form');
+  if (!form || !form.classList.contains('active')) { el.style.display = 'none'; return; }
+  // Výslovné `flex`, ne prázdný řetězec — v CSS má `#stavovy-radek`
+  // `display:none` (tatáž past jako u plovoucí hlavičky).
+  el.style.display = 'flex';
+  var q = function (s) { return document.querySelectorAll(s).length; };
+  var casti = [];
+  var ev = (document.getElementById('f_ev_cislo') || {}).value || '';
+  casti.push('<span>' + esc(typInfo(aktTyp).label) + (ev ? ' · <strong>' + esc(ev) + '</strong>' : '') + '</span>');
+  if (aktTyp === 'elektro' || aktTyp === 'lps') {
+    casti.push('<span>' + q('#rozvadece-container [data-rozvadec-id]') + '× rozváděč · ' +
+      q('#rozvadece-container .meas-table tbody tr[data-rowtype="obvod"]') + '× obvod</span>');
+  } else if (aktTyp === 'stroje') {
+    casti.push('<span>' + q('#stroje-container [data-stroj-id]') + '× stroj</span>');
+  } else if (aktTyp === 'spotrebice') {
+    casti.push('<span>' + q('#spotrebice-list .spotr-tab tbody tr') + '× spotřebič</span>');
+  }
+  var zav = q('#zavady-list .zavada-item');
+  if (zav) casti.push('<span>' + zav + '× závada</span>');
+  var stav = window.__formReadOnly
+    ? '<span class="sr-ok">🔒 dokončená zpráva</span>'
+    : (window.__formDirty
+        ? '<span class="sr-dirty">● neuložené změny</span>'
+        : '<span class="sr-ok">✓ uloženo' + (window.__poslednUlozeno ? ' v ' + window.__poslednUlozeno : '') + '</span>');
+  el.innerHTML = casti.join('<span class="sr-oddel">|</span>') +
+    '<span style="flex:1"></span>' + stav;
+}
+
+// ═══ NAJÍT A NAHRADIT V TEXTECH ZPRÁVY (Ctrl+H jako ve Wordu, v9.90) ═════
+// Hledá **ve všech textových polích zprávy naráz** (popis, závěr, předmět
+// revize, závady, seznam příloh, poznámky) — technik jinak musí obejít šest
+// záložek a vzpomenout si, kde ten překlep napsal.
+function najitPole() {
+  return Array.prototype.slice.call(document.querySelectorAll('#screen-form textarea'));
+}
+
+function najitNazevPole(t) {
+  var f = t.closest('.f');
+  var lab = f ? f.querySelector('label') : null;
+  var nazev = lab ? (lab.childNodes[0] || {}).textContent : '';
+  nazev = String(nazev || '').replace(/\s+/g, ' ').trim();
+  if (!nazev) {
+    var karta = t.closest('.scard');
+    var titulek = karta ? karta.querySelector('.scard-title') : null;
+    nazev = titulek ? titulek.textContent.replace(/\s+/g, ' ').trim().slice(0, 40) : (t.id || 'pole');
+  }
+  return nazev;
+}
+
+// Nahrazuje JEN v textu, ne uvnitř značek formátování (`<strong>`, barva…) —
+// jinak by hledaný řetězec mohl trefit název tagu a text by se rozsypal.
+function najitVKusu(kus, co, cim, citlive) {
+  if (!co) return { text: kus, pocet: 0 };
+  var h = citlive ? kus : kus.toLowerCase();
+  var c = citlive ? co : co.toLowerCase();
+  var out = '', pocet = 0, i = 0;
+  for (;;) {
+    var j = h.indexOf(c, i);
+    if (j < 0) { out += kus.slice(i); break; }
+    out += kus.slice(i, j) + cim;
+    pocet++;
+    i = j + c.length;
+  }
+  return { text: out, pocet: pocet };
+}
+
+function najitVHodnote(text, co, cim, citlive) {
+  text = String(text || '');
+  var out = '', pocet = 0, i = 0;
+  var re = /<[^>]*>/g, m;
+  while ((m = re.exec(text)) !== null) {
+    var r = najitVKusu(text.slice(i, m.index), co, cim, citlive);
+    out += r.text + m[0];
+    pocet += r.pocet;
+    i = m.index + m[0].length;
+  }
+  var z = najitVKusu(text.slice(i), co, cim, citlive);
+  return { text: out + z.text, pocet: pocet + z.pocet };
+}
+
+function najitOtevrit() {
+  var m = document.getElementById('modal-najit');
+  if (!m) return;
+  m.classList.add('open');
+  var g = document.getElementById('najit-co');
+  najitPrehled();
+  setTimeout(function () { if (g) { g.focus(); g.select(); } }, 60);
+}
+
+function najitZavrit() {
+  var m = document.getElementById('modal-najit');
+  if (m) m.classList.remove('open');
+}
+
+function najitPrehled() {
+  var co = (document.getElementById('najit-co') || {}).value || '';
+  var citlive = !!(document.getElementById('najit-citlive') || {}).checked;
+  var box = document.getElementById('najit-vysledek');
+  if (!box) return;
+  if (!co) {
+    box.innerHTML = '<span style="color:var(--muted)">Napište, co se má najít.</span>';
+    return;
+  }
+  var celkem = 0, radky = [];
+  najitPole().forEach(function (t) {
+    var r = najitVHodnote(t.value, co, co, citlive);
+    if (!r.pocet) return;
+    celkem += r.pocet;
+    radky.push('<div style="padding:.15rem 0"><strong>' + r.pocet + '×</strong> ' + esc(najitNazevPole(t)) + '</div>');
+  });
+  box.innerHTML = celkem
+    ? '<div style="font-size:.8rem"><strong>' + celkem + ' nálezů</strong> v ' + radky.length + ' polích:</div>' + radky.join('')
+    : '<span style="color:var(--muted)">Nenalezeno.</span>';
+}
+
+function najitNahradit() {
+  if (window.__formReadOnly) {
+    showToast('Dokončená zpráva je jen pro čtení — nejdřív ji vraťte mezi rozpracované.');
+    return;
+  }
+  var co = (document.getElementById('najit-co') || {}).value || '';
+  var cim = (document.getElementById('najit-cim') || {}).value || '';
+  var citlive = !!(document.getElementById('najit-citlive') || {}).checked;
+  if (!co) { showToast('Napište, co se má najít.'); return; }
+  var zaloha = [], celkem = 0, poli = 0;
+  najitPole().forEach(function (t) {
+    // V poli s formátováním (rich) se nahrazovaný text musí escapovat,
+    // jinak by `<` z klávesnice založil značku a text by se rozpadl.
+    var vloz = t.hasAttribute('data-rich') ? esc(cim) : cim;
+    var r = najitVHodnote(t.value, co, vloz, citlive);
+    if (!r.pocet) return;
+    zaloha.push({ t: t, puvod: t.value });
+    t.value = r.text;
+    t.dispatchEvent(new Event('input', { bubbles: true }));
+    celkem += r.pocet;
+    poli++;
+  });
+  najitPrehled();
+  if (!celkem) { showToast('Nenalezeno — nic se nezměnilo.'); return; }
+  showToast('Nahrazeno ' + celkem + '× v ' + poli + ' polích.', {
+    actionLabel: 'ZPĚT', timeout: 10000,
+    action: function () {
+      zaloha.forEach(function (z) {
+        z.t.value = z.puvod;
+        z.t.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      najitPrehled();
+      showToast('Nahrazení vzato zpět.');
+    }
+  });
+}
+
+// ═══ KLÁVESOVÉ ZKRATKY Z OFFICE — Ctrl+P, Ctrl+F, Ctrl+H, F2 (v9.90) ═════
+// Ctrl+P musí **vždy zabrat prohlížeči** — jeho tisk by vytiskl obrazovku
+// programu, ne zprávu, což je к ničemu.
+function zkratkaTisk() {
+  var akt = document.querySelector('.screen.active');
+  if (!akt) return false;
+  if (akt.id === 'screen-form') {
+    generujPDFAsk();
+    return true;
+  }
+  var b = akt.querySelector('.pdf-actions [data-action*="isk"]');
+  if (b) { b.click(); return true; }
+  return false;
+}
+
+function zkratkaHledat() {
+  var akt = document.querySelector('.screen.active');
+  if (!akt) return false;
+  // Ve formuláři se hledá v postranním archivu — když je sbalený, otevře se.
+  if (akt.id === 'screen-form') {
+    var fa = document.getElementById('fa-hledat');
+    if (!fa || !fa.offsetParent) { formArchivPrepnout(); fa = document.getElementById('fa-hledat'); }
+    if (fa) { fa.focus(); fa.select(); return true; }
+  }
+  var pole = Array.prototype.slice.call(akt.querySelectorAll('input[type=text]')).filter(function (i) {
+    return i.offsetParent && (/hledat/i.test(i.id) || /hledat/i.test(i.placeholder || ''));
+  })[0];
+  if (!pole) return false;
+  pole.focus();
+  pole.select();
+  return true;
+}
+
+function zkratkaPrejmenovat() {
+  var akt = document.querySelector('.screen.active');
+  if (!akt) return false;
+  if (akt.id === 'screen-form') {
+    var ev = document.getElementById('f_ev_cislo');
+    if (ev) {
+      // Ev. číslo bývá na titulní záložce, ale technik může stát na měření —
+      // F2 proto nejdřív přepne na záložku, kde to pole bydlí.
+      if (!ev.offsetParent) {
+        var panel = ev.closest('.tab-panel');
+        var bar = aktivniTabBar();
+        // Panel má id `tab-titulni`, ale tlačítko `data-tab="titulni"` —
+        // předpona se musí useknout, jinak selektor nic nenajde.
+        var btn = (panel && bar) ? bar.querySelector('.tab-btn[data-tab="' + panel.id.replace(/^tab-/, '') + '"]') : null;
+        if (btn) btn.click();
+      }
+      if (ev.offsetParent) { ev.focus(); ev.select(); return true; }
+    }
+  }
+  if (akt.id === 'screen-plan') {
+    var vyb = Object.keys(__planVybrane || {}).filter(function (k) { return __planVybrane[k]; });
+    if (vyb.length === 1) { planOtevritObjekt(vyb[0]); return true; }
+    showToast(vyb.length
+      ? 'Přejmenovat jde jeden objekt — nechte označený jen ten.'
+      : 'Označte čtverečkem objekt, který chcete přejmenovat.');
+    return true;
+  }
+  return false;
+}
 
 // ═══ PREDIKCE PSANÍ V TABULCE MĚŘENÍ ═════════════════════════════════════
 // Jako v Excelu: rozepsaný text se doplní podle hodnot, které už ve stejném
@@ -4884,6 +5257,8 @@ function updateLhutaInfo() {
 
 function switchTab(id, btn) {
   richZapniVse();
+  // Plovoucí hlavička patří k tabulce, která je zrovna vidět.
+  try { plovouciHlavickaPozdeji(); } catch (e) {}
   updateLhutaInfo();
   // Krok, ze kterého se odchází, se počítá jako prošlý (zelená fajfka)
   window.__tabsVisited = window.__tabsVisited || {};
@@ -15019,6 +15394,8 @@ function saveToArchiv() {
   renderZalohaStatus();
   autoZaloha(false); // auto-záloha do složky, throttle 10 min (no-op bez složky)
   window.__formDirty = false; // právě uložené data
+  window.__poslednUlozeno = new Date().toTimeString().slice(0, 5);   // do stavového řádku
+  try { stavovyRadek(); } catch (e) {}
   // Práce je v archivu — koncept pro obnovu po pádu už není potřeba
   try { localStorage.removeItem('revize_el_autosave'); } catch(e) {}
   updateBreadcrumb();
@@ -15437,6 +15814,9 @@ function ulozitDoArchivu() {
 
 // Stav disketky: zlatá = neuložené změny, zelená = právě uloženo.
 function updateUlozitStav() {
+  // Stavový řádek dole se veze na tuhle funkci — volá se při každé změně
+  // rozpracovanosti i při přepnutí obrazovky, takže se nemusí hlídat jinde.
+  try { stavovyRadek(); } catch (e) {}
   var b = document.getElementById('btn-ulozit-archiv');
   if (!b) return;
   if (window.__formDirty && !window.__formReadOnly) {
@@ -22619,6 +22999,10 @@ document.addEventListener('click', function(e) {
     case 'ulozit': ulozit(); break;
     case 'nacist': nacist(); break;
     case 'generujPDF': generujPDFAsk(); break;
+    case 'najitOtevrit': najitOtevrit(); break;
+    case 'najitZavrit': najitZavrit(); break;
+    case 'najitPrehled': najitPrehled(); break;
+    case 'najitNahradit': najitNahradit(); break;
     case 'toggleVoice': toggleVoice(); break;
     case 'ulozitSnippet': ulozitDoKnihovny(el.getAttribute('data-target')); break;
     case 'vlozitSnippet': otevritKnihovnuTextu(el.getAttribute('data-target')); break;
@@ -22839,6 +23223,12 @@ document.addEventListener('input', function(e) {
   // Hledání v postranním archivu. Pole leží mimo #screen-form, takže
   // psaní do něj zprávu neoznačí jako změněnou (viz komentář u panelu).
   if (e.target.id === 'fa-hledat') formArchivRender();
+  // Okno „Najít a nahradit" leží mimo formulář, takže psaní do něj
+  // zprávu NEOZNAČÍ jako změněnou — stejný důvod jako u hledání v archivu.
+  if (e.target.id === 'najit-co' || e.target.id === 'najit-citlive') najitPrehled();
+});
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.id === 'najit-citlive') najitPrehled();
 });
 
 // Ctrl+S / Cmd+S = uložit zprávu do archivu (Excel návyk). Prohlížeči
