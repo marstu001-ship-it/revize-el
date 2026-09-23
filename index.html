@@ -1153,6 +1153,19 @@ body.fa-open #stavovy-radek{left:var(--fa-sirka,280px)}
 #stavovy-radek .sr-oddel{opacity:.4;margin:0 .1rem}
 #stavovy-radek .sr-dirty{color:var(--gold);font-weight:600}
 #stavovy-radek .sr-ok{color:#3f8b52}
+/* Kontextové menu na pravý klik (v9.91). Leží v `body`, aby ho nezařízl
+   `overflow` tabulky ani zmenšeného listu spotřebičů. */
+.kt-menu{position:fixed;z-index:4200;background:var(--surface);color:var(--text);
+  border:1px solid var(--border-dark);border-radius:5px;box-shadow:0 8px 28px rgba(0,0,0,.28);
+  padding:.25rem;min-width:220px;max-width:min(360px,calc(100vw - 16px));outline:none}
+.kt-pol{display:block;width:100%;text-align:left;background:none;border:0;border-radius:4px;
+  padding:.4rem .6rem;cursor:pointer;font-family:inherit;font-size:.82rem;color:inherit;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kt-pol:hover,.kt-pol:focus{background:var(--accent2);color:#fff;outline:none}
+.kt-sep{height:1px;background:var(--border);margin:.25rem .3rem}
+.kt-pata{font-size:.6rem;color:var(--muted);padding:.3rem .6rem .15rem;border-top:1px solid var(--border);
+  margin-top:.25rem}
+@media print{.kt-menu{display:none!important}}
 .plan-popis{font-size:.7rem;color:var(--muted);margin-left:.45rem;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;max-width:220px;display:inline-block;vertical-align:bottom}
 .plan-nazev{cursor:pointer}
@@ -1201,7 +1214,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.90<span class="ver-date"> · 2026-09-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.91<span class="ver-date"> · 2026-09-23</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4804,6 +4817,266 @@ function zkratkaPrejmenovat() {
   }
   return false;
 }
+
+// ═══ PRAVÝ KLIK = KONTEXTOVÉ MENU (v9.91) ════════════════════════════════
+// Word, Excel i Outlook mají u každého řádku pravý klik; program neměl ani
+// jeden (`contextmenu` 0×).
+//
+// **Nabídka se neskládá ručně — vezme se z TLAČÍTEK, která ten řádek má.**
+// Tím se nemůže rozejít s tím, co řádek umí, a nové tlačítko se v ní objeví
+// samo. Klepnutí na položku pak **klikne na to skutečné tlačítko**, takže
+// akce jede přesně toutéž cestou jako myší — včetně `stopPropagation`
+// v delegaci, potvrzovacích dotazů i kontrol zamčené zprávy.
+//
+// **Tlačítka v řádku ZŮSTÁVAJÍ (⧉ ✕ 📄)** — pokyn uživatele 2026-09-23:
+// „technici jsou už na to zvyklí". Menu je druhá cesta, ne náhrada.
+var __ktMenu = null;
+var __ktDotyk = null, __ktDotykX = 0, __ktDotykY = 0;
+
+// Popisky tam, kde je `title` tlačítka upovídaný nebo kde žádný není.
+// Chybí-li klíč, vezme se text tlačítka a jeho bublina — zapomenout se tu
+// tedy nedá nic rozbít.
+var KONTEXT_NAZVY = {
+  copyRow: '⧉ Kopírovat řádek',
+  delRow: '✕ Smazat řádek',
+  copyRcdGroup: '⧉ Kopírovat celý chránič',
+  delRcdGroup: '✕ Smazat celý chránič',
+  copySpotrebic: '⧉ Kopírovat řádek',
+  delSpotrebic: '✕ Smazat řádek',
+  spotrJedenNahled: '📄 Protokol jen pro tento spotřebič',
+  navazatZpravu: '🔗 Navázat — nová zpráva z této',
+  smazatZpravu: '✕ Smazat zprávu',
+  toggleStavZpravy: '✓ Dokončit / vrátit mezi rozpracované',
+  togglePinZpravu: '📌 Připnout / odepnout',
+  vnoritZpravu: '⤵ Připojit starší zprávu jako historii',
+  vyjmoutZretezce: '⤴ Vyjmout z řetězu revizí',
+  prirazitOdberatele: '👤 Přiřadit odběratele',
+  toggleNehlidat: '🔔 Hlídat / nehlídat termín',
+  formArchivKopirovat: '⧉ Kopírovat do nové zprávy',
+  formArchivSmazat: '✕ Smazat zprávu',
+  stromPriradit: '⊕ Napájení podružného rozváděče…'
+};
+
+// Vložit řádek nad/pod — to tlačítko v řádku nemá, takže je to jediná
+// položka, kterou menu přidává samo. Vkládá se řádek TÉHOŽ DRUHU;
+// u chrániče běžný obvod (vložit další chránič je od toho vlastní tlačítko).
+var KONTEXT_VLOZIT = {
+  'obvod': function (tb) { addMereniRowTo(tb); },
+  'rcd-header': function (tb) { addMereniRowTo(tb); },
+  'rcd-mereni': function (tb) { addMereniRowTo(tb); },
+  'info': function (tb) { addInfoRowTo(tb, {}); },
+  'lps-row': function () { addLpsMereni(); },
+  'stroj-polozka': function (tb, tr) { strojPridatRadek(tb, ktStrojKind(tr), {}); },
+  'stroj-nadpis': function (tb, tr) { strojPridatRadek(tb, ktStrojKind(tr), { rowtype: 'stroj-nadpis', text: '' }); }
+};
+
+function ktStrojKind(tr) {
+  var blok = tr.closest('[data-stroj-blok][data-kind]');
+  return blok ? blok.dataset.kind : 'mereni';
+}
+
+function ktZavrit() {
+  if (!__ktMenu) return;
+  __ktMenu.remove();
+  __ktMenu = null;
+}
+
+function ktPopisek(btn) {
+  var a = btn.dataset.action || '';
+  if (KONTEXT_NAZVY[a]) return KONTEXT_NAZVY[a];
+  var txt = (btn.textContent || '').replace(/\s+/g, ' ').trim();
+  var tit = (btn.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+  // Tlačítko se samotným symbolem („⧉") popis nenese — vezme se z bubliny.
+  if (txt.length <= 2) return (txt ? txt + ' ' : '') + (tit || 'Akce');
+  return txt;
+}
+
+// Řádek, na kterém se stojí. Pravidlo je schválně obecné: **řádek, který má
+// vlastní tlačítka, nabídne právě je** — takže to platí pro měření, LPS,
+// stroje, dokumentaci, přístroje, spotřebiče i obojí archiv bez seznamu
+// selektorů, který by se musel udržovat.
+function ktRadekZ(cil) {
+  return cil && cil.closest ? cil.closest('.fa-radek, tr') : null;
+}
+
+function ktVlozitLze(radek) {
+  if (window.__formReadOnly && radek.closest('#screen-form')) return false;
+  return !!(radek.dataset && KONTEXT_VLOZIT[radek.dataset.rowtype] && radek.parentNode);
+}
+
+function ktPolozky(radek, cil) {
+  var pol = [];
+  // Otevřít — u řádku archivu, na který se kliká kvůli otevření zprávy.
+  var akce = radek.getAttribute ? radek.getAttribute('data-action') : '';
+  if (akce === 'otevritZpravu' || akce === 'formArchivOtevrit') {
+    pol.push({ popis: '📂 Otevřít zprávu', el: radek });
+  }
+  // Plán revizí — řádek objektu tlačítka nemá, akce visí na jménu a na
+  // buňce roku. Nabídne se jméno vždy a buňka jen ta pod kurzorem.
+  var nazev = radek.querySelector ? radek.querySelector('.plan-nazev[data-action]') : null;
+  if (nazev) pol.push({ popis: '✏️ Upravit údaje objektu', el: nazev });
+  var bunka = cil && cil.closest ? cil.closest('td.plan-bunka[data-action]') : null;
+  if (bunka) pol.push({ popis: '🗓 Termín v roce ' + (bunka.dataset.rok || ''), el: bunka });
+  // Vlastní tlačítka řádku — jádro nabídky. **Chránič je jeden celek**
+  // rozložený do víc řádků a jeho ⧉ ✕ sedí až na posledním podřádku —
+  // bez tohohle by pravý klik na jeho hlavičce nenabídl vůbec nic.
+  var zdroje = [radek];
+  var g = radek.dataset && radek.dataset.rcdGroup;
+  if (g && radek.parentNode) {
+    zdroje = Array.prototype.slice.call(
+      radek.parentNode.querySelectorAll('tr[data-rcd-group="' + g + '"]'));
+  }
+  var videl = {};
+  zdroje.forEach(function (r) {
+    Array.prototype.forEach.call(r.querySelectorAll('button[data-action]'), function (b) {
+      // Schované tlačítko se nenabízí — u dokončené zprávy je CSS schová
+      // všechna, takže menu samo od sebe nenabídne nic, co by zapisovalo.
+      if (!b.offsetParent && !b.offsetHeight) return;
+      if (b.closest('.drag-handle')) return;
+      var popis = ktPopisek(b);
+      if (videl[popis]) return;          // tatáž akce na víc podřádcích
+      videl[popis] = true;
+      pol.push({ popis: popis, el: b });
+    });
+  });
+  if (ktVlozitLze(radek)) {
+    pol.push({ popis: '⤒ Vložit řádek nad', oddel: true,
+      fn: function () { kontextVlozit(radek, 'nad'); } });
+    pol.push({ popis: '⤓ Vložit řádek pod',
+      fn: function () { kontextVlozit(radek, 'pod'); } });
+  }
+  return pol;
+}
+
+// Vložení řádku nad/pod: **nic se nekreslí znovu** — zavolá se táž funkce,
+// kterou má tlačítko „+ Přidat", a nově vzniklé řádky se jen přestěhují na
+// místo. Porovnáním seznamu před a po se chytí i chránič, který přidá víc
+// řádků naráz.
+function kontextVlozit(tr, kam) {
+  if (window.__formReadOnly && tr.closest('#screen-form')) return;
+  var tbody = tr.parentNode;
+  var pridat = KONTEXT_VLOZIT[tr.dataset.rowtype];
+  if (!tbody || !pridat) return;
+  var pred = Array.prototype.slice.call(tbody.children);
+  pridat(tbody, tr);
+  var nove = Array.prototype.filter.call(tbody.children, function (r) {
+    return pred.indexOf(r) < 0;
+  });
+  if (!nove.length) return;
+  // U chrániče se vkládá k CELÉ skupině, ne mezi jeho podřádky.
+  var kotva = ktKotva(tr, kam);
+  nove.forEach(function (r) {
+    if (kam === 'nad') tbody.insertBefore(r, kotva);
+    else { tbody.insertBefore(r, kotva.nextSibling); kotva = r; }
+  });
+  renumberRows(tbody);
+  if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
+  window.__formDirty = true;
+  if (typeof updateUlozitStav === 'function') updateUlozitStav();
+  showToast(kam === 'nad' ? 'Řádek vložen nad' : 'Řádek vložen pod');
+}
+
+function ktKotva(tr, kam) {
+  var g = tr.dataset.rcdGroup;
+  if (!g || !tr.parentNode) return tr;
+  var rows = tr.parentNode.querySelectorAll('tr[data-rcd-group="' + g + '"]');
+  if (!rows.length) return tr;
+  return kam === 'nad' ? rows[0] : rows[rows.length - 1];
+}
+
+function ktOtevrit(x, y, pol) {
+  ktZavrit();
+  var box = document.createElement('div');
+  box.className = 'kt-menu';
+  box.tabIndex = -1;
+  box.innerHTML = pol.map(function (p, i) {
+    return (p.oddel ? '<div class="kt-sep"></div>' : '') +
+      '<button type="button" class="kt-pol" data-i="' + i + '">' + esc(p.popis) + '</button>';
+  }).join('') +
+    '<div class="kt-pata">Shift + pravý klik = nabídka prohlížeče</div>';
+  document.body.appendChild(box);
+  __ktMenu = box;
+  var v = box.getBoundingClientRect();
+  box.style.left = Math.max(4, Math.min(x, window.innerWidth - v.width - 8)) + 'px';
+  box.style.top = Math.max(4, Math.min(y, window.innerHeight - v.height - 8)) + 'px';
+  box.focus();
+
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('.kt-pol');
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var p = pol[+b.dataset.i];
+    ktZavrit();          // nejdřív zavřít, teprve pak akce (může otevřít dialog)
+    if (!p) return;
+    if (p.fn) p.fn();
+    else if (p.el) p.el.click();
+  });
+  box.addEventListener('keydown', function (e) {
+    var tl = Array.prototype.slice.call(box.querySelectorAll('.kt-pol'));
+    var i = tl.indexOf(document.activeElement);
+    if (e.key === 'Escape') { e.preventDefault(); ktZavrit(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      var j = (e.key === 'ArrowDown' ? i + 1 : i - 1 + tl.length * 2) % tl.length;
+      if (i < 0) j = e.key === 'ArrowDown' ? 0 : tl.length - 1;
+      if (tl[j]) tl[j].focus();
+    }
+  });
+}
+
+// Nad psacím polem s prózou, rozbalovátkem a editorem musí zůstat nabídka
+// PROHLÍŽEČE — tam technik potřebuje vložit ze schránky a opravit překlep.
+// V buňkách tabulky (krátká čísla) je užitečnější naše.
+var KT_NECHAT_PROHLIZECI = 'textarea, select, .rich-edit, [contenteditable="true"]';
+
+function ktZkusit(x, y, cil) {
+  if (cil.closest(KT_NECHAT_PROHLIZECI)) return false;
+  var radek = ktRadekZ(cil);
+  if (!radek) return false;
+  var pol = ktPolozky(radek, cil);
+  if (!pol.length) return false;   // není co nabídnout → ať se ukáže prohlížeč
+  ktOtevrit(x, y, pol);
+  return true;
+}
+
+document.addEventListener('contextmenu', function (e) {
+  if (e.target.closest && e.target.closest('.kt-menu')) { e.preventDefault(); return; }
+  if (e.shiftKey) { ktZavrit(); return; }        // únikovka na nabídku prohlížeče
+  if (!e.target.closest) return;
+  if (ktZkusit(e.clientX, e.clientY, e.target)) e.preventDefault();
+  else ktZavrit();
+});
+
+// Dotyk: dlouhý stisk = pravý klik (a menu se pak ovládá prstem).
+document.addEventListener('pointerdown', function (e) {
+  clearTimeout(__ktDotyk);
+  if (e.pointerType !== 'touch') return;
+  __ktDotykX = e.clientX; __ktDotykY = e.clientY;
+  var cil = e.target;
+  __ktDotyk = setTimeout(function () { ktZkusit(__ktDotykX, __ktDotykY, cil); }, 550);
+}, true);
+document.addEventListener('pointermove', function (e) {
+  if (e.pointerType !== 'touch' || !__ktDotyk) return;
+  if (Math.abs(e.clientX - __ktDotykX) > 10 || Math.abs(e.clientY - __ktDotykY) > 10) {
+    clearTimeout(__ktDotyk); __ktDotyk = null;
+  }
+}, true);
+['pointerup', 'pointercancel'].forEach(function (ev) {
+  document.addEventListener(ev, function () { clearTimeout(__ktDotyk); __ktDotyk = null; }, true);
+});
+
+document.addEventListener('mousedown', function (e) {
+  if (__ktMenu && !(e.target.closest && e.target.closest('.kt-menu'))) ktZavrit();
+}, true);
+window.addEventListener('scroll', function (e) {
+  if (rolovaniUvnitr(e, '.kt-menu')) return;
+  ktZavrit();
+}, true);
+window.addEventListener('resize', function () { ktZavrit(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && __ktMenu) ktZavrit();
+});
 
 // ═══ PREDIKCE PSANÍ V TABULCE MĚŘENÍ ═════════════════════════════════════
 // Jako v Excelu: rozepsaný text se doplní podle hodnot, které už ve stejném

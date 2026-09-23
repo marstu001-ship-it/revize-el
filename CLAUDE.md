@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.90 · 2026-09-23**
+**Aktuální verze: v9.91 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -225,6 +225,87 @@ formulář, stavový řádek včetně viditelnosti, počtů a času uložení, v
 čtyři zkratky, hledání s rozlišováním velikosti, nahrazení s neporušenými
 značkami, escapování, ZPĚT a zamčená zpráva).
 
+## Pravý klik = kontextové menu (v9.91)
+
+Pokyn uživatele 2026-09-23 k bodu 4 seznamu z oddílu „🧭 PRAVIDLO":
+**„tak to udělej, ale tyto symboly tam nechej (⧉ ✕ 📄), technici jsou už na
+to zvyklí."** Původní návrh sliboval, že se tlačítka z řádků odstraní a ušetří
+se tím místo — **uživatel to odmítl a tlačítka zůstávají všechna.** Menu je
+druhá cesta, ne náhrada; hlídají to tři kontroly testu (⧉ ✕ v měření,
+⧉ ✕ v postranním archivu, ⧉ ✕ 📄 u spotřebiče).
+
+### Nabídka se NESKLÁDÁ ručně — bere se z tlačítek řádku
+
+To je jádro celé věci. `ktPolozky()` projde `button[data-action]` uvnitř
+řádku a z každého udělá položku; klepnutí pak **klikne na to skutečné
+tlačítko** (`p.el.click()`).
+
+- **Nemůže se to rozejít s tím, co řádek umí** — a nové tlačítko se v menu
+  objeví samo, bez zásahu. Přesně princip „co se nevygeneruje z jednoho
+  zdroje, to se dřív nebo později zapomene" (oddíl Typy revizních zpráv).
+- **Akce jede přesně toutéž cestou jako myší** — včetně `stopPropagation`
+  v delegaci, potvrzovacích dotazů, ZPĚT v toastu i kontrol zamčené zprávy.
+  Žádná druhá kopie logiky, která by se mohla chovat jinak.
+- **Schované tlačítko se nenabízí** (`!offsetParent && !offsetHeight`).
+  U dokončené zprávy je CSS schová všechna, takže menu **samo od sebe
+  nenabídne nic, co by zapisovalo** — a když nezbude položka, neotevře se
+  vůbec a ukáže se nabídka prohlížeče. Nemusí se to nikde hlídat zvlášť.
+- Popisky: `KONTEXT_NAZVY[akce]`, jinak text tlačítka a jeho bublina.
+  Zapomenout na mapu tedy nic nerozbije, jen bude popisek méně hezký.
+
+Platí to pro **každý řádek, který má vlastní tlačítka** — měření, LPS,
+stroje, dokumentace, přístroje, spotřebiče, archiv i postranní archiv. Žádný
+seznam selektorů, který by se musel udržovat, neexistuje.
+
+### Chránič je JEDEN celek rozložený do víc řádků
+
+`mkRcdActionTd()` dává ⧉ ✕ až na **poslední podřádek** skupiny, takže pravý
+klik na hlavičce chrániče by nenabídl vůbec nic (na tom to napoprvé spadlo).
+Má-li řádek `data-rcdGroup`, sbírají se tlačítka **ze všech řádků skupiny**
+a duplicity se vyhazují.
+
+### Jediná položka navíc: vložit řádek nad / pod
+
+Tu tlačítko v řádku nemá. **Nic se nekreslí znovu** — `kontextVlozit()`
+zavolá tutéž funkci, kterou má „+ Přidat" (`KONTEXT_VLOZIT` podle
+`rowtype`), a nově vzniklé řádky jen přestěhuje na místo. Porovnáním
+seznamu `tbody.children` před a po se chytí i případ, kdy adder přidá víc
+řádků naráz.
+
+- **Vkládá se řádek TÉHOŽ DRUHU** — u „jiného řádku" zase jiný řádek.
+  U chrániče se vloží **běžný obvod** (další chránič má vlastní tlačítko)
+  a sedne **až za jeho podřádky**, ne mezi ně (`ktKotva()`).
+- Po vložení `renumberRows()`, `stromZajistitTlacitka()`, `__formDirty`
+  a `updateUlozitStav()`.
+
+### Co zůstává prohlížeči
+
+- **Psací pole s prózou, `<textarea>`, `<select>` a `.rich-edit`** — tam
+  technik potřebuje vložit ze schránky a opravit překlep, takže tam naše
+  menu nevyskočí. V buňkách tabulky (krátká čísla) je užitečnější naše.
+- **Shift + pravý klik** je únikovka kdekoli; patička menu to říká nahlas,
+  ať se na to nemusí přijít.
+- Řádek bez použitelné položky = `preventDefault` se vůbec nezavolá.
+
+### Ostatní
+
+- **Plán revizí tlačítka v řádku nemá** — akce visí na jménu objektu
+  a na buňce roku. Nabídne se proto „Upravit údaje objektu" vždy a „Termín
+  v roce N" jen u buňky, na které se stojí.
+- **Dotyk: dlouhý stisk 550 ms** = pravý klik. Posun prstu o víc než 10 px
+  ho zruší, jinak by menu vyskakovalo při rolování.
+- Menu leží v `body` (`overflow` tabulky ani zmenšeného listu spotřebičů ho
+  tak nezařízne) a **u pravého dolního rohu se překlopí dovnitř okna**.
+- Zavírá se Escapem, klepnutím jinam, rolováním stránky i změnou velikosti
+  okna; šipky procházejí položky.
+
+Test: `test-kontext.js` (34 kontrol — viditelnost menu, obsah u všech pěti
+míst, že tlačítka ⧉ ✕ 📄 v řádcích zůstala, že akce z menu opravdu proběhne
+(kopie řádku, smazání zprávy, otevření zprávy), vložení nad i pod
+s přečíslováním, chránič jako celek, zamčená zpráva, Shift i pole s prózou,
+dlouhý stisk a jeho zrušení posunem, překlopení u okraje). **Ověřeno, že na
+kódu před v9.91 spadne (13/34).**
+
 ## 🧭 PRAVIDLO: konvence z Wordu, Excelu a Outlooku (2026-09-23)
 
 **Pokyn uživatele:** „Vymyslel jsem několik nápadů, které mě inspirovaly
@@ -284,10 +365,10 @@ Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
    `position:sticky` na `thead th` funguje, jinde chybí.
 3. **Výběr víc řádků v tabulce měření** (Shift/Ctrl) + hromadně smazat,
    kopírovat, přesunout. Dnes jde všechno po jednom; archiv a plán to umí.
-4. **Pravý klik = kontextové menu.** V celém programu není ani jedno
-   (`contextmenu` 0×). Nabízelo by u řádku to, co dnes dělají malá tlačítka
-   (⧉ kopírovat, ✕ smazat, vložit nad/pod), u zprávy v archivu Navázat,
-   Dokončit, Smazat. Ušetří to tlačítka v řádku, ne jen klávesy.
+4. ~~**Pravý klik = kontextové menu.**~~ **HOTOVO ve v9.91** — u řádku nabízí to,
+   co jeho tlačítka, u zprávy v archivu Otevřít / Navázat / Dokončit / Smazat,
+   navíc vložit nad a pod. **Tlačítka v řádku ale ZŮSTALA** (⧉ ✕ 📄) —
+   uživatel je nechtěl odebrat, technici jsou na ně zvyklí.
 5. **Ctrl+C / Ctrl+V nad řádky tabulky** (kopie obvodu i mezi rozváděči).
 6. ~~**Ctrl+P = tisk, Ctrl+F = hledat v archivu, F2 = přejmenovat.**~~ **HOTOVO ve v9.90** Ctrl+S
    máme, zbytek ne.
