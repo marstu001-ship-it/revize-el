@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.92 · 2026-09-23**
+**Aktuální verze: v9.93 · 2026-09-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -292,6 +292,65 @@ prázdná buňka nepřepíše naměřené, využití prázdných řádků, delš
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
 
+## Načtení `.xlsx` zpátky do zprávy — vlastní čtečka (v9.93)
+
+**Nápad uživatele 2026-09-23:** „technik si vygeneruje tabulku měření .xlsx,
+po vlastní ose si ji nechá od nějaké inteligence vyplnit přes OCR a nahraje to
+zpět do programu." Měřicí list se tím uzavřel do kolečka: **program → papír
+nebo sešit → vyplnění kdekoli → zpátky do zprávy.**
+
+**Čte se vlastním kódem, žádná knihovna z CDN** — stejný důvod jako u zápisu
+ZIPu ve v9.42: musí to fungovat i offline. `zipCti()` rozebere ZIP ručně
+(EOCD → centrální adresář → lokální hlavičky) a rozbaluje vestavěným
+**`DecompressionStream('deflate-raw')`**, tedy zrcadlem `CompressionStream`,
+kterým se ZIP balí.
+
+### Výsledek jde do TÉŽE cesty jako vložení ze schránky
+
+`xlsxCti()` vrátí listy jako mřížku textu a ta se předá dialogu z v9.92.
+**Mapování sloupců, náhled, „prázdná buňka nic nepřepíše" i ZPĚT jsou tím
+společné** a nemůžou se rozejít. Kód navíc proti v9.92 skoro nepřibyl.
+
+- **Hlavička se hledá, nebere se první řádek** (`xlsxHlavickaOd`) — náš vlastní
+  list má nad tabulkou hlavičku zprávy (Místo, Ev. číslo, Rozváděč, svorky).
+  Hledá se stejnou funkcí jako u schránky, takže to vyjde i u cizího sešitu.
+- **List se páruje s rozváděčem podle jména** (list `.xlsx` se tak jmenuje,
+  protože se z rozváděče vygeneroval) a předvolí se **„přepsat tabulku od
+  prvního řádku"** — vrácený list nese tytéž řádky v tomtéž pořadí.
+- **Minulé hodnoty v závorkách se NEVRACEJÍ.** Měřicí list je tiskne jako
+  vodítko (`(0,45)`); zapsat je zpátky jako naměřené by znamenalo cizí čísla
+  ve zprávě.
+- **Číslo se převede na desetinnou čárku** — Excel píše `0.45`, program `0,45`.
+  Platí to pro `t="n"` i pro buňku bez typu.
+- Umí **sdílené řetězce** (`t="s"`, tak to píše Excel) i `inlineStr`
+  (tak to píše náš zapisovač a openpyxl).
+
+**Řádek se ukládá na své číslo z atributu `r`, ne na pořadí v dokumentu.**
+Excel prázdný řádek do souboru **vůbec nezapíše**, takže by se všechno pod ním
+posunulo nahoru — a naměřené hodnoty by sedly u cizích obvodů. Test to hlídá
+sešitem, kde jeden řádek uprostřed chybí.
+
+### Past: DVĚ funkce téhož jména v jednom skriptu
+
+Čtečka si pojmenovala převod adresy buňky na index `xlsxSloupec()` — jenže
+**tak se jmenuje opačný převod v zapisovači** (index → písmeno). Celý program
+je jeden `<script>`, takže **pozdější deklarace tu dřívější tiše přebila**
+a čtečka dostávala písmeno místo čísla; `r['A'] = …` pak nechalo pole
+prázdné. Zákeřné na tom je, že **zapisovač fungoval dál** (jeho definice
+vyhrála), takže `test-xlsx.js` zůstal zelený a rozbitá byla jen ta nová
+cesta. Čtečka se jmenuje `xlsxSloupecIndex()`; test obě funkce ověřuje vedle
+sebe, aby se to nemohlo opakovat.
+
+Vstup: tlačítko **„📂 Načíst ze souboru .xlsx"** v dialogu vložení (u víc
+listů se nabídne, který se má načíst). Rozbitý soubor dá srozumitelnou hlášku
+a nic nevloží.
+
+Test: `test-xlsx-zpet.js` (19 kontrol — celé kolečko zpráva → `.xlsx` →
+zpátky, hlavička pod hlavičkou zprávy, vyplněné hodnoty u svých obvodů,
+nedotčený druhý rozváděč, minulé hodnoty v závorkách, cizí sešit z openpyxl,
+sdílené řetězce, díra po prázdném řádku, desetinná čárka, rozbitý soubor,
+a že zapisovač i čtečka mají každý svou funkci na sloupce).
+
 ## Pravý klik = kontextové menu (v9.91)
 
 Pokyn uživatele 2026-09-23 k bodu 4 seznamu z oddílu „🧭 PRAVIDLO":
@@ -426,9 +485,8 @@ Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
 
 1. ~~**Vložení bloku buněk z Excelu do tabulky měření.**~~ **HOTOVO ve v9.92**
    — Ctrl+V do buňky i tlačítko u rozváděče, mapování sloupců s náhledem.
-   **Zbývá druhý směr:** načíst zpátky `.xlsx`, který program sám vygeneroval
-   (nápad uživatele 2026-09-23 — nechat si měřicí list vyplnit OCR/AI mimo
-   program a pak ho nahrát do zprávy).
+   **Druhý směr HOTOVÝ ve v9.93** — `.xlsx` jde načíst zpátky do zprávy
+   (vlastní čtečka ZIPu a OOXML, funguje i offline).
 2. ~~**Ukotvená hlavička tabulky měření a protokolu spotřebičů.**~~ **HOTOVO ve v9.90** U čtyřiceti
    obvodů se odroluje a technik neví, který sloupec je který. V Plánu
    `position:sticky` na `thead th` funguje, jinde chybí.

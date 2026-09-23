@@ -1214,7 +1214,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.92<span class="ver-date"> · 2026-09-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.93<span class="ver-date"> · 2026-09-23</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2491,7 +2491,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <li>Program ukáže, který sloupec kam padne. Teprve pak se to vloží.</li>
       </ol>
       <div style="font-size:.78rem;color:var(--muted)">Prázdná buňka z Excelu nic nepřepíše — co už je v řádku naměřené, zůstane.
-        Vložení jde vzít zpět.</div>
+        Vložení jde vzít zpět.<br>
+        <strong>Máte měřicí list, který program vygeneroval?</strong> Načtěte ho rovnou ze souboru —
+        hodnoty sednou ke svým obvodům samy.</div>
     </div>
     <textarea id="vm-text" style="width:100%;min-height:110px;font-family:var(--mono);font-size:.72rem"
       placeholder="Sem vložte zkopírované buňky (Ctrl+V)…" spellcheck="false"></textarea>
@@ -2502,11 +2504,18 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <label class="teren-radek" style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
         <input type="checkbox" id="vm-hlavicka" data-action="vlozitMereniHlavicka">první řádek je hlavička</label>
     </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.45rem">
+      <label class="btn btn-ghost teren-radek" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2);cursor:pointer;margin:0">
+        📂 Načíst ze souboru .xlsx
+        <input type="file" id="vm-soubor" accept=".xlsx" data-action="vlozitSouborZmena" style="display:none"></label>
+      <label class="teren-radek" id="vm-list-wrap" style="display:none;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
+        List: <select id="vm-list" autocomplete="off" style="min-width:150px"></select></label>
+    </div>
     <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-top:.45rem">
       <label class="teren-radek" style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
         <input type="radio" name="vm-rezim" id="vm-rezim-nove" checked>přidat jako nové řádky na konec</label>
       <label class="teren-radek" style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-family:var(--sans);cursor:pointer">
-        <input type="radio" name="vm-rezim" id="vm-rezim-prepsat">přepsat od řádku, do kterého jsem vkládal</label>
+        <input type="radio" name="vm-rezim" id="vm-rezim-prepsat"><span id="vm-rezim-prepsat-text">přepsat od řádku, do kterého jsem vkládal</span></label>
     </div>
     <div id="vm-nahled" style="margin-top:.7rem"></div>
     <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
@@ -4986,7 +4995,9 @@ function vlozitMereniOtevrit(o) {
   g('vm-potvrdit').style.display = 'none';
   g('vm-rezim-nove').checked = !o.startTr;
   g('vm-rezim-prepsat').checked = !!o.startTr;
-  g('vm-rezim-prepsat').parentNode.style.display = o.startTr ? '' : 'none';
+  g('vm-rezim-prepsat').parentNode.style.display = o.startTr ? 'flex' : 'none';
+  g('vm-rezim-prepsat-text').textContent = 'přepsat od řádku, do kterého jsem vkládal';
+  g('vm-list-wrap').style.display = 'none';
   g('modal-vlozit-mereni').classList.add('open');
   if (o.text) { vlozitMereniRozebrat(); }
   else setTimeout(function () { g('vm-text').focus(); }, 80);
@@ -5009,6 +5020,7 @@ function vlozitMereniRozebrat() {
   __vlozeni.radky = radky;
   __vlozeni.hlavicka = hlavicka;
   __vlozeni.mapa = mapa;
+  __vlozeni.zXlsx = false;
   document.getElementById('vm-hlavicka').checked = hlavicka;
   vlozitMereniNahled();
 }
@@ -5046,12 +5058,13 @@ function vlozitMereniNahled() {
   var data = v.hlavicka ? v.radky.slice(1) : v.radky;
   var h = '<div id="vm-info"></div>' +
     '<div style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:4px">' +
-    '<table id="vm-tabulka" style="width:100%;border-collapse:collapse;font-size:.72rem;font-family:var(--sans)">' +
+    '<table id="vm-tabulka" style="width:100%;min-width:max-content;border-collapse:collapse;' +
+    'font-size:.72rem;font-family:var(--sans)">' +
     '<thead><tr style="background:#1F497D;color:#fff">';
   v.mapa.forEach(function (cil, i) {
     h += '<th style="padding:.25rem .3rem;text-align:left;font-weight:500">' +
       '<select class="vm-mapa" data-i="' + i + '" autocomplete="off" ' +
-      'style="width:100%;font-size:.7rem;padding:.15rem">' +
+      'style="width:100%;min-width:104px;font-size:.7rem;padding:.15rem">' +
       '<option value="">— nevkládat —</option>' +
       TEREN_KOLONKY.map(function (s) {
         return '<option value="' + s.i + '"' + (cil === s.i ? ' selected' : '') + '>' + esc(s.popis) + '</option>';
@@ -5138,10 +5151,14 @@ function vlozitMereniPotvrdit() {
   var tbody = karta ? karta.querySelector('tbody') : (v.tbody || document.querySelector('#rozvadece-container tbody'));
   if (!tbody) return;
   var data = v.hlavicka ? v.radky.slice(1) : v.radky;
-  var prepsat = document.getElementById('vm-rezim-prepsat').checked && v.startTr && v.startTr.parentNode === tbody;
+  var prepsat = document.getElementById('vm-rezim-prepsat').checked;
   var cile = vlozitCiloveRadky(tbody);
-  var od = prepsat ? cile.indexOf(v.startTr) : cile.length;
-  if (od < 0) od = cile.length;
+  // Ze schránky se přepisuje od řádku, do kterého se vkládalo; z vráceného
+  // souboru .xlsx od prvního — ten nese tutéž tabulku ve stejném pořadí.
+  var od = prepsat
+    ? ((v.startTr && v.startTr.parentNode === tbody) ? cile.indexOf(v.startTr) : 0)
+    : cile.length;
+  if (od < 0) od = 0;
   // **Prázdné řádky na konci se použijí místo zakládání nových.** Čerstvá
   // zpráva má dva prázdné obvody a nechat je viset nad vloženým rozpisem
   // by byl nepořádek, který musí technik uklidit ručně.
@@ -5165,6 +5182,9 @@ function vlozitMereniPotvrdit() {
       // Prázdná buňka z Excelu NEMAŽE, co už v řádku je — kdo vkládá
       // rozpis bez naměřených hodnot, nepřijde o to, co naměřil.
       if (!hodnota) return;
+      // Vlastní měřicí list tiskne minulé hodnoty v závorce jako vodítko.
+      // Vrátit je zpátky jako naměřené by byla cizí čísla ve zprávě.
+      if (v.zXlsx && /^\(.*\)$/.test(hodnota)) return;
       zmeny.push({ inp: inp, stara: inp.value });
       inp.value = hodnota;
       inp.dispatchEvent(new Event('input', { bubbles: true }));
@@ -5204,8 +5224,11 @@ function vlozitCilovyTbody() {
 // Přemapování sloupce rukou. Nabídky vznikají překreslením náhledu, takže
 // posluchač musí být delegovaný — navázaný na prvek by se s ním ztratil.
 document.addEventListener('change', function (e) {
-  if (e.target && e.target.classList && e.target.classList.contains('vm-mapa')) vlozitMereniMapa(e.target);
-  if (e.target && e.target.id === 'vm-rozvadec') vlozitMereniNahled();
+  if (!e.target) return;
+  if (e.target.classList && e.target.classList.contains('vm-mapa')) vlozitMereniMapa(e.target);
+  if (e.target.id === 'vm-rozvadec') vlozitMereniHlasky();
+  if (e.target.id === 'vm-soubor') vlozitSouborZmena(e.target);
+  if (e.target.id === 'vm-list') vlozitListVybrat(parseInt(e.target.value, 10) || 0);
 });
 
 // Tlačítko u rozváděče — na dotyku i tam, kde Ctrl+V není po ruce.
@@ -5233,6 +5256,234 @@ document.addEventListener('paste', function (e) {
     startTr: (tr.dataset.rowtype === 'obvod' || tr.dataset.rowtype === 'rcd-header') ? tr : null
   });
 });
+
+// ═══ ČTENÍ .xlsx — ZPÁTKY DO ZPRÁVY (v9.93) ══════════════════════════════
+// Nápad uživatele 2026-09-23: „technik si vygeneruje tabulku měření .xlsx,
+// po vlastní ose si ji nechá od nějaké inteligence vyplnit přes OCR
+// a nahraje to zpět do programu."
+//
+// **Čte se vlastním kódem, žádná knihovna z CDN** — stejný důvod jako
+// u zápisu ZIPu ve v9.42: musí to fungovat i offline. `zipVytvor()` skládá
+// ZIP ručně, `zipCti()` ho ručně rozebere; rozbalení dělá vestavěný
+// `DecompressionStream('deflate-raw')`, tedy zrcadlo `CompressionStream`,
+// kterým se ZIP balí.
+//
+// **Výsledek se sype do TÉŽE cesty jako vložení ze schránky (v9.92)** —
+// mapování sloupců, náhled, ZPĚT i pravidla „prázdná buňka nic nepřepíše"
+// jsou tím společné a nemůžou se rozejít.
+
+function zipDword(dv, p) { return dv.getUint32(p, true); }
+
+// Rozebere ZIP na mapu „název souboru → Uint8Array".
+async function zipCti(buffer) {
+  var u8 = new Uint8Array(buffer);
+  var dv = new DataView(buffer);
+  // EOCD se hledá od konce — za ním může být komentář.
+  var eocd = -1;
+  for (var i = u8.length - 22; i >= 0 && i > u8.length - 65558; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('Tohle není platný soubor .xlsx (chybí konec ZIPu).');
+  var pocet = dv.getUint16(eocd + 10, true);
+  var cdOff = zipDword(dv, eocd + 16);
+  var out = {};
+  var p = cdOff;
+  for (var n = 0; n < pocet; n++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    var metoda = dv.getUint16(p + 10, true);
+    var compSize = zipDword(dv, p + 20);
+    var nameLen = dv.getUint16(p + 28, true);
+    var extraLen = dv.getUint16(p + 30, true);
+    var commLen = dv.getUint16(p + 32, true);
+    var lokal = zipDword(dv, p + 42);
+    var nazev = new TextDecoder('utf-8').decode(u8.subarray(p + 46, p + 46 + nameLen));
+    // Délky v lokální hlavičce se od těch v adresáři můžou lišit, datová
+    // část ale začíná až za ní — proto se čte odtud, ne z adresáře.
+    var lNameLen = dv.getUint16(lokal + 26, true);
+    var lExtraLen = dv.getUint16(lokal + 28, true);
+    var zacatek = lokal + 30 + lNameLen + lExtraLen;
+    var data = u8.subarray(zacatek, zacatek + compSize);
+    out[nazev] = { metoda: metoda, data: data };
+    p += 46 + nameLen + extraLen + commLen;
+  }
+  var vysledek = {};
+  var klice = Object.keys(out);
+  for (var k = 0; k < klice.length; k++) {
+    var z = out[klice[k]];
+    if (z.metoda === 0) { vysledek[klice[k]] = z.data; continue; }
+    if (z.metoda !== 8) continue;             // jiná komprese se nečte
+    if (typeof DecompressionStream === 'undefined') {
+      throw new Error('Tenhle prohlížeč neumí rozbalit ZIP. Zkuste Chrome nebo Edge.');
+    }
+    var ds = new DecompressionStream('deflate-raw');
+    var blob = new Blob([z.data]);
+    var buf = await new Response(blob.stream().pipeThrough(ds)).arrayBuffer();
+    vysledek[klice[k]] = new Uint8Array(buf);
+  }
+  return vysledek;
+}
+
+function xlsxText(u8) { return new TextDecoder('utf-8').decode(u8); }
+
+function xlsxXml(u8) {
+  return new DOMParser().parseFromString(xlsxText(u8), 'application/xml');
+}
+
+// „C" → 2. Sloupec je v adrese buňky písmeny, řádek číslem.
+// **Nesmí se jmenovat `xlsxSloupec`** — tak se jmenuje opačný převod
+// v zapisovači (index → písmeno) a v jednom skriptu by pozdější deklarace
+// tuhle tiše přebila. Reader by pak dostával písmeno místo indexu.
+function xlsxSloupecIndex(adresa) {
+  var m = String(adresa || '').match(/^([A-Z]+)/);
+  if (!m) return 0;
+  var n = 0;
+  for (var i = 0; i < m[1].length; i++) n = n * 26 + (m[1].charCodeAt(i) - 64);
+  return n - 1;
+}
+
+// Vrátí listy sešitu jako mřížku textu: [{ nazev, radky: [[text]] }].
+async function xlsxCti(buffer) {
+  var soubory = await zipCti(buffer);
+  var wb = soubory['xl/workbook.xml'];
+  if (!wb) throw new Error('V souboru není sešit (xl/workbook.xml) — je to opravdu .xlsx?');
+  var rels = soubory['xl/_rels/workbook.xml.rels'];
+  var cesty = {};
+  if (rels) {
+    Array.prototype.forEach.call(xlsxXml(rels).getElementsByTagName('Relationship'), function (r) {
+      cesty[r.getAttribute('Id')] = r.getAttribute('Target');
+    });
+  }
+  // Sdílené řetězce — náš zápis je nepoužívá (`inlineStr`), cizí sešity ano.
+  var sdilene = [];
+  if (soubory['xl/sharedStrings.xml']) {
+    Array.prototype.forEach.call(xlsxXml(soubory['xl/sharedStrings.xml']).getElementsByTagName('si'), function (si) {
+      var t = '';
+      Array.prototype.forEach.call(si.getElementsByTagName('t'), function (x) { t += x.textContent; });
+      sdilene.push(t);
+    });
+  }
+  var listy = [];
+  var sheets = xlsxXml(wb).getElementsByTagName('sheet');
+  for (var s = 0; s < sheets.length; s++) {
+    var nazev = sheets[s].getAttribute('name') || ('List ' + (s + 1));
+    var rid = sheets[s].getAttribute('r:id') || sheets[s].getAttributeNS &&
+      sheets[s].getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+    var cesta = cesty[rid] || ('worksheets/sheet' + (s + 1) + '.xml');
+    cesta = String(cesta).replace(/^\//, '');
+    var u8 = soubory['xl/' + cesta] || soubory[cesta] || soubory['xl/worksheets/sheet' + (s + 1) + '.xml'];
+    if (!u8) continue;
+    var doc = xlsxXml(u8);
+    var radky = [];
+    Array.prototype.forEach.call(doc.getElementsByTagName('row'), function (row) {
+      // **Řádek se ukládá na své číslo z `r`, ne na pořadí v dokumentu.**
+      // Excel prázdný řádek do souboru vůbec nezapíše, takže by se všechno
+      // pod ním posunulo nahoru — a naměřené hodnoty by sedly u cizích obvodů.
+      var ri = parseInt(row.getAttribute('r'), 10);
+      var r = [];
+      Array.prototype.forEach.call(row.getElementsByTagName('c'), function (c) {
+        var i = xlsxSloupecIndex(c.getAttribute('r'));
+        var typ = c.getAttribute('t');
+        var hod = '';
+        if (typ === 'inlineStr') {
+          Array.prototype.forEach.call(c.getElementsByTagName('t'), function (x) { hod += x.textContent; });
+        } else {
+          var v = c.getElementsByTagName('v')[0];
+          hod = v ? v.textContent : '';
+          if (typ === 's') hod = sdilene[parseInt(hod, 10)] || '';
+          // Číslo z Excelu má desetinnou tečku, program píše čárku.
+          else if ((!typ || typ === 'n') && /^-?\d+\.\d+$/.test(hod)) hod = hod.replace('.', ',');
+        }
+        while (r.length < i) r.push('');
+        r[i] = hod;
+      });
+      if (ri > 0) {
+        while (radky.length < ri - 1) radky.push([]);
+        radky[ri - 1] = r;
+      } else radky.push(r);
+    });
+    while (radky.length && radky[radky.length - 1].every(function (x) { return !String(x).trim(); })) radky.pop();
+    var sirka = 0;
+    radky.forEach(function (x) { sirka = Math.max(sirka, x.length); });
+    radky.forEach(function (x) { while (x.length < sirka) x.push(''); });
+    listy.push({ nazev: nazev, radky: radky });
+  }
+  if (!listy.length) throw new Error('Sešit nemá ani jeden list s daty.');
+  return listy;
+}
+
+// Najde řádek s hlavičkou. Náš vlastní list má nad tabulkou hlavičku zprávy
+// (Místo, Ev. číslo, Rozváděč, svorky…), takže se **nesmí brát první řádek**.
+function xlsxHlavickaOd(radky) {
+  for (var i = 0; i < Math.min(radky.length, 40); i++) {
+    if (vlozitPodleHlavicky(radky[i])) return i;
+  }
+  return -1;
+}
+
+// Načtení souboru — tlačítko v dialogu vložení.
+function vlozitSouborZmena(inp) {
+  var f = inp && inp.files && inp.files[0];
+  inp.value = '';
+  if (!f) return;
+  var fr = new FileReader();
+  fr.onload = function () {
+    xlsxCti(fr.result).then(function (listy) {
+      vlozitZListu(listy, f.name);
+    }).catch(function (e) {
+      document.getElementById('vm-nahled').innerHTML =
+        '<div class="warn-box">' + esc(e && e.message ? e.message : 'Soubor se nepodařilo přečíst.') + '</div>';
+      document.getElementById('vm-potvrdit').style.display = 'none';
+    });
+  };
+  fr.readAsArrayBuffer(f);
+}
+
+function vlozitZListu(listy, nazevSouboru) {
+  __vlozeni = __vlozeni || {};
+  __vlozeni.listy = listy;
+  __vlozeni.soubor = nazevSouboru || '';
+  var sel = document.getElementById('vm-list');
+  sel.innerHTML = listy.map(function (l, i) {
+    return '<option value="' + i + '">' + esc(l.nazev) + '</option>';
+  }).join('');
+  document.getElementById('vm-list-wrap').style.display = listy.length > 1 ? 'flex' : 'none';
+  vlozitListVybrat(0);
+}
+
+function vlozitListVybrat(i) {
+  var v = __vlozeni;
+  if (!v || !v.listy || !v.listy[i]) return;
+  var list = v.listy[i];
+  document.getElementById('vm-list').value = String(i);
+  var od = xlsxHlavickaOd(list.radky);
+  if (od < 0) {
+    document.getElementById('vm-nahled').innerHTML =
+      '<div class="warn-box">V listu „' + esc(list.nazev) + '" se nenašel řádek s názvy sloupců ' +
+      '(Název obvodu, A, Riso…). Vyberte jiný list, nebo tabulku vložte přes schránku a sloupce přiřaďte rukou.</div>';
+    document.getElementById('vm-potvrdit').style.display = 'none';
+    return;
+  }
+  // Nad hlavičkou je hlavička zprávy — ta se do tabulky nevkládá.
+  v.radky = list.radky.slice(od);
+  v.hlavicka = true;
+  v.mapa = vlozitPodleHlavicky(v.radky[0]);
+  v.zXlsx = true;
+  document.getElementById('vm-hlavicka').checked = true;
+  document.getElementById('vm-text').value = '';
+  // List se jmenuje jako rozváděč, ze kterého vznikl — spárovat je.
+  var sel = document.getElementById('vm-rozvadec');
+  Array.prototype.forEach.call(sel.options, function (o) {
+    if (vlozitKlic(o.textContent) === vlozitKlic(list.nazev)) sel.value = o.value;
+  });
+  // Vrácený vlastní list má řádky ve stejném pořadí, takže se přepisuje
+  // od prvního — ne že by se všechno přilepilo pod stávající tabulku.
+  var prepsat = document.getElementById('vm-rezim-prepsat');
+  prepsat.parentNode.style.display = 'flex';
+  prepsat.checked = true;
+  document.getElementById('vm-rezim-prepsat-text').textContent = 'přepsat tabulku od prvního řádku';
+  v.startTr = null;      // od prvního řádku tabulky
+  vlozitMereniNahled();
+}
 
 // ═══ PRAVÝ KLIK = KONTEXTOVÉ MENU (v9.91) ════════════════════════════════
 // Word, Excel i Outlook mají u každého řádku pravý klik; program neměl ani
@@ -23629,6 +23880,7 @@ document.addEventListener('click', function(e) {
     case 'vlozitMereniHlavicka': vlozitMereniHlavicka(); break;
     case 'vlozitMereniPotvrdit': vlozitMereniPotvrdit(); break;
     case 'vlozitMereniZavrit': vlozitMereniZavrit(); break;
+    case 'vlozitSouborZmena': break;   // řeší posluchač `change`, ne klik
     case 'planPrepnoutVyber': planPrepnoutVyber(el, e); break;
     case 'planVyberSlozku': planVyberSlozku(el); break;
     case 'planVyberVse': planVyberVse(); break;
