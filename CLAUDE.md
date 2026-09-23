@@ -123,6 +123,84 @@ Test: `test-jeden-spotrebic.js` (40 kontrol — strana na výšku, údaje z řá
 proud na správném řádku a ostatní prázdné, údaje z profilu, všechny tři
 větve výsledku, prázdný řádek, návrat k seznamu na šířku, název souboru).
 
+## 🧭 PRAVIDLO: konvence z Wordu, Excelu a Outlooku (2026-09-23)
+
+**Pokyn uživatele:** „Vymyslel jsem několik nápadů, které mě inspirovaly
+v programech jako Outlook, Word, Excel. V podstatě nevymyslel, jen okopíroval.
+Proč vymýšlet kolo? Tyhle věci zásadně zpříjemňují používání našeho programu.
+**Očekával bych, abys tyto mechanismy navrhoval sám u všech nových věcí, ale
+i zpětně se ohlédl.** Je to komplexní záležitost, od různých funkcionalit až
+po vizuál."
+
+**Platí to jako STÁLÉ PRAVIDLO u každé nové funkce, ne jako jednorázový úkol.**
+Ke každému návrhu proto patří věta „v Excelu/Wordu/Outlooku se tohle dělá
+takhle" — a když se má udělat jinak, musí být řečeno proč. Technik zná Office
+líp než náš program; co se chová jako Office, nemusí se učit.
+
+**Zkouška u každé nové obrazovky, tabulky nebo dialogu:**
+
+1. **Klávesnice** — dá se to celé odbavit bez myši? Enter / Tab / šipky /
+   Esc / Ctrl+S / Ctrl+C/V / F2 / Delete dělají to, co dělají v Office?
+2. **Výběr** — jde označit víc položek (Shift úsek, Ctrl jednotlivě)
+   a udělat s nimi hromadnou akci?
+3. **Zpět** — jde poslední akce vzít zpět? (U nás toast „ZPĚT", ne Ctrl+Z.)
+4. **Schránka** — dá se to zkopírovat do Excelu a zpátky?
+5. **Kontext** — co by dal pravý klik? (Zatím nemáme nikde, viz níž.)
+6. **Vizuál** — ukotvená hlavička, pruhy řádků, kurzor, hover, fokus,
+   stavová hláška. Nic se nesmí hýbat pod rukama (past z v9.64).
+7. **Pojmenování** — tlačítko se má jmenovat tak, jak to zná z Office
+   („Uložit jako…", „Náhled", „Vložit"), ne jak se to jmenuje uvnitř kódu.
+
+### Co už z Office v programu JE (ověřeno v kódu 2026-09-23 — nenabízet znovu)
+
+| odkud | co u nás |
+|---|---|
+| Excel | **predikce psaní** v tabulce měření (`predikceKandidati`) |
+| Excel | **táhlo pro kopírování hodnoty dolů** — fill handle (`showFillHandle`) |
+| Excel | **navigace šipkami a Enterem** v měření, přístrojích i zemničích LPS |
+| Excel | **Ctrl+D** (převzít hodnotu shora) a Enter/šipky v protokolu spotřebičů |
+| Excel | **vložení tabulky ze schránky** — ale JEN v Plánu revizí (`planRozborVlozeni`) |
+| Excel | **ukotvená hlavička** — ale JEN v Plánu revizí a v exportu `.xlsx` |
+| Excel | **export do .xlsx** (měřicí list) |
+| Word | **formátovaný text** (tučné, kurzíva, barva) v polích s prózou |
+| Word | **lišta nad textovým polem**, kontrola překlepů (`spellcheck`) |
+| Word | **náhled před tiskem** + nastavení tisku v panelu vedle náhledu |
+| Outlook | **postranní archiv** jako seznam pošty, roztažitelný myší |
+| Outlook | **přetažení přílohy do Outlooku**, hotový `.eml` s přílohou |
+| obecné | **Ctrl+S**, **Esc zavře dialog**, **přetažení souboru do okna**, |
+| | automatické rolování při tažení, tmavý režim, „naposledy otevřené" |
+
+### Co z Office CHYBÍ — návrh k rozhodnutí
+
+Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
+
+1. **Vložení bloku buněk z Excelu do tabulky měření.** Dnes to umí jen Plán.
+   Technik, který má rozpis obvodů v Excelu, ho musí přepisovat po buňkách.
+   (Vzor: `planRozborVlozeni` — rozbor TSV ze schránky už je hotový.)
+2. **Ukotvená hlavička tabulky měření a protokolu spotřebičů.** U čtyřiceti
+   obvodů se odroluje a technik neví, který sloupec je který. V Plánu
+   `position:sticky` na `thead th` funguje, jinde chybí.
+3. **Výběr víc řádků v tabulce měření** (Shift/Ctrl) + hromadně smazat,
+   kopírovat, přesunout. Dnes jde všechno po jednom; archiv a plán to umí.
+4. **Pravý klik = kontextové menu.** V celém programu není ani jedno
+   (`contextmenu` 0×). Nabízelo by u řádku to, co dnes dělají malá tlačítka
+   (⧉ kopírovat, ✕ smazat, vložit nad/pod), u zprávy v archivu Navázat,
+   Dokončit, Smazat. Ušetří to tlačítka v řádku, ne jen klávesy.
+5. **Ctrl+C / Ctrl+V nad řádky tabulky** (kopie obvodu i mezi rozváděči).
+6. **Ctrl+P = tisk, Ctrl+F = hledat v archivu, F2 = přejmenovat.** Ctrl+S
+   máme, zbytek ne.
+7. **„Zkontrolovat zprávu" před tiskem** — jako kontrola dokumentu ve Wordu:
+   prázdné povinné kolonky, chybějící termín příští revize, nepodepsaný
+   technik, závada bez kategorie. Jedno tlačítko, seznam k proklikání.
+8. **Najít a nahradit** v textech zprávy (popis, závěr, závady).
+9. **Automatický součet** v tabulkách, kde se sčítá (spotřebiče v kW —
+   roadmapa #23).
+10. **Stavový řádek** dole s tím, co program právě udělal (uloženo v 13:42,
+    12 obvodů, 3 závady) — Word/Excel to mají a nahrazuje to půlku toastů.
+
+**Uživatel má vlastní seznam nápadů** — až ho pošle, spojit s tímhle
+a nedělat dvakrát totéž.
+
 ## Stroje se do Plánu revizí nedostaly — objektem je STROJ (v9.89)
 
 Nahlásil uživatel 2026-09-23: „myslím, že stroje se nám nepropisují do plánu."
