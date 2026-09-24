@@ -392,6 +392,13 @@ dočasně vyprázdní**, když hodnota přesně odpovídá položce nabídky (z�
 ať se ukáže celá nabídka; po odchodu se vrátí). Test s názvy „Trouba",
 „Myčka" proto četl prázdné pole. Nejdřív `blur()`, pak číst.
 
+**Do Novinek NEJDE** — rozhodnutí uživatele 2026-09-24: „není to zásadní
+pro používání programu, starší technici tak s počítačem neumí, kdo bude
+šikovný a přijde na to, je to jeho bonus, novinky by byly přehlcené."
+Zpřesnění pravidla z úvodu: **klávesové a myší zkratky navíc (Ctrl+klik,
+Ctrl+C/V nad řádky…), které nic dosavadního nemění, kartu nedostanou** —
+kdo je nezná, ovládá program dál postaru. Příště to nenabízet.
+
 Test: `test-vyber-radku.js` (39 kontrol — Ctrl/Shift+klik, Esc, zvýraznění,
 stavový řádek, TSV v systémové schránce, vložení pod řádek i s hodnotami,
 přečíslování, ZPĚT, jiný rozváděč, jiná zpráva, Ctrl+X přesun, Delete
@@ -624,12 +631,8 @@ Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
    rozváděči a zprávami, do Excelu jde TSV.
 6. ~~**Ctrl+P = tisk, Ctrl+F = hledat v archivu, F2 = přejmenovat.**~~ **HOTOVO ve v9.90** Ctrl+S
    máme, zbytek ne.
-7. **„Zkontrolovat zprávu" před tiskem** — jako kontrola dokumentu ve Wordu:
-   prázdné povinné kolonky, chybějící termín příští revize, nepodepsaný
-   technik, závada bez kategorie. Jedno tlačítko, seznam k proklikání.
-   *Uživatel 2026-09-24: „nevím, co by se kontrolovalo" — vysvětleno
-   (ev. číslo, termín příští revize, závada bez kategorie, obvod bez Zsm,
-   hodnota nad limitem; klik na položku skočí na pole). Čeká na rozhodnutí.*
+7. ~~**„Zkontrolovat zprávu" před tiskem**~~ **ODMÍTNUTO** uživatelem
+   2026-09-24 („myslím, že program provází dobře") — nenabízet znovu.
 8. ~~**Najít a nahradit** v textech zprávy (popis, závěr, závady).~~ **HOTOVO ve v9.90**
 9. ~~**Automatický součet**~~ **ODMÍTNUTO** uživatelem 2026-09-24 („nedává
    mi smysl") — nenabízet znovu.
