@@ -33,10 +33,12 @@ jste nic neudělali.
    se automaticky odvozuje pulsování tlačítka 📰 Novinky (localStorage
    `revize_el_novinky_seen`) — bez data se uživatelé o novince nedozví.
 
-   **⚠️ VŽDY SE UŽIVATELE NEJDŘÍV ZEPTEJ, jestli kartu do Novinek
-   přidat** (pokyn uživatele 2026-08-11). Nikdy ji tam nedávej
-   automaticky — ani když ti to připadá jako zjevná nová funkce.
-   Napiš, co bys do karty napsal, a nech ho rozhodnout.
+   **⚠️ NA NOVINKY SE VŮBEC NEPTEJ — kartu dělej JEN, když si o ni
+   uživatel SÁM řekne** (pokyn uživatele 2026-09-24: „neptej se mě na
+   novinku, dokud si o ni neřeknu"). Nahrazuje to dřívější pravidlo
+   z 2026-08-11 („vždy se nejdřív zeptej"). Kartu nikdy nedávej
+   automaticky a ani ji nenabízej na konci odpovědi. Když si o ni řekne,
+   předlož text ke schválení.
 
    **Do Novinek patří JEN nové funkce, ne opravy chyb.** Kdo chybu
    nahlásil, ví o opravě; komu program fungoval, je informace o ní
@@ -326,11 +328,18 @@ zkratku na české klávesnici: **pravý Alt + tečka / čárka**.
 
 Test: `test-riso-znaky.js` (13 kontrol).
 
+**Karta v Novinkách k tomu NENÍ** — uživatel ji 2026-09-24 odmítl.
+
 ## Ctrl+Z, ukotvený sloupec, řazení archivu (v9.98)
 
 Pokyn uživatele 2026-09-24 („uděláme 1., 2., 3., 4.") k návrhu z téhož dne.
-Bod 1 (podbarvení hodnot mimo mez normy) jde zvlášť — meze se předkládají
-ke schválení.
+
+**Bod 1 (podbarvení hodnot mimo mez normy) ODLOŽEN** — uživatel si ho
+promyslí („neptej se, dokud si o něj neřeknu"). Nedělat a nepřipomínat.
+Navržené meze (předložené 2026-09-24, NEschválené, z paměti, ne z norem):
+Zs ≤ 230/(k·In) s k = 5/10/20 pro B/C/D; Riso ≥ 1 MΩ; vybavovací proud
+0,5–1×IΔn; čas při IΔn ≤ 300 ms; při 5×IΔn ≤ 40 ms; Ut ≤ 50 V. Bez kontroly
+Zs u gG, Rpe a Isc.
 
 ### Ctrl+Z = poslední ZPĚT (Word, Excel)
 
