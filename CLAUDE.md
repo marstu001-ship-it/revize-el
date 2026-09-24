@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.96 · 2026-09-24**
+**Aktuální verze: v9.97 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -291,6 +291,75 @@ IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „n
 prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
+
+## Schéma rozváděčů na papír — navazuje, vejde se, rámeček přes kabely (v9.97)
+
+Hlášení Jiřího Roubalíka 2026-09-24 (poslal PDF RE-26-10002): „Schéma k tisku
+ukazuje dobře první stránku, ta druhá nenavazuje. Možná by bylo lepší to
+trochu zmenšit, nebo naležato a dát to vedle sebe. Nebo automaticky na A3."
+
+**Příčina:** `schemaVykreslit()` krájela řádky na stránky (`radky.slice`)
+a každý kus kreslila jako samostatný strom. `rodic` ale ukazuje na index
+v CELÉM stromu, takže na druhé straně chyběly čáry i odsazení — RS 114.4,
+RM-SK1, EME, RS11 stály u levého kraje, jako by byly hlavní rozváděče.
+
+### Geometrie z celého stromu, kreslí se jen úsek
+
+`stromKresba(radky, o)` bere **`o.od` / `o.do`** — geometrie se spočítá
+z celého stromu a vykreslí se jen řádky z úseku. Průběžné čáry (`prochazi`)
+jsou v každém řádku, takže na nové straně nebo ve sloupci samy pokračují.
+Nad pokračujícím úsekem je šedě **„pokračování — RH2 › RS114"** (cesta
+předků), ať je z papíru poznat, odkud čáry přicházejí.
+
+### Program sám vybere rozvržení na co nejméně listů
+
+`schemaNavrh()` zkusí **na výšku (1 sloupec)** a **na šířku (2 sloupce vedle
+sebe)**, každé v měřítku **100 / 90 / 80 %**, a vybere: **nejméně listů →
+největší písmo → na výšku**. Rozvržení, ve kterém by strom přetekl šířku
+sloupce, se nebere.
+
+- **Zmenšuje se přepočtem rozměrů, ne `transform`** (`stromMeritko(o, k)`
+  násobí čísla i hodnoty v mm/pt uvnitř textů; tloušťky čar nechává).
+  Rozměry se proto změří a vykreslí bez triků a html2canvas nemá co pokazit.
+- **Měří se skutečné výšky řádků** (`schemaZmer`, skrytý kontejner v obrazovce
+  náhledu — skrytá obrazovka má nulové rozměry, stará past), sloupce se plní
+  hltavě (`schemaRozlozit`). Po vykreslení se změří skutečná výška listů
+  a při přetečení se přidá rezerva a skládá znovu.
+- **Rozváděč nezůstane na konci sloupce sám bez svého prvního vývodu** —
+  přesune se s ním (jako nadpis na konci stránky).
+- **Další hlavní rozváděč se radši přesune do nového sloupce celý**, když se
+  tam vejde a stávající sloupec je aspoň z poloviny plný.
+- V liště náhledu je **volba rozvržení**: co nejméně listů (výchozí) · na
+  výšku · na šířku ve dvou sloupcích. Drží se jen v paměti.
+- Info v liště říká počet listů, orientaci i zmenšení („1 list · na šířku,
+  zmenšeno na 90 %").
+- **A3 se nenabízí** — většina kanceláří tiskne jen na A4. Kdyby o ni byl
+  zájem, je to další položka v `SCHEMA_REZIMY` + formát v `renderPagesToPDF`.
+
+Jirkův strom (19 rozváděčů) vyjde na **jeden list na šířku, 90 %**.
+
+### Rámeček je tak široký, aby z něj vycházely všechny kabely
+
+Snímek od uživatele (RS114 se šesti vývody): vějíř kabelů vyčníval vpravo
+mimo rámeček. `stromKresba` dává rámečku rozváděče s vývody
+**`min-width` = poslední kabel + stejný okraj jako před prvním**
+(`g.off` — `stromGeometrie` ho teď vrací, protože se při zúžení mění).
+Platí to na všech třech místech (panel, blok ve zprávě, samostatné schéma).
+
+### Dialog „Napájí tento jistič rozváděč?" — rozsypané řádky
+
+Snímek od uživatele: zaškrtávátko uprostřed, název vpravo zalomený po
+slabikách („RS / 114.2"), VELKÝMI prostrkanými písmeny. **Past z v9.53:**
+`.f label` a `.f input` platí i na vnořené prvky. Řádky mají teď třídu
+`teren-radek napaji-radek`: zaškrtávátko vlevo, tučný název hned za ním
+a šedě **umístění rozváděče** (u „RS 114.2" / „RS114.2.1" pomůže rozlišit).
+
+Testy: `test-schema-tisk.js` (17 kontrol — kabely z dolní hrany rámečku,
+Jirkův strom na jeden list na šířku, nepřetečení, všechny rozváděče,
+pokračující sloupec s odsazením, čarami a cestou předků, ruční „na výšku"
+s navazující druhou stranou, malý strom na výšku v plné velikosti,
+`stromMeritko`) a `test-napaji-dialog.js` (6). Fixtura stromu podle Jirkova
+PDF je v `schema-fixt.js`.
 
 ## Táhlo pro kopírování hodnot zůstávalo viset v tabulce (v9.96)
 

@@ -479,6 +479,9 @@ td.dnd-num-cell input{padding-left:15px}
   padding:0!important;border:none!important;background:none!important}
 .teren-radek strong{font-weight:600}
 .teren-radek .tm{color:var(--muted);font-size:.78rem}
+.napaji-radek{padding:.35rem .2rem!important;border-bottom:1px solid var(--border)}
+.napaji-radek:last-child{border-bottom:none}
+.napaji-radek .tm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .f label .nv{color:var(--accent);font-size:.52rem;display:block;margin-top:1px}
 .f input,.f select,.f textarea{font-family:var(--sans);font-size:.88rem;
   padding:.5rem .7rem;border:1px solid var(--border);background:var(--bg);
@@ -1220,7 +1223,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.96<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.97<span class="ver-date"> · 2026-09-24</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3523,6 +3526,11 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="pdf-toolbar-title">🔌 Náhled schématu — <span id="schema-pdf-info"></span></div>
     <div class="pdf-actions">
       <button class="pbtn" data-action="schemaNahledZpet" style="background:#555;border-color:#555">← Zpět</button>
+      <select id="schema-rozvrzeni" class="pbtn" title="Jak se má schéma rozložit na papír" style="background:#fff;color:#333;border-color:#999">
+        <option value="auto">Rozvržení: co nejméně listů</option>
+        <option value="vysku">Na výšku</option>
+        <option value="sirku">Na šířku, dva sloupce vedle sebe</option>
+      </select>
       <button class="pbtn" data-action="schemaNahledTisk" style="background:#b5291c;border-color:#b5291c" title="Vytiskne rovnou ve vyšší kvalitě, nic se do počítače neukládá">🖨️ Tisk přímo</button>
       <button class="pbtn" data-action="schemaNahledUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
     </div>
@@ -5254,6 +5262,7 @@ document.addEventListener('change', function (e) {
   if (e.target.id === 'vm-rozvadec') vlozitMereniHlasky();
   if (e.target.id === 'vm-soubor') vlozitSouborZmena(e.target);
   if (e.target.id === 'vm-list') vlozitListVybrat(parseInt(e.target.value, 10) || 0);
+  if (e.target.id === 'schema-rozvrzeni') schemaRozvrzeniZmena(e.target);
 });
 
 // Tlačítko u rozváděče — na dotyku i tam, kde Ctrl+V není po ruce.
@@ -8664,10 +8673,16 @@ function stromDopnoutNazvy() {
 function stromKresba(radky, o) {
   o = o || {};
   var u = o.jednotka || 'mm';
+  // Geometrie se počítá VŽDY z celého stromu, i když se kreslí jen úsek
+  // (`o.od`–`o.do`, strana nebo sloupec schématu). Jinak by `rodic` ukazoval
+  // mimo úsek a čáry na další straně by nenavazovaly (hlášení Jiřího
+  // Roubalíka 2026-09-24 — na druhé straně schématu čáry chyběly úplně).
   var g = stromGeometrie(radky, o);
   function j(x) { return (Math.round(x * 100) / 100) + u; }
+  var od = o.od || 0, doI = (o.do === undefined || o.do === null) ? radky.length : o.do;
   var html = '';
   radky.forEach(function(r, i) {
+    if (i < od || i >= doI) return;
     var m = g.mista[i];
 
     // Kabely, které řádkem procházejí shora dolů — míří k pozdějším
@@ -8701,6 +8716,13 @@ function stromKresba(radky, o) {
         ';top:0;bottom:0;border-left:' + o.cara + '"></span>';
     });
     var pod = '<div style="position:relative;height:' + j(o.pahyl) + '">' + vejir + '</div>';
+    // Rámeček musí být tak široký, aby z jeho dolní hrany vycházely VŠECHNY
+    // kabely — u rozváděče s osmi vývody jinak vějíř vyčníval vpravo mimo
+    // rámeček a vypadalo to, že kabely jdou odnikud (pokyn uživatele
+    // 2026-09-24). Za posledním kabelem zůstane stejný okraj jako před prvním.
+    var minSirka = m.detiDrop.length
+      ? ';min-width:' + j(Math.max.apply(null, m.detiDrop) - m.lx + g.off) + ';box-sizing:border-box'
+      : '';
 
     // Umístění patří k rámečku, ne pod něj — pod ním by leželo u kabelů
     // a pletlo by se s popiskem dalšího propoje.
@@ -8717,7 +8739,7 @@ function stromKresba(radky, o) {
                ';color:' + o.barvaPopis + ';line-height:1.3;padding:' + j(o.mezeraPopis) +
                ' 0 ' + j(o.mezeraPopis) + ' ' + j(o.odsazeniPod) + '">' + esc(popis) + '</div>' : '') +
       '<div style="margin-left:' + j(m.lx) + '">' +
-        '<span style="display:inline-block;border:' + o.ram + ';border-radius:' + j(o.radius) +
+        '<span style="display:inline-block;border:' + o.ram + ';border-radius:' + j(o.radius) + minSirka +
           ';padding:' + o.pad + ';background:#fff;font-weight:bold;font-size:' + o.fontBox +
           ';line-height:1.25">' +
           (r.chybi ? '⚠ ' : '') + (r.vCyklu ? '↻ ' : '') +
@@ -8764,7 +8786,7 @@ function stromGeometrie(radky, o) {
       for (var i = 0; i < (r.deti || 0); i++) m.detiDrop.push(m.lx + off + mujVejir - i * rozestup);
       if (m.lx > nejdal) nejdal = m.lx;
     });
-    if (!o.maxLx || nejdal <= o.maxLx || pokus) return { mista: mista, nejdal: nejdal };
+    if (!o.maxLx || nejdal <= o.maxLx || pokus) return { mista: mista, nejdal: nejdal, off: off };
     // Dolní mez 40 %, ať čáry nesplynou v jednu šmouhu
     var pomer = Math.max(0.4, o.maxLx / nejdal);
     off *= pomer; rozestup *= pomer; mezera *= pomer;
@@ -8949,10 +8971,16 @@ function stromPriradit(el) {
     if (stromByVzniklCyklus(mujUid, k.uid, d)) return;          // ani do vlastní větve
     // Rozváděč napájený odjinud jde zaškrtnout taky — program pak upozorní,
     // že je napájený ze dvou míst, ale nebrání tomu.
-    html += '<label style="display:flex;gap:.5rem;align-items:center;padding:.3rem .2rem;border-bottom:1px solid var(--border);font-size:.86rem;cursor:pointer">' +
+    // Třída teren-radek je nutnost: `.f label` jinak z popisku udělá prostrkaný
+    // mono text VELKÝMI PÍSMENY a `.f input` roztáhne zaškrtávátko přes celý
+    // řádek — název pak odjel doprava a lámal se po slabikách („RS / 114.2",
+    // snímek od uživatele 2026-09-24). Stejná past jako v9.53.
+    var um = (k.karta.querySelector('.rozv-umisteni') || {}).value || '';
+    html += '<label class="teren-radek napaji-radek">' +
       '<input type="checkbox" class="napaji-cil" value="' + k.uid + '"' +
       (vybrane.indexOf(k.uid) !== -1 ? ' checked' : '') + '>' +
-      '<span>' + esc(k.nazev || '(bez názvu)') + '</span></label>';
+      '<strong>' + esc(k.nazev || '(bez názvu)') + '</strong>' +
+      (um.trim() ? '<span class="tm">' + esc(um) + '</span>' : '') + '</label>';
   });
   box.innerHTML = html || '<div style="font-size:.84rem;color:var(--muted);padding:.3rem 0">Ve zprávě zatím není jiný rozváděč, který by šlo připojit.</div>';
   var vlastni = document.getElementById('napaji-vlastni');
@@ -9332,23 +9360,168 @@ function schemaHlavicka(D) {
   return h + '</table></div>';
 }
 
-// Stránka schématu kreslí celý svůj úsek najednou — svislé čáry musí
-// navazovat mezi řádky, takže se nedá skládat řádek po řádku.
-function schemaRadkyHtml(cast) {
-  return stromKresba(stromRadkyProKresbu(cast), STROM_SCHEMA);
+// ── rozvržení schématu na papír (v9.97) ─────────────────────────────
+// Hlášení Jiřího Roubalíka 2026-09-24: „Schéma k tisku ukazuje dobře první
+// stránku, ta druhá nenavazuje. Možná by bylo lepší to trochu zmenšit, nebo
+// naležato a dát to vedle sebe." Do v9.96 se řádky krájely na stránky
+// a každý kus se kreslil jako samostatný strom — `rodic` ukazoval mimo kus,
+// takže na druhé straně chyběly čáry i odsazení.
+//
+// Teď se geometrie počítá z CELÉHO stromu a stránka i sloupec kreslí jen svůj
+// úsek (`stromKresba` s `o.od`/`o.do`), takže čáry pokračují. Program navíc
+// sám vybere rozvržení, které se vejde na co nejméně listů:
+//   na výšku · na šířku ve dvou sloupcích vedle sebe · zmenšeno na 90 / 80 %.
+// Přednost má menší počet listů, pak větší písmo, pak orientace na výšku.
+// A3 se nenabízí — většina kanceláří má jen tiskárnu na A4.
+var __schemaRezim = 'auto';
+var SCHEMA_MERITKA = [1, 0.9, 0.8];
+var SCHEMA_REZIMY = {
+  auto:  [{ sirka: false, sloupcu: 1 }, { sirka: true, sloupcu: 2 }],
+  vysku: [{ sirka: false, sloupcu: 1 }],
+  sirku: [{ sirka: true, sloupcu: 2 }]
+};
+var SCHEMA_OKRAJ = { nahore: 14, dole: 10, bok: 14, mezera: 8 };
+
+// Rozměry kresby zmenšené v poměru k — čísla i hodnoty v mm/pt uvnitř textů
+// (písmo, vnitřní okraj rámečku). Tloušťky čar zůstávají, ty se tisknou dobře.
+function stromMeritko(o, k) {
+  var n = {};
+  Object.keys(o).forEach(function(kl) {
+    var v = o[kl];
+    if (typeof v === 'number') n[kl] = v * k;
+    else if (typeof v === 'string' && kl !== 'cara' && kl !== 'ram')
+      n[kl] = v.replace(/(\d*\.?\d+)(mm|pt)/g, function(_, c, j) { return (Math.round(parseFloat(c) * k * 100) / 100) + j; });
+    else n[kl] = v;
+  });
+  return n;
 }
 
-function schemaStranka(D, cast, cislo, celkem, prvni) {
-  var p = document.createElement('div');
-  p.className = 'a4';
-  p.style.cssText = 'padding:14mm 14mm 10mm;background:#fff;color:#000;min-height:0';
-  var h = prvni ? schemaHlavicka(D) : '';
-  h += schemaRadkyHtml(cast);
+function schemaCesta(radky, i) {
+  var cesta = [], r = radky[i];
+  while (r && r.rodic !== undefined && r.rodic >= 0) {
+    r = radky[r.rodic];
+    if (r) cesta.unshift((r.rozv && r.rozv.nazev) || r.nazev || '?');
+  }
+  return cesta;
+}
+
+function schemaPokracovani(radky, i, k) {
+  var cesta = schemaCesta(radky, i);
+  if (!cesta.length) return '';
+  return '<div style="font-size:' + (7.5 * k).toFixed(2) + 'pt;color:#888;font-style:italic;margin-bottom:' +
+    (1.2 * k).toFixed(2) + 'mm">pokračování — ' + esc(cesta.join(' › ')) + '</div>';
+}
+
+function schemaPaticka(D, cislo, celkem) {
   // margin-top:auto — .a4 je flex sloupec, zápatí tak sedí u dolního okraje
-  // papíru jako u zbytku zprávy, ne hned pod stromem.
-  h += '<div style="margin-top:auto;padding-top:2mm;border-top:.5pt solid #999;font-size:7.5pt;color:#666;' +
-       'display:flex;justify-content:space-between">' +
-       '<span>' + esc((D && D.misto) || '') + '</span><span>strana ' + cislo + ' / ' + celkem + '</span></div>';
+  return '<div style="margin-top:auto;padding-top:2mm;border-top:.5pt solid #999;font-size:7.5pt;color:#666;' +
+    'display:flex;justify-content:space-between">' +
+    '<span>' + esc((D && D.misto) || '') + '</span><span>strana ' + cislo + ' / ' + celkem + '</span></div>';
+}
+
+// Změří výšky řádků, šířku stromu, hlavičku a zápatí. Měří se v obrazovce
+// náhledu (skrytá nemá rozměry) a v kontejneru přesně tak širokém jako sloupec.
+function schemaZmer(D, radky, o, sirkaMm, k) {
+  var box = document.getElementById('schema-pdf-pages');
+  var mmNaPx = 96 / 25.4;
+  var m = document.createElement('div');
+  m.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;background:#fff;color:#000;width:' + sirkaMm + 'mm';
+  m.innerHTML = '<div data-z="h">' + schemaHlavicka(D) + '</div>' +
+    '<div data-z="p">' + schemaPokracovani([{ rodic: -1, nazev: 'X' }, { rodic: 0 }], 1, k) + '</div>' +
+    '<div data-z="f" style="display:flex;flex-direction:column">' + schemaPaticka(D, 1, 1) + '</div>' +
+    '<div data-z="s">' + stromKresba(radky, o) + '</div>' +
+    '<div data-z="w" style="width:0;white-space:nowrap">' + stromKresba(radky, o) + '</div>';
+  box.appendChild(m);
+  function v(sel) { return m.querySelector('[data-z="' + sel + '"]').getBoundingClientRect().height / mmNaPx; }
+  var vysky = Array.prototype.map.call(m.querySelector('[data-z="s"]').children, function(el) {
+    return el.getBoundingClientRect().height / mmNaPx;
+  });
+  var sirka = 0;
+  Array.prototype.forEach.call(m.querySelector('[data-z="w"]').children, function(el) {
+    sirka = Math.max(sirka, el.scrollWidth / mmNaPx);
+  });
+  var vysl = { vysky: vysky, sirka: sirka, hlavicka: v('h'), pokracovani: v('p'), paticka: v('f') + 2 };
+  box.removeChild(m);
+  return vysl;
+}
+
+// Rozdělí řádky do sloupců. Nový sloupec začíná, když se řádek nevejde;
+// zbytek stromu v něm pokračuje (čáry navazují). Samostatný strom (další
+// hlavní rozváděč) se radši přesune do nového sloupce celý, když se tam
+// vejde a stávající sloupec je aspoň z poloviny plný.
+function schemaRozlozit(radky, mer, varianta, rezerva) {
+  var H = varianta.sirka ? 210 : 297;
+  var cista = H - SCHEMA_OKRAJ.nahore - SCHEMA_OKRAJ.dole - mer.paticka - rezerva;
+  function dostupne(sloupec) {
+    return cista - (Math.floor(sloupec / varianta.sloupcu) === 0 ? mer.hlavicka : 0);
+  }
+  var sloupce = [], od = 0, vyska = 0, idx = 0;
+  function uzavri(i) { sloupce.push({ od: od, do: i }); od = i; idx++; vyska = 0; }
+  function zacatek(i) { return (radky[i].rodic !== undefined && radky[i].rodic >= 0) ? mer.pokracovani : 0; }
+  vyska = 0;
+  for (var i = 0; i < radky.length; i++) {
+    if (i === od) vyska = zacatek(i);
+    var h = mer.vysky[i] || 0;
+    var jeKoren = !(radky[i].rodic >= 0);
+    if (jeKoren && i > od) {
+      var konec = i + 1;
+      while (konec < radky.length && radky[konec].rodic >= 0) konec++;
+      var strom = 0;
+      for (var q = i; q < konec; q++) strom += mer.vysky[q] || 0;
+      if (vyska + strom > dostupne(idx) && strom <= dostupne(idx + 1) && vyska >= dostupne(idx) / 2) {
+        uzavri(i); vyska = zacatek(i);
+      }
+    }
+    if (i > od && vyska + h > dostupne(idx)) {
+      // Rozváděč nezůstane na konci sloupce sám bez svého prvního vývodu —
+      // přesune se s ním (jako nadpis, který nesmí viset na konci stránky).
+      if (radky[i].rodic === i - 1 && i - 1 > od) {
+        uzavri(i - 1); vyska = zacatek(i - 1) + (mer.vysky[i - 1] || 0);
+      } else { uzavri(i); vyska = zacatek(i); }
+    }
+    vyska += h;
+  }
+  sloupce.push({ od: od, do: radky.length });
+  var stran = Math.ceil(sloupce.length / varianta.sloupcu);
+  return { sloupce: sloupce, stran: stran };
+}
+
+function schemaNavrh(D, radky) {
+  var zaklad = stromRadkyProKresbu(radky);
+  var nejlepsi = null, nouze = null;
+  (SCHEMA_REZIMY[__schemaRezim] || SCHEMA_REZIMY.auto).forEach(function(v) {
+    var sirkaStr = (v.sirka ? 297 : 210) - 2 * SCHEMA_OKRAJ.bok;
+    var sirkaSl = (sirkaStr - (v.sloupcu - 1) * SCHEMA_OKRAJ.mezera) / v.sloupcu;
+    SCHEMA_MERITKA.forEach(function(k) {
+      var o = stromMeritko(STROM_SCHEMA, k);
+      var mer = schemaZmer(D, zaklad, o, sirkaSl, k);
+      var roz = schemaRozlozit(radky, mer, v, 2);
+      var n = { sirka: v.sirka, sloupcu: v.sloupcu, k: k, o: o, sirkaSl: sirkaSl, mer: mer, roz: roz,
+                vejdeSe: mer.sirka <= sirkaSl + 0.5 };
+      if (!nouze) nouze = n;
+      if (!n.vejdeSe) return;
+      if (!nejlepsi || n.roz.stran < nejlepsi.roz.stran ||
+          (n.roz.stran === nejlepsi.roz.stran && n.k > nejlepsi.k)) nejlepsi = n;
+    });
+  });
+  return nejlepsi || nouze;
+}
+
+function schemaStranka(D, radky, n, sloupce, cislo, celkem, prvni) {
+  var p = document.createElement('div');
+  p.className = n.sirka ? 'a4 a4-landscape' : 'a4';
+  p.style.cssText = 'padding:' + SCHEMA_OKRAJ.nahore + 'mm ' + SCHEMA_OKRAJ.bok + 'mm ' + SCHEMA_OKRAJ.dole +
+    'mm;background:#fff;color:#000;min-height:0';
+  var zaklad = stromRadkyProKresbu(radky);
+  var h = prvni ? schemaHlavicka(D) : '';
+  h += '<div style="display:flex;gap:' + SCHEMA_OKRAJ.mezera + 'mm;align-items:flex-start">';
+  sloupce.forEach(function(sl) {
+    var o = {}; Object.keys(n.o).forEach(function(kl) { o[kl] = n.o[kl]; });
+    o.od = sl.od; o.do = sl.do;
+    h += '<div data-schema-sloupec style="flex:0 0 ' + n.sirkaSl.toFixed(2) + 'mm;width:' + n.sirkaSl.toFixed(2) + 'mm">' +
+      schemaPokracovani(radky, sl.od, n.k) + stromKresba(zaklad, o) + '</div>';
+  });
+  h += '</div>' + schemaPaticka(D, cislo, celkem);
   p.innerHTML = h;
   return p;
 }
@@ -9357,34 +9530,46 @@ function schemaVykreslit(D, radky) {
   var box = document.getElementById('schema-pdf-pages');
   if (!box) return;
   // Obrazovku je nutné ukázat DŘÍV, než se měří výška — ve skryté obrazovce
-  // mají prvky nulovou velikost a dělení stránek vyjde mimo (stejná past
-  // jako u náhledu plánu).
+  // mají prvky nulovou velikost (stejná past jako u náhledu plánu).
   showScreen('schema-pdf');
+  var sel = document.getElementById('schema-rozvrzeni');
+  if (sel) sel.value = __schemaRezim;
+  window.__schemaData = { D: D, radky: radky };
   var mmNaPx = 96 / 25.4;
-  var naStranu = radky.length;
-  for (var pokus = 0; pokus < 20; pokus++) {
+  var n = schemaNavrh(D, radky);
+  // Kontrola skutečné výšky — měření řádků po jednom se může o kousek
+  // splést (zaokrouhlení, zalomení). Přeteče-li strana, přidá se rezerva.
+  for (var rezerva = 2; rezerva < 40; rezerva += 6) {
+    n.roz = schemaRozlozit(radky, n.mer, n, rezerva);
     box.innerHTML = '';
-    var stranky = [];
-    for (var i = 0; i < radky.length; i += naStranu) stranky.push(radky.slice(i, i + naStranu));
-    stranky.forEach(function(cast, idx) {
-      box.appendChild(schemaStranka(D, cast, idx + 1, stranky.length, idx === 0));
-    });
+    var stran = n.roz.stran;
+    for (var s = 0; s < stran; s++) {
+      var sl = n.roz.sloupce.slice(s * n.sloupcu, (s + 1) * n.sloupcu);
+      box.appendChild(schemaStranka(D, radky, n, sl, s + 1, stran, s === 0));
+    }
     var prilis = false;
     Array.prototype.forEach.call(box.querySelectorAll('.a4'), function(el) {
-      if (el.getBoundingClientRect().height / mmNaPx > 290) prilis = true;
+      if (el.getBoundingClientRect().height / mmNaPx > (n.sirka ? 210 : 297) + 0.5) prilis = true;
     });
-    if (!prilis || naStranu <= 4) break;
-    naStranu = Math.max(4, naStranu - 3);
+    if (!prilis) break;
   }
-  // min-height:0 potřebuje jen měření (jinak by každá stránka „naměřila"
-  // 297 mm a dělení by nikdy nic nerozdělilo). Pro náhled se vrací, aby
-  // list vypadal jako papír, ne jako útržek.
+  // min-height:0 potřebuje jen měření; pro náhled se vrací, ať list vypadá
+  // jako papír, ne jako útržek.
   Array.prototype.forEach.call(box.querySelectorAll('.a4'), function(el) { el.style.minHeight = ''; });
+  window.__schemaNavrh = { sirka: n.sirka, sloupcu: n.sloupcu, k: n.k, stran: n.roz.stran };
   var pocet = box.querySelectorAll('.a4').length;
   var info = document.getElementById('schema-pdf-info');
   if (info) info.textContent = radky.length + (radky.length === 1 ? ' rozváděč' : (radky.length < 5 ? ' rozváděče' : ' rozváděčů')) +
-    ' · ' + pocet + (pocet === 1 ? ' strana' : (pocet < 5 ? ' strany' : ' stran'));
+    ' · ' + pocet + (pocet === 1 ? ' list' : (pocet < 5 ? ' listy' : ' listů')) +
+    ' · ' + (n.sirka ? 'na šířku' : 'na výšku') +
+    (n.k < 1 ? ', zmenšeno na ' + Math.round(n.k * 100) + ' %' : '');
   window.scrollTo(0, 0);
+}
+
+function schemaRozvrzeniZmena(sel) {
+  __schemaRezim = sel.value || 'auto';
+  var d = window.__schemaData;
+  if (d) schemaVykreslit(d.D, d.radky);
 }
 
 function schemaNahledZpet() { showScreen(__schemaZpet || 'form'); }
