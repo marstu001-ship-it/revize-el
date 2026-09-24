@@ -1166,6 +1166,12 @@ body.fa-open #stavovy-radek{left:var(--fa-sirka,280px)}
 .kt-pata{font-size:.6rem;color:var(--muted);padding:.3rem .6rem .15rem;border-top:1px solid var(--border);
   margin-top:.25rem}
 @media print{.kt-menu{display:none!important}}
+/* Výběr víc řádků v tabulce měření (v9.95). Vnitřní stín místo pozadí —
+   řádky i buňky mají vlastní inline barvu (obvod, chránič, jiný řádek),
+   kterou by pozadí nepřebilo. */
+#rozvadece-container tr.mr-vybrany > td{box-shadow:inset 0 0 0 999px rgba(43,87,154,.17)}
+html.dark #rozvadece-container tr.mr-vybrany > td{box-shadow:inset 0 0 0 999px rgba(120,160,230,.24)}
+#stavovy-radek .sr-vyber{color:var(--accent2);font-weight:600}
 .plan-popis{font-size:.7rem;color:var(--muted);margin-left:.45rem;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;max-width:220px;display:inline-block;vertical-align:bottom}
 .plan-nazev{cursor:pointer}
@@ -1214,7 +1220,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.94<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.95<span class="ver-date"> · 2026-09-24</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4680,6 +4686,10 @@ function stavovyRadek() {
   }
   var zav = q('#zavady-list .zavada-item');
   if (zav) casti.push('<span>' + zav + '× závada</span>');
+  // Výběr víc řádků (v9.95) — tady se technik dozví, co s ním jde dělat.
+  var nv = (typeof mrVybraneHlavy === 'function') ? mrVybraneHlavy().length : 0;
+  if (nv) casti.push('<span class="sr-vyber">Vybráno: ' + mrPocetRadku(nv) +
+    ' · Ctrl+C kopírovat · Ctrl+X vyjmout · Del smazat · Esc zrušit</span>');
   var stav = window.__formReadOnly
     ? '<span class="sr-ok">🔒 dokončená zpráva</span>'
     : (window.__formDirty
@@ -5263,6 +5273,9 @@ document.addEventListener('paste', function (e) {
   var tbody = tr ? tr.parentNode : null;
   if (!td || !tr || !tbody || !jeTabulkaObvodu(tbody)) return;
   var text = (e.clipboardData || window.clipboardData).getData('text');
+  // Řádky, které program sám zkopíroval (v9.95), se vloží celé pod tenhle
+  // řádek — i s chráničem a výběrem v rozbalovátkách, ne přes dialog.
+  if (mrVlozitZeSchranky(text, tr)) { e.preventDefault(); return; }
   if (!text || (text.indexOf('\t') < 0 && !/\n.*\S/.test(text))) return;   // jedna buňka
   e.preventDefault();
   vlozitMereniOtevrit({
@@ -5500,6 +5513,324 @@ function vlozitListVybrat(i) {
   vlozitMereniNahled();
 }
 
+// ═══ VÝBĚR VÍC ŘÁDKŮ + Ctrl+C / Ctrl+X / Ctrl+V / Delete (v9.95) ═════════
+// Body 3 a 5 ze seznamu „🧭 PRAVIDLO". Jako v Excelu: **Ctrl+klik** přidá
+// nebo ubere řádek, **Shift+klik** označí úsek, obyčejný klik výběr zruší.
+// S vybranými řádky pak jde **Ctrl+C / Ctrl+X / Delete** a kdekoli jinde —
+// i v jiném rozváděči nebo v jiné zprávě — **Ctrl+V**.
+//
+// Tři rozhodnutí, která se od Excelu liší a proč:
+// 1. **Ctrl+V řádky VKLÁDÁ pod ten, na kterém se stojí, nepřepisuje.**
+//    Excel vložením přepíše cílové buňky; tady by to znamenalo tiše přepsat
+//    naměřený obvod. Kdo chce přepsat, smaže a vloží — a obojí jde ZPĚT.
+// 2. **Vyjmout maže hned** (s ZPĚT), ne až při vložení. Excel nechává
+//    „mravenčí" rámeček, dokud se nevloží; na dotyku a přes víc zpráv by to
+//    byl stav, který nikdo nevidí.
+// 3. **Kopie nepřebírá vazbu „napájí rozváděč"** — dva jističe napájející
+//    týž rozváděč by strom hlásil jako chybu. Při VYJMUTÍ (přesunu) se vazba
+//    naopak zachová, protože řádek jen mění místo.
+//
+// Kopíruje se **klonováním řádků**, stejně jako ⧉ u obvodu a chrániče
+// (`copyRow`, `copyRcdGroup`) — do schránky programu se ukládají odpojené
+// kopie, takže vložení funguje i po otevření jiné zprávy. Do systémové
+// schránky jde zároveň text oddělený tabulátory, takže řádky jdou vložit
+// i do Excelu.
+var __mrVyber = [];        // hlavy vybraných jednotek (řádek / hlavička chrániče)
+var __mrKotva = null;      // odkud se počítá úsek u Shift+klik
+var __mrSchranka = null;   // { vzory: [tr], sely: [[hodnoty selectů]], tsv, presun, pocet }
+
+var MR_RADEK = '#rozvadece-container .meas-table tbody tr[data-rowtype]';
+
+// Chránič je jeden celek: hlavička + podřádky. Vybírá, kopíruje i maže se
+// vždycky celý — stejně jako ho kopíruje a maže ⧉ ✕ u jeho posledního řádku.
+function mrHlava(tr) {
+  var g = tr && tr.dataset && tr.dataset.rcdGroup;
+  if (!g || !tr.parentNode) return tr;
+  return tr.parentNode.querySelector('tr[data-rcd-group="' + g + '"][data-rowtype="rcd-header"]') || tr;
+}
+function mrClenove(hlava) {
+  var g = hlava.dataset.rcdGroup;
+  if (!g || !hlava.parentNode) return [hlava];
+  return Array.prototype.slice.call(hlava.parentNode.querySelectorAll('tr[data-rcd-group="' + g + '"]'));
+}
+function mrHlavyTabulky(tbody) {
+  return Array.prototype.filter.call(tbody.children, function (tr) {
+    return tr.dataset.rowtype && tr.dataset.rowtype !== 'rcd-mereni';
+  });
+}
+function mrVybraneHlavy() {
+  __mrVyber = __mrVyber.filter(function (h) { return document.contains(h); });
+  // Vždycky v pořadí tabulky, ne v pořadí klikání — kopie má vyjít
+  // ve stejném sledu, v jakém řádky stojí.
+  if (!__mrVyber.length) return [];
+  var poradi = mrHlavyTabulky(__mrVyber[0].parentNode);
+  return __mrVyber.slice().sort(function (a, b) { return poradi.indexOf(a) - poradi.indexOf(b); });
+}
+function mrVykreslit() {
+  Array.prototype.forEach.call(document.querySelectorAll('tr.mr-vybrany'), function (tr) {
+    tr.classList.remove('mr-vybrany');
+  });
+  mrVybraneHlavy().forEach(function (h) {
+    mrClenove(h).forEach(function (tr) { tr.classList.add('mr-vybrany'); });
+  });
+  if (typeof stavovyRadek === 'function') stavovyRadek();
+}
+function mrZrusit() {
+  __mrVyber = [];
+  __mrKotva = null;
+  mrVykreslit();
+}
+function mrEditovatelne(el) {
+  return !!(el && el.closest && el.closest('input, textarea, select, [contenteditable="true"]'));
+}
+
+function mrPocetRadku(n) {
+  return n + ' ' + (n === 1 ? 'řádek' : (n >= 2 && n <= 4 ? 'řádky' : 'řádků'));
+}
+
+// Hodnota ve vizuálním sloupci — i z `<select>` a z políčka jen pro čtení
+// (Fáze), protože do Excelu se kopíruje, co je vidět.
+function mrBunka(tr, sloupec) {
+  var c = 0;
+  for (var i = 0; i < tr.children.length; i++) {
+    var span = tr.children[i].colSpan || 1;
+    if (sloupec >= c && sloupec < c + span) {
+      if (span !== 1) return '';
+      var el = tr.children[i].querySelector('input, select');
+      return el ? String(el.value || '') : '';
+    }
+    c += span;
+  }
+  return '';
+}
+function mrTsv(radky) {
+  return radky.map(function (tr) {
+    var bunky;
+    if (tr.dataset.rowtype === 'info') {
+      // „Jiný řádek" nemá sloupce — popis do názvu, hodnota na konec,
+      // stejně jako v exportu měřicího listu do .xlsx.
+      var p = tr.querySelector('.info-popis'), h = tr.querySelector('.info-hodnota');
+      bunky = TEREN_KOLONKY.map(function (s) {
+        if (s.klic === 'c') return mrBunka(tr, 0);
+        if (s.klic === 'n') return p ? p.value : '';
+        if (s.klic === 'kabel') return h ? h.value : '';
+        return '';
+      });
+    } else {
+      bunky = TEREN_KOLONKY.map(function (s) { return mrBunka(tr, s.i); });
+    }
+    return bunky.map(function (x) { return String(x).replace(/[\t\r\n]+/g, ' '); }).join('\t');
+  }).join('\r\n');
+}
+
+// Odpojená kopie řádku pro schránku programu. `cloneNode` přenáší hodnoty
+// `<input>`, ale **ne výběr `<select>`** (past z `copyRcdGroup`) — ty se
+// proto pamatují zvlášť a dosadí se při vložení.
+function mrKlon(tr) {
+  var k = tr.cloneNode(true);
+  k.classList.remove('mr-vybrany', 'row-dragging', 'row-drag-above', 'row-drag-below');
+  delete k.dataset.dndInit;
+  k.querySelectorAll('.drag-handle').forEach(function (h) { h.remove(); });
+  var prvni = k.querySelector('td');
+  if (prvni) prvni.classList.remove('dnd-num-cell');
+  return k;
+}
+
+function mrKopirovat(hlavy, vyjmout) {
+  hlavy = hlavy || mrVybraneHlavy();
+  if (!hlavy.length) return '';
+  if (vyjmout && window.__formReadOnly) {
+    showToast('Zpráva je dokončená — vyjmout z ní nejde, zkopírovat ano.');
+    return '';
+  }
+  var radky = [];
+  hlavy.forEach(function (h) { mrClenove(h).forEach(function (r) { radky.push(r); }); });
+  var tsv = mrTsv(radky);
+  __mrSchranka = {
+    vzory: radky.map(mrKlon),
+    sely: radky.map(function (r) {
+      return Array.prototype.map.call(r.querySelectorAll('select'), function (s) { return s.value; });
+    }),
+    tsv: tsv,
+    presun: !!vyjmout,
+    pocet: hlavy.length
+  };
+  if (vyjmout) {
+    var tbody = hlavy[0].parentNode;
+    __mrVyber = [];
+    deleteRowsWithUndo(radky, 'Vyjmuto ' + mrPocetRadku(hlavy.length) + ' — Ctrl+V je vloží jinam', tbody);
+    mrVykreslit();
+  } else {
+    showToast('📋 Zkopírováno ' + mrPocetRadku(hlavy.length) +
+      ' — Ctrl+V je vloží pod řádek, na kterém stojíte (i v jiném rozváděči nebo zprávě).', { timeout: 6000 });
+  }
+  return tsv;
+}
+
+// Vloží řádky ze schránky programu POD `cilTr` (u chrániče až za jeho
+// podřádky — `ktKotva`), bez cíle na konec první tabulky.
+function mrVlozit(cilTr) {
+  var S = __mrSchranka;
+  if (!S || !S.vzory.length) return false;
+  if (window.__formReadOnly) { showToast('Zpráva je dokončená — nejdřív ji vraťte mezi rozpracované.'); return true; }
+  var tbody = cilTr && cilTr.parentNode ? cilTr.parentNode
+    : ((mrVybraneHlavy()[0] || {}).parentNode || document.querySelector('#rozvadece-container .meas-table tbody'));
+  if (!tbody || !jeTabulkaObvodu(tbody)) return false;
+  var kotva = cilTr ? ktKotva(cilTr, 'pod') : null;
+  if (!cilTr) {
+    var posl = mrVybraneHlavy();
+    kotva = posl.length ? ktKotva(posl[posl.length - 1], 'pod') : tbody.lastElementChild;
+  }
+  var skupiny = {};
+  var nove = [];
+  S.vzory.forEach(function (vzor, vi) {
+    var c = vzor.cloneNode(true);
+    Array.prototype.forEach.call(c.querySelectorAll('select'), function (s, si) {
+      if (S.sely[vi] && S.sely[vi][si] !== undefined) s.value = S.sely[vi][si];
+    });
+    // Každé vložení = nový chránič, jinak by ✕ jednoho mazal i ten druhý.
+    if (c.dataset.rcdGroup) {
+      var stara = c.dataset.rcdGroup;
+      if (!skupiny[stara]) { rcdGroupCounter++; skupiny[stara] = 'rcd-' + rcdGroupCounter; }
+      c.dataset.rcdGroup = skupiny[stara];
+      c.querySelectorAll('[data-group]').forEach(function (b) { b.dataset.group = skupiny[stara]; });
+      if (c.dataset.rowtype === 'rcd-header') {
+        var sel = c.querySelector('select');
+        if (sel) sel.addEventListener('change', function () { rcdTypZmenen(this); });
+        // Hlavička chrániče načtená z archivu má ✕ s posluchačem, který
+        // klonování nepřežije — dostane obyčejnou akci jako ostatní tlačítka.
+        c.querySelectorAll('button.del-btn:not([data-action])').forEach(function (b) {
+          b.dataset.action = 'delRcdGroup';
+          b.dataset.group = c.dataset.rcdGroup;
+        });
+      }
+    }
+    if (!S.presun) { delete c.dataset.napaji; delete c.dataset.napajiNazev; }
+    if (kotva && kotva.parentNode === tbody) tbody.insertBefore(c, kotva.nextSibling);
+    else tbody.appendChild(c);
+    kotva = c;
+    nove.push(c);
+  });
+  nove.forEach(function (c) { if (c.dataset.rowtype !== 'rcd-mereni') initRowDnd(c, tbody); });
+  // Přesun platí jen jednou — další Ctrl+V už je kopie a vazbu nepřebírá.
+  S.presun = false;
+  renumberRows(tbody);
+  if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
+  if (typeof stromNaplnitNapajenZ === 'function') stromNaplnitNapajenZ();
+  window.__formDirty = true;
+  if (typeof updateUlozitStav === 'function') updateUlozitStav();
+  // Jako v Excelu: vložené řádky zůstanou označené.
+  __mrVyber = nove.filter(function (c) { return c.dataset.rowtype !== 'rcd-mereni'; });
+  __mrKotva = __mrVyber[0] || null;
+  mrVykreslit();
+  showToast('📥 Vloženo ' + mrPocetRadku(S.pocet) + '.', {
+    timeout: 8000, actionLabel: '↩ ZPĚT',
+    action: function () {
+      nove.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
+      renumberRows(tbody);
+      if (typeof stromZajistitTlacitka === 'function') stromZajistitTlacitka();
+      mrZrusit();
+      showToast('Vložení vzato zpět');
+    }
+  });
+  return true;
+}
+
+function mrSmazat(hlavy) {
+  hlavy = hlavy || mrVybraneHlavy();
+  if (!hlavy.length || window.__formReadOnly) return;
+  var radky = [];
+  hlavy.forEach(function (h) { mrClenove(h).forEach(function (r) { radky.push(r); }); });
+  var tbody = hlavy[0].parentNode;
+  __mrVyber = [];
+  deleteRowsWithUndo(radky, 'Smazáno ' + mrPocetRadku(hlavy.length), tbody);
+  mrVykreslit();
+}
+
+// Klik do tabulky: s Ctrl / Shift se vybírá, bez nich se výběr ruší.
+document.addEventListener('mousedown', function (e) {
+  if (e.button !== 0) return;
+  var tr = e.target && e.target.closest ? e.target.closest(MR_RADEK) : null;
+  if (!tr) return;                          // mimo tabulku (lišta, menu) výběr drží
+  if (e.target.closest('button, select, .drag-handle, .fill-handle')) return;
+  var mod = e.ctrlKey || e.metaKey || e.shiftKey;
+  if (!mod) { if (__mrVyber.length) mrZrusit(); return; }
+  // Kurzor do buňky nepustit — jinak by Ctrl+C kopírovalo text buňky,
+  // ne řádky, a Shift+klik by označoval písmena.
+  e.preventDefault();
+  if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
+    document.activeElement.blur();
+  }
+  var h = mrHlava(tr);
+  var vyb = mrVybraneHlavy();
+  if (vyb.length && vyb[0].parentNode !== h.parentNode) { vyb = []; __mrKotva = null; }
+  if (e.shiftKey && __mrKotva && __mrKotva.parentNode === h.parentNode) {
+    var hl = mrHlavyTabulky(h.parentNode);
+    var a = hl.indexOf(__mrKotva), b = hl.indexOf(h);
+    __mrVyber = hl.slice(Math.min(a, b), Math.max(a, b) + 1);
+  } else if (e.ctrlKey || e.metaKey) {
+    var i = vyb.indexOf(h);
+    if (i >= 0) vyb.splice(i, 1); else vyb.push(h);
+    __mrVyber = vyb;
+    __mrKotva = h;
+  } else {
+    __mrVyber = [h];
+    __mrKotva = h;
+  }
+  mrVykreslit();
+});
+
+// Schránka: události `copy`/`cut`/`paste`, ne klávesy — tak se do systémové
+// schránky dá zapsat text pro Excel a funguje to i z nabídky prohlížeče.
+document.addEventListener('copy', function (e) {
+  if (!mrVybraneHlavy().length || mrEditovatelne(document.activeElement)) return;
+  var tsv = mrKopirovat(null, false);
+  if (!tsv) return;
+  e.preventDefault();
+  if (e.clipboardData) e.clipboardData.setData('text/plain', tsv);
+});
+document.addEventListener('cut', function (e) {
+  if (!mrVybraneHlavy().length || mrEditovatelne(document.activeElement)) return;
+  var tsv = mrKopirovat(null, true);
+  e.preventDefault();
+  if (tsv && e.clipboardData) e.clipboardData.setData('text/plain', tsv);
+});
+// Vložení mimo buňku (stojí se na vybraných řádcích). Vložení DO buňky
+// chytá handler z v9.92 a volá odtud `mrVlozitZeSchranky`.
+document.addEventListener('paste', function (e) {
+  if (mrEditovatelne(e.target) || mrEditovatelne(document.activeElement)) return;
+  var form = document.getElementById('screen-form');
+  if (!form || !form.classList.contains('active')) return;
+  var text = (e.clipboardData || window.clipboardData).getData('text') || '';
+  var vyb = mrVybraneHlavy();
+  if (__mrSchranka && (text === __mrSchranka.tsv || !text)) {
+    e.preventDefault();
+    mrVlozit(null);
+    return;
+  }
+  // Cizí blok z Excelu → dialog z v9.92, do rozváděče vybraných řádků.
+  if (vyb.length && text && (text.indexOf('\t') >= 0 || /\n.*\S/.test(text)) && !window.__formReadOnly) {
+    e.preventDefault();
+    vlozitMereniOtevrit({ tbody: vyb[0].parentNode, text: text, od: 1 });
+  }
+});
+// Vloží naše řádky, když se Ctrl+V stiskne v buňce a ve schránce je přesně
+// to, co program sám zkopíroval. Vrací true, když si vložení vzal.
+function mrVlozitZeSchranky(text, tr) {
+  if (!__mrSchranka || !text || text !== __mrSchranka.tsv) return false;
+  return mrVlozit(tr);
+}
+
+document.addEventListener('keydown', function (e) {
+  if (!__mrVyber.length || mrEditovatelne(document.activeElement)) return;
+  if (e.key === 'Escape') { mrZrusit(); return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (!mrVybraneHlavy().length) return;
+    e.preventDefault();
+    mrSmazat();
+  }
+});
+
 // ═══ PRAVÝ KLIK = KONTEXTOVÉ MENU (v9.91) ════════════════════════════════
 // Word, Excel i Outlook mají u každého řádku pravý klik; program neměl ani
 // jeden (`contextmenu` 0×).
@@ -5586,8 +5917,38 @@ function ktVlozitLze(radek) {
   return !!(radek.dataset && KONTEXT_VLOZIT[radek.dataset.rowtype] && radek.parentNode);
 }
 
+function ktDoSchranky(t) {
+  // Z nabídky není událost `copy`, takže systémová schránka se plní přes
+  // Clipboard API. Když ji prohlížeč nedovolí, zůstane aspoň schránka
+  // programu — vložení v programu funguje tak jako tak.
+  try { if (t && navigator.clipboard) navigator.clipboard.writeText(t).catch(function () {}); } catch (e) {}
+}
+
 function ktPolozky(radek, cil) {
   var pol = [];
+  var odSchranky = -1;
+  // Schránka a výběr víc řádků (v9.95) — jen v tabulce měření rozváděčů.
+  // Zkopírovat jde i z dokončené zprávy (jen se čte), vyjmout a vložit ne.
+  if (radek.matches && radek.matches(MR_RADEK)) {
+    var hl = mrHlava(radek);
+    var vyb = mrVybraneHlavy();
+    var cilove = vyb.indexOf(hl) >= 0 ? vyb : [hl];
+    var n = cilove.length;
+    var kolik = n > 1 ? ' vybrané (' + n + ')' : '';
+    pol.push({ popis: '📋\u2002Kopírovat' + kolik + ' do schránky\u2003Ctrl+C',
+      fn: function () { ktDoSchranky(mrKopirovat(cilove, false)); } });
+    if (!window.__formReadOnly) {
+      pol.push({ popis: '✂\u2002Vyjmout' + kolik + '\u2003Ctrl+X',
+        fn: function () { ktDoSchranky(mrKopirovat(cilove, true)); } });
+      if (__mrSchranka) {
+        pol.push({ popis: '📥\u2002Vložit zkopírované pod (' + mrPocetRadku(__mrSchranka.pocet) + ')\u2003Ctrl+V',
+          fn: function () { mrVlozit(radek); } });
+      }
+      if (n > 1) pol.push({ popis: '✕\u2002Smazat vybrané (' + n + ')\u2003Del',
+        fn: function () { mrSmazat(cilove); } });
+    }
+    odSchranky = pol.length;
+  }
   // Otevřít — u řádku archivu, na který se kliká kvůli otevření zprávy.
   var akce = radek.getAttribute ? radek.getAttribute('data-action') : '';
   if (akce === 'otevritZpravu' || akce === 'formArchivOtevrit') {
@@ -5621,6 +5982,7 @@ function ktPolozky(radek, cil) {
       pol.push({ popis: popis, el: b });
     });
   });
+  if (odSchranky > 0 && pol.length > odSchranky) pol[odSchranky].oddel = true;
   if (ktVlozitLze(radek)) {
     pol.push({ popis: '⤒ Vložit řádek nad', oddel: true,
       fn: function () { kontextVlozit(radek, 'nad'); } });

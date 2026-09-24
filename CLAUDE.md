@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.94 · 2026-09-24**
+**Aktuální verze: v9.95 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -292,6 +292,82 @@ prázdná buňka nepřepíše naměřené, využití prázdných řádků, delš
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
 
+## Výběr víc řádků + Ctrl+C / Ctrl+X / Ctrl+V / Delete (v9.95)
+
+Pokyn uživatele 2026-09-24 k seznamu z oddílu „🧭 PRAVIDLO": **„3+5 udělej"**
+(bod 9 odmítl, u bodu 7 nevěděl, co by se kontrolovalo — vysvětleno, čeká).
+Týká se **tabulky měření rozváděčů** (`MR_RADEK`); LPS a stroje ne.
+
+### Ovládání jako v Excelu
+
+| akce | co dělá |
+|---|---|
+| **Ctrl+klik** | přidá / ubere řádek |
+| **Shift+klik** | úsek od **naposledy kliknutého** řádku (jako Excel) |
+| obyčejný klik do buňky, **Esc** | výběr zruší |
+| **Ctrl+C** | zkopíruje do schránky programu **i do systémové** (TSV pro Excel) |
+| **Ctrl+X** | vyjme — **smaže hned**, s ZPĚT |
+| **Ctrl+V** | vloží **pod** řádek, na kterém se stojí — i v jiném rozváděči či zprávě |
+| **Delete** | smaže vybrané, s ZPĚT |
+
+Pravý klik na výběr nabízí totéž („Kopírovat vybrané (N)", „Vyjmout",
+„Smazat vybrané", „Vložit zkopírované pod"). Stavový řádek ukazuje
+**„Vybráno: N řádků · Ctrl+C … · Esc zrušit"** — tam se to technik dozví.
+
+### Kde se to od Excelu vědomě liší
+
+1. **Ctrl+V vkládá, nepřepisuje.** Přepsání cílových buněk by tu znamenalo
+   tiše přepsat naměřený obvod.
+2. **Vyjmout maže hned** (s ZPĚT), ne až při vložení — „mravenčí rámeček"
+   přes víc zpráv a na dotyku by byl stav, který nikdo nevidí.
+3. **Kopie nepřebírá vazbu „napájí rozváděč"** (`dataset.napaji`) — dva
+   jističe na jeden rozváděč hlásí strom jako chybu. **Přesun (Ctrl+X → V)
+   ji zachová**, ale jen při prvním vložení; další Ctrl+V už je kopie.
+
+### Jak je to postavené
+
+- **Ctrl/Shift+klik dělá `preventDefault` na `mousedown` a kurzor z buňky
+  odejde.** Jinak by Ctrl+C kopírovalo text buňky a Shift+klik označoval
+  písmena. Klávesy (Delete, Esc) i `copy`/`cut`/`paste` se chytají **jen
+  když fokus NENÍ v editovatelném poli** — Delete v buňce dál maže písmena
+  a Ctrl+C v buňce bez výběru kopíruje její text (test hlídá obojí).
+- **Schránka se řeší událostmi `copy`/`cut`/`paste`, ne klávesami** — jen
+  tak jde zapsat do systémové schránky text pro Excel. Z kontextového menu
+  událost není, tam se píše přes `navigator.clipboard.writeText` (když ho
+  prohlížeč nedovolí, zůstane aspoň schránka programu).
+- **Kopíruje se klonováním řádků** jako u ⧉ (`copyRow`, `copyRcdGroup`).
+  Schránka programu drží **odpojené klony**, takže vložení funguje i po
+  otevření jiné zprávy. **`cloneNode` nepřenáší výběr `<select>`** (typ
+  chrániče) — hodnoty se pamatují zvlášť (`sely`) a dosazují při vložení.
+- **Chránič je jeden celek** (`mrHlava`/`mrClenove`): Ctrl+klik na podřádek
+  vybere celý, kopie dostane **novou `rcdGroup`** (jinak by ✕ jedné mazal
+  obě) a sedne **až za podřádky** cílového chrániče (`ktKotva`). Hlavička
+  načtená z archivu má ✕ s posluchačem, který klonování nepřežije —
+  dostane `data-action="delRcdGroup"`.
+- **Ctrl+V v buňce** chytá handler z v9.92: když je ve schránce **přesně**
+  text, který program sám zkopíroval (`mrVlozitZeSchranky`), vloží celé
+  řádky; jinak otevře dialog vložení z Excelu. Cizí blok vložený při stání
+  na vybraných řádcích (fokus mimo buňku) jde taky do toho dialogu.
+- **Vložené řádky zůstanou vybrané** (jako v Excelu) a vložení jde ZPĚT.
+- **Dokončená zpráva:** vybrat a **zkopírovat jde** (jen se čte — hodí se na
+  převzetí obvodů do nové zprávy), vyjmout, smazat ani vložit ne. Proto se
+  u dokončené zprávy **kontextové menu nově otevře** s jedinou položkou
+  „Kopírovat do schránky" — `test-kontext.js` upraven.
+- Zvýraznění je `box-shadow: inset`, ne pozadí — řádky a buňky mají vlastní
+  inline barvy, které by pozadí nepřebilo.
+
+**Past v testu:** buňka „Název obvodu" má datalist a **při fokusu se
+dočasně vyprázdní**, když hodnota přesně odpovídá položce nabídky (záměr —
+ať se ukáže celá nabídka; po odchodu se vrátí). Test s názvy „Trouba",
+„Myčka" proto četl prázdné pole. Nejdřív `blur()`, pak číst.
+
+Test: `test-vyber-radku.js` (39 kontrol — Ctrl/Shift+klik, Esc, zvýraznění,
+stavový řádek, TSV v systémové schránce, vložení pod řádek i s hodnotami,
+přečíslování, ZPĚT, jiný rozváděč, jiná zpráva, Ctrl+X přesun, Delete
+s ZPĚT, Delete v buňce maže písmena, chránič jako celek s typem B, ✕ kopie
+nemaže originál, vazba při kopii × přesunu, cizí blok → dialog, Ctrl+C
+v buňce kopíruje text, dokončená zpráva, kontextové menu nad výběrem).
+
 ## Karta v Novinkách k Excelu a pravému kliku (v9.94)
 
 Uživatel schválil 2026-09-24 („schvaluji, pravý klik přidej v tomto jako další
@@ -508,21 +584,24 @@ Seřazeno podle **užitku ku práci**; nic z toho se nedělá bez odsouhlasení.
 2. ~~**Ukotvená hlavička tabulky měření a protokolu spotřebičů.**~~ **HOTOVO ve v9.90** U čtyřiceti
    obvodů se odroluje a technik neví, který sloupec je který. V Plánu
    `position:sticky` na `thead th` funguje, jinde chybí.
-3. **Výběr víc řádků v tabulce měření** (Shift/Ctrl) + hromadně smazat,
-   kopírovat, přesunout. Dnes jde všechno po jednom; archiv a plán to umí.
+3. ~~**Výběr víc řádků v tabulce měření**~~ **HOTOVO ve v9.95** (spolu s bodem 5).
 4. ~~**Pravý klik = kontextové menu.**~~ **HOTOVO ve v9.91** — u řádku nabízí to,
    co jeho tlačítka, u zprávy v archivu Otevřít / Navázat / Dokončit / Smazat,
    navíc vložit nad a pod. **Tlačítka v řádku ale ZŮSTALA** (⧉ ✕ 📄) —
    uživatel je nechtěl odebrat, technici jsou na ně zvyklí.
-5. **Ctrl+C / Ctrl+V nad řádky tabulky** (kopie obvodu i mezi rozváděči).
+5. ~~**Ctrl+C / Ctrl+V nad řádky tabulky**~~ **HOTOVO ve v9.95** — i mezi
+   rozváděči a zprávami, do Excelu jde TSV.
 6. ~~**Ctrl+P = tisk, Ctrl+F = hledat v archivu, F2 = přejmenovat.**~~ **HOTOVO ve v9.90** Ctrl+S
    máme, zbytek ne.
 7. **„Zkontrolovat zprávu" před tiskem** — jako kontrola dokumentu ve Wordu:
    prázdné povinné kolonky, chybějící termín příští revize, nepodepsaný
    technik, závada bez kategorie. Jedno tlačítko, seznam k proklikání.
+   *Uživatel 2026-09-24: „nevím, co by se kontrolovalo" — vysvětleno
+   (ev. číslo, termín příští revize, závada bez kategorie, obvod bez Zsm,
+   hodnota nad limitem; klik na položku skočí na pole). Čeká na rozhodnutí.*
 8. ~~**Najít a nahradit** v textech zprávy (popis, závěr, závady).~~ **HOTOVO ve v9.90**
-9. **Automatický součet** v tabulkách, kde se sčítá (spotřebiče v kW —
-   roadmapa #23).
+9. ~~**Automatický součet**~~ **ODMÍTNUTO** uživatelem 2026-09-24 („nedává
+   mi smysl") — nenabízet znovu.
 10. ~~**Stavový řádek** dole s tím, co program právě udělal~~ **HOTOVO ve v9.90** (uloženo v 13:42,
     12 obvodů, 3 závady) — Word/Excel to mají a nahrazuje to půlku toastů.
 
