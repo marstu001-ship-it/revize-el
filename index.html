@@ -479,6 +479,21 @@ td.dnd-num-cell input{padding-left:15px}
   padding:0!important;border:none!important;background:none!important}
 .teren-radek strong{font-weight:600}
 .teren-radek .tm{color:var(--muted);font-size:.78rem}
+/* Chytrá lupa v Novinkách (v9.100) */
+.nov-lupa{position:sticky;top:.5rem;z-index:5;display:flex;align-items:center;gap:.4rem;
+  background:var(--surface);border:1px solid var(--border-dark);border-radius:6px;
+  padding:.35rem .5rem;margin:0 0 .5rem;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.nov-lupa-ico{font-size:1rem;opacity:.7}
+.nov-lupa input{flex:1;border:none;background:transparent;font-size:.95rem;padding:.35rem .2rem;
+  color:var(--text);outline:none;min-width:0}
+.nov-lupa-x{border:none;background:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:.1rem .35rem;
+  visibility:hidden}
+.nov-lupa.ma-text .nov-lupa-x{visibility:visible}
+.nov-lupa-info{font-size:.8rem;color:var(--muted);margin:0 0 .8rem .2rem;min-height:1em}
+.nov-lupa-info .nov-tip{color:var(--text)}
+#screen-novinky mark.nov-mark{background:#ffe066;color:inherit;padding:0 1px;border-radius:2px}
+html.dark #screen-novinky mark.nov-mark{background:#8a6d00;color:#fff}
+#screen-novinky .nov-skryto{display:none!important}
 .archiv-th-razeni{cursor:pointer;user-select:none;white-space:nowrap}
 .archiv-th-razeni:hover{text-decoration:underline}
 .archiv-th-akt{color:var(--accent2)}
@@ -1250,7 +1265,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.99<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.100<span class="ver-date"> · 2026-09-24</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1389,6 +1404,15 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <h1>📰 Novinky v programu</h1>
     <p>Přehled funkcí a jak je používat</p>
   </div>
+
+  <div class="nov-lupa">
+    <span class="nov-lupa-ico">🔍</span>
+    <input type="text" id="nov-hledat" autocomplete="off" spellcheck="false"
+      placeholder="Hledat v novinkách — třeba chránič, tisk, excel, číslo zprávy…"
+      title="Hledá bez ohledu na háčky a velká písmena. Víc slov = karta musí obsahovat všechna. Esc hledání zruší.">
+    <button type="button" class="nov-lupa-x" data-action="novinkyHledatZrusit" title="Zrušit hledání (Esc)">✕</button>
+  </div>
+  <div id="nov-hledat-info" class="nov-lupa-info"></div>
 
   <div class="scard" data-nov-datum="2026-09-24">
     <div class="scard-title">📋 Excel ↔ tabulka měření — tam i zpátky <span class="nov-datum">24. 9. 2026</span></div>
@@ -4931,6 +4955,217 @@ function najitNahradit() {
     }
   });
 }
+
+// ═══ CHYTRÁ LUPA V NOVINKÁCH (v9.100) ═════════════════════════════════════
+// Nápad uživatele 2026-09-24: „když někdo nebude něco vědět, tak to tam třeba
+// najde podle klíčových slov." Novinky jsou de facto návod k programu (přes
+// 50 karet) — jako „Řekněte mi, co chcete udělat" ve Wordu.
+//
+// - **Bez ohledu na háčky a velká písmena** — „rozvadec" najde „Rozváděč".
+// - **Víc slov = karta musí obsahovat VŠECHNA** (v libovolném pořadí).
+// - **Slovo se hledá jako začátek i uvnitř** („chránič" najde „chrániče").
+// - **Slovník souvisejících slov** (`NOV_SLOVNIK`) — technik hledá jinými
+//   slovy, než jak je karta napsaná (chránič ↔ RCD, hromosvod ↔ LPS…).
+//   Stačí, když karta obsahuje kterékoli slovo ze skupiny.
+// - V nalezené kartě se **sbalí odrážky, které se hledání netýkají** — technik
+//   rovnou vidí tu jednu větu. Když se shoduje nadpis karty, ukáže se celá.
+// - **Nic se nekreslí znovu** — karty zůstávají v HTML, jen se schovávají
+//   (třída `nov-skryto`) a nalezená místa se obalí `<mark>`. Před dalším
+//   hledáním se značky rozbalí zpátky na holý text.
+// - Ctrl+F na obrazovce Novinek skočí do pole sám (`zkratkaHledat` hledá pole
+//   s „hledat" v id), Esc hledání zruší.
+var NOV_SLOVNIK = [
+  ['chránič', 'rcd', 'rcbo', 'proudový chránič', 'fi'],
+  ['hromosvod', 'lps', 'bleskosvod', 'jímač', 'zemnič', 'uzemnění'],
+  ['tisk', 'tisknout', 'vytisknout', 'pdf', 'tiskárna', 'náhled'],
+  ['excel', 'xlsx', 'tabulka', 'sešit', 'schránka'],
+  ['číslo zprávy', 'ev. číslo', 'evidenční číslo', 'číslování', 'číslo'],
+  ['smazat', 'odstranit', 'vymazat', 'zpět', 'vrátit'],
+  ['kopírovat', 'kopie', 'zkopírovat', 'duplikovat', '⧉'],
+  ['archiv', 'uložené zprávy', 'seznam zpráv'],
+  ['rozváděč', 'rozvaděč', 'rozvodnice', 'rozvodna', 'rh', 'rm'],
+  ['stroj', 'stroje', 'kontrola stroje', '60204'],
+  ['spotřebič', 'spotřebiče', '1600', 'prodlužovací přívod'],
+  ['plán', 'plán revizí', 'termín', 'lhůta', 'příští revize'],
+  ['přenos', 'kolega', 'soubor pro kolegu', 'poslat', 'předat', 'načíst'],
+  ['záloha', 'zálohovat', 'obnovit', 'obnova'],
+  ['podpis', 'razítko'],
+  ['barva', 'podbarvení', 'pozadí'],
+  ['měření', 'naměřené hodnoty', 'měřicí list', 'terén'],
+  ['závada', 'závady', 'nedostatek'],
+  ['fotka', 'foto', 'fotografie', 'obrázek'],
+  ['e-mail', 'email', 'mail', 'outlook', 'odeslat'],
+  ['schéma', 'strom', 'zapojení', 'napájí', 'napájení'],
+  ['odběratel', 'zákazník', 'provozovatel', 'ares', 'ičo'],
+  ['norma', 'normy', 'čsn'],
+  ['pravý klik', 'kontextové menu', 'nabídka'],
+  ['hledat', 'najít', 'filtr', 'vyhledat']
+];
+
+function novNorm(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Skupina souvisejících slov pro jedno hledané slovo. Slovo se skupinou
+// souvisí, když se s některým jejím slovem shoduje, nebo (od 4 znaků) je
+// jeho začátkem — „chrani" tak najde skupinu „chránič".
+//
+// **Česká koncovka se useká** (`novKmen`): „tabulky" hledá „tabulk", takže
+// najde i „tabulka" a „tabulce"; „rozvaděče" najde „rozvaděč".
+function novKmen(w) {
+  if (w.length >= 8) return w.slice(0, -2);
+  if (w.length >= 5) return w.slice(0, -1);
+  return w;
+}
+
+function novAlternativy(slovo) {
+  var kmen = novKmen(slovo);
+  var alt = [kmen];
+  NOV_SLOVNIK.forEach(function (sk) {
+    var n = sk.map(novNorm);
+    var souvisi = n.some(function (w) {
+      return w === slovo || (slovo.length >= 4 && w.indexOf(slovo) === 0) ||
+             (w.length >= 5 && slovo.indexOf(w) === 0) || (kmen.length >= 4 && w.indexOf(kmen) === 0);
+    });
+    if (souvisi) n.forEach(function (w) { if (alt.indexOf(w) === -1) alt.push(w); });
+  });
+  return alt;
+}
+
+// Hledá se vždy od ZAČÁTKU slova — „chrán" nesmí trefit „oCHRANný".
+// Krátká slova (rh, rm, fi, rcd) navíc jen celá, jinak by „rh" trefilo
+// každé „vrh" a „fi" každou „firmu".
+function novRegex(w) {
+  var e = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(^|[^a-z0-9])(' + e + ')' + (w.length <= 3 ? '(?=$|[^a-z0-9])' : ''), 'g');
+}
+
+function novObsahuje(text, alt) {
+  for (var i = 0; i < alt.length; i++) {
+    var re = novRegex(alt[i]);
+    if (re.test(text)) return true;
+  }
+  return false;
+}
+
+function novKarty() {
+  return Array.prototype.slice.call(document.querySelectorAll('#screen-novinky .home-wrap > .scard'))
+    .filter(function (k) { return !k.classList.contains('ai-feature'); });
+}
+
+function novOdznacit() {
+  document.querySelectorAll('#screen-novinky mark.nov-mark').forEach(function (m) {
+    var r = m.parentNode;
+    r.replaceChild(document.createTextNode(m.textContent), m);
+    r.normalize();
+  });
+  document.querySelectorAll('#screen-novinky .nov-skryto').forEach(function (el) {
+    el.classList.remove('nov-skryto');
+    if (!el.className) el.removeAttribute('class');     // po hledání nesmí zůstat stopa
+  });
+}
+
+// Obalí výskyty v textových uzlech prvku značkou <mark>. Hledá se v textu
+// bez háčků, ale obaluje se původní text — mapa indexů drží, kde který znak byl.
+function novZvyraznit(el, alt) {
+  var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+  var uzly = [];
+  while (walker.nextNode()) uzly.push(walker.currentNode);
+  uzly.forEach(function (u) {
+    var t = u.nodeValue, norm = '', mapa = [];
+    for (var i = 0; i < t.length; i++) {
+      var n = novNorm(t[i]);
+      for (var j = 0; j < n.length; j++) { norm += n[j]; mapa.push(i); }
+    }
+    var useky = [];
+    alt.forEach(function (w) {
+      var re = novRegex(w), m;
+      while ((m = re.exec(norm)) !== null) {
+        var k = m.index + m[1].length;
+        useky.push([mapa[k], mapa[k + w.length - 1] + 1]);
+        if (re.lastIndex === m.index) re.lastIndex++;
+      }
+    });
+    if (!useky.length) return;
+    useky.sort(function (a, b) { return a[0] - b[0]; });
+    var spojene = [];
+    useky.forEach(function (x) {
+      var p = spojene[spojene.length - 1];
+      if (p && x[0] <= p[1]) p[1] = Math.max(p[1], x[1]); else spojene.push(x.slice());
+    });
+    var frag = document.createDocumentFragment(), poz = 0;
+    spojene.forEach(function (x) {
+      if (x[0] > poz) frag.appendChild(document.createTextNode(t.slice(poz, x[0])));
+      var m = document.createElement('mark');
+      m.className = 'nov-mark';
+      m.textContent = t.slice(x[0], x[1]);
+      frag.appendChild(m);
+      poz = x[1];
+    });
+    if (poz < t.length) frag.appendChild(document.createTextNode(t.slice(poz)));
+    u.parentNode.replaceChild(frag, u);
+  });
+}
+
+var __novHledatCas = null;
+function novinkyHledatPozdeji() {
+  var box = document.querySelector('.nov-lupa');
+  var pole = document.getElementById('nov-hledat');
+  if (box && pole) box.classList.toggle('ma-text', !!pole.value);
+  clearTimeout(__novHledatCas);
+  __novHledatCas = setTimeout(novinkyHledat, 150);
+}
+
+function novinkyHledat() {
+  var pole = document.getElementById('nov-hledat');
+  var info = document.getElementById('nov-hledat-info');
+  if (!pole) return;
+  novOdznacit();
+  var slova = novNorm(pole.value).split(/[\s,;]+/).filter(function (w) { return w.length >= 2; });
+  if (!slova.length) { if (info) info.innerHTML = ''; return; }
+  var skupiny = slova.map(novAlternativy);
+  var karty = novKarty(), nalez = 0;
+  karty.forEach(function (k) {
+    var text = novNorm(k.textContent);
+    var ok = skupiny.every(function (alt) { return novObsahuje(text, alt); });
+    if (!ok) { k.classList.add('nov-skryto'); return; }
+    nalez++;
+    // Shoduje-li se nadpis, je celá karta o tom → nic se nesbaluje.
+    var titulek = k.querySelector('.scard-title');
+    var tNorm = novNorm(titulek ? titulek.textContent : '');
+    var celaKarta = skupiny.some(function (alt) { return novObsahuje(tNorm, alt); });
+    if (!celaKarta) {
+      var polozky = Array.prototype.slice.call(k.querySelectorAll('li'));
+      var trefene = polozky.filter(function (li) {
+        var n = novNorm(li.textContent);
+        return skupiny.some(function (alt) { return novObsahuje(n, alt); });
+      });
+      if (trefene.length) polozky.forEach(function (li) { if (trefene.indexOf(li) === -1) li.classList.add('nov-skryto'); });
+    }
+    skupiny.forEach(function (alt) { novZvyraznit(k, alt); });
+  });
+  if (info) {
+    info.innerHTML = nalez
+      ? 'Nalezeno v <strong class="nov-tip">' + nalez + '</strong> ' + (nalez === 1 ? 'kartě' : 'kartách') +
+        ' · nesouvisející odrážky jsou schované · Esc zruší hledání'
+      : '<span class="nov-tip">Nic nenalezeno.</span> Zkuste jiné slovo — třeba jen jeho začátek, nebo méně slov.';
+  }
+}
+
+function novinkyHledatZrusit() {
+  var pole = document.getElementById('nov-hledat');
+  if (pole) { pole.value = ''; pole.focus(); }
+  novinkyHledatPozdeji();
+  novinkyHledat();
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && e.target && e.target.id === 'nov-hledat' && e.target.value) {
+    e.preventDefault();
+    e.stopPropagation();
+    novinkyHledatZrusit();
+  }
+}, true);
 
 // ═══ KLÁVESOVÉ ZKRATKY Z OFFICE — Ctrl+P, Ctrl+F, Ctrl+H, F2 (v9.90) ═════
 // Ctrl+P musí **vždy zabrat prohlížeči** — jeho tisk by vytiskl obrazovku
@@ -24702,6 +24937,7 @@ document.addEventListener('click', function(e) {
     case 'planExportSoubor': planExportSoubor(); break;
     case 'planImportSoubor': planImportSoubor(); break;
     case 'novinky': showScreen('novinky'); break;
+    case 'novinkyHledatZrusit': novinkyHledatZrusit(); break;
     case 'toggleAutoCislovani': toggleAutoCislovani(el); break;
     case 'lpzTypickyDum': lpzTypickyDum(); break;
     case 'ulozitDoArchivu': ulozitDoArchivu(); break;
@@ -24937,6 +25173,7 @@ document.addEventListener('input', function(e) {
   // Hledání v postranním archivu. Pole leží mimo #screen-form, takže
   // psaní do něj zprávu neoznačí jako změněnou (viz komentář u panelu).
   if (e.target.id === 'fa-hledat') formArchivRender();
+  if (e.target.id === 'nov-hledat') novinkyHledatPozdeji();
   // Okno „Najít a nahradit" leží mimo formulář, takže psaní do něj
   // zprávu NEOZNAČÍ jako změněnou — stejný důvod jako u hledání v archivu.
   if (e.target.id === 'najit-co' || e.target.id === 'najit-citlive') najitPrehled();

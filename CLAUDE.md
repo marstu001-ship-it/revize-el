@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.99 · 2026-09-24**
+**Aktuální verze: v9.100 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -293,6 +293,41 @@ IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „n
 prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
+
+## Chytrá lupa v Novinkách (v9.100)
+
+Nápad uživatele 2026-09-24: „dodělal bych chytrou lupu do novinek, když
+někdo nebude něco vědět, tak to tam třeba najde podle klíčových slov."
+Novinky jsou de facto návod k programu — jako „Řekněte mi, co chcete udělat"
+ve Wordu. Pole s lupou je nahoře na obrazovce Novinek (přilepené při
+rolování), filtruje už při psaní.
+
+- **Bez háčků a velkých písmen** (`novNorm`), **víc slov = karta musí mít
+  všechna**, v libovolném pořadí.
+- **Hledá se vždy od ZAČÁTKU slova** (`novRegex`) — „chrán" jinak trefil
+  „oCHRANný" (našlo se až na snímku). Slova do 3 znaků (RH, RM, FI, RCD)
+  jen celá.
+- **Česká koncovka se useká** (`novKmen`: od 5 znaků −1, od 8 znaků −2) —
+  „tabulky" najde „tabulka", „rozvaděče" najde „rozvaděč".
+- **Slovník souvisejících slov `NOV_SLOVNIK`** — chránič ↔ RCD, hromosvod ↔
+  LPS, tisk ↔ PDF, Excel ↔ xlsx… Stačí, když karta obsahuje kterékoli slovo
+  ze skupiny. **Rozšiřuje se přidáním řádku.**
+- V nalezené kartě se **sbalí odrážky, které se hledání netýkají**; shoduje-li
+  se nadpis karty, ukáže se celá. Nalezená místa jsou **zvýrazněná žlutě**
+  (`<mark>`, hledá se v textu bez háčků, obaluje se původní — mapa indexů).
+- **Nic se nekreslí znovu**: karty zůstávají v HTML, jen se schovávají
+  (`nov-skryto`) a obalují. Po zrušení hledání **nesmí zůstat stopa** — ani
+  prázdné `class=""` (test porovnává celé HTML Novinek před a po).
+- Ctrl+F na Novinkách skočí do pole (obecné `zkratkaHledat` z v9.90 najde
+  pole s „hledat" v id), Esc hledání zruší.
+- **Karty `ai-feature` se nepočítají** (jsou schované CSS).
+- **Lupa najde jen to, co v Novinkách je napsané** — věci bez karty (Ctrl+Z,
+  ukotvený sloupec, řazení archivu, znaky pod tabulkou) nenajde. Uživatel
+  o tom ví; případný oddíl „Jak na to" jen když si řekne.
+
+**Karta v Novinkách k tomu NENÍ** — o Novinky se neptat (pravidlo nahoře).
+
+Test: `test-nov-lupa.js` (21 kontrol).
 
 ## Riso „>20" jen jako nápověda + znaky pod tabulkou rozváděče (v9.99)
 
