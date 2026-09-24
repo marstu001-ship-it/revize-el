@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.98 · 2026-09-24**
+**Aktuální verze: v9.99 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -291,6 +291,40 @@ IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „n
 prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
+
+## Riso „>20" jen jako nápověda + znaky pod tabulkou rozváděče (v9.99)
+
+Pokyn uživatele 2026-09-24 se snímkem tabulky měření: „dejme tu hodnotu >20
+jen šedě jako nápovědu, zároveň nevím jak vložit znaménko větší než, aby
+nezavazelo jako výběr."
+
+### Riso se už nepředvyplňuje
+
+Nový obvod (`addMereniRowTo`) i hlavička chrániče (`addRcdRow`) měly v Riso
+**hodnotu** `>20` — a ta se tiskla do zprávy i u obvodu, který nikdo
+nezměřil. Teď je to jen `placeholder`, jako Zsm `0,23` a ostatní nápovědy.
+
+- **Uložené zprávy se nemění** — co má `>20` v datech, drží si ho (test).
+- `porovnani2.js` se proto u čerstvé zprávy LIŠÍ právě o `>20` v Riso — je
+  to ten záměr. `porovnani2-riso.js` (Riso ručně vyplněné) vychází znak po
+  znaku stejně, jiná změna tedy není.
+- Výjimky pro `riso === '>20'` ve vložení z Excelu (v9.92) a v měřicím listu
+  (v9.53) zůstaly — týkají se starších zpráv, kde hodnota v datech je.
+
+### Znaky i pod tabulkou měření rozváděče
+
+„Aby nezavazelo" = žádná plovoucí lišta (tu uživatel odmítl 2026-08-31).
+Proto **tentýž pevný proužek jako u strojů a spotřebičů (v9.77)**, vedle
+tlačítek pod tabulkou rozváděče: `≤ ≥ < > Δ Ω ± °`. **`<` přibyl** (i u strojů
+a spotřebičů — `SYMBOLY_MERENI` je jedna tabulka). Bublina u `>` a `<` radí
+zkratku na české klávesnici: **pravý Alt + tečka / čárka**.
+
+- `symboleVhodne()` nově zná i `#rozvadece-container .meas-table`, takže
+  i tam funguje přepis `<=` → `≤`, `>=` → `≥`, `+-` → `±`.
+- Proužek je v `.tab-panel`, u dokončené zprávy ho CSS schová (test).
+- Jednou napsané `>20` jde táhlem nebo Ctrl+D rozkopírovat dolů.
+
+Test: `test-riso-znaky.js` (13 kontrol).
 
 ## Ctrl+Z, ukotvený sloupec, řazení archivu (v9.98)
 
@@ -2302,9 +2336,10 @@ vygenerovat a vytisknout tabulku a jít do terénu měřit."
   stávající tisk měření; hlídá to první kontrola v `test-teren-list.js`.
 - `o.prazdne` = `TEREN_MERENE` (`isc, zsm, riso, rpe, vyp, cas, t5idn, ut`).
   **`faze` mezi nimi NENÍ** — polarity `A+`/`A−` se předtisknou, ať technik ví,
-  co má měřit. **Pozor na `riso`:** program ho předvyplňuje hodnotou `>20`
-  (ř. 7157 a 7371), takže se na listu MUSÍ vyprázdnit — jinak by technik
-  přetiskl falešnou hodnotu jako naměřenou.
+  co má měřit. **Pozor na `riso`:** program ho do v9.98 předvyplňoval
+  hodnotou `>20`, takže se na listu MUSÍ vyprázdnit — jinak by technik
+  přetiskl falešnou hodnotu jako naměřenou. (Od v9.99 je `>20` jen nápověda,
+  ale starší zprávy ho v datech mají.)
 - `o.skryte` = vizuální indexy sloupců (0–15) k vynechání. **Colspany u řádků
   `info` (1+11+4) a `rcd-mereni` (10+5+1) se musí dopočítat**, jinak se tabulka
   rozjede. Řeší to `radek()` + `ubrat()` uvnitř funkce; test počítá šířku

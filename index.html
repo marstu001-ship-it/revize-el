@@ -1250,7 +1250,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.98<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.99<span class="ver-date"> · 2026-09-24</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -8446,6 +8446,7 @@ function addRozvadec() {
     '<button class="add-row" data-action="addRcdRow" data-rozvadec="rozv-' + n + '" style="border-color:var(--gold);color:var(--gold)">+ Přidat řádek RCD/RCBO</button>' +
     '<button class="add-row" data-action="addInfoRow" data-rozvadec="rozv-' + n + '" style="border-color:#a87d00;color:#a87d00" title="Volný řádek pro elektroměr, stykač, pojistku, spotřebič…">+ Přidat jiný řádek</button>' +
     '<button class="add-row" data-action="vlozitExcel" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2)" title="Vložit rozpis obvodů zkopírovaný z Excelu">📋 Vložit z Excelu</button>' +
+    symbolyProuzekHtml() +
     (STORE.aiConfig && STORE.aiConfig.provider && STORE.aiConfig.apiKey
       ? '<button class="add-row" data-action="aiPanelScan" data-rozvadec="rozv-' + n + '" style="border-color:var(--accent2);color:var(--accent2);font-weight:600">🤖 Naskenovat štítek (AI)</button>'
       : '') +
@@ -10178,7 +10179,11 @@ function addMereniRowTo(tbody) {
     { ph: '0,03', list: 'dl_idn' },
     { ph: '' },
     { ph: '0,23' },
-    { ph: '>20', v: '>20' },
+    // Riso jen jako šedá nápověda, ne hodnota (pokyn uživatele 2026-09-24):
+    // předvyplněné „>20" se do zprávy vytisklo i u obvodu, který nikdo
+    // nezměřil. Teď se chová jako ostatní nápovědy — dokud technik nenapíše,
+    // buňka je prázdná.
+    { ph: '>20' },
     { ph: '' }
   ];
   hlavni.forEach(function(col) {
@@ -10385,8 +10390,7 @@ function addRcdRow(el) {
   trMain.appendChild(mkTd(''));
   // Zsm, Riso (Riso předvyplněno na typickou hodnotu >20)
   trMain.appendChild(mkTd('0,65'));
-  var risoTd = mkTd('>20');
-  risoTd.querySelector('input').value = '>20';
+  var risoTd = mkTd('>20');        // jen nápověda — viz addMereniRowTo
   trMain.appendChild(risoTd);
   trMain.appendChild(mkTd(''));
   // Fáze — první polarita, readonly (výchozí typ 'A' → 'A+')
@@ -24150,7 +24154,8 @@ function planVybraneStitek() { planHromadnaVolba('stitek'); }
 var SYMBOLY_MERENI = [
   { z: '≤', popis: 'menší nebo rovno' },
   { z: '≥', popis: 'větší nebo rovno' },
-  { z: '>', popis: 'větší než (přesah rozsahu měřáku)' },
+  { z: '<', popis: 'menší než — na klávesnici pravý Alt + čárka' },
+  { z: '>', popis: 'větší než (přesah rozsahu měřáku, třeba >20) — na klávesnici pravý Alt + tečka' },
   { z: 'Δ', popis: 'delta — třeba IΔn' },
   { z: 'Ω', popis: 'ohm' },
   { z: '±', popis: 'plus minus' },
@@ -24177,7 +24182,8 @@ var __symPole = null;
 
 function symboleVhodne(el) {
   if (!el || el.tagName !== 'INPUT' || el.type !== 'text' || el.readOnly) return false;
-  return !!(el.closest('#stroje-mereni-hosty') || el.closest('#spotrebice-list'));
+  return !!(el.closest('#stroje-mereni-hosty') || el.closest('#spotrebice-list') ||
+            el.closest('#rozvadece-container .meas-table'));
 }
 
 function vlozitSymbol(el) {
