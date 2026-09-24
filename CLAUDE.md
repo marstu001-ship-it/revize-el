@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.97 · 2026-09-24**
+**Aktuální verze: v9.98 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -291,6 +291,76 @@ IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „n
 prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
+
+## Ctrl+Z, ukotvený sloupec, řazení archivu (v9.98)
+
+Pokyn uživatele 2026-09-24 („uděláme 1., 2., 3., 4.") k návrhu z téhož dne.
+Bod 1 (podbarvení hodnot mimo mez normy) jde zvlášť — meze se předkládají
+ke schválení.
+
+### Ctrl+Z = poslední ZPĚT (Word, Excel)
+
+Tlačítko ZPĚT v hlášce je na zhruba třiceti místech, jenže hláška za pár
+vteřin zmizí. **`showToast()` každé tlačítko s popiskem ZPĚT (`ZPET_POPISEK`)
+zapíše do zásobníku `__zpetZasobnik`** — nic se nepřidávalo na třiceti
+místech, stačilo jedno. Ctrl+Z vezme poslední položku, **i po zmizení hlášky**.
+
+- **Tlačítko i Ctrl+Z jedou přes JEDNU obalovou funkci** (`zpetZapsat`), která
+  proběhne nejvýš jednou — klik na ZPĚT a pak Ctrl+Z by jinak vrátil tutéž
+  věc dvakrát. Po použití se položka ze zásobníku vyřadí.
+- **V psacím poli Ctrl+Z patří prohlížeči** (vrací psaní, jako v Office).
+- **Otevření jiné zprávy zásobník vyprázdní** (`zpetVycistit()` na začátku
+  `novaZprava()` i `nacistData()`) — vrátit řádek do zprávy, která už není
+  na obrazovce, by bylo matoucí.
+- Hláška řekne, co se vzalo zpět; když není co, řekne „Není co vzít zpět."
+- Strop 30 položek.
+
+Test: `test-ctrlz.js` (12 kontrol — vrácení po zmizení hlášky na původní
+místo, dvakrát v obráceném pořadí, ZPĚT + Ctrl+Z nevrací dvakrát, Ctrl+Z
+v buňce, jiná zpráva, smazaná zpráva v archivu).
+
+### Ukotvený sloupec Č. + Název obvodu (Excel „Ukotvit příčky")
+
+Na notebooku a tabletu se tabulka měření posouvá do strany a technik neví,
+ke kterému obvodu píše. **Tady `position:sticky` funguje** — posun je
+vodorovný uvnitř `.meas-table-wrap`, na rozdíl od svislého ukotvení hlavičky
+(v9.90), kde nefungoval.
+
+- Záhlaví mají třídy `mr-lep1` / `mr-lep2` (v `getMeasTableHtml`), buňky se
+  berou selektorem podle `data-rowtype`: **obvod a hlavička chrániče oba
+  sloupce, „jiný řádek" jen Č., podřádky chrániče nic** (sloučené buňky).
+- **Druhý sloupec stojí o šířku prvního vpravo** — šířka je v procentech
+  (`colgroup`), takže ji `mrUkotveni()` dopočítá do `--mr-c1` při vodorovném
+  posunu (zachytávací `scroll` posluchač). Zároveň přepíná `mr-odsunuto`
+  = stínek za ukotveným sloupcem.
+- **Ukotvené buňky musí mít neprůhledné pozadí** — liché řádky `inherit`
+  z `tr`, sudé zebrování natvrdo (světlý i tmavý režim), jinak by pod nimi
+  prosvítaly odjeté sloupce.
+- **Plovoucí hlavička (v9.90) je kopie mimo posouvaný rámeček** — ukotvená
+  záhlaví se v ní posunou `translateX` o `scrollLeft`, jinak by nad
+  ukotveným sloupcem stál popisek jiného sloupce.
+
+Test: `test-ukotveni.js` (11 kontrol, okno 760 px).
+
+### Řazení archivu kliknutím na záhlaví (Outlook)
+
+Typ · Ev. číslo · Místo · Datum · Stav. **Klik seřadí, druhý obrátí, třetí
+vrátí výchozí pořadí programu** (rozpracované, končící termíny, nejnovější).
+Šipka ▲▼ v záhlaví, bublina říká, co udělá další klik.
+
+- Datum se napoprvé řadí od nejnovějšího (jako pošta), ostatní od A.
+- Ev. číslo přes `cisloPorovnat` (RE-26-9 před RE-26-10), místo přes
+  `localeCompare('cs')` (Č po C), u stroje podle názvu stroje.
+- Řazení je stabilní — shodné hodnoty drží výchozí pořadí.
+- **Pamatuje se v `localStorage` (`revize_el_archiv_razeni`)**, ne ve STORE —
+  zvyk člověka u konkrétního počítače, do zálohy nepatří.
+- Hromadný výběr a „označit vše" jedou dál podle pořadí na obrazovce
+  (`__archivPoradi`), takže Shift+klik bere úsek v seřazeném seznamu.
+
+Test: `test-razeni-archivu.js` (11 kontrol).
+
+**Do Novinek nic z toho nejde** — zkratky a pohodlnosti, které nic
+dosavadního nemění (rozhodnutí uživatele 2026-09-24 u v9.95).
 
 ## Schéma rozváděčů na papír — navazuje, vejde se, rámeček přes kabely (v9.97)
 

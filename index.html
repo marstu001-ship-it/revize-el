@@ -479,6 +479,10 @@ td.dnd-num-cell input{padding-left:15px}
   padding:0!important;border:none!important;background:none!important}
 .teren-radek strong{font-weight:600}
 .teren-radek .tm{color:var(--muted);font-size:.78rem}
+.archiv-th-razeni{cursor:pointer;user-select:none;white-space:nowrap}
+.archiv-th-razeni:hover{text-decoration:underline}
+.archiv-th-akt{color:var(--accent2)}
+html.dark .archiv-th-akt{color:#8fb3e8}
 .napaji-radek{padding:.35rem .2rem!important;border-bottom:1px solid var(--border)}
 .napaji-radek:last-child{border-bottom:none}
 .napaji-radek .tm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -526,6 +530,29 @@ input::placeholder,textarea::placeholder{color:#9a9488;font-style:italic;opacity
   #tab-spotrebice.tab-panel{max-width:min(1160px, calc(100vw - 2rem))}
 }
 .meas-table{width:100%;min-width:900px;table-layout:fixed}
+/* Ukotvený sloupec Č. a Název obvodu (v9.98, v Excelu „Ukotvit příčky").
+   Na notebooku a tabletu se šestnáctisloupcová tabulka posouvá do strany
+   a technik neví, ke kterému obvodu píše. Posouvá se jen vodorovně uvnitř
+   .meas-table-wrap, takže position:sticky tu funguje (na rozdíl od
+   ukotvení hlavičky svisle, viz v9.90). Druhý sloupec stojí o šířku
+   prvního vpravo — tu dopočítá mrUkotveni() do --mr-c1.
+   Buňky se sloučením (podřádky chrániče, text „jiného řádku") se neukotvují. */
+.meas-table th.mr-lep1,.meas-table th.mr-lep2{position:sticky;z-index:3}
+.meas-table th.mr-lep1{left:0}
+.meas-table th.mr-lep2{left:var(--mr-c1,40px)}
+.meas-table tbody tr:is([data-rowtype="obvod"],[data-rowtype="rcd-header"],[data-rowtype="info"])>td:first-child:not([colspan]),
+.meas-table tbody tr:is([data-rowtype="obvod"],[data-rowtype="rcd-header"])>td:nth-child(2):not([colspan]){
+  position:sticky;z-index:2;background-color:inherit}
+.meas-table tbody tr:is([data-rowtype="obvod"],[data-rowtype="rcd-header"],[data-rowtype="info"])>td:first-child:not([colspan]){left:0}
+.meas-table tbody tr:is([data-rowtype="obvod"],[data-rowtype="rcd-header"])>td:nth-child(2):not([colspan]){left:var(--mr-c1,40px)}
+.meas-table tbody tr:nth-child(even):is([data-rowtype="obvod"],[data-rowtype="rcd-header"],[data-rowtype="info"])>td:first-child:not([colspan]),
+.meas-table tbody tr:nth-child(even):is([data-rowtype="obvod"],[data-rowtype="rcd-header"])>td:nth-child(2):not([colspan]){background-color:#f5f4f0}
+html.dark .meas-table tbody tr:nth-child(even):is([data-rowtype="obvod"],[data-rowtype="rcd-header"],[data-rowtype="info"])>td:first-child:not([colspan]),
+html.dark .meas-table tbody tr:nth-child(even):is([data-rowtype="obvod"],[data-rowtype="rcd-header"])>td:nth-child(2):not([colspan]){background-color:#27241f!important}
+/* Odsunutá tabulka: stínek za ukotveným sloupcem, ať je vidět, že pod ním
+   něco je. */
+.meas-table-wrap.mr-odsunuto .meas-table tbody tr>td:nth-child(2):not([colspan]),
+.meas-table-wrap.mr-odsunuto .meas-table th.mr-lep2{box-shadow:3px 0 3px -2px rgba(0,0,0,.25)}
 .meas-table th.grp{background:#1F497D}
 .meas-table th{font-size:.52rem;padding:.3rem .2rem}
 .meas-table td input{font-size:.75rem}
@@ -1223,7 +1250,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.97<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.98<span class="ver-date"> · 2026-09-24</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4486,8 +4513,13 @@ function showToast(text, opts) {
     if (!a[0] || !a[1]) return;
     var b = document.createElement('button');
     b.textContent = a[0];
+    var akce = a[1];
+    // Tlačítko ZPĚT se zároveň zapíše do zásobníku pro Ctrl+Z (v9.98).
+    // Obojí vede přes JEDNU obalovou funkci, která proběhne nejvýš jednou —
+    // jinak by klik na ZPĚT a pak Ctrl+Z vrátil tutéž věc dvakrát.
+    if (ZPET_POPISEK.test(String(a[0]).trim())) akce = zpetZapsat(text, a[1], t);
     b.addEventListener('click', function() {
-      try { a[1](); } catch(e) {}
+      try { akce(); } catch(e) {}
       t.remove();
     });
     t.appendChild(b);
@@ -4496,6 +4528,54 @@ function showToast(text, opts) {
   setTimeout(function() { if (t.parentNode) t.remove(); }, opts.timeout || 4000);
   return t;
 }
+
+// ── Ctrl+Z = poslední ZPĚT (v9.98) ─────────────────────────────────────
+// Jako ve Wordu a Excelu. Program má tlačítko ZPĚT v hlášce na zhruba
+// třiceti místech (smazání řádku, rozváděče, zprávy, vložení z Excelu,
+// nahrazení…), jenže hláška po pár vteřinách zmizí a s ní i možnost vrátit.
+// Ctrl+Z proto vezme poslední ZPĚT, které ještě neproběhlo — i po zmizení
+// hlášky. **Nic se nedělá znovu**: zásobník drží tytéž funkce, které volá
+// tlačítko, takže se to nemůže chovat jinak než klik na ZPĚT.
+//
+// - Ctrl+Z v psacím poli nechává prohlížeči — tam vrací psaní, jako v Office.
+// - Otevřením jiné zprávy se zásobník vyprázdní: vrátit smazaný řádek do
+//   zprávy, která už není na obrazovce, by bylo matoucí.
+var ZPET_POPISEK = /^(↩\s*)?zpět$/i;
+var __zpetZasobnik = [];
+
+function zpetZapsat(text, akce, toast) {
+  var z = { text: text, hotovo: false, toast: toast };
+  z.akce = function () {
+    if (z.hotovo) return;
+    z.hotovo = true;
+    var i = __zpetZasobnik.indexOf(z);
+    if (i !== -1) __zpetZasobnik.splice(i, 1);
+    akce();
+  };
+  __zpetZasobnik.push(z);
+  if (__zpetZasobnik.length > 30) __zpetZasobnik.shift();
+  return z.akce;
+}
+
+function zpetVycistit() { __zpetZasobnik.length = 0; }
+
+function zpetPosledni() {
+  var z = __zpetZasobnik[__zpetZasobnik.length - 1];
+  if (!z) { showToast('Není co vzít zpět.', { timeout: 2000 }); return false; }
+  if (z.toast && z.toast.parentNode) z.toast.remove();
+  try { z.akce(); } catch (e) {}
+  showToast('↶ Vzato zpět — „' + String(z.text || '').replace(/\s+$/, '') + '“', { timeout: 3500 });
+  return true;
+}
+
+document.addEventListener('keydown', function (e) {
+  if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+  if (String(e.key).toLowerCase() !== 'z' && e.code !== 'KeyZ') return;
+  var el = document.activeElement;
+  if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+  e.preventDefault();
+  zpetPosledni();
+});
 
 // Smaže element s toastem „ZPĚT" — vrácení vloží prvek na původní místo.
 // onChange se volá po smazání i po vrácení (přečíslování apod.).
@@ -4647,6 +4727,15 @@ function plovouciHlavicka() {
     box.firstChild.appendChild(klon);
   }
   var levy = Math.max(wr.left, 0);
+  // Ukotvené záhlaví Č. a Název se v kopii musí posunout zpátky o tolik,
+  // o kolik je tabulka odsunutá — jinak by nad ukotveným sloupcem stál
+  // popisek jiného sloupce.
+  var odsun = (wrap.scrollLeft || 0) / k;
+  Array.prototype.forEach.call(box.firstChild.querySelectorAll('th.mr-lep1, th.mr-lep2'), function (th) {
+    th.style.position = 'relative';
+    th.style.left = '0px';            // CSS left:var(--mr-c1) platí jen pro sticky v tabulce
+    th.style.transform = odsun ? 'translateX(' + odsun + 'px)' : '';
+  });
   box.firstChild.style.transform = (k === 1 ? '' : 'scale(' + k + ')');
   box.firstChild.style.left = Math.round(nalez.tr.left - levy) + 'px';
   // **Výslovné `block`, ne prázdný řetězec** — v CSS má `#plov-hlavicka`
@@ -4664,6 +4753,18 @@ function plovouciHlavickaPozdeji() {
 }
 window.addEventListener('scroll', plovouciHlavickaPozdeji, { passive: true });
 window.addEventListener('resize', plovouciHlavickaPozdeji);
+// Ukotvený sloupec Č. + Název (v9.98): druhý sloupec stojí o šířku prvního
+// vpravo. Šířka je v procentech (colgroup), takže se dopočítá v px až při
+// vodorovném posunu, kdy na ní záleží.
+function mrUkotveni(wrap) {
+  if (!wrap || !wrap.classList || !wrap.classList.contains('meas-table-wrap')) return;
+  var t = wrap.querySelector('table.meas-table');
+  var th = t && t.querySelector('th.mr-lep1');
+  if (th) t.style.setProperty('--mr-c1', th.getBoundingClientRect().width + 'px');
+  wrap.classList.toggle('mr-odsunuto', wrap.scrollLeft > 2);
+}
+document.addEventListener('scroll', function (e) { mrUkotveni(e.target); }, true);
+
 // Zachytávací fáze kvůli VODOROVNÉMU rolování uvnitř `.meas-table-wrap` —
 // kopie se musí posunout s ním, jinak by sloupce nad tabulkou nesouhlasily.
 document.addEventListener('scroll', plovouciHlavickaPozdeji, true);
@@ -6800,6 +6901,7 @@ function genZpravaUid() {
 }
 
 function novaZprava(typ) {
+  zpetVycistit();                  // Ctrl+Z nesmí sahat do předchozí zprávy
   aktTyp = typ;
   window.__tiskZpravy = {};        // nová zpráva jede podle profilu
   window.__aktualniOdberatelId = '';
@@ -8256,13 +8358,13 @@ function getMeasTableHtml() {
     '</colgroup>' +
     '<thead>' +
     '<tr>' +
-    '<th class="grp" rowspan="2" style="cursor:pointer" data-action="toggleAutoCislovani" title="' +
+    '<th class="grp mr-lep1" rowspan="2" style="cursor:pointer" data-action="toggleAutoCislovani" title="' +
     (STORE.auto_cislovani === false
       ? 'Vlastní číslování — čísla řádků zůstávají, jak je napíšete (FA1, FA2…). Klepnutím přepnete na automatické.'
       : 'Automatické číslování 1, 2, 3… Klepnutím přepnete na vlastní (čísla se nebudou přepisovat).') +
     '"><div class="cisl-hlavicka">Č.<span class="cisl-ico">' +
     (STORE.auto_cislovani === false ? '✏️' : '🔢') + '</span></div></th>' +
-    '<th class="grp" rowspan="2">Název obvodu</th>' +
+    '<th class="grp mr-lep2" rowspan="2">Název obvodu</th>' +
     '<th class="grp" colspan="5">Jmenovité hodnoty jištění</th>' +
     '<th class="grp" rowspan="2">Zsm<br>max Ω</th>' +
     '<th class="grp" rowspan="2">Riso<br>MΩ</th>' +
@@ -17031,6 +17133,7 @@ function toggleStavZpravy(i) {
 }
 
 function nacistData(D) {
+  zpetVycistit();
   // Během obnovy se addRozvadec() volá v cyklu s ještě prázdnými názvy —
   // stromDopnoutNazvy() by v ten okamžik jen zbytečně přepisovalo řádky
   // a označilo právě otevřenou zprávu jako neuloženou.
@@ -20286,6 +20389,67 @@ function archivHay(z) {
   })).filter(Boolean).join(' ').toLowerCase();
 }
 
+// ── Řazení archivu kliknutím na záhlaví (v9.98) ──────────────────────
+// Jako v Outlooku: klik na „Datum" seřadí, druhý klik obrátí, třetí vrátí
+// výchozí pořadí programu (rozpracované, pak končící termíny, pak nejnovější).
+// Šipka ▲▼ říká, podle čeho se řadí. Volba se pamatuje v localStorage —
+// je to zvyk konkrétního člověka u konkrétního počítače, do zálohy nepatří.
+var ARCHIV_RAZENI = {
+  typ:   function (a, b) { return String(typInfo(a.typ).label).localeCompare(String(typInfo(b.typ).label), 'cs'); },
+  ev:    function (a, b) { return cisloPorovnat(a.ev_cislo || '', b.ev_cislo || ''); },
+  misto: function (a, b) { return archivMistoRazeni(a).localeCompare(archivMistoRazeni(b), 'cs', { sensitivity: 'base' }); },
+  datum: function (a, b) {
+    var x = String(a.datum || '') + String(a.timestamp || '').padStart(15, '0');
+    var y = String(b.datum || '') + String(b.timestamp || '').padStart(15, '0');
+    return x < y ? -1 : (x > y ? 1 : 0);
+  },
+  stav:  function (a, b) { return (a.stav === 'aktivni' ? 0 : 1) - (b.stav === 'aktivni' ? 0 : 1); }
+};
+// Datum se napoprvé řadí od nejnovějšího (jako pošta), ostatní od A.
+var ARCHIV_RAZENI_PRVNI = { datum: 'sestupne' };
+var ARCHIV_RAZENI_KLIC = 'revize_el_archiv_razeni';
+
+function archivMistoRazeni(z) {
+  var h = strojeHlavicka(z);
+  return String((h && h.nazev) || z.misto || '').trim() || '\uffff';   // prázdné místo nakonec
+}
+
+function archivRazeni() {
+  try {
+    var r = JSON.parse(localStorage.getItem(ARCHIV_RAZENI_KLIC) || 'null');
+    return (r && ARCHIV_RAZENI[r.sloupec]) ? r : null;
+  } catch (e) { return null; }
+}
+
+function archivRadit(el) {
+  var sl = el && el.dataset ? el.dataset.sloupec : '';
+  if (!ARCHIV_RAZENI[sl]) return;
+  var nyni = archivRazeni();
+  var prvni = ARCHIV_RAZENI_PRVNI[sl] || 'vzestupne';
+  var druhy = prvni === 'vzestupne' ? 'sestupne' : 'vzestupne';
+  var nove;
+  if (!nyni || nyni.sloupec !== sl) nove = { sloupec: sl, smer: prvni };
+  else if (nyni.smer === prvni) nove = { sloupec: sl, smer: druhy };
+  else nove = null;                                   // třetí klik = výchozí pořadí
+  try {
+    if (nove) localStorage.setItem(ARCHIV_RAZENI_KLIC, JSON.stringify(nove));
+    else localStorage.removeItem(ARCHIV_RAZENI_KLIC);
+  } catch (e) {}
+  renderArchiv();
+}
+
+function archivTh(sl, text) {
+  var r = archivRazeni();
+  var akt = r && r.sloupec === sl;
+  var sipka = akt ? (r.smer === 'sestupne' ? ' ▼' : ' ▲') : '';
+  var tip = akt ? (r.smer === (ARCHIV_RAZENI_PRVNI[sl] || 'vzestupne')
+                    ? 'Klepnutím obrátíte pořadí'
+                    : 'Klepnutím vrátíte výchozí pořadí (rozpracované a končící nahoře)')
+                : 'Seřadit podle sloupce „' + text + '"';
+  return '<th class="archiv-th-razeni' + (akt ? ' archiv-th-akt' : '') + '" data-action="archivRadit" data-sloupec="' + sl +
+    '" title="' + esc(tip) + '">' + esc(text) + '<span class="archiv-sipka">' + sipka + '</span></th>';
+}
+
 function renderArchiv() {
   // Postranní archiv ve formuláři jede z týchž dat — překreslit ho tady
   // znamená, že se sveze s každou změnou archivu (uložení, připnutí,
@@ -20371,6 +20535,18 @@ function renderArchiv() {
     if (ka && kb && ka.pristi !== kb.pristi) return ka.pristi < kb.pristi ? -1 : 1;
     return a.i - b.i;
   });
+  // Klik na záhlaví sloupce řazení přebije (v9.98, jako v Outlooku a Excelu).
+  // Stabilní řazení: shodné hodnoty si drží výchozí pořadí výše.
+  var raz = archivRazeni();
+  if (raz) {
+    var cmp = ARCHIV_RAZENI[raz.sloupec];
+    filtered = filtered.map(function (it, n) { return { it: it, n: n }; });
+    filtered.sort(function (a, b) {
+      var v = cmp(a.it.z, b.it.z);
+      return (v ? (raz.smer === 'sestupne' ? -v : v) : 0) || (a.n - b.n);
+    });
+    filtered = filtered.map(function (x) { return x.it; });
+  }
   // Stránkování: prvních N zpráv + tlačítko „Zobrazit další". Díky řazení
   // je vše podstatné (rozpracované, končící) vždy v první dávce. Změna
   // filtru vrací stránkování na začátek.
@@ -20393,7 +20569,8 @@ function renderArchiv() {
   var html = '<table class="archiv-table"><thead><tr>' +
     '<th style="width:22px"><input type="checkbox" class="archiv-check" data-action="archivVyberVse"' +
     (archivVsechnyVybrane(zobrazene) ? ' checked' : '') + ' title="Ozna\u010dit / odzna\u010dit v\u0161echny zobrazen\u00e9"></th>' +
-    '<th>#</th><th>Typ</th><th>Ev. číslo</th><th>Místo</th><th>Datum</th><th>Stav</th><th></th></tr></thead><tbody>';
+    '<th>#</th>' + archivTh('typ', 'Typ') + archivTh('ev', 'Ev. číslo') + archivTh('misto', 'Místo') +
+    archivTh('datum', 'Datum') + archivTh('stav', 'Stav') + '<th></th></tr></thead><tbody>';
   var chainOpen = window.__archivChainOpen || {};
   zobrazene.forEach(function(it) {
     var z = it.z, i = it.i;
@@ -24666,6 +24843,7 @@ document.addEventListener('click', function(e) {
     case 'delPreset': delPreset(parseInt(el.getAttribute('data-idx'))); break;
     case 'archivPrepnoutVyber': e.stopPropagation(); archivPrepnoutVyber(el, e); break;
     case 'archivVyberVse': e.stopPropagation(); archivVyberVse(); break;
+    case 'archivRadit': archivRadit(el); break;
     case 'archivZrusitVyber': archivZrusitVyber(); break;
     case 'archivVybratSkryte': archivVybratSkryte(); break;
     case 'archivExportVybrane': archivExportVybrane(); break;
