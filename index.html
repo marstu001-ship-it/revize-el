@@ -287,17 +287,20 @@ html.dark .norma-radek:hover{background:rgba(122,163,216,.13)}
   #odberatel-search{min-width:auto!important;flex:1 1 100%!important}
 }
 .archiv-table{width:100%;border-collapse:collapse;font-size:.84rem}
-/* Na mobilu skryj první sloupec (#) v archivu + odběratelích,
-   aby zbylé sloupce měly víc místa na úzké obrazovce */
+/* Na mobilu skryj sloupec s pořadovým číslem (#) v archivu + odběratelích,
+   aby zbylé sloupce měly víc místa na úzké obrazovce.
+   **Ne `:first-child`!** Od v9.83 je v archivu prvním sloupcem zaškrtávátko
+   hromadného výběru — pravidlo s `:first-child` ho v zobrazení Mobil
+   a na úzkém okně schovávalo (nahlásil uživatel 2026-09-24). Číslo proto
+   nese třídu `archiv-poradi`. */
 @media (max-width:640px){
-  .archiv-table th:first-child,.archiv-table td:first-child{display:none}
+  .archiv-table .archiv-poradi{display:none}
   .archiv-table th,.archiv-table td{padding:.5rem .4rem;font-size:.78rem}
   .archiv-table th{font-size:.55rem;letter-spacing:.05em;padding:.4rem .3rem}
   .scard{padding:1rem 1rem}
   .home-wrap{padding:0 .75rem}
 }
-html.view-mobile .archiv-table th:first-child,
-html.view-mobile .archiv-table td:first-child{display:none}
+html.view-mobile .archiv-table .archiv-poradi{display:none}
 html.view-mobile .scard{padding:1rem 1rem}
 html.view-mobile .home-wrap{padding:0 .75rem}
 .archiv-table th{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;
@@ -1265,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.101<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.102<span class="ver-date"> · 2026-09-24</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -17846,7 +17849,7 @@ function renderOdberatele() {
     return;
   }
   var html = '<table class="archiv-table"><thead><tr>' +
-    '<th style="width:5%">#</th>' +
+    '<th class="archiv-poradi" style="width:5%">#</th>' +
     '<th>Název / firma</th>' +
     '<th>IČO</th>' +
     '<th>Kontakt</th>' +
@@ -17857,7 +17860,7 @@ function renderOdberatele() {
     var pocet = pocetZpravOdberatele(o.id);
     var kontakt = [o.telefon, o.email].filter(Boolean).join(' · ');
     html += '<tr>';
-    html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
+    html += '<td class="archiv-poradi" style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
     html += '<td style="font-size:.88rem"><strong>' + esc(o.nazev || '—') + '</strong>' +
       (o.adresa ? '<br><span style="font-size:.75rem;color:#6e6a60">' + esc(o.adresa.split('\n').join(', ')) + '</span>' : '') + '</td>';
     html += '<td style="font-family:monospace;font-size:.8rem">' + esc(o.ico || '—') + '</td>';
@@ -20808,7 +20811,7 @@ function renderArchiv() {
   var html = '<table class="archiv-table"><thead><tr>' +
     '<th style="width:22px"><input type="checkbox" class="archiv-check" data-action="archivVyberVse"' +
     (archivVsechnyVybrane(zobrazene) ? ' checked' : '') + ' title="Ozna\u010dit / odzna\u010dit v\u0161echny zobrazen\u00e9"></th>' +
-    '<th>#</th>' + archivTh('typ', 'Typ') + archivTh('ev', 'Ev. číslo') + archivTh('misto', 'Místo') +
+    '<th class="archiv-poradi">#</th>' + archivTh('typ', 'Typ') + archivTh('ev', 'Ev. číslo') + archivTh('misto', 'Místo') +
     archivTh('datum', 'Datum') + archivTh('stav', 'Stav') + '<th></th></tr></thead><tbody>';
   var chainOpen = window.__archivChainOpen || {};
   zobrazene.forEach(function(it) {
@@ -20827,7 +20830,7 @@ function renderArchiv() {
     html += '<tr' + rowCls + ' style="cursor:' + (hasData ? 'pointer' : 'default') + '"' + (hasData ? ' data-action="otevritZpravu" data-idx="' + i + '"' : '') + '>';
     html += '<td style="text-align:center"><input type="checkbox" class="archiv-check" data-action="archivPrepnoutVyber" data-klic="' + esc(klic) + '"' +
       (__archivVybrane[klic] ? ' checked' : '') + ' title="Ozna\u010dit zpr\u00e1vu (se Shiftem cel\u00fd \u00fasek)"></td>';
-    html += '<td style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
+    html += '<td class="archiv-poradi" style="font-family:monospace;font-size:.72rem;color:#6e6a60">' + (i + 1) + '</td>';
     html += '<td><span class="' + typInfo(z.typ).badge + '">' + typInfo(z.typ).label + '</span></td>';
     html += '<td data-archiv-ev="1" style="font-family:monospace;font-size:.8rem">' + (z.ev_cislo || '—') + '</td>';
     // `data-archiv-misto` je záchytný bod pro testy: adresovat buňku pořadím
@@ -20876,7 +20879,7 @@ function renderArchiv() {
         // Starší revize v řetězu se hromadně nevybírají — jen prázdná buňka,
         // aby sloupce seděly s hlavními řádky.
         html += '<td></td>';
-        html += '<td style="text-align:right;color:#b5af9f">↳</td>';
+        html += '<td class="archiv-poradi" style="text-align:right;color:#b5af9f">↳</td>';
         html += '<td><span class="' + typInfo(nz.typ).badge + '">' + typInfo(nz.typ).label + '</span></td>';
         html += '<td data-archiv-ev="1" style="font-family:monospace;font-size:.78rem">' + (nz.ev_cislo || '—') + '</td>';
         html += '<td data-archiv-misto="1" style="font-size:.8rem;color:#6e6a60">' + archivMistoBunka(nz, true) + '</td>';

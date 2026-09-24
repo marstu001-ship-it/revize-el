@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.101 · 2026-09-24**
+**Aktuální verze: v9.102 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -61,6 +61,27 @@ jste nic neudělali.
      neovlivňuje funkcionalitu, je to jen příjemné překvapení"). Zkouška:
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
+
+## Zaškrtávátka v archivu chyběla v zobrazení Mobil (v9.102)
+
+Nahlásil uživatel 2026-09-24 (fotka notebooku, Chrome i stažená aplikace):
+„není v levé části archivu čtverečky pro hromadný výběr."
+
+**Příčina:** CSS z doby před hromadným výběrem schovávalo v zobrazení
+**📱 Mobil** (`html.view-mobile`) a na oknech do 640 px **první sloupec**
+archivu (`th:first-child, td:first-child`), aby se ušetřilo místo za pořadové
+číslo. Od v9.83 je ale prvním sloupcem **zaškrtávátko** — takže mizelo právě
+ono. Číslo zůstalo a výběr nešel.
+
+- **Pořadové číslo nese třídu `archiv-poradi`** a schovává se podle ní — v
+  archivu (hlavička, řádek, `↳` vnořené revize) i v tabulce odběratelů, která
+  sdílí třídu `archiv-table`.
+- **Poučení: nikdy neschovávat sloupec podle pozice** (`:first-child`,
+  `nth-child`) — přidaný sloupec to potichu rozbije. Stejná past jako
+  `tr.children[2]` v testu z v9.83.
+
+Test: `test-archiv-mobil.js` (9 kontrol — PC, zobrazení Mobil, úzké okno,
+počet sloupců hlavičky proti řádku, odběratelé). **Na v9.101 spadne 3 z 9.**
 
 ## 📰 Karty v Novinkách musí sedět s tím, jak program funguje TEĎ
 
