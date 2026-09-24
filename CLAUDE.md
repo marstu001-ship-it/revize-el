@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.93 · 2026-09-23**
+**Aktuální verze: v9.94 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -291,6 +291,24 @@ IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „n
 prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
+
+## Karta v Novinkách k Excelu a pravému kliku (v9.94)
+
+Uživatel schválil 2026-09-24 („schvaluji, pravý klik přidej v tomto jako další
+řádek"). **Jedna karta pro tři verze:** vložení z Excelu (v9.92), načtení
+`.xlsx` zpátky (v9.93) a pravý klik (v9.91) jako poslední odrážka. Text byl
+předložen ke schválení **před** vložením. Uživatel si to výslovně vyžádal
+(„dej mi text ke schválení").
+
+- **Datum je 2026-09-24, ne 23. 9. ze schváleného návrhu.** Mezi návrhem
+  a schválením se změnilo systémové datum session a pravidlo nahoře říká brát
+  datum ze session, ne z dřívějšího odhadu.
+- Poznámka pod čarou vysvětluje dvě věci, které by technika mohly překvapit:
+  **jedna buňka se vkládá postaru** a **minulé hodnoty v závorce se
+  nenačítají**.
+- Test: 3 kontroly v `test-vlozit-excel.js` (30). Karta se hledá **podle
+  titulku** a pořadí se ověřuje nárokem **nad ní nic staršího, pod ní nic
+  novějšího**, nikdy indexem (past z v9.58/71/84/88).
 
 ## Načtení `.xlsx` zpátky do zprávy — vlastní čtečka (v9.93)
 
