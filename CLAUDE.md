@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.100 · 2026-09-24**
+**Aktuální verze: v9.101 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -61,6 +61,30 @@ jste nic neudělali.
      neovlivňuje funkcionalitu, je to jen příjemné překvapení"). Zkouška:
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
+
+## 📰 Karty v Novinkách musí sedět s tím, jak program funguje TEĎ
+
+**Stálé pravidlo (pokyn uživatele 2026-09-24):** kdykoli se mění chování
+funkce, **najdi kartu v Novinkách, která ji popisuje** (lupa nebo
+`grep` v `#screen-novinky`), a když by po změně lhala, **oprav její text ve
+stejném commitu** a v odpovědi to řekni. Karty se píšou, když funkce vzniká,
+a nikdo je pak nepřepisuje — s chytrou lupou (v9.100) by technik nacházel
+nepravdy.
+
+- **Datum karty se při opravě NEMĚNÍ** — nejde o novou funkci, pulsování 📰
+  se nesmí rozsvítit. (Totéž rozhodnutí jako u karty k archivu ve v9.71.)
+- Tohle **není** dotaz na novou kartu — na ty se neptat (pravidlo nahoře).
+- Karty `ai-feature` jsou schované; uživatel je opravovat nechce, dokud AI
+  zůstává vypnutá (v nich je třeba „D. Měření" místo „E. Měření").
+
+**Revize 2026-09-24 (v9.101)** — prošlo se všech 50 karet, opraveny čtyři:
+razítko a podpis (nastavují se v panelu u náhledu, program se už neptá),
+vlastní číslování obvodů (platí pro jeden rozváděč a ukládá se ve zprávě,
+ne napořád v záloze), stroje („kontrola", záložka „2. Stroj a popis",
+přepínač „Rozsah kontroly"), důvod mimořádné revize (tab „A. Popis
+instalace"). Ostatní karty sedí — některé nejsou úplné, ale nelžou.
+Hlídá to `test-novinky-pravda.js` (8 kontrol — i to, že tab a přepínač,
+na které karty odkazují, v programu opravdu existují).
 
 ## Protokol jen pro JEDEN spotřebič (v9.78)
 
