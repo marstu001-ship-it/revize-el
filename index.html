@@ -1220,7 +1220,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.95<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.96<span class="ver-date"> · 2026-09-24</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -5628,6 +5628,7 @@ function mrTsv(radky) {
 // proto pamatují zvlášť a dosadí se při vložení.
 function mrKlon(tr) {
   var k = tr.cloneNode(true);
+  fillUklidKlony(k);
   k.classList.remove('mr-vybrany', 'row-dragging', 'row-drag-above', 'row-drag-below');
   delete k.dataset.dndInit;
   k.querySelectorAll('.drag-handle').forEach(function (h) { h.remove(); });
@@ -6181,17 +6182,33 @@ document.addEventListener('input', function(e) {
 // řádek" se přeskočí). Vyplnění jde vzít zpět tlačítkem ZPĚT.
 var __fill = null;
 
+// Táhlo je JEDNO a drží se v proměnné, ne přes `getElementById`. Sedí přímo
+// v buňce, takže **každé klonování řádku ho zkopíruje taky** (⧉, kopie
+// chrániče, kopie rozváděče, Ctrl+C/V) — kopie má totéž id a žádný
+// posluchač, zůstala viset v tabulce a `getElementById` mohl vrátit právě
+// ji (nahlásil uživatel 2026-09-24 se snímkem, v9.96). Proto: skutečné táhlo
+// v proměnné a úklid všech ostatních při každém ukázání i schování.
+var __fillHandle = null;
+
 function fillHandleEl() {
-  var h = document.getElementById('fill-handle');
-  if (!h) {
-    h = document.createElement('div');
+  if (!__fillHandle) {
+    var h = document.createElement('div');
     h.id = 'fill-handle';
     h.className = 'fill-handle';
     h.title = 'Táhnutím zkopírujete hodnotu do dalších řádků';
     h.addEventListener('pointerdown', fillStart);
     document.body.appendChild(h);
+    __fillHandle = h;
   }
-  return h;
+  return __fillHandle;
+}
+
+// Vyhodí kopie táhla, které přinesl klon řádku. Volá se při ukázání
+// i schování táhla, takže uklidí i kopie ze zpráv otevřených dřív.
+function fillUklidKlony(koren) {
+  Array.prototype.forEach.call((koren || document).querySelectorAll('.fill-handle'), function (x) {
+    if (x !== __fillHandle && x.parentNode) x.parentNode.removeChild(x);
+  });
 }
 
 function showFillHandle(inp) {
@@ -6199,14 +6216,15 @@ function showFillHandle(inp) {
   var td = inp.closest('td');
   if (!td || !td.closest('.meas-table') || td.colSpan > 1) { hideFillHandle(); return; }
   var h = fillHandleEl();
+  fillUklidKlony();
   td.appendChild(h);       // pozice přes CSS (right/bottom v buňce)
   h.style.display = '';
   h.__srcInput = inp;
 }
 
 function hideFillHandle() {
-  var h = document.getElementById('fill-handle');
-  if (h) h.style.display = 'none';
+  fillUklidKlony();
+  if (__fillHandle) __fillHandle.style.display = 'none';
 }
 
 // Rozpozná označení tvaru „text + číslo na konci" (FA1, QF 12, Zásuvky 3),
@@ -8136,6 +8154,7 @@ function copyRow(el) {
   if (!tr) return;
   var tbody = tr.parentNode;
   var clone = tr.cloneNode(true);
+  fillUklidKlony(clone);                 // klon by si odnesl táhlo z buňky
   delete clone.dataset.dndInit;
   clone.querySelectorAll('.drag-handle').forEach(function(h) { h.remove(); });
   clone.classList.remove('row-dragging', 'row-drag-above', 'row-drag-below');
@@ -8177,6 +8196,7 @@ function copyRcdGroup(el) {
   var insertAfter = lastRow;
   rows.forEach(function(r) {
     var clone = r.cloneNode(true);
+    fillUklidKlony(clone);
     clone.dataset.rcdGroup = newGroupId;
     // Aktualizuj groupId v copy/delete tlačítkách
     var cpBtns = clone.querySelectorAll('[data-group]');
@@ -9561,6 +9581,7 @@ function copyRozvadec(el) {
   rozvadecCounter++;
   var novyId = 'rozv-' + rozvadecCounter;
   var klon = orig.cloneNode(true);
+  fillUklidKlony(klon);
   klon.dataset.rozvadecId = novyId;
   // Kopie je jiný rozváděč — vlastní uid, jinak by strom nepoznal, který
   // z nich je který. Odchozí vazby v řádcích se kopírují (kopie napájí

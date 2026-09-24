@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.95 · 2026-09-24**
+**Aktuální verze: v9.96 · 2026-09-24**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -291,6 +291,37 @@ IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „n
 prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
 v uvozovkách).
+
+## Táhlo pro kopírování hodnot zůstávalo viset v tabulce (v9.96)
+
+Nahlásil uživatel 2026-09-24 se snímkem (čtyři černé čtverečky v tabulce
+měření): „zůstávají tam viset čtverečky pro kopírování hodnot."
+
+**Táhlo (`#fill-handle`) sedí přímo v buňce**, takže **každé klonování řádku
+ho zkopírovalo s ní** — ⧉ u obvodu (`copyRow`), kopie chrániče
+(`copyRcdGroup`), kopie rozváděče (`copyRozvadec`) i nové Ctrl+C / Ctrl+V
+(`mrKlon`). Kopie měla totéž id, inline viditelnost a **žádný posluchač**.
+`hideFillHandle()` schovával jen to, co vrátil `getElementById` — tedy jediné
+— a ostatní visely dál. **Horší byla druhá půlka:** `getElementById` mohl
+vrátit mrtvou kopii, takže **skutečné táhlo přestalo kopírovat hodnoty**
+(test to na v9.95 zopakoval: osm táhel, tažení nic nevyplnilo). Chyba je
+stará jako táhlo samo; Ctrl+C / Ctrl+V z v9.95 ji jen přidalo další cestou.
+
+- **Skutečné táhlo se drží v proměnné `__fillHandle`**, ne přes
+  `getElementById`.
+- **`fillUklidKlony(koren)`** vyhodí všechny `.fill-handle` kromě skutečného.
+  Volá se ve **všech čtyřech klonovacích místech** (na klon) a navíc
+  **při každém ukázání i schování táhla** (na celý dokument) — tím se uklidí
+  i kopie, které technikovi už visí ve zprávě otevřené ve starší verzi.
+- **Poučení pro každé další klonování řádku:** klon s sebou nese všechno,
+  co v buňce zrovna bydlí (táhlo, `mr-vybrany`, drag-handle…). Pomocné prvky
+  UI patří do `body`, nebo se z klonu musí vyhodit.
+
+Do Novinek **nejde** — oprava chyby.
+
+Test: `test-tahlo.js` (8 kontrol — ⧉, kopie chrániče, kopie rozváděče,
+Ctrl+C/V, úklid kopie visící z dřívějška, že táhlo dál kopíruje hodnotu
+dolů). **Na v9.95 spadne 6 z 8.**
 
 ## Výběr víc řádků + Ctrl+C / Ctrl+X / Ctrl+V / Delete (v9.95)
 
