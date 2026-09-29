@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.102 · 2026-09-24**
+**Aktuální verze: v9.103 · 2026-09-29**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -61,6 +61,48 @@ jste nic neudělali.
      neovlivňuje funkcionalitu, je to jen příjemné překvapení"). Zkouška:
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
+
+## Blok „Předmět revize – stroj" na titulce ELEKTRO zprávy (v9.103)
+
+Nahlásil uživatel 2026-09-29 se snímkem titulky elektro zprávy: „objeví se
+tam předmět revize – stroj. To je katastrofální chyba s dopadem na naše
+uživatele."
+
+**Chyba byla od zavedení strojů (v9.30)** — ověřeno spuštěním starých verzí
+(v9.42, v9.57, v9.72, v9.87 i v9.102 ji mají). Stačilo **otevřít jakoukoli
+elektro nebo LPS zprávu z archivu** (i přes koncept, Navázat, ⧉ kopii):
+
+1. `getData()` ukládal `stroje: collectStrojeData()` **u každé zprávy**, takže
+   i elektro zpráva nesla v datech prázdné `stroje`,
+2. `nacistData()` ho proto obnovila (`restoreStrojeData`),
+3. `restoreStrojeData` → `addStroj` → `strojeAktualizovatRozsah()`, která
+   blok **bez ohledu na typ** přestěhovala na titulní stranu
+   (`#stroje-titulka-host`).
+
+**Do PDF ani do Plánu revizí se nic nedostalo** — obojí čte `D.stroje` jen
+u `D.typ === 'stroje'` (ověřeno v kódu i `porovnani2.js`). Šlo o to, co
+technik viděl a do čeho mohl psát. Navíc se **stroj z předchozí zprávy
+o stroji ukládal skrytě do dat další elektro zprávy** (nová elektro po
+stroji) — netiskl se, ale v datech byl.
+
+Opraveno na třech místech, schválně víc než jedním:
+
+- **`strojeAktualizovatRozsah()`** pošle blok na titulku jen u
+  `aktTyp === 'stroje'`, jinak do `tab-stroje-objekt`.
+- **`getData()`** ukládá `stroje` jen u zprávy o strojích (jinak `undefined`,
+  klíč v JSON vůbec není).
+- **`nacistData()`** obnovuje `stroje` jen u zprávy o strojích — **starší
+  elektro a LPS zprávy v archivu prázdné `stroje` v datech mají** a měnit je
+  za zády uživatele se nesmí (past z v9.39), takže se jen ignorují.
+
+**Poučení (potřetí, po v9.75 a v9.81):** cokoli, co stěhuje prvek podle typu
+zprávy, **musí ten typ kontrolovat samo** — nestačí, že ho kontroluje
+`novaZprava()`. Do funkce se dá dostat i jinou cestou (tady obnovou dat).
+
+Test: `test-stroj-na-elektro.js` (14 kontrol — nová elektro, elektro z archivu,
+stará zpráva s `stroje` v datech, stroj z předchozí zprávy se neuloží do
+elektro, Navázat, ⧉ kopie, LPS, a že u strojů blok na titulce dál je, s názvem,
+v PDF, a u souboru strojů v tabu). **Na v9.102 spadne 6 z 14.**
 
 ## Zaškrtávátka v archivu chyběla v zobrazení Mobil (v9.102)
 

@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.102<span class="ver-date"> · 2026-09-24</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.103<span class="ver-date"> · 2026-09-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -11494,7 +11494,13 @@ function strojeAktualizovatRozsah() {
   // i konkurence). Soubor strojů se na titulku nevejde — zůstane v tabu,
   // na titulní straně PDF je pak jen souhrn „Soubor N strojů".
   var blok = document.getElementById('stroje-blok');
-  var cil = document.getElementById(soubor ? 'tab-stroje-objekt' : 'stroje-titulka-host');
+  // **Na titulní stranu smí blok JEN u zprávy o strojích** (v9.103). Do
+  // v9.102 se sem nekoukalo na typ — a protože elektro i LPS zpráva nesla
+  // v datech prázdné `stroje`, `nacistData()` ji obnovila a tahle funkce
+  // odstěhovala „Předmět revize – stroj" na titulku ELEKTRO zprávy
+  // (nahlásil uživatel 2026-09-29). Stěhování musí být podmíněné typem
+  // na OBOU koncích — poučení už z v9.75.
+  var cil = document.getElementById((soubor || aktTyp !== 'stroje') ? 'tab-stroje-objekt' : 'stroje-titulka-host');
   if (blok && cil && blok.parentNode !== cil) {
     if (soubor) cil.insertBefore(blok, cil.firstChild);
     else cil.appendChild(blok);
@@ -13531,7 +13537,10 @@ function getData() {
     poznamka_zavady: gv('f_poznamka_zavady'),
     pristroje: pristroje, rozvadece: rozvadece, zavady: zavady, dokumentace: dokumentace,
     lps: collectLpsData(),
-    stroje: collectStrojeData(),
+    // Stroje se ukládají JEN u zprávy o strojích (v9.103). Dřív je nesla
+    // každá zpráva — u elektro to byl skrytý blok z předchozí zprávy o stroji
+    // a po otevření z archivu se kvůli němu stroj ukázal na titulce.
+    stroje: (aktTyp === 'stroje') ? collectStrojeData() : undefined,
     spotrebice: collectSpotrebiceData(),
     rozvStrom: { zapnuto: stromZapnut(), sbaleno: !!(__rozvStrom && __rozvStrom.sbaleno) },
     odberatel_id: window.__aktualniOdberatelId || '',
@@ -17449,7 +17458,10 @@ function nacistData(D) {
   }
   // Restore LPS data (pokud jsou)
   if (D.lps) restoreLpsData(D.lps);
-  if (D.stroje) restoreStrojeData(D.stroje);
+  // Starší elektro a LPS zprávy mají v datech prázdné `stroje` (do v9.102
+  // se ukládaly u každé zprávy) — obnovovat je nesmí, jinak se na titulce
+  // objeví blok stroje.
+  if (D.stroje && (D.typ || aktTyp) === 'stroje') restoreStrojeData(D.stroje);
   if (D.spotrebice) restoreSpotrebiceData(D.spotrebice);
   // Strom rozváděčů: obnova je dlouhá a jednotlivé addRozvadec() si strom
   // překreslují průběžně (tehdy ještě bez vyplněných názvů). Poslední slovo
