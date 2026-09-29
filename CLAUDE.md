@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.103 · 2026-09-29**
+**Aktuální verze: v9.104 · 2026-09-29**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -61,6 +61,61 @@ jste nic neudělali.
      neovlivňuje funkcionalitu, je to jen příjemné překvapení"). Zkouška:
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
+
+## 🛑 POVINNÉ PŘED KAŽDÝM VYDÁNÍM: `test-typy-krizem.js` (v9.104)
+
+Pokyn uživatele 2026-09-29 po chybě z v9.103: **„takové hrozné chyby se
+nemohou dít!"** Tři vydání po sobě (v9.75, v9.81, v9.103) ukázala na obrazovce
+něco z JINÉHO typu zprávy. Pokaždé stejná třída chyby a pokaždé ji testy
+nechytily, protože zkoušely každý typ **jen jako čerstvě založený** — nikdy
+otevřený z archivu, přes Navázat nebo kopií, a nikdy **po jiném typu**.
+
+**`test-typy-krizem.js`** to zkouší plošně: každý typ (elektro dům, elektro
+průmysl, LPS, stroje, spotřebiče) **po každém jiném typu, každou cestou**
+(nová, z archivu, Navázat, ⧉ kopie) = **80 kombinací** + otevření v téže
+stránce. U každé porovná, **co je vidět na každé záložce** (nadpisy karet
+v pořadí, lišta, blok stroje na titulce), se vzorem — čerstvou zprávou téhož
+typu v čisté stránce. Nic se nevyjmenovává ručně, takže to chytí i kartu,
+na kterou nikdo nepomyslel.
+
+- **Musí projít před KAŽDÝM commitem, který mění `index.html`** — ne jen při
+  změně typů zpráv. Tyhle chyby vznikaly z nenápadných míst (obnova dat,
+  ukládání), ne z kódu „o typech".
+- **Na v9.102 hlásí 60 chyb** (blok stroje i pořadí karet), na v9.104 nulu.
+  Ověřeno, že opravdu chytá to, co má.
+- **Nová cesta, jak otevřít zprávu** (import, šablona, cokoli) = přidat ji do
+  `cesty` v testu. **Nový typ zprávy** = přidat do `TYPY`.
+- Každá zpráva v testu má **vlastní ev. číslo** — elektro a LPS jinak obě
+  dostanou RE-26-0001 a uložení se zeptá na přepsání (to byla past, na kterou
+  test napoprvé spadl — není to chyba programu, dialog je záměr).
+
+**Co test při prvním spuštění našel navíc:** na elektro záložce „A. Popis
+instalace" se po otevření zprávy jiného typu **přeházelo pořadí karet** —
+karty `scard-rozsah-popis` / `scard-ochrana-char` / `scard-dokumentace` se
+vracely na KONEC tabu, ne na své místo. Opraveno kotvami (`kotva-<id>`,
+skrytý `<span>` na původním místě karty, vznikne při prvním stěhování).
+
+### Regrese se čte podle ❌, NE podle návratového kódu
+
+Při zavádění křížového testu vyšlo najevo, že **`test-symboly.js` selhával
+už od v9.99** (čekal starou sadu znaků a žádný proužek pod elektro tabulkou —
+obojí se ve v9.99 záměrně změnilo). Nikdo si toho nevšiml, protože **polovina
+starších testů při ❌ končí návratovým kódem 0** a smyčka, která regresi
+spouštěla, hlídala jen ten kód. Program byl v pořádku, test byl zastaralý —
+ale regrese tvrdila „vše prošlo" a nebyla to pravda.
+
+- **Regrese se spouští `regrese.sh`** (ve scratchpadu): hlásí každé ❌,
+  „SELHALO", pád i test bez jediného ✅, ať skončí s jakýmkoli kódem, a na
+  konci `CELKEM ŠPATNĚ: N`. **Vydává se jen při N = 0.**
+- Nové testy končí `process.exit(res.some(r => r.startsWith('❌')) ? 1 : 0)`.
+- **Když se záměrně změní chování, najdi a oprav i testy, které staré chování
+  hlídaly** — ve stejném commitu. Zastaralý test, který se tiše ignoruje, je
+  horší než žádný.
+
+**Záchranná síť** (jako u protokolu spotřebičů ve v9.82): `switchTab()` při
+každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
+není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
+blok na titulku dostal jakoukoli budoucí cestou.
 
 ## Blok „Předmět revize – stroj" na titulce ELEKTRO zprávy (v9.103)
 

@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.103<span class="ver-date"> · 2026-09-29</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.104<span class="ver-date"> · 2026-09-29</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -6962,6 +6962,14 @@ function switchTab(id, btn) {
   // hlášeno 2026-09-21 u strojů na starší verzi). Každé přepnutí záložky to
   // teď samo spraví, ať už by je ukradla jakkoli.
   if (aktTyp !== 'spotrebice') spotrPrenosPoli(false);
+  // Totéž pro blok stroje (v9.104): u jiné než strojní zprávy nesmí stát na
+  // titulní straně. Kdyby se tam dostal jakoukoli budoucí cestou (v9.103 to
+  // byla obnova dat), první přepnutí záložky ho uklidí.
+  if (aktTyp !== 'stroje') {
+    var sBlok = document.getElementById('stroje-blok');
+    var sTab = document.getElementById('tab-stroje-objekt');
+    if (sBlok && sTab && sBlok.parentNode !== sTab) sTab.insertBefore(sBlok, sTab.firstChild);
+  }
   window.scrollTo(0, 0);
 }
 
@@ -7313,7 +7321,20 @@ function novaZprava(typ) {
     if (!karta) return;
     var cilId = (typ === 'lps') ? k.lps : (typ === 'stroje' ? k.stroje : 'tab-popis');
     var cil = document.getElementById(cilId);
-    if (cil && karta.parentNode !== cil) cil.appendChild(karta);
+    // Domov karty (elektro tab „A. Popis") si pamatuje KOTVA na jejím
+    // původním místě v HTML. Do v9.103 se karta vracela na KONEC tabu, takže
+    // po otevření zprávy jiného typu se na elektro záložce přeházelo pořadí
+    // karet (našel to test test-typy-krizem.js).
+    var kotva = document.getElementById('kotva-' + k.id);
+    if (!kotva && karta.parentNode && karta.parentNode.id === 'tab-popis') {
+      kotva = document.createElement('span');
+      kotva.id = 'kotva-' + k.id;
+      kotva.hidden = true;
+      karta.parentNode.insertBefore(kotva, karta);
+    }
+    if (!cil || karta.parentNode === cil && (!kotva || cilId !== 'tab-popis' || kotva.nextSibling === karta)) return;
+    if (cilId === 'tab-popis' && kotva && kotva.parentNode === cil) cil.insertBefore(karta, kotva.nextSibling);
+    else if (karta.parentNode !== cil) cil.appendChild(karta);
   });
   // Blok stroje bydlí na titulní straně jen u zpráv o strojích — u elektro
   // a LPS se zaparkuje zpátky do svého tabu, ať nesvítí na cizí titulce.
