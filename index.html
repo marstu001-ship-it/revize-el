@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.104<span class="ver-date"> · 2026-09-29</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.105<span class="ver-date"> · 2026-09-30</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -9666,9 +9666,24 @@ function stromProPdf(D) {
   if (!D || !D.rozvStrom || !D.rozvStrom.zapnuto) return '';
   var radky = stromZDat(D);
   if (!radky) return '';
+  // Každý řádek schématu ve vlastním obalu, ať ho stránkovač umí přesunout
+  // na další list (v9.105). Velký areál (32 rozváděčů z převodu cizí
+  // zprávy) dal schéma vysoké 2,5 listu, které nešlo rozdělit — a na té
+  // jediné straně se zaseklo dělení VŠECH dalších stran měření. Geometrie se
+  // počítá z celého stromu (`o.od`/`o.do` jako u samostatného schématu, v9.97),
+  // takže čáry na dalším listu navazují. `data-cesta` nese předky řádku pro
+  // popisek „pokračování — RH › RS1".
+  var kr = stromRadkyProKresbu(radky);
+  var telo = '';
+  kr.forEach(function(r, i) {
+    var o = {}; Object.keys(STROM_TISK).forEach(function(k) { o[k] = STROM_TISK[k]; });
+    o.od = i; o.do = i + 1;
+    telo += '<div class="pdf-strom-radek" data-cesta="' + esc(schemaCesta(radky, i).join(' › ')) + '">' +
+      stromKresba(kr, o) + '</div>';
+  });
   var html = '<div class="pdf-strom" style="margin:0 2mm 4mm">' +
     '<div style="font-size:9.5pt;font-weight:bold;margin-bottom:1.5mm">Zapojení rozváděčů</div>' +
-    stromKresba(stromRadkyProKresbu(radky), STROM_TISK) +
+    telo +
     '</div>';
   return html;
 }
@@ -15118,6 +15133,45 @@ function generujPDF() {
       if (!overflows(page)) return null;
       var pContent = page.querySelector('.a4-content');
       if (!pContent) return null;
+      // 0) Schéma „Zapojení rozváděčů" vyšší než list (v9.105): všechno za ním
+      // jde na další list a schéma se rozdělí po řádcích. Když se schéma samo
+      // vejde, vrátí se obsah zpátky a dělí se postaru (rozváděč za rozváděčem).
+      var strom = pContent.querySelector('.pdf-strom');
+      if (strom && strom.querySelectorAll('.pdf-strom-radek').length > 1) {
+        var zaStromem = [];
+        for (var sib = strom.nextSibling; sib; sib = sib.nextSibling) zaStromem.push(sib);
+        var npZbytek = newA4('a4 a4-landscape');
+        var zbContent = npZbytek.querySelector('.a4-content');
+        zaStromem.forEach(function(n) { zbContent.appendChild(n); });
+        if (!overflows(page)) {
+          zaStromem.forEach(function(n) { pContent.appendChild(n); });
+        } else {
+          if (zaStromem.length) pages.insertBefore(npZbytek, page.nextSibling);
+          var npStrom = newA4('a4 a4-landscape');
+          var novy = document.createElement('div');
+          novy.className = 'pdf-strom';
+          novy.setAttribute('style', strom.getAttribute('style') || '');
+          npStrom.querySelector('.a4-content').appendChild(novy);
+          var srad = strom.querySelectorAll('.pdf-strom-radek');
+          var presunuto = 0;
+          while (overflows(page) && srad.length - presunuto > 1) {
+            novy.insertBefore(srad[srad.length - 1 - presunuto], novy.firstChild);
+            presunuto++;
+          }
+          if (presunuto) {
+            var prvni = novy.querySelector('.pdf-strom-radek');
+            var cesta = prvni ? prvni.getAttribute('data-cesta') : '';
+            var nadpis = document.createElement('div');
+            nadpis.setAttribute('style', 'font-size:9.5pt;font-weight:bold;margin-bottom:1.5mm');
+            nadpis.innerHTML = 'Zapojení rozváděčů — pokračování' + (cesta
+              ? '<span style="font-weight:normal;font-style:italic;color:#888;font-size:7.5pt"> (' + esc(cesta) + ')</span>' : '');
+            novy.insertBefore(nadpis, novy.firstChild);
+            pages.insertBefore(npStrom, page.nextSibling);
+            return npStrom;
+          }
+          return zaStromem.length ? npZbytek : null;
+        }
+      }
       var rozvs = pContent.querySelectorAll('[data-rozv]');
       var trailingPage = null; // stránka s přesunutými trailing rozváděči (z case 1)
       // 1) Více rozváděčů: přesuň trailing rozváděče na novou stránku
@@ -15187,8 +15241,10 @@ function generujPDF() {
       didSplit = false;
       var allLand = Array.prototype.slice.call(pages.querySelectorAll('.a4.a4-landscape'));
       for (var li = 0; li < allLand.length; li++) {
-        if (overflows(allLand[li])) {
-          splitLandscapePage(allLand[li]);
+        // Stránka, kterou rozdělit nejde, se přeskočí — do v9.104 se na ní
+        // smyčka točila až do pojistky 200 a na další strany už nedošlo.
+        if (overflows(allLand[li]) && !allLand[li].__nedelitelna) {
+          if (!splitLandscapePage(allLand[li])) allLand[li].__nedelitelna = true;
           didSplit = true;
           break; // restartuj sken — nové stránky byly vloženy do DOM
         }

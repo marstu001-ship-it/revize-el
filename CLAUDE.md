@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.104 · 2026-09-29**
+**Aktuální verze: v9.105 · 2026-09-30**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,70 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## Schéma „Zapojení rozváděčů" vyšší než list zaseklo stránkování (v9.105)
+
+Našlo se při zkušebním převodu cizí zprávy (viz oddíl níž): **32 provázaných
+rozváděčů** dalo schéma na začátku kapitoly Naměřené hodnoty vysoké ~2,5 listu
+na šířku. Dvě chyby naráz:
+
+1. **Schéma nešlo rozdělit** — byl to jeden blok `.pdf-strom`, stránkovač
+   uměl přesouvat jen celé rozváděče (`[data-rozv]`) a řádky jejich tabulky.
+2. **Stránkovač se na nedělitelné straně ZASEKL** — `splitLandscapePage()`
+   vrátila `null`, smyčka nastavila `didSplit = true`, začala znovu od první
+   strany a točila se na ní až do pojistky 200. **Na další strany už nedošlo**,
+   takže 31 rozváděčů skončilo na jedné straně vysoké 29 000 px.
+
+Oprava:
+
+- **`stromProPdf()` obalí každý řádek schématu** (`.pdf-strom-radek`,
+  `data-cesta` = předci) a kreslí ho `stromKresba` s `o.od`/`o.do` — geometrie
+  z celého stromu jako u samostatného schématu (v9.97), takže **čáry na dalším
+  listu navazují**. Text PDF se tím nemění (`porovnani2.js` znak po znaku).
+- **Nový krok 0 v `splitLandscapePage()`**: když je schéma samo vyšší než
+  list, všechno za ním jde na další list a schéma se dělí po řádcích; nad
+  pokračováním je „Zapojení rozváděčů — pokračování (RH › RS1)". **Když se
+  schéma vejde, obsah se vrátí zpátky** a dělí se postaru — malé schéma
+  vypadá přesně jako dřív (test to hlídá).
+- **Strana, kterou rozdělit nejde, dostane `__nedelitelna` a skenování ji
+  přeskočí.** Jedna vadná strana už nikdy nezablokuje ostatní.
+
+Test: `test-strom-velky.js` (12 kontrol, 40 vymyšlených rozváděčů — nic
+nepřetéká, každý rozváděč ve schématu právě jednou a ve správném pořadí přes
+listy, cesta předků, navazující čáry, všech 40 tabulek, malý strom beze
+změny). **Na v9.104 spadne 6 z 12** (list vysoký 7 698 px).
+
+## Převod cizí revizní zprávy (PDF) do programu — ZKUŠEBNĚ, bez kódu (2026-09-30)
+
+Dotaz uživatele: „chci nějakou automatizaci nebo agenta, kterému dám pdf
+s revizní zprávou v cizím vzoru a agent ji přepíše do vzoru v našem programu."
+**V programu se zatím NIC nestaví** — ověřilo se to ručně na dvou skenech
+(data zákazníků zůstala jen ve scratchpadu, do repa nepatří):
+
+- **Úhledná zpráva, 13 stran** (tabulka měření, 47 řádků) — převedeno celé,
+  program to načetl přes `zpracovatZpravuData()` bez úprav.
+- **Psací stroj, 32 stran** (průběžný text, 32 rozváděčů, 638 obvodů,
+  soupisy místností) — pět pomocníků po šesti stranách, ~4 minuty, pak
+  spojení. Namátkou sedí znak po znaku.
+
+Co z toho plyne pro případného agenta:
+
+1. **Výstup = soubor ve formátu `getData()`** a načtení přes 📂 Načíst.
+   „Jiný řádek" má klíče `popis` / `hodnota`, ne `n`.
+2. **Dlouhou zprávu číst po úsecích**; při spojení (a) rozváděč přes hranici
+   úseku se nesmí rozpadnout na dva, (b) jména téhož rozváděče psaná různě
+   („RS 14 R 2.1" × „RS R 2.1") se sjednotí — ale **shoda po sjednocení
+   se jen nahlásí**, nic se neslučuje potichu.
+3. **Seznam „k ověření" je hlavní výstup**, ne doplněk (u 32 stran 103
+   položek — převážně chyby v cizí zprávě, zbytek odhady agenta, např. ke
+   kterému rozváděči patří soupis místností).
+4. **Rozhodnutí uživatele 2026-09-30: „Nám v programu nic nechybí a když je
+   nesoulad jako TN-C, tak to je chyba cizího revizáka, správně to máme my
+   … jedeme podle norem, takže vždycky my."** Když cizí zpráva uvádí něco,
+   co program nenabízí (síť, norma), **platí program** — agent to jen
+   nahlásí, program se kvůli cizí zprávě NEMĚNÍ a nic se nenavrhuje doplnit.
+5. Převzatá zpráva nese cizí číslo a cizího technika — patří k tomu body 4–7
+   odsouhlaseného návrhu „Převzaté zprávy od kolegů" (štítek 📥, dokončená).
 
 ## Blok „Předmět revize – stroj" na titulce ELEKTRO zprávy (v9.103)
 
