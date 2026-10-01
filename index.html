@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.105<span class="ver-date"> · 2026-09-30</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.106<span class="ver-date"> · 2026-10-01</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -17146,6 +17146,14 @@ function tiskMereni() {
   win.document.write('<div class="hbox">' + fmtDate(D.zahajeni) + '</div>');
   win.document.write('<div class="hbox">' + esc(D.ev_cislo||'—') + '</div>');
   win.document.write('</div>');
+  // Přehledové schéma zapojení rozváděčů — stejné jako na začátku kapitoly
+  // měření ve zprávě (v9.106, pokyn uživatele 2026-10-01). Tiskne se jen,
+  // když má zpráva provázané rozváděče; jinak stromProPdf vrátí prázdno.
+  var tmStrom = stromProPdf(D);
+  if (tmStrom) {
+    win.document.write('<style>.pdf-strom-radek{break-inside:avoid;page-break-inside:avoid}</style>');
+    win.document.write(tmStrom);
+  }
   var rozvList = D.rozvadece || [{ nazev: D.rozvadec, umisteni: D.rozvadec_umisteni, mereni: D.mereni }];
   rozvList.forEach(function(rozv, ri) {
     var rows = renderTiskRows(rozv.mereni || []);

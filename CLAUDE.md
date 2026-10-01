@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.105 · 2026-09-30**
+**Aktuální verze: v9.106 · 2026-10-01**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,27 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## Schéma zapojení rozváděčů i v „Tisku měření samostatně" (v9.106)
+
+Pokyn uživatele 2026-10-01: „když si dám v programu tisk měření samostatně,
+tak tam není to přehledové schéma zapojení rozváděčů."
+
+`tiskMereni()` skládá vlastní tiskové okno (`window.open` + `document.write`,
+stránkuje prohlížeč) a schéma do něj nikdy nedávalo. Teď se za hlavičku
+vloží **`stromProPdf(D)`** — **tatáž funkce jako ve zprávě**, takže se obě
+podoby nemůžou rozejít. Bez provázaných rozváděčů vrátí prázdno a tisk
+vypadá přesně jako dřív.
+
+- Řádky schématu mají v tiskovém okně `break-inside:avoid` — rámeček
+  rozváděče se nerozdělí přes stránku. Čáry přes zlom stránky navazují samy,
+  protože každý řádek nese průběžné čáry (v9.97/v9.105).
+- Test: `test-tisk-mereni-strom.js` (8 kontrol — schéma je v okně tisku, všech
+  7 rozváděčů, čáry, stojí před tabulkami, tabulky zůstaly, bez vazeb se
+  netiskne). **Na v9.105 spadne 4 z 8.**
+- **Past v testu:** snímek celého okna tisku (`fullPage`) schéma neukázal,
+  přestože v DOM bylo vidět (`offsetHeight` 375) — kontrolovat přes DOM,
+  vizuálně přes `emulateMedia({ media: 'print' })`.
 
 ## Schéma „Zapojení rozváděčů" vyšší než list zaseklo stránkování (v9.105)
 
