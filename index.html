@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.106<span class="ver-date"> · 2026-10-01</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.107<span class="ver-date"> · 2026-10-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2344,7 +2344,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       revize se berou z archivu zpráv</strong> (podle pole „Místo provádění revize", <strong>u strojů
       je objektem každý stroj</strong> podle názvu a umístění z karty stroje), příští termín z pole
       <strong>„Termín příští revize"</strong> ve zprávě. <strong>Když ve zprávě chybí, plán si ho nedomýšlí</strong> —
-      označí to červeně, ať ho odpovědný člověk doplní podle skutečnosti (ve zprávě, nebo klepnutím do buňky roku).
+      označí to červeně, ať ho odpovědný člověk doplní podle skutečnosti (ve zprávě, lhůtou u objektu, nebo klepnutím do buňky roku).
       Vlastní řadu dopředu si můžete nechat dopočítat z lhůty u objektu (⏱ Lhůty).
       <br>Uspořádání je jako složky ve Windows: <strong>🏢 provozovatel → 🏠 budova → 📄 objekty</strong>.
       Rozbaluje se tlačítkem <strong>+</strong> u složky nebo v liště naráz: <strong>⊞</strong> vše ·
@@ -22349,6 +22349,26 @@ function planRadky() {
                           }) };
       });
     }
+    // „Chybí termín" platí, jen dokud příští termín NEZNÁ ani plán. Plán sám
+    // nabízí dvě cesty, jak ho doplnit — lhůtu u objektu (⏱) a termín
+    // klepnutím do buňky roku — a do v9.106 ani jedna varování nezhasla:
+    // počítalo se jen ze zprávy (hlášení uživatele 2026-10-05 u paketovacího
+    // lisu). Lhůta i ruční termín jsou údaje, které technik zadal sám,
+    // ne odhad programu, takže to pravidlo „plán si termín nedomýšlí" neporušuje.
+    if (r.bezTerminu.length && r.o) {
+      var o = r.o;
+      r.bezTerminu = r.bezTerminu.filter(function(b) {
+        if (o.cyklus && parseInt(o.cyklus[b.druh], 10) > 0) return false;
+        var rucni = (Array.isArray(o.terminy) ? o.terminy : []).some(function(t) {
+          return t && t.rok > b.rok && (t.polozky || []).some(function(p) {
+            return p.druh === b.druh && p.stav !== 'zruseno';
+          });
+        });
+        return !rucni;
+      });
+      Object.keys(r.roky).forEach(function(rok) { delete r.roky[rok].chybiTermin; });
+      r.bezTerminu.forEach(function(b) { if (r.roky[b.rok]) r.roky[b.rok].chybiTermin = true; });
+    }
   });
   return radky;
 }
@@ -22716,7 +22736,8 @@ function planRadekObjektu(r, uroven, roky, odsazeni) {
     planStitkyHtml(r) +
     (r.bezTerminu.length ? '<span class="plan-chybi-stitek" title="' +
       esc(r.bezTerminu.map(function(x) { return x.ev_cislo + ' (' + x.rok + ', ' + x.druh + ')'; }).join(', ')) +
-      ' — ve zprávě není vyplněný termín příští revize. Doplňte ho ve zprávě podle skutečnosti.">⚠ CHYBÍ TERMÍN</span>' : '') +
+      ' — ve zprávě není vyplněný termín příští revize. Doplňte ho ve zprávě podle skutečnosti, ' +
+      'nebo u objektu nastavte lhůtu (klepnutím na název), případně termín klepnutím do buňky roku.">⚠ CHYBÍ TERMÍN</span>' : '') +
     (r.zpravy.length ? '<span class="plan-zdroj" title="' + r.zpravy.length + ' zpráv v archivu">📁 ' + r.zpravy.length + '</span>' : '') +
     '</td>';
   roky.forEach(function(rok) {
@@ -22944,8 +22965,8 @@ function planVarovaniTerminy(radky) {
   box.style.display = '';
   box.innerHTML = '⚠️ <strong>' + zprav + '×</strong> chybí ve zprávě <strong>termín příští revize</strong> ' +
     '(' + objektu + (objektu === 1 ? ' objekt' : (objektu < 5 ? ' objekty' : ' objektů')) + '). ' +
-    'Plán si termín nedomýšlí — otevřete zprávu a doplňte ho podle skutečnosti, nebo ho zadejte ' +
-    'klepnutím do buňky roku. ' +
+    'Plán si termín nedomýšlí — otevřete zprávu a doplňte ho podle skutečnosti, nebo u objektu ' +
+    'nastavte lhůtu, případně termín zadejte klepnutím do buňky roku. ' +
     '<button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent);' +
     'font-size:.68rem;margin-left:.4rem;padding:.25rem .5rem" data-action="planFiltrChybi">Ukázat jen tyto</button>';
 }
@@ -22984,7 +23005,7 @@ function planLegenda() {
           '<span><span class="plan-ex">EX</span> nutné oprávnění pro prostředí s nebezpečím výbuchu</span>' +
           '<span><strong>EL</strong> elektroinstalace · <strong>LPS</strong> hromosvod · <strong>T</strong> technologie, zařízení</span>' +
           '<span><span class="vzorek" style="background:rgba(142,68,173,.35)"></span>objekt bez zprávy v programu (vedený jen v plánu)</span>' +
-          '<span><span class="plan-chybi-stitek">⚠ CHYBÍ TERMÍN</span> zpráva nemá vyplněný termín příští revize — doplňte ho ve zprávě</span>';
+          '<span><span class="plan-chybi-stitek">⚠ CHYBÍ TERMÍN</span> zpráva nemá vyplněný termín příští revize — doplňte ho ve zprávě, nebo u objektu nastavte lhůtu</span>';
   P.technici.forEach(function(t) {
     h += '<span><span class="plan-technik" style="background:' + esc(t.barva) + '">' + esc(planIniciala(t.jmeno)) +
          '</span> ' + esc(t.jmeno) + '</span>';

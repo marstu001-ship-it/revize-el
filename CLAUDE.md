@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.106 · 2026-10-01**
+**Aktuální verze: v9.107 · 2026-10-05**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,39 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## Plán revizí: „⚠ CHYBÍ TERMÍN" nezhasl po doplnění termínu v plánu (v9.107)
+
+Nahlásil uživatel 2026-10-05 se snímkem okna objektu (paketovací lis, zpráva
+o stroji bez termínu příští kontroly): „svítilo mi, že chybí termín, a když
+ho doplním a uložím, tak to svítí pořád."
+
+**Plán sám radil dvě cesty, jak termín doplnit** — lhůtou u objektu (⏱) a
+klepnutím do buňky roku — a **ani jedna varování nezhasla**. `bezTerminu`
+se počítalo jen ze zprávy (`D.pristi`), takže po zadání lhůty 2 roky se řada
+2028, 2030… dopočítala, ale štítek i `?` v buňce svítily dál.
+
+- **`bezTerminu` se na konci `planRadky()` profiltruje**: zpráva bez termínu
+  se nehlásí, když objekt má pro TENTÝŽ druh **lhůtu** (`o.cyklus[druh]`),
+  nebo **ruční termín** téhož druhu v pozdějším roce (zrušený `zruseno`
+  se nepočítá). Příznak `chybiTermin` v letech se přepočítá podle zbytku.
+- **Nerozporuje to rozhodnutí z 2026-08-20** („plán si termín nedomýšlí,
+  odhad z textu lhůty ve zprávě se nepoužívá") — lhůtu i ruční termín zadal
+  technik sám, není to odhad programu.
+- Texty štítku, souhrnného varování, legendy a úvodní nápovědy plánu nově
+  radí i lhůtu u objektu.
+- **Šedé 5 a 4 u EL/LPS v okně objektu jsou jen nápověda (`placeholder`),
+  ne nastavená lhůta** — uložit se musí číslo napsané do pole. U T nápověda
+  není. Uživatel hlásil i „nedoplnilo 2 roky do lhůty"; zeptáno, odkud
+  by se 2 měly brát — **nedělat bez odpovědi** (předvyplnění z textu lhůty
+  ve zprávě by šlo proti rozhodnutí z 2026-08-20).
+
+Test: `test-plan-chybi-termin.js` (13 kontrol — lhůta zhasne varování i `?`
+a dopočítá řadu, ruční termín zhasne, zrušený termín ne, lhůta jiného druhu
+ne, objekt bez doplnění svítí dál, souhrnné varování a filtr „chybí termín"
+počítají jen opravdu chybějící, smazaná lhůta varování vrátí).
+**Na v9.106 spadne 6 z 13.** Do Novinek nejde — oprava chyby a plán Novinky
+nemá.
 
 ## Schéma zapojení rozváděčů i v „Tisku měření samostatně" (v9.106)
 
