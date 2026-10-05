@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.109<span class="ver-date"> · 2026-10-05</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.110<span class="ver-date"> · 2026-10-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3937,10 +3937,12 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="modal" style="max-width:620px">
     <div class="modal-title">🚫 Skryté objekty plánu</div>
     <div class="info-box" style="margin-bottom:.8rem">Objekty, které jste z plánu odebral nebo sloučil s jiným.
-      Revizní zprávy v archivu zůstaly nedotčené. Zaškrtněte ty, které chcete do plánu vrátit.</div>
+      Revizní zprávy v archivu zůstaly nedotčené. Zaškrtněte ty, které chcete do plánu vrátit.
+      Ty, ke kterým v archivu už žádná zpráva není, jde i zapomenout natrvalo.</div>
     <label class="teren-radek" style="margin-bottom:.3rem"><input type="checkbox" id="plan-skryte-vse"> <span>Označit vše</span></label>
     <div id="plan-skryte-seznam" style="max-height:46vh;overflow:auto;border:1px solid var(--border);border-radius:3px;padding:.2rem .5rem;margin-bottom:1rem"></div>
     <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn btn-ghost" id="plan-skryte-zapomenout" style="background:var(--bg);color:var(--text);border:1px solid var(--border);margin-right:auto" data-action="planSkryteZapomenout" disabled title="Vyřadí ze seznamu skryté objekty, ke kterým v archivu už žádná zpráva není. Objekty se zprávami v archivu zapomenout nejde — vrátily by se do plánu.">🗑 Zapomenout natrvalo</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritPlanSkryte">Zavřít</button>
       <button class="btn btn-gold" id="plan-skryte-vratit" data-action="planSkryteVratit" disabled>↩ Vrátit do plánu</button>
     </div>
@@ -24281,6 +24283,9 @@ function planSkryteZapsat(r, info) {
   if (!P.skryteInfo || typeof P.skryteInfo !== 'object') P.skryteInfo = {};
   var zaznam = { kdy: new Date().toISOString().slice(0, 10), duvod: info.duvod };
   if (info.do) zaznam.do = info.do;
+  // název a umístění, aby šel objekt poznat, i když zpráva z archivu zmizí
+  if (r.nazev) zaznam.nazev = r.nazev;
+  if (r.popis) zaznam.popis = r.popis;
   if (r.o) { try { zaznam.objekt = JSON.parse(JSON.stringify(r.o)); } catch(e) {} }
   P.skryteInfo[r.klic] = zaznam;
 }
@@ -24302,6 +24307,8 @@ function planSkrytyPopis(klic) {
       if (druh && d.druhy.indexOf(druh) === -1) d.druhy.push(druh);
     });
   });
+  if (!d.nazev && info.nazev) d.nazev = info.nazev;
+  if (!d.popis && info.popis) d.popis = info.popis;
   if (!d.nazev && info.objekt && info.objekt.nazev) d.nazev = info.objekt.nazev;
   if (!d.nazev) d.nazev = klic.replace(/^stroj:/, '').split('|')[0];
   return d;
@@ -24321,14 +24328,14 @@ function planObnovitSkryte() {
         (d.posledni ? ' · poslední ' + fmtDate(d.posledni) : '') +
         (d.druhy.length ? ' (' + d.druhy.join(', ') + ')' : ''));
     } else {
-      radek2.push('v archivu už žádná zpráva není');
+      radek2.push('v archivu už žádná zpráva není — jde zapomenout natrvalo');
     }
     var i = d.info || {};
     if (i.duvod === 'slouceno') radek2.push('sloučeno do „' + (i.do || '?') + '"' + (i.kdy ? ' ' + fmtDate(i.kdy) : ''));
     else if (i.kdy) radek2.push('skryto ' + fmtDate(i.kdy));
     if (i.objekt) radek2.push('vrátí se i složka, technik a lhůty');
     return '<label class="teren-radek napaji-radek plan-skryty" style="align-items:flex-start">' +
-      '<input type="checkbox" class="plan-skryty-vyber" value="' + esc(d.klic) + '" style="margin-top:.2rem!important">' +
+      '<input type="checkbox" class="plan-skryty-vyber" value="' + esc(d.klic) + '"' + (d.zprav ? '' : ' data-sirotek="1"') + ' style="margin-top:.2rem!important">' +
       '<span style="min-width:0"><strong>' + esc(d.nazev) + '</strong>' +
       (d.popis ? ' <span class="tm">' + esc(d.popis) + '</span>' : '') +
       '<span class="tm" style="display:block;white-space:normal">' + esc(radek2.join(' · ')) + '</span></span></label>';
@@ -24344,6 +24351,9 @@ function planSkryteStav() {
   var vsech = document.querySelectorAll('#plan-skryte-seznam .plan-skryty-vyber').length;
   var b = document.getElementById('plan-skryte-vratit');
   if (b) { b.disabled = !vybrano; b.textContent = '↩ Vrátit do plánu' + (vybrano ? ' (' + vybrano + ')' : ''); }
+  var sirotku = document.querySelectorAll('#plan-skryte-seznam .plan-skryty-vyber[data-sirotek]:checked').length;
+  var z = document.getElementById('plan-skryte-zapomenout');
+  if (z) { z.disabled = !sirotku; z.textContent = '🗑 Zapomenout natrvalo' + (sirotku ? ' (' + sirotku + ')' : ''); }
   var v = document.getElementById('plan-skryte-vse');
   if (v) v.checked = vsech > 0 && vybrano === vsech;
 }
@@ -24387,6 +24397,43 @@ function planSkryteVratit() {
     (klice.length < 5 ? ' objekty' : ' objektů')) + '.', { actionLabel: 'ZPĚT', timeout: 8000, action: function() {
       var Q = planData();
       Q.skryte = predSkryte; Q.skryteInfo = predInfo; Q.objekty = predObjekty;
+      planUlozit();
+      renderPlan();
+    }});
+}
+
+// Zapomenout natrvalo (v9.110) — jen skryté objekty, ke kterým v archivu
+// už žádná zpráva není (smazaná zpráva, přejmenované místo, ručně přidaný
+// objekt). Objekt se zprávami zapomenout nejde: zmizel by ze skrytých
+// a plán by ho z archivu hned odvodil zpátky. Jde vzít ZPĚT (i Ctrl+Z).
+function planSkryteZapomenout() {
+  var vybrane = Array.prototype.slice.call(document.querySelectorAll('#plan-skryte-seznam .plan-skryty-vyber:checked'));
+  var klice = vybrane.filter(function(c) { return c.hasAttribute('data-sirotek'); }).map(function(c) { return c.value; });
+  // pojistka: archiv se mohl mezitím změnit (druhé okno)
+  klice = klice.filter(function(k) { return !planSkrytyPopis(k).zprav; });
+  if (!klice.length) return;
+  var P = planData();
+  var nazvy = klice.slice(0, 12).map(function(k) { return '  • ' + (planSkrytyPopis(k).nazev || '(bez názvu)'); }).join('\n');
+  if (klice.length > 12) nazvy += '\n  … a dalších ' + (klice.length - 12);
+  var sUdaji = klice.filter(function(k) { return P.skryteInfo && P.skryteInfo[k] && P.skryteInfo[k].objekt; }).length;
+  var text = 'Zapomenout natrvalo ' + (klice.length === 1 ? '1 skrytý objekt' : klice.length + (klice.length < 5 ? ' skryté objekty' : ' skrytých objektů')) +
+    '?\n\n' + nazvy + '\n\nV archivu k nim žádná zpráva není, ze seznamu skrytých zmizí.';
+  if (sUdaji) text += '\nZapomene se i to, co jste u nich v plánu vyplnil (složka, technik, lhůty, ruční termíny).';
+  var zbytek = vybrane.length - klice.length;
+  if (zbytek) text += '\n\n' + zbytek + ' označených mají zprávy v archivu — ty zůstanou skryté.';
+  if (!confirm(text)) return;
+  var predSkryte = (P.skryte || []).slice();
+  var predInfo = JSON.parse(JSON.stringify(P.skryteInfo || {}));
+  P.skryte = (P.skryte || []).filter(function(k) { return klice.indexOf(k) === -1; });
+  if (P.skryteInfo) klice.forEach(function(k) { delete P.skryteInfo[k]; });
+  planUlozit();
+  renderPlan();
+  if ((P.skryte || []).length) planObnovitSkryte();
+  else closeModal('modal-plan-skryte');
+  showToast('🗑 Zapomenuto ' + (klice.length === 1 ? '1 skrytý objekt' : klice.length + (klice.length < 5 ? ' skryté objekty' : ' skrytých objektů')) + '.',
+    { actionLabel: 'ZPĚT', timeout: 8000, action: function() {
+      var Q = planData();
+      Q.skryte = predSkryte; Q.skryteInfo = predInfo;
       planUlozit();
       renderPlan();
     }});
@@ -25209,6 +25256,7 @@ document.addEventListener('click', function(e) {
     case 'planHromadnaZavrit': planHromadnaZavrit(); break;
     case 'planObnovitSkryte': planObnovitSkryte(); break;
     case 'planSkryteVratit': planSkryteVratit(); break;
+    case 'planSkryteZapomenout': planSkryteZapomenout(); break;
     case 'zavritPlanSkryte': closeModal('modal-plan-skryte'); break;
     case 'planFiltrChybi': planFiltrChybi(); break;
     case 'planVlozitRozebrat': planVlozitRozebrat(); break;

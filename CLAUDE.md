@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.109 · 2026-10-05**
+**Aktuální verze: v9.110 · 2026-10-05**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,26 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## Plán revizí: „🗑 Zapomenout natrvalo" u skrytých bez zprávy (v9.110)
+
+Dotaz uživatele 2026-10-05 nad oknem skrytých: co znamená „v archivu už žádná
+zpráva není" (smazaná zpráva, přepsané místo / název stroje → jiný klíč,
+ručně přidaný objekt). Na „udělej to" přibylo tlačítko **🗑 Zapomenout
+natrvalo (N)** v okně skrytých (`planSkryteZapomenout`).
+
+- **Jen objekty BEZ zprávy v archivu** (`data-sirotek` na zaškrtávátku,
+  při akci se archiv kontroluje znovu). Objekt se zprávami zapomenout nejde —
+  zmizel by ze skrytých a plán by ho z archivu hned odvodil zpátky.
+  Smíšený výběr: zapomenou se jen sirotci, dotaz to řekne.
+- Dotaz jmenuje objekty a varuje, že se zapomene i vyplněná složka /
+  technik / lhůty (`skryteInfo.objekt`). **ZPĚT** (i Ctrl+Z) vrátí `skryte`
+  i `skryteInfo`.
+- `planSkryteZapsat()` nově ukládá i **`nazev` a `popis`** — klíč je
+  normalizovaný (malá písmena), takže skrytý objekt bez zprávy by se
+  v seznamu jinak ukázal jako „sklad b".
+
+Test: `test-plan-zapomenout.js` (11 kontrol). Do Novinek nejde (plán).
 
 ## Plán revizí: skryté objekty jde prohlédnout a vrátit jednotlivě (v9.109)
 
