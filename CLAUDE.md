@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.107 · 2026-10-05**
+**Aktuální verze: v9.108 · 2026-10-05**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,45 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## 🛑 Program ve DVOU oknech si přepisoval data (v9.108)
+
+Nahlásil uživatel 2026-10-05 snímkem zprávy o paketovacím lisu: „zpráva ale
+datum vyplněný měla" — a plán přesto hlásil „chybí termín". Uživatel používá
+program **v Chromu i jako staženou aplikaci** (viz v9.102).
+
+**Každé okno drží CELÁ data v paměti** (`STORE`, `archiv`, `odberatele`)
+a **`saveStore()` zapisuje všechno naráz**. Okno otevřené od rána tak při
+uložení čehokoli (tady lhůty v plánu) **přepsalo novější archiv z druhého
+okna**. Ověřeno pokusem: termín uložený v okně B **po uložení plánu v okně A
+z dat zmizel** a po restartu nebyl. Plán v okně A navíc termín neviděl vůbec,
+protože měl archiv z doby, kdy se otevřel.
+
+Oprava — okna se sladí, nic se nezakazuje:
+
+- **`saveStore()` po zápisu do IDB ohlásí ostatním oknům změnu**
+  (`BroadcastChannel('revize-el-store')`, ve zprávě `__oknoId`, aby se okno
+  nenačítalo samo po sobě). Bez BroadcastChannel (starší Safari) poslouží
+  událost `storage` na `revize_el_store`.
+- **Ostatní okna si data načtou znovu** (`storeZJinehoOkna()` → `loadStore()`,
+  přepojí `archiv` a `odberatele`, překreslí archiv, odběratele a otevřený
+  plán). Jejich příští uložení už nemá čím novější změny přepsat.
+- **Rozepsaná zpráva se nedotkne** — žije ve formuláři (DOM), ne ve `STORE`;
+  zůstane i příznak neuloženo.
+- Během **hromadného tisku** se nenačítá (půjčuje si zprávy z archivu), odloží
+  se to až po něm.
+- **Nový globál, který drží data ze STORE** (jako `archiv`), se musí přepojit
+  i ve `storeZJinehoOkna()` — jinak by okno dál pracovalo se starou kopií.
+
+Zbývající riziko: dvě okna uloží **v téže desetině sekundy** — prakticky
+nenastane. Totéž ZPRÁVA otevřená a upravovaná ve dvou oknech naráz = vyhraje
+poslední uložení (jako v každém programu).
+
+Test: `test-dve-okna.js` (11 kontrol — termín z okna B se dostane do okna A
+i do jeho otevřeného plánu, uložení v okně A ho po restartu nepřepíše, nová
+zpráva a odběratel z různých oken přežijí oba, rozepsaná zpráva zůstane
+nedotčená a neuložená, okno se po vlastním uložení nenačítá znovu).
+**Na v9.107 spadne 5 z 11.** Do Novinek nejde — oprava chyby.
 
 ## Plán revizí: „⚠ CHYBÍ TERMÍN" nezhasl po doplnění termínu v plánu (v9.107)
 

@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.107<span class="ver-date"> · 2026-10-05</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.108<span class="ver-date"> · 2026-10-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4323,8 +4323,57 @@ function saveStore() {
   if (idb) {
     var snapshot = {};
     STORE_KEYS.forEach(function(k) { snapshot[k] = STORE[k]; });
-    idbSetMulti(snapshot);
+    idbSetMulti(snapshot).then(storeOhlasitOknum);
+  } else {
+    storeOhlasitOknum();
   }
+}
+
+// ── Víc oken najednou (v9.108) ───────────────────────────────────────
+// Každé okno (karta v Chromu, stažená aplikace) drží CELÁ data v paměti
+// a saveStore() zapisuje všechno naráz. Okno otevřené od rána tak při
+// uložení plánu přepsalo novější archiv z jiného okna — termín příští
+// kontroly doplněný ve zprávě z dat zmizel (hlášení uživatele 2026-10-05,
+// paketovací lis: „zpráva ale datum vyplněný měla"). Okno proto po každém
+// uložení ohlásí ostatním, že data změnilo, a ta si je znovu načtou —
+// jejich příští uložení už nemá čím novější změny přepsat.
+var __oknoId = Math.random().toString(36).slice(2);
+var __storeKanal = null;
+try { if ('BroadcastChannel' in window) __storeKanal = new BroadcastChannel('revize-el-store'); } catch(e) {}
+
+function storeOhlasitOknum() {
+  try { if (__storeKanal) __storeKanal.postMessage({ okno: __oknoId, t: Date.now() }); } catch(e) {}
+}
+
+var __storeZnovuCasovac = null;
+function storeZJinehoOkna() {
+  if (__storeZnovuCasovac) clearTimeout(__storeZnovuCasovac);
+  __storeZnovuCasovac = setTimeout(function() {
+    __storeZnovuCasovac = null;
+    // Hromadný tisk si postupně půjčuje zprávy z archivu — pod rukama se
+    // mu data měnit nesmí, načte se až po něm.
+    if (window.__hromadnyTisk) { storeZJinehoOkna(); return; }
+    loadStore().then(function() {
+      archiv = STORE.archiv || [];
+      odberatele = STORE.odberatele || [];
+      try { renderArchiv(); } catch(e) {}
+      try { renderOdberatele(); } catch(e) {}
+      var plan = document.getElementById('screen-plan');
+      if (plan && plan.classList.contains('active')) { try { renderPlan(); } catch(e) {} }
+    });
+  }, 150);
+}
+
+if (__storeKanal) {
+  __storeKanal.onmessage = function(e) {
+    if (e && e.data && e.data.okno !== __oknoId) storeZJinehoOkna();
+  };
+} else {
+  // Prohlížeč bez BroadcastChannel (starší Safari): ozve se aspoň změna
+  // zálohy v localStorage, kterou saveStore() zapisuje vždycky.
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'revize_el_store') storeZJinehoOkna();
+  });
 }
 
 // loadStore — async. Preference IDB. Pokud je IDB prázdná, načte se
