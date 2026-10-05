@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.108<span class="ver-date"> · 2026-10-05</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.109<span class="ver-date"> · 2026-10-05</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2368,7 +2368,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planRozbalitVse" title="Rozbalit všechny složky">⊞</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planUroven" title="Rozbalit jen provozovatele — budovy zůstanou sbalené a ukážou souhrn termínů za celou budovu">⊡</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planSbalitVse" title="Sbalit všechny složky">⊟</button>
-      <button class="btn btn-ghost" id="plan-btn-skryte" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObnovitSkryte" title="Vrátit do plánu objekty, které jste z něj odebral">🚫 Skryté</button>
+      <button class="btn btn-ghost" id="plan-btn-skryte" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObnovitSkryte" title="Ukázat objekty skryté z plánu a vybrané vrátit zpátky">🚫 Skryté</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planTechnici">👷 Revizní technici</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExport">📄 Tisk / PDF</button>
       <button class="btn btn-gold" data-action="planUlozitDoZalohy" title="Uloží plán do databáze programu — veze se pak v každé záloze">💾 Uložit plán</button>
@@ -3929,6 +3929,20 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div style="display:flex;gap:.5rem;justify-content:flex-end">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritNapaji">Zrušit</button>
       <button class="btn btn-gold" data-action="stromPriraditUlozit">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-plan-skryte">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-title">🚫 Skryté objekty plánu</div>
+    <div class="info-box" style="margin-bottom:.8rem">Objekty, které jste z plánu odebral nebo sloučil s jiným.
+      Revizní zprávy v archivu zůstaly nedotčené. Zaškrtněte ty, které chcete do plánu vrátit.</div>
+    <label class="teren-radek" style="margin-bottom:.3rem"><input type="checkbox" id="plan-skryte-vse"> <span>Označit vše</span></label>
+    <div id="plan-skryte-seznam" style="max-height:46vh;overflow:auto;border:1px solid var(--border);border-radius:3px;padding:.2rem .5rem;margin-bottom:1rem"></div>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="zavritPlanSkryte">Zavřít</button>
+      <button class="btn btn-gold" id="plan-skryte-vratit" data-action="planSkryteVratit" disabled>↩ Vrátit do plánu</button>
     </div>
   </div>
 </div>
@@ -24238,24 +24252,144 @@ function planVybraneSmazat() {
   var P = planData();
   if (!Array.isArray(P.skryte)) P.skryte = [];
   radky.forEach(function(r) {
-    if (r.klic && P.skryte.indexOf(r.klic) === -1) P.skryte.push(r.klic);
+    if (r.klic && P.skryte.indexOf(r.klic) === -1) {
+      P.skryte.push(r.klic);
+      planSkryteZapsat(r, { duvod: 'odebrano' });
+    }
     P.objekty = P.objekty.filter(function(o) { return o.id !== r.id; });
   });
   __planVybrane = {};
   planUlozit();
   renderPlan();
-  showToast('🗑 Z plánu odebráno ' + radky.length + ' objektů.');
+  showToast('🗑 Z plánu ' + (radky.length === 1 ? 'odebrán 1 objekt' : 'odebráno ' + radky.length +
+    (radky.length < 5 ? ' objekty' : ' objektů')) + '.');
+}
+
+// ── Skryté objekty: prohlédnout a vrátit jednotlivě (v9.109) ──────────
+// Pokyn uživatele 2026-10-05: „když za měsíc zapomenu, co jsem skryl, tak
+// nemám možnost nahlédnout, co je skryté, jen je můžu vrátit zpět, což
+// nechci, a ještě všechny najednou." Jako „Obnovit odstraněné položky"
+// v Outlooku / „Zobrazit skryté listy" v Excelu: seznam, výběr, vrátit.
+//
+// Ke klíči se při skrytí ukládá i proč a kdy (`P.skryteInfo`) a hlavně
+// VLASTNÍ ZÁZNAM OBJEKTU — složka, technik, lhůty, ruční termíny. Do v9.108
+// se při skrytí zahodil, takže vrácený objekt přišel o všechno, co k němu
+// technik doplnil. Skrytí ze starších verzí info nemají — ukáže se jen to,
+// co jde dohledat v archivu.
+function planSkryteZapsat(r, info) {
+  var P = planData();
+  if (!P.skryteInfo || typeof P.skryteInfo !== 'object') P.skryteInfo = {};
+  var zaznam = { kdy: new Date().toISOString().slice(0, 10), duvod: info.duvod };
+  if (info.do) zaznam.do = info.do;
+  if (r.o) { try { zaznam.objekt = JSON.parse(JSON.stringify(r.o)); } catch(e) {} }
+  P.skryteInfo[r.klic] = zaznam;
+}
+
+// Co o skrytém klíči víme z archivu: název, umístění, počet zpráv, poslední revize.
+function planSkrytyPopis(klic) {
+  var P = planData();
+  var info = (P.skryteInfo || {})[klic] || {};
+  var d = { klic: klic, nazev: '', popis: '', zprav: 0, posledni: '', druhy: [], info: info };
+  (archiv || []).forEach(function(z) {
+    planKliceZpravy(z).forEach(function(e) {
+      if (e.klic !== klic) return;
+      d.zprav++;
+      if (!d.nazev) d.nazev = e.nazev || '';
+      if (!d.popis && e.popis) d.popis = e.popis;
+      var dat = String(z.datum || '');
+      if (dat > d.posledni) d.posledni = dat;
+      var druh = planDruhZpravy(z);
+      if (druh && d.druhy.indexOf(druh) === -1) d.druhy.push(druh);
+    });
+  });
+  if (!d.nazev && info.objekt && info.objekt.nazev) d.nazev = info.objekt.nazev;
+  if (!d.nazev) d.nazev = klic.replace(/^stroj:/, '').split('|')[0];
+  return d;
 }
 
 function planObnovitSkryte() {
   var P = planData();
-  var pocet = (P.skryte || []).length;
-  if (!pocet) return;
-  if (!confirm('Vrátit do plánu ' + pocet + ' skrytých objektů z archivu?')) return;
-  P.skryte = [];
+  var klice = (P.skryte || []).slice();
+  if (!klice.length) return;
+  var polozky = klice.map(planSkrytyPopis).sort(function(a, b) {
+    return String(a.nazev).localeCompare(String(b.nazev), 'cs');
+  });
+  var html = polozky.map(function(d) {
+    var radek2 = [];
+    if (d.zprav) {
+      radek2.push(pocetZprav(d.zprav) + ' v archivu' +
+        (d.posledni ? ' · poslední ' + fmtDate(d.posledni) : '') +
+        (d.druhy.length ? ' (' + d.druhy.join(', ') + ')' : ''));
+    } else {
+      radek2.push('v archivu už žádná zpráva není');
+    }
+    var i = d.info || {};
+    if (i.duvod === 'slouceno') radek2.push('sloučeno do „' + (i.do || '?') + '"' + (i.kdy ? ' ' + fmtDate(i.kdy) : ''));
+    else if (i.kdy) radek2.push('skryto ' + fmtDate(i.kdy));
+    if (i.objekt) radek2.push('vrátí se i složka, technik a lhůty');
+    return '<label class="teren-radek napaji-radek plan-skryty" style="align-items:flex-start">' +
+      '<input type="checkbox" class="plan-skryty-vyber" value="' + esc(d.klic) + '" style="margin-top:.2rem!important">' +
+      '<span style="min-width:0"><strong>' + esc(d.nazev) + '</strong>' +
+      (d.popis ? ' <span class="tm">' + esc(d.popis) + '</span>' : '') +
+      '<span class="tm" style="display:block;white-space:normal">' + esc(radek2.join(' · ')) + '</span></span></label>';
+  }).join('');
+  document.getElementById('plan-skryte-seznam').innerHTML = html;
+  document.getElementById('plan-skryte-vse').checked = false;
+  planSkryteStav();
+  document.getElementById('modal-plan-skryte').classList.add('open');
+}
+
+function planSkryteStav() {
+  var vybrano = document.querySelectorAll('#plan-skryte-seznam .plan-skryty-vyber:checked').length;
+  var vsech = document.querySelectorAll('#plan-skryte-seznam .plan-skryty-vyber').length;
+  var b = document.getElementById('plan-skryte-vratit');
+  if (b) { b.disabled = !vybrano; b.textContent = '↩ Vrátit do plánu' + (vybrano ? ' (' + vybrano + ')' : ''); }
+  var v = document.getElementById('plan-skryte-vse');
+  if (v) v.checked = vsech > 0 && vybrano === vsech;
+}
+
+document.addEventListener('change', function(e) {
+  var t = e.target;
+  if (!t || !t.closest || !t.closest('#modal-plan-skryte')) return;
+  if (t.id === 'plan-skryte-vse') planSkryteVybratVse(t.checked);
+  else if (t.classList.contains('plan-skryty-vyber')) planSkryteStav();
+});
+
+function planSkryteVybratVse(zap) {
+  document.querySelectorAll('#plan-skryte-seznam .plan-skryty-vyber').forEach(function(c) { c.checked = zap; });
+  planSkryteStav();
+}
+
+function planSkryteVratit() {
+  var klice = Array.prototype.map.call(
+    document.querySelectorAll('#plan-skryte-seznam .plan-skryty-vyber:checked'), function(c) { return c.value; });
+  if (!klice.length) return;
+  var P = planData();
+  var predSkryte = (P.skryte || []).slice();
+  var predInfo = JSON.parse(JSON.stringify(P.skryteInfo || {}));
+  var predObjekty = (P.objekty || []).slice();
+  if (!P.skryteInfo) P.skryteInfo = {};
+  klice.forEach(function(k) {
+    var info = P.skryteInfo[k];
+    // Vlastní záznam objektu (složka, technik, lhůty…) se vrátí s ním —
+    // jen když mezitím nevznikl jiný se stejným klíčem.
+    if (info && info.objekt && !P.objekty.some(function(o) { return o.klic === k; })) {
+      P.objekty.push(info.objekt);
+    }
+    delete P.skryteInfo[k];
+  });
+  P.skryte = (P.skryte || []).filter(function(k) { return klice.indexOf(k) === -1; });
   planUlozit();
   renderPlan();
-  showToast('↩ Skryté objekty jsou zpátky v plánu.');
+  if ((P.skryte || []).length) planObnovitSkryte();
+  else closeModal('modal-plan-skryte');
+  showToast('↩ Do plánu ' + (klice.length === 1 ? 'vrácen 1 objekt' : 'vráceno ' + klice.length +
+    (klice.length < 5 ? ' objekty' : ' objektů')) + '.', { actionLabel: 'ZPĚT', timeout: 8000, action: function() {
+      var Q = planData();
+      Q.skryte = predSkryte; Q.skryteInfo = predInfo; Q.objekty = predObjekty;
+      planUlozit();
+      renderPlan();
+    }});
 }
 
 function planVybranePresunout() { planHromadnaVolba('slozka'); }
@@ -24307,7 +24441,10 @@ function planVybraneSloucit() {
     // objekt odvozený z archivu se skryje, vlastní záznam zmizí
     if (r.klic && r.klic !== cil.klic) {
       if (!Array.isArray(P.skryte)) P.skryte = [];
-      if (P.skryte.indexOf(r.klic) === -1) P.skryte.push(r.klic);
+      if (P.skryte.indexOf(r.klic) === -1) {
+        P.skryte.push(r.klic);
+        planSkryteZapsat(r, { duvod: 'slouceno', do: cilNazev });
+      }
     }
     P.objekty = P.objekty.filter(function(o) { return o.id !== r.id; });
   });
@@ -25071,6 +25208,8 @@ document.addEventListener('click', function(e) {
     case 'planHromadnaPotvrdit': planHromadnaPotvrdit(); break;
     case 'planHromadnaZavrit': planHromadnaZavrit(); break;
     case 'planObnovitSkryte': planObnovitSkryte(); break;
+    case 'planSkryteVratit': planSkryteVratit(); break;
+    case 'zavritPlanSkryte': closeModal('modal-plan-skryte'); break;
     case 'planFiltrChybi': planFiltrChybi(); break;
     case 'planVlozitRozebrat': planVlozitRozebrat(); break;
     case 'planVlozitPotvrdit': planVlozitPotvrdit(); break;

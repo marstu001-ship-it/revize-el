@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.108 · 2026-10-05**
+**Aktuální verze: v9.109 · 2026-10-05**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,36 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## Plán revizí: skryté objekty jde prohlédnout a vrátit jednotlivě (v9.109)
+
+Pokyn uživatele 2026-10-05: „když mám nějaké objekty skryté, tak když za
+měsíc zapomenu, co jsem skryl, tak nemám možnost nahlédnout, co je skryté,
+jen je můžu vrátit zpět, což nechci, a ještě všechny najednou."
+
+Tlačítko **🚫 Skryté (N)** teď otevře okno se seznamem (jako „Obnovit
+odstraněné položky" v Outlooku / „Zobrazit skryté listy" v Excelu):
+název, umístění, počet zpráv v archivu, poslední revize a druh, **kdy a proč
+se skryl** („skryto 5. 10. 2026" / „sloučeno do „Sklad B""). Zaškrtnout
+jednotlivě nebo „Označit vše" → **↩ Vrátit do plánu (N)**. Okno zůstane
+otevřené se zbytkem; vrácení jde vzít **ZPĚT** (i Ctrl+Z).
+
+- **`P.skryteInfo[klic]`** (uvnitř `STORE.plan`, takže žádný nový klíč STORE)
+  = `{kdy, duvod: 'odebrano'|'slouceno', do, objekt}`. Zapisuje se
+  v `planVybraneSmazat()` i `planVybraneSloucit()` přes `planSkryteZapsat()`.
+- **Opravená ztráta dat:** skrytí do v9.108 **mazalo vlastní záznam objektu**
+  (složka, technik, lhůty, ruční termíny) a nechalo jen klíč — vrácený objekt
+  spadl holý do „Nezařazených". Teď se záznam uschová v `skryteInfo.objekt`
+  a při vrácení obnoví (jen když mezitím nevznikl jiný se stejným klíčem).
+- **Skrytí ze starších verzí** info nemají — seznam je ukáže podle archivu
+  (`planSkrytyPopis`); složku po nich vrátit nejde, byla smazaná dřív.
+- Hláška „Z plánu odebráno 2 objektů" → správně skloňovaná.
+- Do Novinek nejde — plán je jen pro uživatele a kolegu.
+
+Test: `test-plan-skryte.js` (18 kontrol — seznam místo vrácení všeho,
+řazení, umístění a zprávy u stroje, „sloučeno do", datum skrytí, staré
+skrytí bez info, vypnuté tlačítko bez výběru, vrácení jen vybraného, okno
+zůstane se zbytkem, složka/technik/lhůta zpátky, ZPĚT, označit vše).
 
 ## 🛑 Program ve DVOU oknech si přepisoval data (v9.108)
 
