@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.112 · 2026-10-06**
+**Aktuální verze: v9.113 · 2026-10-06**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,53 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## 🛑 Automatická záloha vynechávala změny (v9.113)
+
+Nahlásil uživatel 2026-10-06: „když nahraju soubor od kolegy, tak se program
+do zálohy neuloží, a když jsem si tu zprávu upravil a přiřadil v plánu
+revizí a dal uložit, tak se mi po restartu prohlížeče v poslední záloze
+nezobrazuje — obrovská chyba."
+
+**Dvě příčiny, obě ověřené testem na v9.112:**
+
+1. **10min „throttle" změny ZAHAZOVAL.** `autoZaloha(false)` při uložení
+   zprávy i plánu skončila, když od poslední zálohy neuplynulo deset minut —
+   a nic se nenaplánovalo na později. Další záloha přišla až při startu
+   **v nový den**. Záloha při startu dne + práce během deseti minut = nic.
+2. **Načtení zpráv od kolegy (`zpravyImportDavka`) zálohu nespouštělo vůbec.**
+
+**Oprava — záloha se veze na `saveStore()`, ne na jednotlivé akce:**
+
+- **Každý `saveStore()` naplánuje zálohu za 4 s** (`autoZalohaNaplanovat`,
+  odklad slučuje série změn). Tím se pokryje import, plán, odběratelé,
+  nastavení — cokoli, co data mění, i budoucí funkce. **Nemusí se hlídat
+  na deseti místech** (stejný princip jako `renderArchiv()` u postranního
+  archivu).
+- **Během deseti minut se PŘEPISUJE TENTÝŽ soubor** (`STORE.auto_zaloha_soubor`
+  + `auto_zaloha_soubor_od`, okno se počítá od VZNIKU souboru, ne od
+  posledního zápisu). Nový soubor až po deseti minutách → složka se
+  nezaplaví, historie je dál jeden soubor na deset minut práce, a ten
+  poslední drží **vždy nejnovější stav**. `force` (start dne, výběr složky,
+  ruční export) dělá nový soubor hned.
+- **Vlastní zápis údajů o záloze nesmí plánovat další** — `autoZaloha()` volá
+  `saveStore()` pod příznakem `window.__autoZalohaVlastni`. Změna dat
+  BĚHEM zápisu (`__autoZalohaBezi`) se nezahodí: `__autoZalohaZnovu` →
+  po dopsání se naplánuje další.
+- **Odchod z okna** (`visibilitychange` hidden, `pagehide`) čekající zálohu
+  dopíše hned.
+- **Bez povolení přístupu ke složce program upozorní** (`autoZalohaNepovoleno`,
+  jednou za běh, jen při stavu `prompt`): Chrome po restartu chce přístup
+  potvrdit znovu a bez kliknutí se zeptat nesmí — dřív to tiše selhalo.
+  Hláška má tlačítko „Povolit" (klik = smí se zeptat).
+- Nové klíče `auto_zaloha_soubor*` jsou v `STORE_KEYS` a `STORE_VYCHOZI`,
+  **do zálohy nejdou** (patří zařízení, jako `auto_zaloha_at`).
+- Text v Nastavení i karta v Novinkách (datum nezměněno) opraveny.
+
+Test: `test-autozaloha.js` (9 kontrol, složka napodobená v paměti — start
+dne, import od kolegy, úprava do 10 minut, plán, jeden soubor v okně, žádné
+zálohování dokola, nový soubor po 10 minutách, upozornění bez povolení).
+**Na v9.112 spadne 4 z 8.** Do Novinek nejde (oprava chyby).
 
 ## Karta stroje k zápisu v terénu (v9.111)
 

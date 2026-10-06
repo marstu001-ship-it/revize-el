@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.112<span class="ver-date"> · 2026-10-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.113<span class="ver-date"> · 2026-10-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1821,7 +1821,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 
   <div class="scard" data-nov-datum="2026-07-13">
     <div class="scard-title">📁 Automatické zálohy do složky <span class="nov-datum">13. 7. 2026</span></div>
-    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Konec ručního stahování a hledání složky. Vyberete jednou složku na disku a program do ní ukládá zálohy databáze sám — při uložení zprávy, při prvním otevření v nový den a po každé aktualizaci programu. Název souboru obsahuje datum i čas.</p>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Konec ručního stahování a hledání složky. Vyberete jednou složku na disku a program do ní ukládá zálohy databáze sám — po každé změně (uložení zprávy, načtení zpráv od kolegy, úprava plánu…), při prvním otevření v nový den a po každé aktualizaci programu. Název souboru obsahuje datum i čas.</p>
     <div style="font-size:.85rem;line-height:1.7">
       <strong>Jak na to:</strong>
       <ol style="margin:.3rem 0 0 1.4rem;padding:0">
@@ -1830,7 +1830,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         <li>Povolte prohlížeči ukládání do složky — první záloha se uloží hned</li>
         <li>Hotovo — o zálohy se už nestaráte. I ruční „⬇️ Stáhnout zálohu" teď ukládá rovnou do této složky</li>
       </ol>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Drží se posledních 20 záloh, starší se samy promažou — jiných souborů ve složce se program nedotkne. Funguje v Chrome/Edge na počítači; na mobilu zůstává ruční stažení. Tip: zvolte složku synchronizovanou s cloudem (OneDrive, Disk Google) a máte zálohy i mimo počítač.</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Během deseti minut se přepisuje tatáž záloha, nová vznikne až po deseti minutách. Drží se posledních 20 záloh, starší se samy promažou — jiných souborů ve složce se program nedotkne. Když prohlížeč po restartu chce přístup ke složce potvrdit znovu, program to ohlásí a nabídne tlačítko „Povolit“. Funguje v Chrome/Edge na počítači; na mobilu zůstává ruční stažení. Tip: zvolte složku synchronizovanou s cloudem (OneDrive, Disk Google) a máte zálohy i mimo počítač.</div>
     </div>
   </div>
 
@@ -2311,7 +2311,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   </div>
   <div class="scard">
     <div class="scard-title">📁 Automatické zálohy do složky</div>
-    <div class="info-box">Vyberte jednou složku na disku (třeba <strong>Dokumenty\Revize zálohy</strong>) a program do ní bude zálohy ukládat <strong>sám</strong> — při uložení zprávy (max. 1× za 10 minut), při prvním otevření v nový den a po aktualizaci programu. Drží se posledních 20 záloh, starší se automaticky promazávají (jiných souborů ve složce se to nedotkne). Ruční tlačítko „⬇️ Stáhnout zálohu" pak ukládá rovnou do této složky bez dialogu.</div>
+    <div class="info-box">Vyberte jednou složku na disku (třeba <strong>Dokumenty\Revize zálohy</strong>) a program do ní bude zálohy ukládat <strong>sám</strong> — po <strong>každé změně</strong> (uložení zprávy, načtení zpráv od kolegy, úprava plánu…) do pár vteřin, při prvním otevření v nový den a po aktualizaci programu. Během deseti minut se přepisuje tatáž záloha, nová vznikne až po deseti minutách, takže se složka nezaplaví. Drží se posledních 20 záloh, starší se automaticky promazávají (jiných souborů ve složce se to nedotkne). Ruční tlačítko „⬇️ Stáhnout zálohu" pak ukládá rovnou do této složky bez dialogu.</div>
     <div id="autozaloha-status" style="margin-bottom:.6rem"></div>
     <div style="display:flex;gap:.75rem;flex-wrap:wrap">
       <button class="btn btn-gold" data-action="vybratSlozkuZaloh">📁 Vybrat složku pro zálohy</button>
@@ -4255,6 +4255,7 @@ var STORE_VYCHOZI = {
   strojeMereni: [], strojeKontroly: [], teren: {},
   last_backup_at: null, archiv_count_at_last_backup: 0,
   auto_cislovani: true, auto_zaloha_at: null, auto_zaloha_ver: null,
+  auto_zaloha_soubor: '', auto_zaloha_soubor_od: null,
   tisk_migrace_kolonky: 0
 };
 var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
@@ -4262,6 +4263,7 @@ var STORE_KEYS = ['technik', 'pristroje', 'archiv', 'odberatele',
                   'strojeMereni', 'strojeKontroly', 'teren',
                   'last_backup_at', 'archiv_count_at_last_backup',
                   'auto_cislovani', 'auto_zaloha_at', 'auto_zaloha_ver',
+                  'auto_zaloha_soubor', 'auto_zaloha_soubor_od',
                   'tisk_migrace_kolonky'];
 
 // iOS Safari (tab i PWA) má historicky bugy v IndexedDB v WebKit content
@@ -4343,6 +4345,8 @@ function saveStore() {
   } else {
     storeOhlasitOknum();
   }
+  // Každá změna dat se dostane i do automatické zálohy do složky (v9.113)
+  if (!window.__autoZalohaVlastni) autoZalohaNaplanovat();
 }
 
 // ── Víc oken najednou (v9.108) ───────────────────────────────────────
@@ -17499,7 +17503,7 @@ function saveToArchiv() {
   saveStore();
   renderArchiv();
   renderZalohaStatus();
-  autoZaloha(false); // auto-záloha do složky, throttle 10 min (no-op bez složky)
+  autoZaloha(false); // auto-záloha do složky hned (klik = smí se zeptat na povolení), no-op bez složky
   window.__formDirty = false; // právě uložené data
   window.__poslednUlozeno = new Date().toTimeString().slice(0, 5);   // do stavového řádku
   try { stavovyRadek(); } catch (e) {}
@@ -18758,7 +18762,7 @@ async function stahnoutKodZip() {
 // ═══ AUTOMATICKÉ ZÁLOHY DO SLOŽKY (File System Access API) ═══════════════
 // Uživatel jednou vybere složku na disku (Chrome/Edge desktop), handle se
 // uloží do IndexedDB (nejde přes JSON/localStorage) a zálohy se pak píšou
-// bez dialogu: při uložení zprávy (max 1× za 10 min), při startu v nový den
+// bez dialogu: po každé změně dat (do 4 s, během 10 min se přepisuje tentýž soubor), při startu v nový den
 // a při změně verze programu. Starší zálohy nad limit se promazávají.
 var backupDirHandle = null;
 var AUTOZALOHA_LIMIT = 20;
@@ -18809,18 +18813,50 @@ async function autoZalohaPermission(interactive) {
   return false;
 }
 
-// force=true přeskočí 10min throttle (ruční export, výběr složky, start)
+// ── Automatická záloha do složky ──────────────────────────────────────
+// Do v9.112 se záloha při uložení zprávy pouštěla NEJVÝŠ jednou za deset
+// minut a vše, co se v té době změnilo, se do zálohy nedostalo vůbec — dokud
+// nebyl nový den. Načtení zpráv od kolegy ji nespouštělo vůbec. Hlášení
+// uživatele 2026-10-06: zpráva od kolegy, upravená a zařazená v plánu, po
+// restartu prohlížeče v poslední záloze nebyla.
+//
+// Teď: KAŽDÁ změna dat (saveStore) naplánuje zálohu za 4 s. Aby se složka
+// nezaplavila, během deseti minut se PŘEPISUJE TENTÝŽ soubor — nový vznikne
+// až po deseti minutách. Záloha tak drží vždy poslední stav a historie má
+// pořád jeden soubor za každých deset minut práce.
+//
+// force=true = nový soubor hned (výběr složky, ruční export, start v nový den).
+var __autoZalohaCasovac = null, __autoZalohaCeka = false, __autoZalohaBezi = false, __autoZalohaZnovu = false;
+var AUTOZALOHA_OKNO = 10 * 60 * 1000;
+
+function autoZalohaNaplanovat() {
+  if (!backupDirHandle) return;
+  if (__autoZalohaBezi) { __autoZalohaZnovu = true; return; }   // změna během zápisu
+  __autoZalohaCeka = true;
+  clearTimeout(__autoZalohaCasovac);
+  __autoZalohaCasovac = setTimeout(function() { autoZaloha(false); }, 4000);
+}
+
 async function autoZaloha(force) {
   if (!backupDirHandle) return false;
-  if (!force) {
-    var last = STORE.auto_zaloha_at ? new Date(STORE.auto_zaloha_at).getTime() : 0;
-    if (Date.now() - last < 10 * 60 * 1000) return false;
-  }
+  if (__autoZalohaBezi) { __autoZalohaZnovu = true; return false; }
   // requestPermission smí běžet jen uvnitř uživatelské akce (klik)
   var interactive = !!(navigator.userActivation && navigator.userActivation.isActive);
-  if (!(await autoZalohaPermission(interactive))) return false;
+  if (!(await autoZalohaPermission(interactive))) { autoZalohaNepovoleno(); return false; }
+  __autoZalohaBezi = true;
+  clearTimeout(__autoZalohaCasovac);
+  __autoZalohaCeka = false;
   try {
-    var fh = await backupDirHandle.getFileHandle(zalohaFilename(), { create: true });
+    var od = STORE.auto_zaloha_soubor_od ? new Date(STORE.auto_zaloha_soubor_od).getTime() : 0;
+    var jmeno;
+    if (!force && STORE.auto_zaloha_soubor && Date.now() - od < AUTOZALOHA_OKNO) {
+      jmeno = STORE.auto_zaloha_soubor;              // přepíše se tentýž soubor
+    } else {
+      jmeno = zalohaFilename();
+      STORE.auto_zaloha_soubor = jmeno;
+      STORE.auto_zaloha_soubor_od = new Date().toISOString();
+    }
+    var fh = await backupDirHandle.getFileHandle(jmeno, { create: true });
     var w = await fh.createWritable();
     await w.write(buildZalohaBlob());
     await w.close();
@@ -18828,7 +18864,9 @@ async function autoZaloha(force) {
     STORE.auto_zaloha_ver = getAppVer();
     STORE.last_backup_at = STORE.auto_zaloha_at;
     STORE.archiv_count_at_last_backup = (STORE.archiv || []).length;
-    saveStore();
+    // Vlastní zápis údajů o záloze nesmí naplánovat další zálohu
+    window.__autoZalohaVlastni = true;
+    try { saveStore(); } finally { window.__autoZalohaVlastni = false; }
     renderZalohaStatus();
     updateAutoZalohaUI();
     rotaceZaloh();
@@ -18836,8 +18874,33 @@ async function autoZaloha(force) {
   } catch(e) {
     try { console.error('Auto-záloha selhala:', e); } catch(e2) {}
     return false;
+  } finally {
+    __autoZalohaBezi = false;
+    if (__autoZalohaZnovu) { __autoZalohaZnovu = false; autoZalohaNaplanovat(); }
   }
 }
+
+// Po restartu prohlížeče Chrome často chce přístup ke složce potvrdit znovu
+// a bez kliknutí se zeptat nesmí. Dřív se pak záloha TIŠE nepovedla —
+// teď to program řekne (jednou za běh) a nabídne tlačítko, které je kliknutím.
+var __autoZalohaUpozorneno = false;
+async function autoZalohaNepovoleno() {
+  if (__autoZalohaUpozorneno || !backupDirHandle) return;
+  var stav = '';
+  try { stav = await backupDirHandle.queryPermission({ mode: 'readwrite' }); } catch(e) {}
+  if (stav !== 'prompt') return;
+  __autoZalohaUpozorneno = true;
+  showToast('⚠ Automatická záloha čeká na povolení přístupu ke složce „' + (backupDirHandle.name || '') + '".', {
+    actionLabel: 'Povolit', timeout: 30000,
+    action: function() { __autoZalohaUpozorneno = false; autoZaloha(true); }
+  });
+}
+
+// Odchod z okna / zavření: čekající zálohu dopsat hned, ne za 4 s
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden' && __autoZalohaCeka) autoZaloha(false);
+});
+window.addEventListener('pagehide', function() { if (__autoZalohaCeka) autoZaloha(false); });
 
 // Smaže nejstarší auto-zálohy nad limit. Sahá VÝHRADNĚ na soubory přesně
 // ve tvaru revize-el-zaloha-RRRR-MM-DD_HH-MM.json — cizích souborů ve
@@ -23579,9 +23642,10 @@ function planTechniciZavrit() {
 function planUlozitDoZalohy() {
   planUlozit();
   // Plán je součástí databáze programu, takže se veze v každé záloze —
-  // nedělá si vlastní soubor. Automatická záloha do složky se přitom
-  // nechává na svém obvyklém režimu (nejvýš jednou za deset minut),
-  // ať klepnutí na Uložit nezaplaví složku novými soubory.
+  // nedělá si vlastní soubor. Automatickou zálohu naplánoval už
+  // planUlozit() → saveStore(); tady se jen dopíše hned (klik = smí se
+  // zeptat na povolení složky). Během deseti minut se přepisuje tentýž
+  // soubor, takže klepání na Uložit složku nezaplaví (v9.113).
   try { if (typeof autoZaloha === 'function') autoZaloha(false); } catch (e) {}
   showToast('💾 Plán uložen do databáze programu — je součástí zálohy celé databáze.');
 }
