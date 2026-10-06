@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.111 · 2026-10-06**
+**Aktuální verze: v9.112 · 2026-10-06**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -141,10 +141,18 @@ stroje, které se najdou až na místě).
   bez ní vypadá přesně jako dřív), počet prázdných karet ne.
 - Popisky na papíře **bez VELKÝCH PÍSMEN** — `text-transform` dělal
   z „kW" „KW".
-- Do `.xlsx` karta nejde (o to uživatel nežádal).
+- **Karta jde i do `.xlsx` (v9.112)** — uživatel uviděl v náhledu „Do Excelu"
+  („já tady ale do excelu vidím") a sešit kartu neměl, takže neodpovídal
+  tomu, co je vidět. `terenExcelKarta()` dá na list stroje blok „Karta
+  stroje — údaj | Hodnota" (táž pole ze `STROJ_KARTA`) PŘED měření; každá
+  prázdná karta navíc má vlastní list „Prázdná karta N". Bez volby karty
+  se sešit nemění (test).
 - Info v liště náhledu je nově česky skloňované („2 stroje · 2 strany").
 
-Test: `test-karta-stroje.js` (14 kontrol).
+Test: `test-karta-stroje.js` (19 kontrol, sešit se otevírá přes openpyxl).
+**Port 8920** = předchozí vydání pro porovnání formuláře; **NE 8905–8907**,
+ty si za běhu berou `test-zip-kodu.js` a `test-sri.js` (obsazení jim
+shodilo regresi). Servery spouští `servery.sh` ve scratchpadu.
 
 ## Plán revizí: „🗑 Zapomenout natrvalo" u skrytých bez zprávy (v9.110)
 

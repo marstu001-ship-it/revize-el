@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.111<span class="ver-date"> · 2026-10-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.112<span class="ver-date"> · 2026-10-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -16879,7 +16879,9 @@ function terenExcelListy(D, v) {
       radky.push(['Stroj:', st.nazev || ('Stroj ' + (idx + 1)), st.typ || '', st.umisteni || '']);
       radky.push([]);
       var hlavicky = [];
+      if (v.karta) terenExcelKarta(radky, hlavicky, st);
       if (v.mereni) {
+        if (v.karta) radky.push([]);
         hlavicky.push(radky.length + 1);
         radky.push(['Měření — položka', 'Hodnota', 'Jednotka', 'Poznámka']);
         (st.mereni || []).forEach(function(p) {
@@ -16904,6 +16906,15 @@ function terenExcelListy(D, v) {
         zamrazitPo: hlavicky.length ? hlavicky[0] : 0
       });
     });
+    // Prázdné karty navíc — každá na vlastní list, jako na papíře
+    for (var k = 0; k < (v.kartNavic || 0); k++) {
+      var rk = meta.slice(0, 3).map(function(m) { return m.slice(); });
+      rk.push(['Zapsáno dne:', '']);
+      rk.push([]);
+      var hk = [];
+      terenExcelKarta(rk, hk, {});
+      listy.push({ nazev: 'Prázdná karta ' + (k + 1), radky: rk, sirky: [52, 40, 12, 26], hlavicky: hk, zamrazitPo: 0 });
+    }
     return listy;
   }
 
@@ -16960,6 +16971,17 @@ function terenExcelListy(D, v) {
     });
   });
   return listy;
+}
+
+// Karta stroje do sešitu (v9.112): táž pole jako na papíře (STROJ_KARTA),
+// vyplněné hodnoty předvyplněné, prázdné k doplnění.
+function terenExcelKarta(radky, hlavicky, st) {
+  hlavicky.push(radky.length + 1);
+  radky.push(['Karta stroje — údaj', 'Hodnota', '', '']);
+  strojKartaRadky().forEach(function(r) {
+    r.pole.forEach(function(f) { radky.push([f[1], String(st[STROJ_POLE_MAPA[f[0]]] || '').trim(), '', '']); });
+  });
+  radky.push(['Poznámka', String(st.poznamka || '').trim(), '', '']);
 }
 
 function terenNazevXlsx() {
