@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.110<span class="ver-date"> · 2026-10-05</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.111<span class="ver-date"> · 2026-10-06</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -11649,6 +11649,38 @@ function strojPole(cls, label, ph, list) {
     (list ? ' list="' + list + '"' : '') + ' autocomplete="off" placeholder="' + ph + '"></div>';
 }
 
+// Rozvržení karty stroje — řádky po 3 nebo 2 polích. JEDEN zdroj pro
+// formulář (addStroj) i pro tištěnou kartu k zápisu v terénu (v9.111),
+// takže přidané pole se objeví na obou místech a nemůžou se rozejít.
+// Pole: [třída, popisek, nápověda, datalist]. Poznámka jde zvlášť (celá šířka).
+var STROJ_KARTA = [
+  ['g3', [['stroj-nazev', 'Název stroje', 'např. Soustruh SU 50', 'dl_stroj_nazev'],
+          ['stroj-typ', 'Typ', 'typové označení'],
+          ['stroj-vyrobce', 'Výrobce', 'výrobce stroje']]],
+  ['g3', [['stroj-vyrcislo', 'Výrobní číslo', 'výrobní číslo'],
+          ['stroj-rok', 'Rok výroby', 'např. 1998'],
+          ['stroj-evcislo', 'Evidenční číslo', 'inventární číslo']]],
+  ['g3', [['stroj-prikon', 'Instalovaný příkon (kW)', 'např. 7,5'],
+          ['stroj-proud', 'Proud (A)', 'např. 16'],
+          ['stroj-napeti', 'Napájecí napětí (V)', 'např. 3/PE/N ~400/230 V']]],
+  // Jištění a připojení stroje — doplněno dle vzoru od kolegy (2026-09-15).
+  ['g2', [['stroj-jisteni-typ', 'Hlavní jištění stroje — typ', 'např. jistič', 'dl_stroj_jisteni'],
+          ['stroj-jisteni-proud', 'Hlavní jištění — proudová hodnota (A)', 'např. 3×25', 'dl_proud_A']]],
+  ['g2', [['stroj-predjisteni-typ', 'Předřazené jištění síťového přívodu — typ', 'např. jistič', 'dl_stroj_jisteni'],
+          ['stroj-predjisteni-proud', 'Předřazené jištění — proudová hodnota (A)', 'např. 3×25', 'dl_proud_A']]],
+  ['g3', [['stroj-ridici-napeti', 'Napětí řídicích obvodů (V)', 'ze sítě / z oddělovacího transformátoru', 'dl_stroj_ridici'],
+          ['stroj-napajeno-z', 'Napájeno z rozváděče', 'např. RS 232.2', 'dl_nazev_rozvadec'],
+          ['stroj-privodni-kabel', 'Přívodní kabel', 'např. CYKY 5C × 4 mm²', 'dl_kabel']]],
+  ['g3', [['stroj-umisteni', 'Umístění', 'hala, dílna, místnost'],
+          ['stroj-vnejsi', 'Vnější vlivy', 'např. AA5 AB5 …', 'dl_stroj_vlivy'],
+          ['stroj-kryti', 'Krytí (IP)', 'např. IP 54']]],
+  ['g2', [['stroj-trida', 'Třída ochrany', 'např. I', 'dl_stroj_trida'],
+          ['stroj-ochrana', 'Ochrana před úrazem', 'automatickým odpojením od zdroje', 'f_ochrana_options']]]
+];
+function strojKartaRadky() {
+  return STROJ_KARTA.map(function(r) { return { mrizka: r[0], pole: r[1] }; });
+}
+
 function addStroj(data) {
   data = data || {};
   var container = document.getElementById('stroje-container');
@@ -11666,46 +11698,9 @@ function addStroj(data) {
         '<button class="del-btn" data-action="delStroj" data-stroj="' + id + '" title="Smazat stroj">✕</button>' +
       '</span>' +
     '</div>' +
-    '<div class="g3">' +
-      strojPole('stroj-nazev', 'Název stroje', 'např. Soustruh SU 50', 'dl_stroj_nazev') +
-      strojPole('stroj-typ', 'Typ', 'typové označení') +
-      strojPole('stroj-vyrobce', 'Výrobce', 'výrobce stroje') +
-    '</div>' +
-    '<div class="g3">' +
-      strojPole('stroj-vyrcislo', 'Výrobní číslo', 'výrobní číslo') +
-      strojPole('stroj-rok', 'Rok výroby', 'např. 1998') +
-      strojPole('stroj-evcislo', 'Evidenční číslo', 'inventární číslo') +
-    '</div>' +
-    '<div class="g3">' +
-      strojPole('stroj-prikon', 'Instalovaný příkon (kW)', 'např. 7,5') +
-      strojPole('stroj-proud', 'Proud (A)', 'např. 16') +
-      strojPole('stroj-napeti', 'Napájecí napětí (V)', 'např. 3/PE/N ~400/230 V') +
-    '</div>' +
-    // Jištění a připojení stroje — doplněno dle vzoru od kolegy
-    // (pokyn uživatele 2026-09-15). Patří to k identifikaci stroje, proto
-    // je to tady: u režimu „jeden stroj" se blok stěhuje na titulní stranu.
-    '<div class="g2">' +
-      strojPole('stroj-jisteni-typ', 'Hlavní jištění stroje — typ', 'např. jistič', 'dl_stroj_jisteni') +
-      strojPole('stroj-jisteni-proud', 'Hlavní jištění — proudová hodnota (A)', 'např. 3×25', 'dl_proud_A') +
-    '</div>' +
-    '<div class="g2">' +
-      strojPole('stroj-predjisteni-typ', 'Předřazené jištění síťového přívodu — typ', 'např. jistič', 'dl_stroj_jisteni') +
-      strojPole('stroj-predjisteni-proud', 'Předřazené jištění — proudová hodnota (A)', 'např. 3×25', 'dl_proud_A') +
-    '</div>' +
-    '<div class="g3">' +
-      strojPole('stroj-ridici-napeti', 'Napětí řídicích obvodů (V)', 'ze sítě / z oddělovacího transformátoru', 'dl_stroj_ridici') +
-      strojPole('stroj-napajeno-z', 'Napájeno z rozváděče', 'např. RS 232.2', 'dl_nazev_rozvadec') +
-      strojPole('stroj-privodni-kabel', 'Přívodní kabel', 'např. CYKY 5C × 4 mm²', 'dl_kabel') +
-    '</div>' +
-    '<div class="g3">' +
-      strojPole('stroj-umisteni', 'Umístění', 'hala, dílna, místnost') +
-      strojPole('stroj-vnejsi', 'Vnější vlivy', 'např. AA5 AB5 …', 'dl_stroj_vlivy') +
-      strojPole('stroj-kryti', 'Krytí (IP)', 'např. IP 54') +
-    '</div>' +
-    '<div class="g2">' +
-      strojPole('stroj-trida', 'Třída ochrany', 'např. I', 'dl_stroj_trida') +
-      strojPole('stroj-ochrana', 'Ochrana před úrazem', 'automatickým odpojením od zdroje', 'f_ochrana_options') +
-    '</div>' +
+    strojKartaRadky().map(function(r) {
+      return '<div class="' + r.mrizka + '">' + r.pole.map(function(f) { return strojPole(f[0], f[1], f[2], f[3]); }).join('') + '</div>';
+    }).join('') +
     '<div class="f"><label>Poznámka</label><input type="text" class="stroj-poznamka" placeholder="doplňující údaj ke stroji"></div>';
   container.appendChild(div);
 
@@ -16416,7 +16411,8 @@ function terenNastaveni() {
     sloupce: t.sloupce || {},          // klíč → false = skrytý
     vyssi: t.vyssi !== false,
     poznamka: t.poznamka !== false,
-    minule: !!t.minule
+    minule: !!t.minule,
+    karta: !!t.karta
   };
 }
 
@@ -16489,6 +16485,13 @@ function terenOtevrit() {
       '<div style="border-top:1px solid var(--border);margin-top:.4rem;padding-top:.4rem;display:flex;gap:1.2rem">' +
       '<label class="teren-radek"><input type="checkbox" id="teren-s-mereni" checked> měření</label>' +
       '<label class="teren-radek"><input type="checkbox" id="teren-s-kontroly" checked> kontroly (se zaškrtávacím políčkem)</label>' +
+      '</div>' +
+      // Karta stroje k zápisu (v9.111) — údaje o stroji z tabu „2. Stroj"
+      // jako okénka na papíře, každý stroj na vlastní list na šířku.
+      '<div style="border-top:1px solid var(--border);margin-top:.4rem;padding-top:.4rem;display:flex;flex-wrap:wrap;gap:.3rem 1.2rem;align-items:center">' +
+      '<label class="teren-radek"><input type="checkbox" id="teren-s-karta"' + (n.karta ? ' checked' : '') + '> karta stroje k zápisu údajů (každý stroj na list na šířku)</label>' +
+      '<label class="teren-radek" style="white-space:nowrap">prázdných karet navíc ' +
+      '<input type="number" id="teren-karet-navic" min="0" max="20" value="0" style="width:3.6rem!important;padding:.15rem .3rem!important"></label>' +
       '</div>';
   } else {
     lbl.textContent = 'Které rozváděče jdete měřit';
@@ -16542,10 +16545,19 @@ function terenVytvorit() {
     poznamka: document.getElementById('teren-poznamka').checked,
     minule: document.getElementById('teren-minule').checked,
     mereni: !document.getElementById('teren-s-mereni') || document.getElementById('teren-s-mereni').checked,
-    kontroly: !document.getElementById('teren-s-kontroly') || document.getElementById('teren-s-kontroly').checked
+    kontroly: !document.getElementById('teren-s-kontroly') || document.getElementById('teren-s-kontroly').checked,
+    karta: !!(document.getElementById('teren-s-karta') && document.getElementById('teren-s-karta').checked),
+    kartNavic: Math.max(0, Math.min(20, parseInt((document.getElementById('teren-karet-navic') || {}).value, 10) || 0))
   };
+  if (aktTyp === 'stroje' && !v.mereni && !v.kontroly && !v.karta && !v.kartNavic) {
+    alert('Zaškrtněte, co má na listu být — měření, kontroly nebo kartu stroje.');
+    return;
+  }
   // Volby (ne výběr rozváděčů) si program pamatuje do příště.
-  STORE.teren = { sloupce: sloupce, vyssi: v.vyssi, poznamka: v.poznamka, minule: v.minule };
+  // Volba karty stroje se mění jen u strojů; u elektro listu se nechá být.
+  var kartaDrive = terenNastaveni().karta;
+  STORE.teren = { sloupce: sloupce, vyssi: v.vyssi, poznamka: v.poznamka, minule: v.minule,
+    karta: (aktTyp === 'stroje') ? v.karta : kartaDrive };
   saveStore();
   window.__terenVyber = v;   // Excel exportuje tentýž výběr
   terenZavrit();
@@ -16614,6 +16626,16 @@ function terenVykreslit(D, v) {
   var pad = v.vyssi ? '2.6mm 1.5mm' : '1mm 1.5mm';
   var strany = [];
   var strana = null, obsah = null;
+  var maHlavicku = false;
+  // Karta stroje k zápisu — vlastní list na šířku, do toku měření nepatří.
+  function kartaStrana(st, poradi) {
+    var p = document.createElement('div');
+    p.className = 'a4 a4-landscape teren-karta';
+    p.style.cssText = 'padding:10mm 8mm;background:#fff;color:#000;min-height:0;display:flex;flex-direction:column';
+    p.innerHTML = '<div style="flex:1;font-family:\'Courier Prime\',monospace">' + terenKartaHtml(D, st, poradi) + '</div>';
+    box.appendChild(p);
+    strany.push(p);
+  }
 
   function novaStrana() {
     strana = document.createElement('div');
@@ -16621,7 +16643,7 @@ function terenVykreslit(D, v) {
     strana.style.cssText = 'padding:10mm 8mm;background:#fff;color:#000;min-height:0;display:flex;flex-direction:column';
     obsah = document.createElement('div');
     obsah.style.cssText = 'flex:1;font-family:\'Courier Prime\',monospace';
-    if (!strany.length) obsah.innerHTML = terenHlavicka(D);
+    if (!maHlavicku) { obsah.innerHTML = terenHlavicka(D); maHlavicku = true; }
     strana.appendChild(obsah);
     box.appendChild(strana);
     strany.push(strana);
@@ -16640,13 +16662,18 @@ function terenVykreslit(D, v) {
     }
     return el;
   }
-  novaStrana();
+  if (!(jeStroj && (v.karta || v.kartNavic))) novaStrana();
 
   if (jeStroj) {
     var stroje = (D.stroje && D.stroje.seznam) || [];
     v.vybrane.forEach(function(idx) {
       var st = stroje[idx];
       if (!st) return;
+      if (v.karta) {
+        kartaStrana(st, idx + 1);
+        if (!v.mereni && !v.kontroly) return;
+        novaStrana();      // měření tohoto stroje začne na vlastním listu
+      } else if (!obsah) novaStrana();
       var hl = document.createElement('div');
       hl.style.cssText = 'font-weight:bold;font-size:10pt;margin:3mm 0 1mm;border-bottom:.75pt solid #000;padding-bottom:1mm';
       hl.innerHTML = esc(st.nazev || ('Stroj ' + (idx + 1))) +
@@ -16656,6 +16683,8 @@ function terenVykreslit(D, v) {
       if (v.mereni) pridat(terenStrojTabulka(st.mereni || [], 'mereni', pad, v));
       if (v.kontroly) pridat(terenStrojTabulka(st.kontroly || [], 'kontroly', pad, v));
     });
+    // Prázdné karty na stroje, které se najdou až na místě
+    for (var k = 0; k < (v.kartNavic || 0); k++) kartaStrana({}, stroje.length + k + 1);
   } else {
     var predD = v.minule ? terenPredchozi() : null;
     var skryte = terenSkryteSloupce(v);
@@ -16703,10 +16732,39 @@ function terenVykreslit(D, v) {
   });
 
   var info = document.getElementById('teren-pdf-info');
-  if (info) info.textContent = (D.ev_cislo || '') + ' · ' + v.vybrane.length +
-    (jeStroj ? (v.vybrane.length === 1 ? ' stroj' : ' strojů') : (v.vybrane.length === 1 ? ' rozváděč' : ' rozváděčů')) +
-    ' · ' + strany.length + (strany.length === 1 ? ' strana' : ' stran');
+  var skl = function(n, a, b, c) { return n + ' ' + (n === 1 ? a : (n >= 2 && n <= 4 ? b : c)); };
+  if (info) info.textContent = (D.ev_cislo || '') + ' · ' +
+    (jeStroj ? skl(v.vybrane.length, 'stroj', 'stroje', 'strojů') : skl(v.vybrane.length, 'rozváděč', 'rozváděče', 'rozváděčů')) +
+    (jeStroj && v.kartNavic ? ' + ' + skl(v.kartNavic, 'prázdná karta', 'prázdné karty', 'prázdných karet') : '') +
+    ' · ' + skl(strany.length, 'strana', 'strany', 'stran');
   window.scrollTo(0, 0);
+}
+
+// Karta stroje k zápisu v terénu (v9.111): táž pole jako tab „2. Stroj"
+// (STROJ_KARTA), co je vyplněné, se předtiskne, zbytek je prázdné okénko.
+function terenKartaHtml(D, st, poradi) {
+  st = st || {};
+  var hodnota = function(cls) { return String(st[STROJ_POLE_MAPA[cls]] || '').trim(); };
+  var okno = function(cls, label) {
+    return '<div style="min-width:0">' +
+      '<div style="font-size:7.2pt;color:#444;margin-bottom:.6mm">' + esc(label) + '</div>' +
+      '<div class="teren-karta-pole" data-pole="' + cls + '" style="border:.75pt solid #000;height:10.5mm;padding:0 2mm;display:flex;align-items:center;font-size:9.5pt;overflow:hidden;white-space:nowrap">' +
+      esc(hodnota(cls)) + '</div></div>';
+  };
+  var radky = strojKartaRadky().map(function(r) {
+    return '<div style="display:grid;grid-template-columns:repeat(' + r.pole.length + ',1fr);gap:3mm;margin-bottom:2.6mm">' +
+      r.pole.map(function(f) { return okno(f[0], f[1]); }).join('') + '</div>';
+  }).join('');
+  var pozn = '<div style="margin-bottom:2.6mm"><div style="font-size:7.2pt;color:#444;margin-bottom:.6mm">Poznámka</div>' +
+    '<div class="teren-karta-pole" data-pole="stroj-poznamka" style="border:.75pt solid #000;min-height:16mm;padding:1.5mm 2mm;font-size:9.5pt">' + esc(hodnota('stroj-poznamka')) + '</div></div>';
+  var r = function(l, h) { return '<span style="color:#555">' + l + '</span> <strong>' + esc(h || '—') + '</strong>'; };
+  return '<div style="display:flex;align-items:baseline;gap:4mm;border-bottom:1pt solid #000;padding-bottom:1.5mm;margin-bottom:3mm">' +
+      '<span style="font-size:12pt;font-weight:bold">⚙ Stroj ' + poradi + '</span>' +
+      '<span style="font-size:8.5pt;color:#444">— údaje o stroji k zapsání na místě</span></div>' +
+    '<div style="font-size:8.5pt;display:flex;flex-wrap:wrap;gap:1mm 8mm;margin-bottom:3.5mm">' +
+      r('Místo:', D.misto) + r('Ev. číslo:', D.ev_cislo) + r('Technik:', D.rt_jmeno) +
+      '<span style="color:#555">Zapsáno dne:</span><span style="display:inline-block;min-width:32mm;border-bottom:.5pt solid #999">&nbsp;</span></div>' +
+    radky + pozn;
 }
 
 function terenRozvHlavicka(rozv, pad) {

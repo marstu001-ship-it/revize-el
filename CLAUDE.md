@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.110 · 2026-10-05**
+**Aktuální verze: v9.111 · 2026-10-06**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,35 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## Karta stroje k zápisu v terénu (v9.111)
+
+Pokyn uživatele 2026-10-06 (snímek karty stroje v tabu 2. Stroj): „jak máme
+u strojů měřicí list do terénu, tak bych potřeboval i tisknutelný list pro
+zapsání stroje. Tisk každého stroje na jeden list papíru, na šířku."
+
+Ve stejném dialogu **📋 Měřicí list do terénu** (u strojů) přibyla volba
+**„karta stroje k zápisu údajů"** a pole **„prázdných karet navíc"** (na
+stroje, které se najdou až na místě).
+
+- **Rozvržení karty je na JEDNOM místě — `STROJ_KARTA`** (řádky po 3 / 2
+  polích). Staví z něj `addStroj()` formulář i `terenKartaHtml()` tištěnou
+  kartu, takže **přidané pole se objeví na obou**. Test hlídá, že formulář
+  vychází HTML znak po znaku stejně jako ve v9.110 a že karta má všechna
+  pole ze `STROJ_POLE_MAPA`.
+- **Vyplněné se předtiskne, zbytek je prázdné okénko.** Nápovědy
+  (`placeholder`) se netisknou — na papíře by vypadaly jako hodnota.
+- **Každá karta = vlastní list `a4-landscape`** (`.teren-karta`), měření
+  a kontroly toho stroje začnou na novém listu na výšku hned za ní.
+  `renderPagesToPDF` orientaci bere po stranách, takže to jde v jednom PDF.
+- Volba karty se pamatuje v `STORE.teren.karta` (výchozí **vypnuto** — list
+  bez ní vypadá přesně jako dřív), počet prázdných karet ne.
+- Popisky na papíře **bez VELKÝCH PÍSMEN** — `text-transform` dělal
+  z „kW" „KW".
+- Do `.xlsx` karta nejde (o to uživatel nežádal).
+- Info v liště náhledu je nově česky skloňované („2 stroje · 2 strany").
+
+Test: `test-karta-stroje.js` (14 kontrol).
 
 ## Plán revizí: „🗑 Zapomenout natrvalo" u skrytých bez zprávy (v9.110)
 
