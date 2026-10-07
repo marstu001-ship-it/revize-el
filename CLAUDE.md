@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.113 · 2026-10-06**
+**Aktuální verze: v9.114 · 2026-10-07**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -116,6 +116,47 @@ ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 každém přepnutí záložky vrátí blok stroje do jeho tabu, když otevřená zpráva
 není o strojích. Chyba by se tak sama spravila jedním klepnutím, kdyby se
 blok na titulku dostal jakoukoli budoucí cestou.
+
+## 🛑 Táž zpráva ve dvou oknech — starší formulář přepsal novější (v9.114)
+
+Nahlásil uživatel 2026-10-07 (paketovací lis, potřetí): ve zprávě je termín
+příští kontroly **05.10.2028 vidět**, plán přesto svítí „⚠ CHYBÍ TERMÍN".
+Domněnka uživatele („u stroje se to bere z jiného okénka") **neplatila** —
+pole je `f_pristi` u všech typů a čerstvá zpráva o stroji prochází.
+
+**Skutečná příčina (zopakováno testem):** zpráva byla otevřená ve formuláři
+**ve dvou oknech** (Chrome + stažená aplikace). V okně A se doplnil termín
+a uložil. Okno B si od v9.108 načte nový ARCHIV, ale **formulář drží
+starou verzi** — a první náhled PDF (`generujPDFAsk()` volá
+`saveToArchiv()`) nebo Ctrl+S ji **uložil znovu bez termínu**. V okně A pak
+formulář termín dál ukazuje (je jen v paměti), archiv i plán ho nemají.
+v9.108 tohle vědomě nechala („vyhraje poslední uložení") — jenže tady
+okno B nic neupravovalo, jen tisklo.
+
+Oprava:
+
+- **`window.__openZpravaVerze`** = `timestamp` uložené verze, ze které
+  formulář vychází. Nastavuje se v `otevritZpravu()`, po každém
+  `saveToArchiv()`, nová zpráva má `undefined` (žádná kontrola —
+  totéž obnova konceptu, Navázat, ⧉ kopie, které dostávají nové uid).
+- **Při změně dat z jiného okna** (`storeZJinehoOkna` →
+  `otevrenaZpravaZJinehoOkna`): je-li otevřená zpráva v archivu novější
+  a formulář **neupravený**, **načte se znovu** (`formNacistZArchivu` —
+  zůstane záložka, místo na stránce i „jen pro čtení") + hláška. Je-li
+  **rozepsaný**, nic se nezahodí, jen hláška „Než ji tady uložíte, zeptám
+  se, kterou verzi ponechat".
+- **Pojistka přímo v `saveToArchiv()`** (kdyby ohlášení propadlo):
+  starší verze + neupravený formulář = **nic se nepřepíše**, formulář se
+  načte znovu. Rozepsaný = dotaz **OK = přepsat / Zrušit = ponechat verzi
+  z druhého okna** (formulář ji pak ukáže).
+- **Data, která už se takhle ztratila, se nevrátí** — uživatel musí termín
+  doplnit znovu (po načtení v9.114 se formulář ukáže tak, jak je v archivu).
+
+Test: `test-dve-okna-zprava.js` (14 kontrol — znovunačtení na téže záložce,
+náhled PDF nic nesmaže, plán nehlásí chybějící termín, pojistka v uložení,
+rozepsané změny se nezahodí a program upozorní, dotaz s oběma volbami,
+jedno okno se na nic neptá, dokončená zůstane jen pro čtení).
+**Na v9.113 se chyba zopakuje** (`dbg-okna-formular.js`). Do Novinek nejde.
 
 ## 🛑 Automatická záloha vynechávala změny (v9.113)
 

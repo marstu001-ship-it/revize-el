@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.113<span class="ver-date"> · 2026-10-06</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.114<span class="ver-date"> · 2026-10-07</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4366,6 +4366,38 @@ function storeOhlasitOknum() {
 }
 
 var __storeZnovuCasovac = null;
+// Otevřenou zprávu načíst znovu z archivu — zůstane se na téže záložce
+// i na stejném místě stránky. Používá se, když ji jiné okno uložilo novější.
+function formNacistZArchivu(e) {
+  var bar = typeof aktivniTabBar === 'function' ? aktivniTabBar() : null;
+  var akt = bar ? bar.querySelector('.tab-btn.active') : null;
+  var tab = akt ? akt.getAttribute('data-tab') : '';
+  var y = window.scrollY;
+  nacistData(e.data);
+  window.__openZpravaUid = e.uid;
+  window.__openZpravaVerze = e.timestamp || '';
+  setFormReadOnly(e.stav !== 'aktivni');
+  formArchivObnovitTab(tab);
+  window.__formDirty = false;
+  try { updateBreadcrumb(); } catch(er) {}
+  try { updateUlozitStav(); } catch(er) {}
+  window.scrollTo(0, y);
+}
+
+// Po změně dat z jiného okna: je otevřená zpráva tady starší než v archivu?
+function otevrenaZpravaZJinehoOkna() {
+  if (typeof window.__openZpravaVerze !== 'string' || window.__hromadnyTisk) return;
+  var uid = window.__openZpravaUid, e = null;
+  (archiv || []).forEach(function(z) { if (!e && z.uid && z.uid === uid) e = z; });
+  if (!e || (e.timestamp || '') === window.__openZpravaVerze) return;
+  if (window.__formDirty) {
+    showToast('⚠ Zprávu ' + (e.ev_cislo || '') + ' jste mezitím uložil v jiném okně. Než ji tady uložíte, zeptám se, kterou verzi ponechat.', { timeout: 10000 });
+    return;
+  }
+  formNacistZArchivu(e);
+  showToast('↻ Zpráva ' + (e.ev_cislo || '') + ' byla uložena v jiném okně — formulář ukazuje novější verzi.', { timeout: 8000 });
+}
+
 function storeZJinehoOkna() {
   if (__storeZnovuCasovac) clearTimeout(__storeZnovuCasovac);
   __storeZnovuCasovac = setTimeout(function() {
@@ -4380,6 +4412,7 @@ function storeZJinehoOkna() {
       try { renderOdberatele(); } catch(e) {}
       var plan = document.getElementById('screen-plan');
       if (plan && plan.classList.contains('active')) { try { renderPlan(); } catch(e) {} }
+      try { otevrenaZpravaZJinehoOkna(); } catch(e) {}
     });
   }, 150);
 }
@@ -7221,6 +7254,7 @@ function novaZprava(typ) {
   window.__tiskZpravy = {};        // nová zpráva jede podle profilu
   window.__aktualniOdberatelId = '';
   window.__openZpravaUid = genZpravaUid();
+  window.__openZpravaVerze = undefined;   // nová zpráva — žádná uložená verze
   window.__predchudceUid = '';
   setFormReadOnly(false);
   renderOdberatelSelect();
@@ -17476,6 +17510,27 @@ function saveToArchiv() {
       }
     }
   }
+  // Zpráva mezitím uložená v JINÉM OKNĚ (v9.114). Formulář tady drží starší
+  // verzi — bez téhle pojistky by ji první náhled PDF nebo Ctrl+S tiše
+  // přepsal a zmizelo by, co se doplnilo jinde (hlášení uživatele
+  // 2026-10-07: termín příští kontroly u paketovacího lisu).
+  if (found >= 0 && typeof window.__openZpravaVerze === 'string' &&
+      (archiv[found].timestamp || '') !== window.__openZpravaVerze) {
+    var jinde = archiv[found];
+    if (!window.__formDirty) {
+      // Tady se nic neměnilo — jen se ukáže novější verze, nic se nepřepíše.
+      formNacistZArchivu(jinde);
+      showToast('↻ Zpráva ' + (jinde.ev_cislo || '') + ' byla uložena v jiném okně — ukazuji novější verzi, nic se nepřepsalo.', { timeout: 8000 });
+      return true;
+    }
+    if (!confirm('Zprávu ' + (jinde.ev_cislo || '') + ' jste mezitím uložil v JINÉM OKNĚ' +
+          (jinde.timestamp ? ' (' + new Date(jinde.timestamp).toLocaleString('cs-CZ') + ')' : '') + '.\n\n' +
+          'OK = přepsat ji touto verzí odsud (co se uložilo v druhém okně, se ztratí)\n' +
+          'Zrušit = ponechat verzi z druhého okna (neuložené změny tady se zahodí)')) {
+      formNacistZArchivu(jinde);
+      return false;
+    }
+  }
   var entry = {
     uid: uid,
     typ: D.typ, podtyp: D.podtyp, ev_cislo: D.ev_cislo, misto: D.misto,
@@ -17499,6 +17554,7 @@ function saveToArchiv() {
   } else {
     archiv.unshift(entry); // přidej novou
   }
+  window.__openZpravaVerze = entry.timestamp;
   STORE.archiv = archiv;
   saveStore();
   renderArchiv();
@@ -17527,6 +17583,7 @@ function otevritZpravu(i) {
   // nacistData (přes novaZprava) přidělila nové uid — u otevřené archivní
   // zprávy se musí převzít identita záznamu, jinak by uložení vytvořilo kopii
   window.__openZpravaUid = entry.uid;
+  window.__openZpravaVerze = entry.timestamp || '';   // ze které uložené verze formulář vychází
   // Dokončená zpráva se otevírá jen pro čtení — proti omylným změnám.
   // Odemkne se tlačítkem v banneru (vrátí ji mezi rozpracované).
   setFormReadOnly(entry.stav !== 'aktivni');
