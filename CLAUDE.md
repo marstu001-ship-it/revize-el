@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.114 · 2026-10-07**
+**Aktuální verze: v9.115 · 2026-10-07**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -62,6 +62,25 @@ jste nic neudělali.
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
 
+## 🧪 Testy jsou v repozitáři — `testy/` (2026-10-07)
+
+Do 2026-10-07 žily testy jen ve scratchpadu session a s každou novou session
+se ztrácely. Teď jsou v **`testy/`** (návod `testy/README.md`):
+`testy/regrese.sh` = celá regrese, `testy/regrese.sh test-x.js` = vybrané.
+Servery (8901 program, 8902 HEAD pro `porovnani2.js`, 8903 falešná CDN,
+8904 program pro ZIP, 8920 v9.110) staví a spouští `testy/servery.sh`
+do `testy/_beh/` (mimo git) — **sám při startu session** (SessionStart hook
+v `.claude/settings.json`) a na začátku regrese.
+
+- **Repozitář je veřejný: v testech jen VYMYŠLENÁ data.** Při přesunu se
+  anonymizovaly údaje kolegy (telefon, e-mail, IČO), adresa uživatele
+  a jméno zákazníka ve fixtuře stromu. Snímky cizích zpráv, převody cizích
+  PDF a ladicí skripty (`dbg-*`) zůstávají ve scratchpadu.
+- **Nový test patří rovnou do `testy/`** a do stejného commitu jako změna.
+  Výstupy (snímky, sešity) jen do `testy/_beh/`.
+- `testy/` se nasazuje na Pages s celým repem; program ani `sw.js` na ni
+  neodkazují, takže to nevadí.
+
 ## 🛑 POVINNÉ PŘED KAŽDÝM VYDÁNÍM: `test-typy-krizem.js` (v9.104)
 
 Pokyn uživatele 2026-09-29 po chybě z v9.103: **„takové hrozné chyby se
@@ -104,7 +123,7 @@ starších testů při ❌ končí návratovým kódem 0** a smyčka, která reg
 spouštěla, hlídala jen ten kód. Program byl v pořádku, test byl zastaralý —
 ale regrese tvrdila „vše prošlo" a nebyla to pravda.
 
-- **Regrese se spouští `regrese.sh`** (ve scratchpadu): hlásí každé ❌,
+- **Regrese se spouští `testy/regrese.sh`**: hlásí každé ❌,
   „SELHALO", pád i test bez jediného ✅, ať skončí s jakýmkoli kódem, a na
   konci `CELKEM ŠPATNĚ: N`. **Vydává se jen při N = 0.**
 - Nové testy končí `process.exit(res.some(r => r.startsWith('❌')) ? 1 : 0)`.
@@ -240,7 +259,7 @@ stroje, které se najdou až na místě).
 Test: `test-karta-stroje.js` (19 kontrol, sešit se otevírá přes openpyxl).
 **Port 8920** = předchozí vydání pro porovnání formuláře; **NE 8905–8907**,
 ty si za běhu berou `test-zip-kodu.js` a `test-sri.js` (obsazení jim
-shodilo regresi). Servery spouští `servery.sh` ve scratchpadu.
+shodilo regresi). Servery spouští `testy/servery.sh`.
 
 ## Plán revizí: „🗑 Zapomenout natrvalo" u skrytých bez zprávy (v9.110)
 
