@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.115<span class="ver-date"> · 2026-10-07</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.116<span class="ver-date"> · 2026-10-09</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2368,6 +2368,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planRozbalitVse" title="Rozbalit všechny složky">⊞</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planUroven" title="Rozbalit jen provozovatele — budovy zůstanou sbalené a ukážou souhrn termínů za celou budovu">⊡</button>
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planSbalitVse" title="Sbalit všechny složky">⊟</button>
+      <button class="btn btn-ghost" id="plan-btn-seradit" style="display:none;background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planSerazenoZnovu" title="Pořadí se při úpravách nemění, aby řádek neuskočil pod rukou. Tímhle se objekty znovu seřadí podle nejbližšího termínu.">↕ Seřadit znovu</button>
       <button class="btn btn-ghost" id="plan-btn-skryte" style="display:none;background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planObnovitSkryte" title="Ukázat objekty skryté z plánu a vybrané vrátit zpátky">🚫 Skryté</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planTechnici">👷 Revizní technici</button>
       <button class="btn btn-ghost" style="background:#fff;color:var(--accent2);border:1px solid var(--accent2)" data-action="planExport">📄 Tisk / PDF</button>
@@ -22579,30 +22580,6 @@ function planRadky() {
         if (r.roky[rok]) r.roky[rok].chybiTermin = true;
       }
     });
-    // Zpráva nemusí mít vyplněnou doporučenou lhůtu — pak plán nemá z čeho
-    // příští termín spočítat a rok by zůstal prázdný. Proto se řada dopočítá
-    // z lhůty nastavené u objektu (⏱ Lhůty), a to až do konce zobrazených let.
-    if (r.o && r.o.cyklus) {
-      var doRoku = planRoky()[planRoky().length - 1];
-      PLAN_DRUHY.forEach(function(d) {
-        var cyklus = parseInt(r.o.cyklus[d], 10);
-        if (!cyklus || cyklus < 1) return;
-        var posledni = null;
-        Object.keys(r.roky).forEach(function(rok) {
-          (r.roky[rok].polozky || []).forEach(function(p) {
-            if (p.druh !== d) return;
-            var rokC = parseInt(rok, 10);
-            if (!posledni || rokC > posledni.rok) posledni = { rok: rokC, mesic: p.mesic };
-          });
-        });
-        if (!posledni) return;
-        var rr = posledni.rok + cyklus, pojistka = 0;
-        while (rr <= doRoku && pojistka++ < 40) {
-          planZapisDoRoku(r, rr, d, posledni.mesic, 'odhad', '');
-          rr += cyklus;
-        }
-      });
-    }
     // ruční termíny mají přednost před vším odvozeným
     if (r.o && Array.isArray(r.o.terminy)) {
       r.o.terminy.forEach(function(t) {
@@ -22612,6 +22589,41 @@ function planRadky() {
                             return { druh: p.druh, mesic: (typeof p.mesic === 'number' ? p.mesic : null),
                                      stav: p.stav || 'plan', uidy: [] };
                           }) };
+      });
+    }
+    // Zpráva nemusí mít vyplněnou doporučenou lhůtu — pak plán nemá z čeho
+    // příští termín spočítat a rok by zůstal prázdný. Proto se řada dopočítá
+    // z lhůty nastavené u objektu (⏱ Lhůty), a to až do konce zobrazených let.
+    // Počítá se AŽ PO ručních termínech: u objektu bez zpráv v archivu (ruční,
+    // vložený z Excelu) je poslední revize právě v nich — dřív je výpočet
+    // neviděl a lhůta nedala nic (hlášení uživatele 2026-10-09). Počítá se
+    // i „Poslední revize" z okna objektu. Do roku s ručním termínem téhož
+    // druhu se nic nepřidává — ruční termín má přednost.
+    if (r.o && r.o.cyklus) {
+      var doRoku = planRoky()[planRoky().length - 1];
+      PLAN_DRUHY.forEach(function(d) {
+        var cyklus = parseInt(r.o.cyklus[d], 10);
+        if (!cyklus || cyklus < 1) return;
+        var posledni = null;
+        var vzit = function(rokC, mesic) {
+          if (rokC && (!posledni || rokC > posledni.rok)) posledni = { rok: rokC, mesic: mesic };
+        };
+        Object.keys(r.roky).forEach(function(rok) {
+          (r.roky[rok].polozky || []).forEach(function(p) {
+            if (p.druh !== d || p.stav === 'zruseno') return;
+            vzit(parseInt(rok, 10), p.mesic);
+          });
+        });
+        var pz = r.o.posledni && r.o.posledni[d];
+        if (pz) vzit(parseInt(pz.rok, 10), typeof pz.mesic === 'number' ? pz.mesic : null);
+        if (!posledni) return;
+        var rr = posledni.rok + cyklus, pojistka = 0;
+        while (rr <= doRoku && pojistka++ < 40) {
+          var b = r.roky[rr];
+          var uzMa = b && (b.polozky || []).some(function(p) { return p.druh === d; });
+          if (!uzMa) planZapisDoRoku(r, rr, d, posledni.mesic, 'odhad', '');
+          rr += cyklus;
+        }
       });
     }
     // „Chybí termín" platí, jen dokud příští termín NEZNÁ ani plán. Plán sám
@@ -22816,7 +22828,7 @@ function planPristiRadku(r) {
 // Strom = složky (provozovatelé, budovy) + objekty jako listy.
 // Objekty bez zařazení spadnou do zvláštní složky „Nezařazené objekty",
 // aby nezmizely z očí.
-function planStrom(radky) {
+function planStrom(radky, bezZamku) {
   planMigraceSkupin();
   var slozky = planSlozky();
   var uzly = {};
@@ -22839,12 +22851,47 @@ function planStrom(radky) {
     else nezarazene.deti.push(u);
   });
   if (nezarazene.deti.length) koren.push(nezarazene);
-  planSeraditUzly(koren);
+  planSeraditUzly(koren, bezZamku ? null : __planZamek);
   return koren;
 }
 
-function planSeraditUzly(seznam) {
-  seznam.forEach(function(u) { if (u.deti.length) planSeraditUzly(u.deti); });
+// Ukotvené pořadí (jako v Excelu a Outlooku): úprava objektu ho v seznamu
+// NEPOSUNE. Pořadí z prvního vykreslení se drží, dokud se plán znovu
+// neotevře, netiskne, nebo technik neklepne na „↕ Seřadit znovu".
+// Klíč typ:id (složka a objekt mohou mít shodné id), hodnota = pořadí.
+var __planZamek = null;
+function planUzelKlic(u) { return u.typ + ':' + u.id; }
+function planZamekZrusit() { __planZamek = null; }
+function planPoradiStromu(strom) {
+  var vys = [];
+  (function projit(seznam) {
+    seznam.forEach(function(u) { vys.push(planUzelKlic(u)); projit(u.deti); });
+  })(strom);
+  return vys;
+}
+function planSerazenoZnovu() { planZamekZrusit(); renderPlan(); }
+
+function planSeraditUzly(seznam, zamek) {
+  seznam.forEach(function(u) { if (u.deti.length) planSeraditUzly(u.deti, zamek); });
+  planSeraditPodleTerminu(seznam);
+  if (!zamek) return;
+  // Uzly, které už byly vidět, se vrátí do svého dřívějšího pořadí — jen
+  // mezi sebou a jen v rámci téhož druhu (složka zůstane nad objekty).
+  // Nové uzly zůstanou tam, kam je zařadilo řazení podle termínu.
+  var druhy = {};
+  seznam.forEach(function(u, i) {
+    if (zamek[planUzelKlic(u)] === undefined) return;
+    (druhy[u.typ] = druhy[u.typ] || []).push(i);
+  });
+  Object.keys(druhy).forEach(function(typ) {
+    var sloty = druhy[typ];
+    var uzly = sloty.map(function(i) { return seznam[i]; });
+    uzly.sort(function(a, b) { return zamek[planUzelKlic(a)] - zamek[planUzelKlic(b)]; });
+    sloty.forEach(function(i, k) { seznam[i] = uzly[k]; });
+  });
+}
+
+function planSeraditPodleTerminu(seznam) {
   seznam.sort(function(a, b) {
     // složky nahoru, nezařazené úplně dolů
     var poradiTypu = { provozovatel: 0, budova: 1, objekt: 2, nezarazene: 3 };
@@ -22898,6 +22945,14 @@ function renderPlan() {
   var roky = planRoky();
   var radky = planFiltrovat(planRadky());
   var strom = planStrom(radky);
+  // Pořadí se drží (viz __planZamek); tlačítko „Seřadit znovu" se ukáže,
+  // jen když se od řazení podle termínů skutečně liší.
+  var poradi = planPoradiStromu(strom);
+  var cerstve = planPoradiStromu(planStrom(radky, true));
+  var serBtn = document.getElementById('plan-btn-seradit');
+  if (serBtn) serBtn.style.display = poradi.join('|') === cerstve.join('|') ? 'none' : '';
+  __planZamek = {};
+  poradi.forEach(function(k, i) { __planZamek[k] = i; });
   if (!strom.length) {
     box.innerHTML = '<div class="plan-prazdno">Zatím tu nic není. Objekty se vezmou z archivu zpráv ' +
       '(podle „Místa provádění revize"), složky si přidejte tlačítky ' +
@@ -23322,6 +23377,7 @@ function planZmenaRozsahu() {
 }
 
 function otevritPlan() {
+  planZamekZrusit();
   showScreen('plan');
   renderPlan();
   var h = document.getElementById('plan-hledat');
@@ -23817,6 +23873,8 @@ function planNazevSouboru() {
 
 // Okno s nastavením nadpisu — otevře se místo přímého generování
 function planExport() {
+  // Na papír jde plán seřazený podle termínů, ne ukotvené pořadí z obrazovky.
+  planZamekZrusit();
   var t = planTiskNastaveni();
   var g = function(x) { return document.getElementById(x); };
   g('plan-tisk-nadpis').value = t.nadpis;
@@ -25473,6 +25531,7 @@ document.addEventListener('click', function(e) {
     case 'planRozbalitVse': planRozbalitVse(true); break;
     case 'planSbalitVse': planRozbalitVse(false); break;
     case 'planUroven': planUroven(); break;
+    case 'planSerazenoZnovu': planSerazenoZnovu(); break;
     case 'planObjekt': planObjekt(el); break;
     case 'planObjektUlozit': planObjektUlozit(); break;
     case 'planObjektSmazat': planObjektSmazat(); break;

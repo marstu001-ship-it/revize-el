@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.115 · 2026-10-07**
+**Aktuální verze: v9.116 · 2026-10-09**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -80,6 +80,51 @@ v `.claude/settings.json`) a na začátku regrese.
   Výstupy (snímky, sešity) jen do `testy/_beh/`.
 - `testy/` se nasazuje na Pages s celým repem; program ani `sw.js` na ni
   neodkazují, takže to nevadí.
+
+## Plán revizí: pořadí se při úpravě NEMĚNÍ (v9.116)
+
+Nahlásil uživatel 2026-10-09: „strašně mě plete, že když opravím například
+termín revize u objektu ručně vloženého, tak se to pořadí změní." Objekty ve
+složce se řadí podle nejbližšího termínu (`planSeraditPodleTerminu`), takže
+změna termínu řádek odhodila jinam — přesně „nic se nesmí hýbat pod rukama"
+(v9.64).
+
+Teď je to jako v Excelu (seřazená tabulka se po úpravě sama nepřerovná)
+a v Outlooku (přečtená pošta zůstane na místě, dokud složku neopustíte):
+
+- **`__planZamek`** = pořadí z posledního vykreslení (`typ:id` → index,
+  jen v paměti). `planSeraditUzly(seznam, zamek)` nejdřív seřadí podle
+  termínu a pak uzly, které už byly vidět, vrátí do jejich dřívějšího
+  pořadí — **jen mezi uzly téhož druhu**, takže složky zůstanou nad objekty.
+  Nový objekt se zařadí podle termínu, ostatní se nepohnou.
+- **Znovu se seřadí:** při otevření plánu (`otevritPlan`), při tisku
+  (`planExport` — na papír jde vždy pořadí podle termínů) a tlačítkem
+  **„↕ Seřadit znovu"**, které se ukáže, jen když se ukotvené pořadí od
+  řazení podle termínů liší (`planSerazenoZnovu`).
+- Hledání a filtr pořadí nemíchají.
+
+Test: `testy/test-plan-poradi.js` (15 kontrol). **Na v9.115 spadne 5 z 15.**
+Do Novinek nejde (plán).
+
+### Lhůta u objektu nedala nic u ručně dopsaných revizí (v9.116)
+
+Nahlásil uživatel 2026-10-09 se snímkem (objekt bez zprávy v archivu, EL
+2021–2026 dopsané v plánu, lhůta EL 1 rok, „poslední revize září 2026"):
+„nastavím si lhůtu na jeden rok a do plánu mi to nejde … u ručně dopsané
+revize do plánu."
+
+**Příčina:** `planRadky()` dopočítával řadu z `o.cyklus` **PŘED** tím, než do
+řádku vložil ruční termíny (`o.terminy`). U objektu se zprávami v archivu to
+nevadilo (poslední revize byla ze zprávy), u objektu vedeného jen v plánu
+výpočet neviděl žádnou revizi a nedal nic. Ignoroval i „Poslední revizi"
+z okna objektu (`o.posledni`), kterou okno přitom předvyplní z tabulky.
+
+- Řada se teď počítá **AŽ PO ručních termínech** a za základ bere nejpozdější
+  revizi daného druhu z řádku (bez zrušených) i `o.posledni[druh]`.
+- **Ruční termín má dál přednost** — do roku s ručním termínem se nic
+  nepřidává (`planZapisDoRoku` ruční rok nepřepisuje) a řada pokračuje od něj.
+
+Test: `testy/test-plan-lhuta-rucni.js` (9 kontrol). **Na v9.115 spadne 4 z 9.**
 
 ## 🛑 POVINNÉ PŘED KAŽDÝM VYDÁNÍM: `test-typy-krizem.js` (v9.104)
 
