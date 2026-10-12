@@ -1278,7 +1278,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.120<span class="ver-date"> · 2026-10-12</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.121<span class="ver-date"> · 2026-10-12</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -3949,8 +3949,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="modal" style="max-width:680px">
     <div class="modal-title">🔗 Zprávy v archivu k ručně dopsanému objektu</div>
     <div class="info-box" style="margin-bottom:.8rem">V archivu jsou zprávy k objektu, který máte v plánu dopsaný ručně —
-      v plánu jsou z toho dva řádky. <b>Sloučit</b>: zůstane váš řádek (název, složka, technik, lhůty, ručně dopsané roky)
-      a ukážou se v něm zprávy z archivu, i ty, které uložíte příště. <b>Nechat zvlášť</b>: jde o jiný objekt
+      v plánu jsou z toho dva řádky. <b>Sloučit</b>: zůstane váš řádek (název, složka, technik, lhůty, ručně dopsaná historie)
+      a ukážou se v něm zprávy z archivu, i ty, které uložíte příště. Termíny bere ze zpráv z programu —
+      co bylo ručně naplánované od první zprávy dál, nahradí. <b>Nechat zvlášť</b>: jde o jiný objekt
       (třeba společný hromosvod dvou budov) — na tuhle dvojici se program už nezeptá.</div>
     <div id="plan-shody-seznam" style="max-height:50vh;overflow:auto;margin-bottom:1rem"></div>
     <div style="display:flex;gap:.5rem;justify-content:flex-end">
@@ -24967,10 +24968,62 @@ function planShodyVykreslit() {
 // Vlastní spárování. Je-li u řádku ze zpráv už vlastní záznam (složka,
 // technik, ruční roky), vlije se do ručního objektu — ruční údaje mají
 // přednost, doplní se jen to, co chybí.
+// Při sloučení mají ZPRÁVY Z PROGRAMU přednost před tím, co bylo dopsáno
+// ručně (pokyn uživatele 2026-10-12: „když bylo něco dopsáno ručně a potom
+// se na to udělá revize v programu, tak chceme, aby se data načítala
+// z revize z programu"). Pro každý druh, ke kterému jsou zprávy:
+//  - ruční PLÁN od roku první zprávy dál zmizí (termín dává zpráva),
+//  - ruční zápis v roce, kde zpráva má revizi nebo příští termín, zmizí,
+//  - prázdný rok („nic se tu nedělá") v takovém roce zmizí — jinak by
+//    zakryl termín ze zprávy,
+//  - „Poslední revize" z okna objektu, která není novější než zprávy, zmizí.
+// Ruční HISTORIE před první zprávou (revize z papíru) zůstává.
+// Dělá se jen při sloučení, ne trvale v planRadky(): ruční úprava udělaná
+// AŽ po zprávě je vědomé rozhodnutí technika (v9.117) a musí platit.
+function planUkliditRucniZaZpravami(o, zpravy) {
+  var prvni = {}, posledni = {}, maData = {};
+  (zpravy || []).forEach(function(zi) {
+    var z = zi.z || zi;
+    var d = planDruhZpravy(z);
+    var rok = parseInt(String(z.datum || '').slice(0, 4), 10);
+    if (!d || !rok) return;
+    if (!prvni[d] || rok < prvni[d]) prvni[d] = rok;
+    if (!posledni[d] || rok > posledni[d]) posledni[d] = rok;
+    maData[d + ':' + rok] = true;
+    var p = planPristiTermin(z);
+    if (p && p.rok) maData[d + ':' + p.rok] = true;
+  });
+  var druhy = Object.keys(prvni);
+  if (!druhy.length) return;
+  if (Array.isArray(o.terminy)) {
+    o.terminy = o.terminy.filter(function(t) {
+      if (!t || !t.rok) return true;
+      if (!(t.polozky || []).length) {
+        return !druhy.some(function(d) { return maData[d + ':' + t.rok]; });
+      }
+      t.polozky = t.polozky.filter(function(p) {
+        if (!prvni[p.druh]) return true;
+        if (maData[p.druh + ':' + t.rok]) return false;
+        return !((p.stav || 'plan') === 'plan' && t.rok >= prvni[p.druh]);
+      });
+      return t.polozky.length > 0;
+    });
+  }
+  if (o.posledni) {
+    druhy.forEach(function(d) {
+      var pz = o.posledni[d];
+      if (pz && parseInt(pz.rok, 10) <= posledni[d]) delete o.posledni[d];
+    });
+  }
+}
+
 function planSparovat(r, a) {
   var P = planData();
   var o = r.o;
   if (!o) return;
+  // úklid jen ručních zápisů ručního objektu — zápisy z řádku zpráv (b) dělal
+  // technik až nad zprávami, ty se vlijí beze změny
+  planUkliditRucniZaZpravami(o, a.zpravy);
   if (a.o && a.o !== o) {
     var b = a.o;
     ['cislo', 'technik', 'rodic', 'poznamka', 'popis', 'skupina'].forEach(function(k) {

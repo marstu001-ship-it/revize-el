@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.120 · 2026-10-12**
+**Aktuální verze: v9.121 · 2026-10-12**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -104,6 +104,17 @@ duplikaci." Proto **nic se neslučuje samo**, jen se nabídne:
   zpráv, zůstane jeho název, složka, technik, lhůty i ručně dopsané roky
   a ukazují se v něm zprávy — **i ty uložené až příště**. Měl-li řádek ze
   zpráv vlastní záznam, vlije se do ručního (ruční údaje mají přednost).
+- **(v9.121) Při sloučení mají přednost ZPRÁVY Z PROGRAMU** (pokyn
+  uživatele: „když bylo něco dopsáno ručně a potom se na to udělá revize
+  v programu, chceme, aby se data načítala z revize z programu").
+  `planUkliditRucniZaZpravami()` v ručních zápisech pro každý druh se
+  zprávami smaže **plán od roku první zprávy dál**, **cokoli v roce, kde
+  zpráva má revizi nebo příští termín**, **prázdný rok** v takovém roce
+  (jinak by zakryl termín ze zprávy — přesně případ U3 2030) a „Poslední
+  revizi" z okna objektu, která není novější než zprávy. **Ruční historie
+  před první zprávou zůstává.** Jen při sloučení, ne trvale v `planRadky()`
+  — ruční úprava udělaná AŽ nad zprávami je vědomé rozhodnutí (v9.117)
+  a zápisy z řádku zpráv se proto vlévají bez úklidu.
 - **Opraveno i ruční „🔗 Sloučit" v liště:** ruční objekt bez zpráv jako cíl
   se teď taky spáruje. Dřív se zprávy zkopírovaly jako ruční roky a jejich
   klíč se **skryl** — revize uložená v programu příště se v plánu už
@@ -115,8 +126,8 @@ k témuž dni: „ve vygenerovaném PDF to je, ale při prohlížení v programu
 složky měla jen buňka s názvem, teď i `td.plan-bunka-slozka` ve sloupcích let
 (světlý i tmavý režim). Najetí myší a výběr ho dál přebarví.
 
-Test: `testy/test-plan-shody.js` (22 kontrol). Na v9.119 spadne (okno
-neexistuje). Do Novinek nejde (plán).
+Test: `testy/test-plan-shody.js` (26 kontrol). Na v9.119 spadne (okno
+neexistuje), na v9.120 tři kontroly přednosti zpráv. Do Novinek nejde (plán).
 
 ## Plán revizí: prohlídka slepých uliček (v9.118)
 

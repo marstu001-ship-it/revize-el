@@ -32,7 +32,11 @@ const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' 
     P.slozky.push({ id: 'sl1', typ: 'budova', nazev: 'Areál Jih', rodic: '' });
     const h = (rok, druh, mesic) => ({ rok, polozky: [{ druh, mesic, stav: 'hotovo' }], poznamka: '' });
     P.objekty.push({ id: 'u3', nazev: 'U3', rodic: 'sl1', technik: '', cyklus: { LPS: 4 },
-      terminy: [h(2021, 'EL', 4), h(2026, 'EL', 4), h(2022, 'LPS', 7)] });
+      terminy: [h(2021, 'EL', 4), h(2022, 'LPS', 7),
+        // ručně naplánované LPS 2026 a 2029 a vyprázdněný rok 2030 (jako u uživatele)
+        { rok: 2026, polozky: [{ druh: 'EL', mesic: 4, stav: 'hotovo' }, { druh: 'LPS', mesic: 5, stav: 'plan' }], poznamka: '' },
+        { rok: 2029, polozky: [{ druh: 'LPS', mesic: 3, stav: 'plan' }], poznamka: '' },
+        { rok: 2030, polozky: [], poznamka: '' }] });
     // společný hromosvod dvou budov — záměrně zvlášť
     P.objekty.push({ id: 'u12', nazev: 'U1+U2', rodic: 'sl1', cyklus: { LPS: 4 },
       terminy: [h(2024, 'LPS', 5)] });
@@ -63,11 +67,21 @@ const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' 
     return { pocet: r.length, nazev: u.nazev, rodic: u.rodic, zprav: u.zpravy.length,
       lps2026: (u.roky[2026].polozky || []).filter(q => q.druh === 'LPS').map(q => q.stav + '/' + q.mesic).join(),
       el2021: (u.roky[2021].polozky || []).map(q => q.druh + '/' + q.stav).join(),
+      el2026: (u.roky[2026].polozky || []).filter(q => q.druh === 'EL').map(q => q.stav).join(),
+      lps2022: (u.roky[2022].polozky || []).map(q => q.druh + '/' + q.stav).join(),
+      lps2029: ((u.roky[2029] || {}).polozky || []).filter(q => q.druh === 'LPS').length,
+      lps2030: ((u.roky[2030] || {}).polozky || []).filter(q => q.druh === 'LPS').map(q => q.stav + '/' + q.mesic).join(),
+      terminy: planData().objekty.find(o => o.id === 'u3').terminy.map(t => t.rok + ':' + t.polozky.map(q => q.druh + '/' + q.stav).join('+')).join(' '),
       skryte: (planData().skryte || []).length };
   });
   check('z dvou řádků je jeden „U3"', po.pocet === 1 && po.nazev === 'U3', JSON.stringify(po));
   check('U3 zůstal ve své složce a s ručně dopsanými roky', po.rodic === 'sl1' && po.el2021 === 'EL/hotovo');
   check('a ukazuje hotovou LPS ze zprávy', po.zprav === 1 && po.lps2026 === 'hotovo/7', po.lps2026);
+  check('ručně naplánované LPS 2029 nahradil termín ze zprávy (zmizelo)', po.lps2029 === 0, String(po.lps2029));
+  check('vyprázdněný rok 2030 nezakryl příští termín ze zprávy', po.lps2030 === 'odhad/7', po.lps2030);
+  check('ruční historie před první zprávou zůstala (LPS 2022, EL 2021 a 2026)',
+    po.lps2022 === 'LPS/hotovo' && po.el2026 === 'hotovo', po.terminy);
+  check('v ručních zápisech nezůstal plán LPS ani prázdný rok', !/LPS\/plan/.test(po.terminy) && !/2030:/.test(po.terminy), po.terminy);
   check('nic se neskrylo', po.skryte === 0, String(po.skryte));
   const zpet = await p.$$('#toast-wrap .toast button');
   check('sloučení nabízí ZPĚT', zpet.length > 0 && /ZPĚT/.test(await zpet[zpet.length - 1].textContent()));
