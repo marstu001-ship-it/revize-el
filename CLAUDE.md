@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.117 · 2026-10-12**
+**Aktuální verze: v9.118 · 2026-10-12**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -80,6 +80,34 @@ v `.claude/settings.json`) a na začátku regrese.
   Výstupy (snímky, sešity) jen do `testy/_beh/`.
 - `testy/` se nasazuje na Pages s celým repem; program ani `sw.js` na ni
   neodkazují, takže to nevadí.
+
+## Plán revizí: prohlídka slepých uliček (v9.118)
+
+Po v9.117 si uživatel řekl o slíbenou prohlídku („co ty další blbé chyby
+a funkcionality, co jsi mi slíbil, že se podíváš, jak to je v plánu
+revizí?"). Sonda `testy/_beh/sonda-plan.js` (mimo git) prošla úpravy termínů
+a lhůt jako technik a našla pět věcí:
+
+1. **Změna měsíce u budoucího termínu smazala dopočítané termíny před ním.**
+   Řada z lhůty se počítala od POSLEDNÍHO termínu vůbec — ruční „2029/květen"
+   tak vymazal odhady 2027 a 2028. Teď se počítá od **poslední hotové revize**
+   (bez ní od prvního známého termínu, + „Poslední revize" z okna objektu)
+   a **každý pozdější známý termín ji přeladí** (kotvy v `planRadky()`).
+   Zrušený rok kotvou není, rytmus řady drží.
+2. **„🗑 Vymazat termín" u termínu z lhůty / ze zprávy neudělal nic** a neřekl
+   proč (ruší jen ruční zápis). Nabízí se teď **jen u ručního termínu**;
+   prázdný rok se dělá odškrtnutím všeho (v9.117).
+3. **Šedé „5" a „4" ve lhůtách vypadaly jako nastavená lhůta** (viz v9.107).
+   Náznak je teď **„nenastaveno"**, číslo jen v bublině.
+4. **Hromadně nešla lhůta zrušit** — prázdné pole i 0 se ignorovaly. Teď
+   prázdné = beze změny, **0 = zrušit**, okno to říká.
+5. **Úpravy termínů a objektů nešly vzít ZPĚT** (jinde v programu jdou).
+   Uložení termínu, vymazání termínu i uložení okna objektu nabídnou
+   **ZPĚT i Ctrl+Z** — `planSnimek()` / `planNabidnoutZpet()` (snímek celého
+   `STORE.plan`). **Novou úpravu v plánu dělat stejně.**
+
+Test: `testy/test-plan-audit.js` (18 kontrol). **Na v9.117 spadne 13 z 18.**
+Do Novinek nejde (plán).
 
 ## Plán revizí: rok jde nastavit na „nic se tu nedělá" (v9.117)
 
@@ -445,8 +473,8 @@ se počítalo jen ze zprávy (`D.pristi`), takže po zadání lhůty 2 roky se �
   technik sám, není to odhad programu.
 - Texty štítku, souhrnného varování, legendy a úvodní nápovědy plánu nově
   radí i lhůtu u objektu.
-- **Šedé 5 a 4 u EL/LPS v okně objektu jsou jen nápověda (`placeholder`),
-  ne nastavená lhůta** — uložit se musí číslo napsané do pole. U T nápověda
+- **Šedé 5 a 4 u EL/LPS v okně objektu byly jen nápověda (`placeholder`),
+  ne nastavená lhůta** — od v9.118 je tam „nenastaveno", aby nemátly. U T nápověda
   není. Uživatel hlásil i „nedoplnilo 2 roky do lhůty"; zeptáno, odkud
   by se 2 měly brát — **nedělat bez odpovědi** (předvyplnění z textu lhůty
   ve zprávě by šlo proti rozhodnutí z 2026-08-20).

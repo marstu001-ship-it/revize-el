@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.117<span class="ver-date"> · 2026-10-12</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.118<span class="ver-date"> · 2026-10-12</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2427,24 +2427,24 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
         </div>
       </div>
       <div class="f span2" style="border-top:1px solid var(--border);padding-top:.7rem;margin-top:.2rem">
-        <label style="margin-bottom:.4rem">Lhůty a dopočet řady <span style="font-size:.62rem;color:var(--muted);text-transform:none;letter-spacing:0">— pro objekty, jejichž revize nejsou v programu</span></label>
+        <label style="margin-bottom:.4rem">Lhůty a dopočet řady <span style="font-size:.62rem;color:var(--muted);text-transform:none;letter-spacing:0">— podle lhůty plán dopočítá další termíny; prázdné pole = lhůta nenastavená</span></label>
         <table style="width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.78rem">
           <thead><tr style="text-align:left;color:var(--muted);font-size:.68rem;letter-spacing:.05em">
             <th style="padding:.2rem .3rem">REVIZE</th><th style="padding:.2rem .3rem">LHŮTA (ROKY)</th><th style="padding:.2rem .3rem">POSLEDNÍ REVIZE</th>
           </tr></thead>
           <tbody>
             <tr><td style="padding:.2rem .3rem"><strong>EL</strong> elektroinstalace</td>
-              <td style="padding:.2rem .3rem"><input type="number" id="plan-o-cyklus-el" min="0" max="20" step="1" placeholder="5" autocomplete="off" style="width:100%"></td>
+              <td style="padding:.2rem .3rem"><input type="number" id="plan-o-cyklus-el" min="0" max="20" step="1" placeholder="nenastaveno" title="Počet let mezi revizemi, např. 5" autocomplete="off" style="width:100%"></td>
               <td style="padding:.2rem .3rem;display:flex;gap:.3rem">
                 <select id="plan-o-posledni-mesic-el" autocomplete="off" style="flex:1"></select>
                 <input type="number" id="plan-o-posledni-rok-el" min="1990" max="2100" step="1" placeholder="rok" autocomplete="off" style="width:5rem"></td></tr>
             <tr><td style="padding:.2rem .3rem"><strong>LPS</strong> hromosvod</td>
-              <td style="padding:.2rem .3rem"><input type="number" id="plan-o-cyklus-lps" min="0" max="20" step="1" placeholder="4" autocomplete="off" style="width:100%"></td>
+              <td style="padding:.2rem .3rem"><input type="number" id="plan-o-cyklus-lps" min="0" max="20" step="1" placeholder="nenastaveno" title="Počet let mezi revizemi, např. 4" autocomplete="off" style="width:100%"></td>
               <td style="padding:.2rem .3rem;display:flex;gap:.3rem">
                 <select id="plan-o-posledni-mesic-lps" autocomplete="off" style="flex:1"></select>
                 <input type="number" id="plan-o-posledni-rok-lps" min="1990" max="2100" step="1" placeholder="rok" autocomplete="off" style="width:5rem"></td></tr>
             <tr><td style="padding:.2rem .3rem"><strong>T</strong> technologie</td>
-              <td style="padding:.2rem .3rem"><input type="number" id="plan-o-cyklus-t" min="0" max="20" step="1" placeholder="" autocomplete="off" style="width:100%"></td>
+              <td style="padding:.2rem .3rem"><input type="number" id="plan-o-cyklus-t" min="0" max="20" step="1" placeholder="nenastaveno" title="Počet let mezi revizemi" autocomplete="off" style="width:100%"></td>
               <td style="padding:.2rem .3rem;display:flex;gap:.3rem">
                 <select id="plan-o-posledni-mesic-t" autocomplete="off" style="flex:1"></select>
                 <input type="number" id="plan-o-posledni-rok-t" min="1990" max="2100" step="1" placeholder="rok" autocomplete="off" style="width:5rem"></td></tr>
@@ -2490,9 +2490,9 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div class="f"><select id="plan-hv-select" autocomplete="off"></select></div>
     <div id="plan-hv-lhuty" style="display:none">
       <div class="g2" style="gap:.6rem">
-        <div class="f"><label>EL (roky)</label><input type="number" id="plan-hv-cyklus-el" min="0" max="20" step="1" placeholder="5" autocomplete="off"></div>
-        <div class="f"><label>LPS (roky)</label><input type="number" id="plan-hv-cyklus-lps" min="0" max="20" step="1" placeholder="4" autocomplete="off"></div>
-        <div class="f"><label>T (roky)</label><input type="number" id="plan-hv-cyklus-t" min="0" max="20" step="1" placeholder="" autocomplete="off"></div>
+        <div class="f"><label>EL (roky)</label><input type="number" id="plan-hv-cyklus-el" min="0" max="20" step="1" placeholder="beze změny" autocomplete="off"></div>
+        <div class="f"><label>LPS (roky)</label><input type="number" id="plan-hv-cyklus-lps" min="0" max="20" step="1" placeholder="beze změny" autocomplete="off"></div>
+        <div class="f"><label>T (roky)</label><input type="number" id="plan-hv-cyklus-t" min="0" max="20" step="1" placeholder="beze změny" autocomplete="off"></div>
       </div>
     </div>
     <div class="modal-actions" style="gap:.5rem;margin-top:.8rem">
@@ -22615,25 +22615,39 @@ function planRadky() {
       PLAN_DRUHY.forEach(function(d) {
         var cyklus = parseInt(r.o.cyklus[d], 10);
         if (!cyklus || cyklus < 1) return;
-        var posledni = null;
-        var vzit = function(rokC, mesic) {
-          if (rokC && (!posledni || rokC > posledni.rok)) posledni = { rok: rokC, mesic: mesic };
-        };
+        // Kotvy = roky, kde už termín téhož druhu je (hotový, ruční, ze zprávy),
+        // + „Poslední revize" z okna objektu. Zrušené kotvou nejsou.
+        var kotvy = [];
         Object.keys(r.roky).forEach(function(rok) {
           (r.roky[rok].polozky || []).forEach(function(p) {
             if (p.druh !== d || p.stav === 'zruseno') return;
-            vzit(parseInt(rok, 10), p.mesic);
+            kotvy.push({ rok: parseInt(rok, 10), mesic: p.mesic, hotovo: p.stav === 'hotovo' });
           });
         });
         var pz = r.o.posledni && r.o.posledni[d];
-        if (pz) vzit(parseInt(pz.rok, 10), typeof pz.mesic === 'number' ? pz.mesic : null);
-        if (!posledni) return;
-        var rr = posledni.rok + cyklus, pojistka = 0;
-        while (rr <= doRoku && pojistka++ < 40) {
-          var b = r.roky[rr];
+        if (pz && parseInt(pz.rok, 10)) {
+          kotvy.push({ rok: parseInt(pz.rok, 10), mesic: typeof pz.mesic === 'number' ? pz.mesic : null, hotovo: true });
+        }
+        if (!kotvy.length) return;
+        kotvy.sort(function(a, b) { return a.rok - b.rok; });
+        // Řada se počítá od POSLEDNÍ HOTOVÉ revize (není-li žádná, od prvního
+        // známého termínu) a každý pozdější známý termín ji přeladí. Dřív se
+        // počítala až od posledního termínu vůbec — po změně měsíce u termínu
+        // 2029 tak zmizely odhady 2027 a 2028 (sonda 2026-10-12).
+        var cur = null;
+        kotvy.forEach(function(k) { if (k.hotovo && (!cur || k.rok >= cur.rok)) cur = k; });
+        if (!cur) cur = kotvy[0];
+        var pojistka = 0;
+        while (pojistka++ < 80) {
+          var dalsi = cur.rok + cyklus;
+          var mezi = null;
+          kotvy.forEach(function(k) { if (!mezi && k.rok > cur.rok && k.rok <= dalsi) mezi = k; });
+          if (mezi) { cur = mezi; continue; }
+          if (dalsi > doRoku) break;
+          var b = r.roky[dalsi];
           var uzMa = b && (b.polozky || []).some(function(p) { return p.druh === d; });
-          if (!uzMa) planZapisDoRoku(r, rr, d, posledni.mesic, 'odhad', '');
-          rr += cyklus;
+          if (!uzMa) planZapisDoRoku(r, dalsi, d, cur.mesic, 'odhad', '');
+          cur = { rok: dalsi, mesic: cur.mesic };
         }
       });
     }
@@ -23562,6 +23576,7 @@ function planObjektUlozit() {
   var g = function(x) { return document.getElementById(x); };
   var nazev = g('plan-o-nazev').value.trim();
   if (!nazev) { alert('Vyplňte název objektu.'); g('plan-o-nazev').focus(); return; }
+  var snimekObj = planSnimek();
   var P = planData();
   var o;
   if (__planObjektId) {
@@ -23591,7 +23606,7 @@ function planObjektUlozit() {
   planUlozit();
   planObjektZavrit();
   renderPlan();
-  showToast('💾 Objekt uložen do plánu.');
+  planNabidnoutZpet('💾 Objekt uložen do plánu.', snimekObj);
 }
 
 function planObjektSmazat() {
@@ -23619,6 +23634,11 @@ function planTermin(el) {
   if (!r) return;
   __planTermin = { id: id, rok: rok };
   var b = r.roky[rok] || { polozky: [], poznamka: '' };
+  // „Vymazat termín" ruší jen RUČNÍ zápis. U termínu z lhůty nebo ze zprávy
+  // by neudělal nic, a to bez vysvětlení — proto se tam nenabízí.
+  var maRucni = !!(r.o && Array.isArray(r.o.terminy) && r.o.terminy.some(function(t) { return t && t.rok === rok; }));
+  var btnSmazat = document.querySelector('#modal-plan-termin [data-action="planTerminSmazat"]');
+  if (btnSmazat) btnSmazat.style.display = maRucni ? '' : 'none';
   var g = function(x) { return document.getElementById(x); };
   g('plan-termin-title').textContent = (r.nazev || 'Objekt') + ' — rok ' + rok;
   var mesice = '<option value="">— neurčeno —</option>' + PLAN_MESICE.map(function(m, i) {
@@ -23658,8 +23678,21 @@ function planTermin(el) {
   g('modal-plan-termin').classList.add('open');
 }
 
+// ZPĚT u úprav v plánu (jako všude jinde v programu, i Ctrl+Z): snímek
+// celého plánu před změnou, ZPĚT ho vrátí. Plán je malý, snímek nic nestojí.
+function planSnimek() { return JSON.stringify(planData()); }
+function planNabidnoutZpet(text, snimek) {
+  showToast(text, { actionLabel: 'ZPĚT', timeout: 8000, action: function() {
+    STORE.plan = JSON.parse(snimek);
+    planUlozit();
+    renderPlan();
+    showToast('↩ Vráceno zpět.');
+  } });
+}
+
 function planTerminUlozit() {
   if (!__planTermin) return;
+  var snimek = planSnimek();
   var g = function(x) { return document.getElementById(x); };
   var polozky = [];
   PLAN_DRUHY.forEach(function(d) {
@@ -23681,14 +23714,15 @@ function planTerminUlozit() {
   planUlozit();
   planTerminZavrit();
   renderPlan();
-  if (!polozky.length) {
-    showToast('V roce ' + rok + ' se u objektu nic neplánuje. Vrátit to jde tlačítkem „Vymazat termín" v téže buňce.');
-  }
+  planNabidnoutZpet(polozky.length
+    ? '💾 Termín v roce ' + rok + ' uložen.'
+    : 'V roce ' + rok + ' se u objektu nic neplánuje. Vrátit to jde tlačítkem „Vymazat termín" v téže buňce.', snimek);
 }
 
 // Vymazání ručního termínu vrátí buňku k tomu, co plyne z archivu.
 function planTerminSmazat() {
   if (!__planTermin) return;
+  var snimek = planSnimek(), rokSm = __planTermin.rok;
   var P = planData(), o = null;
   P.objekty.forEach(function(x) { if (x.id === __planTermin.id) o = x; });
   if (o && Array.isArray(o.terminy)) {
@@ -23697,6 +23731,7 @@ function planTerminSmazat() {
   }
   planTerminZavrit();
   renderPlan();
+  planNabidnoutZpet('🗑 Ruční termín v roce ' + rokSm + ' vymazán — buňka ukazuje, co plyne ze zpráv a lhůty.', snimek);
 }
 
 function planTerminZavrit() {
@@ -24820,7 +24855,7 @@ function planHromadnaVolba(co) {
     sel.parentNode.style.display = '';
   } else {
     g('plan-hv-title').textContent = '⏱ Nastavit lhůty';
-    g('plan-hv-popis').textContent = 'Lhůty pro vybraných ' + radky.length + ' objektů. Prázdné pole se nezmění.';
+    g('plan-hv-popis').textContent = 'Lhůty pro vybraných ' + radky.length + ' objektů. Prázdné pole se nezmění, 0 lhůtu zruší.';
     sel.parentNode.style.display = 'none';
     g('plan-hv-lhuty').style.display = '';
     PLAN_DRUHY.forEach(function(d) { g('plan-hv-cyklus-' + d.toLowerCase()).value = ''; });
@@ -24853,14 +24888,19 @@ function planHromadnaPotvrdit() {
   } else {
     var zmena = {};
     PLAN_DRUHY.forEach(function(d) {
-      var v = parseInt(g('plan-hv-cyklus-' + d.toLowerCase()).value, 10);
+      var txt = g('plan-hv-cyklus-' + d.toLowerCase()).value.trim();
+      if (txt === '') return;                       // prázdné = beze změny
+      var v = parseInt(txt, 10);
       if (v > 0) zmena[d] = v;
+      else if (v === 0) zmena[d] = 0;               // 0 = lhůtu zrušit
     });
     if (!Object.keys(zmena).length) { planHromadnaZavrit(); return; }
     radky.forEach(function(r) {
       var o = planZajistitObjekt(r.id);
       if (!o.cyklus) o.cyklus = {};
-      Object.keys(zmena).forEach(function(d) { o.cyklus[d] = zmena[d]; });
+      Object.keys(zmena).forEach(function(d) {
+        if (zmena[d] > 0) o.cyklus[d] = zmena[d]; else delete o.cyklus[d];
+      });
     });
     showToast('⏱ Lhůty nastaveny ' + radky.length + ' objektům.');
   }
