@@ -2,7 +2,7 @@
 // To jsou pojmy ČSN 33 1500 pro REVIZI vyhrazeného el. zařízení; kontrola
 // stroje jede podle NV 378/2001 Sb. § 4 (odst. 1 před uvedením do provozu,
 // odst. 2 následná nejméně jednou za 12 měsíců).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 (async () => {

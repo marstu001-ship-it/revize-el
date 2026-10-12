@@ -1,6 +1,6 @@
 // v9.82 — titulní strana se nikdy nedělí, takže jako jediná může přetéct.
 // Nahlásil Jan Novák 2026-09-21: podpisová okénka uříznutá, popisky pryč.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 
 (async () => {

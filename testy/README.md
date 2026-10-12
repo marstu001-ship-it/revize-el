@@ -42,7 +42,7 @@ SessionStart).
 
 ## Prostředí
 
-Testy čekají Playwright v `/opt/node22/lib/node_modules/playwright` a Chromium
+Playwright hledá `pw.js` (doplňte do něj cestu, když chybí), Chromium testy čekají
 v `/opt/pw-browsers/chromium-1194` (cloudové prostředí Claude Code), Python
 s `openpyxl` a `unzip`. Jinde stačí cesty v hlavičce testu upravit.
 

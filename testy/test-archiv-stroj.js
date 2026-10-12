@@ -1,6 +1,6 @@
 // v9.47 — v seznamu archivu má zpráva o stroji ukázat NÁZEV a TYP stroje,
 // ne jen umístění (pokyn uživatele 2026-09-15). Jen u typu „stroje".
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 (async () => {

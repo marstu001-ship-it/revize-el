@@ -1,6 +1,6 @@
 // v9.97 — schéma rozváděčů k tisku: navazování čar, rozvržení na co nejméně
 // listů (na šířku ve dvou sloupcích / zmenšení), rámeček přes všechny kabely.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const postav = require('./schema-fixt.js');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));

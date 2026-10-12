@@ -1,7 +1,7 @@
 // v9.62 — vlastní šablona číslování zpráv v Nastavení.
 // NEJDŮLEŽITĚJŠÍ KONTROLA: bez nastavení se program chová PŘESNĚ jako dřív
 // (nová zpráva = RE-26-0001), aby nikoho číslování nepřekvapilo.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 const ROK = String(new Date().getFullYear()).slice(-2);
 

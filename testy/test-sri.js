@@ -4,7 +4,7 @@
 // Testuje se trojí: (1) se správnými bajty se skript NAČTE, (2) po změně
 // jediného bajtu se NENAČTE (jinak by otisk nic nehlídal), (3) offline
 // varianta z index-offline.html otisk NEMÁ (jinak by file:// nefungovalo).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const fs = require('fs'), cp = require('child_process'), path = require('path');
 const DIR = __dirname, SRC = path.join(__dirname, '..', 'index.html');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));

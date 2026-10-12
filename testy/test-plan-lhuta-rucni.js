@@ -3,7 +3,7 @@
 // zapsané v plánu, lhůta EL 1 rok): „nastavím si lhůtu na jeden rok a do plánu
 // mi to nejde … u ručně dopsané revize do plánu". Ruční termíny se do řádku
 // dostávaly až PO výpočtu řady, takže je výpočet neviděl. Vymyšlená data.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 

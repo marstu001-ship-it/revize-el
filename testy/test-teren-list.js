@@ -2,7 +2,7 @@
 // na naměřené hodnoty (přání kolegy Jana Nováka, 2026-09-15).
 // Nejdůležitější kontrola: `renderTiskRows(data)` bez druhého parametru musí
 // vracet bajt po bajtu totéž — jede přes ni „🖨️ Tisk měření samostatně".
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 const VZOREK = [

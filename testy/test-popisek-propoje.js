@@ -1,7 +1,7 @@
 // v9.45 — popisek propoje ve stromu: kabel · označení jističe (jištění).
 // Název obvodu se vynechává, protože jen opakuje jméno z rámečku pod ním
 // a u většího stromu by se kresba nevešla na šířku A4.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });

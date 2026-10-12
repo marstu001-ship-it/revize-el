@@ -1,6 +1,6 @@
 // v9.111 — Karta stroje k zápisu v terénu: každý stroj na list na šířku,
 // táž pole jako tab „2. Stroj", vyplněné se předtiskne. Vymyšlená data.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 // Port 8920 = předchozí verze (testy/_beh/predchozi, v9.110 z gitu — staví servery.sh). NE 8905–8907 — ty si berou test-zip-kodu a test-sri.
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));

@@ -6,7 +6,7 @@
 //         REGISTRACE, ne stahování sw.js (ten musí do ZIPu jít).
 // Past 3: showSaveFilePicker v headless bez uživatelského gesta nikdy
 //         nedoresolvuje → v testu se odstraní, ať se jede cestou stažení.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const fs = require('fs'), cp = require('child_process');
 const DIR = __dirname;
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));

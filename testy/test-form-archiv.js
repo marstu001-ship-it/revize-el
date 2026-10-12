@@ -5,7 +5,7 @@
 //  - u jiného typu zprávy (stroje nemají tab „popis") se spadne na titulku
 //  - neuložené změny projdou dialogem, nikdy se nezahodí potichu
 //  - sbalení se pamatuje a panel se neukazuje mimo formulář
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 (async () => {

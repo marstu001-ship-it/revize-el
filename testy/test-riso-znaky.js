@@ -1,5 +1,5 @@
 // v9.99 — Riso „>20" jen jako šedá nápověda; proužek se znaky i pod tabulkou rozváděče.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 (async () => {

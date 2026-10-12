@@ -1,7 +1,7 @@
 // v9.51 — datace norem u strojů. ČSN EN 60204-1 má v ČR čtyři verze, ne dvě;
 // stroj z roku 2004 spadá pod vydání 03/2000 (dotaz uživatele 2026-09-15).
 // Ověřeno u ČAS / normy.biz. Test hlídá, že se ta datace zase nerozjede.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 // Jediné místo pravdy testu: co se ověřilo u zdroje.

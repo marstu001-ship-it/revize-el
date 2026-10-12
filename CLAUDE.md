@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.116 · 2026-10-09**
+**Aktuální verze: v9.117 · 2026-10-12**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -80,6 +80,36 @@ v `.claude/settings.json`) a na začátku regrese.
   Výstupy (snímky, sešity) jen do `testy/_beh/`.
 - `testy/` se nasazuje na Pages s celým repem; program ani `sw.js` na ni
   neodkazují, takže to nevadí.
+
+## Plán revizí: rok jde nastavit na „nic se tu nedělá" (v9.117)
+
+Nahlásil uživatel 2026-10-12 (objekt U3 vedený jen v plánu, v roce 2030 se tam
+plánovalo LPS, přestože hromosvod už hlídá zpráva z programu): „když kliknu
+do okénka, abych to smazal, program vyžaduje, že tam musí být něco
+zakliknuto, ale v tom roce tam nic nemá být." A dodal: „už mě to pěkně štve,
+jak pořád narážím na takové hloupé chyby v plánu revizí."
+
+**Dvě slepé uličky:** `planTerminUlozit()` s ničím zaškrtnutým vyhodila
+„Zaškrtněte aspoň jednu revizi", a „🗑 Vymazat termín" jen zruší ruční zápis
+— termín z lhůty objektu nebo ze zprávy (`odhad`) se pak objevil znovu.
+Odstranit naplánovaný termín tedy nešlo vůbec.
+
+- **Nic nezaškrtnuto + Uložit = prázdný ruční rok** (`terminy: [{rok,
+  polozky: []}]`). V `planRadky()` potlačí naplánované i odhadnuté položky
+  (a lhůta do něj nic nepřidá — `planZapisDoRoku` ruční rok nepřepisuje),
+  **ale hotová revize ze zprávy v archivu zůstane** (`stav hotovo` s `uidy`)
+  — ta se opravdu stala.
+- „🗑 Vymazat termín" dál vrací buňku k odvozenému (bublina to teď říká),
+  hláška po uložení prázdného roku na to upozorní.
+- **Prázdný rok se nesmí vyrobit omylem:** „Dopočítat řadu" ho nezaplní
+  a sloučení objektů ho do cíle nepřenese (tam by znamenal „nic").
+
+Test: `testy/test-plan-prazdny-rok.js` (15 kontrol). **Na v9.116 spadne**
+hned na hlášeném kroku (okno nejde uložit). Do Novinek nejde (plán).
+
+**Testy:** Playwright se v různých prostředích hledá jinde
+(`/opt/node-tools/…` × `/opt/node22/…`) — všechny testy ho berou přes
+**`testy/pw.js`**. Nový test: `require('./pw')`, ne absolutní cesta.
 
 ## Plán revizí: pořadí se při úpravě NEMĚNÍ (v9.116)
 

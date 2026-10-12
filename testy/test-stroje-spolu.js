@@ -1,7 +1,7 @@
 // v9.49 — u stroje je měření a hned za ním jeho kontroly, v jedné kapitole.
 // Zpráva uložená DŘÍV (bez příznaku D.stroje.spolu) se musí tisknout POSTARU,
 // jinak by se jí posunulo číslo kapitoly Závady, na které odkazuje závěr.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 async function pdfText(p) {

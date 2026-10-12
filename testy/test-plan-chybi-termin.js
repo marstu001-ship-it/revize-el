@@ -2,7 +2,7 @@
 // PŘÍMO V PLÁNU (lhůtou u objektu nebo termínem v buňce roku). Hlášení
 // uživatele 2026-10-05 (paketovací lis): „svítilo mi, že chybí termín, a když
 // ho doplním a uložím, tak to svítí pořád." Vymyšlená data.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 

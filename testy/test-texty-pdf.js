@@ -1,6 +1,6 @@
 // v9.44 — přepsání textů, které program skládá sám (nadpis, citace norem,
 // posudek) přímo v panelu nastavení tisku + vypnuté podbarvení okének.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });

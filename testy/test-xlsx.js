@@ -1,7 +1,7 @@
 // v9.54 — export měřicího listu do .xlsx. Nestačí „ZIP se rozbalil":
 // soubor se OTEVÍRÁ přes openpyxl a převádí LibreOffice, ať je jisté,
 // že ho otevře i skutečný Excel.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const fs = require('fs'), cp = require('child_process');
 const DIR = __dirname, OUT = DIR + '/_beh/out-xlsx';
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));

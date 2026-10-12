@@ -1,7 +1,7 @@
 // v9.106 — „🖨️ Tisk měření samostatně" tiskne i přehledové schéma zapojení
 // rozváděčů (pokyn uživatele 2026-10-01: „když si dám tisk měření samostatně,
 // tak tam není to přehledové schéma zapojení rozváděčů"). Vymyšlená data.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 function zprava(V, pocet, vetveni) {

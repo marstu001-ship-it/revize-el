@@ -1,6 +1,6 @@
 // v9.90 — konvence z Office: ukotvená hlavička, Ctrl+P/F/H/F2,
 // Najít a nahradit, stavový řádek.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 
 (async () => {

@@ -1,5 +1,5 @@
 // v9.93 — načtení .xlsx zpátky do zprávy (vlastní čtečka ZIPu a OOXML).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const fs = require('fs');
 const path = require('path');
 const SP = __dirname + '/_beh', VSTUPY = __dirname + '/vstupy';

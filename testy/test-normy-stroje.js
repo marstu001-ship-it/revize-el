@@ -2,7 +2,7 @@
 // zařízení (pokyn uživatele 2026-09-15). Tři místa: celkový posudek,
 // výchozí zaškrtnutí norem, citace pod nadpisem + odůvodnění lhůty.
 // Elektro a LPS se nesmí dotknout — tam je NV 190/2022 i ČSN 33 1500 správně.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 (async () => {

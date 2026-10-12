@@ -3,7 +3,7 @@
 // (nová, z archivu, Navázat, ⧉ kopie, koncept po restartu) PO KAŽDÉM jiném typu
 // a obrazovka musí vypadat na chlup stejně jako u čerstvé zprávy téhož typu
 // v čisté stránce. Porovnává se, co je VIDĚT: nadpisy karet na každé záložce.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 const TYPY = [['elektro','dum'], ['elektro','prumysl'], ['lps','lps'], ['stroje','dum'], ['spotrebice','dum']];

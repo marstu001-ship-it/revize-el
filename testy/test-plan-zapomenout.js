@@ -1,6 +1,6 @@
 // v9.110 — Skryté objekty bez zprávy v archivu jde ZAPOMENOUT NATRVALO.
 // Objekty se zprávami ne (vrátily by se do plánu). Vymyšlená data.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 (async () => {

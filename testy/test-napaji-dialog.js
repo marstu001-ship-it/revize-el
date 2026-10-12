@@ -1,5 +1,5 @@
 // v9.97 — dialog „Napájí tento jistič rozváděč?": zaškrtávátko a název v jednom řádku vlevo.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const postav = require('./schema-fixt.js');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 (async () => {

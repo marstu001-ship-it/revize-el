@@ -3,7 +3,7 @@
 // všechno naráz, takže starší okno při uložení přepsalo novější změny z druhého
 // (hlášení uživatele 2026-10-05, paketovací lis: termín ve zprávě byl, plán
 // hlásil „chybí termín" a po uložení lhůty termín z dat zmizel). Vymyšlená data.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 

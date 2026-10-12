@@ -1,5 +1,5 @@
 // v9.83 — hromadný výběr v archivu: tisk (jedno/oboustranně), dokončení, smazání.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 
 (async () => {
@@ -103,8 +103,22 @@ const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?'
   const obou = await p.evaluate(async () => {
     showScreen('home'); renderArchiv();
     await new Promise(r => setTimeout(r, 200));
+    // Kolik stran zpráva má, záleží na písmech a prohlížeči — v jiném
+    // prostředí vyšly všechny sudé a nebylo co doplňovat (2026-10-12).
+    // Proto se první zprávě se sudým počtem přidá jedna strana navíc:
+    // doplnění prázdné zadní strany se tak vyzkouší vždycky.
+    const puvodni = hromadnyVykreslit; let vynuceno = false;
+    hromadnyVykreslit = function (D, cb) {
+      return puvodni(D, function (strany) {
+        if (!vynuceno && strany.length % 2 === 0 && strany.length) {
+          strany = strany.concat([strany[strany.length - 1].cloneNode(true)]); vynuceno = true;
+        }
+        cb(strany);
+      });
+    };
     archivTiskObou();
     await new Promise(r => setTimeout(r, 9000));
+    hromadnyVykreslit = puvodni;
     const str = [...document.querySelectorAll('#hromadny-pdf-pages .a4')];
     // kde začíná která zpráva — po prázdné straně musí následovat začátek další
     const znacky = str.map(x => x.getAttribute('data-prazdna') ? 'P' : (x.classList.contains('a4-titulni') ? 'T' : '.'));

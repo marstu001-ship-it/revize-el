@@ -2,7 +2,7 @@
 // Předloha: protokoly kolegy Jana Nováka (snímky 2026-09-17).
 // v9.69 — formulář JE protokol: jeden list místo tabů, skutečná pole zprávy
 // se do něj stěhují, v PDF je podpisová čára a nikde není vodorovný posuvník.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 (async () => {

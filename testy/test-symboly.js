@@ -1,7 +1,7 @@
 // v9.77 — znaky, které se na klávesnici nenapíšou (≤ ≥ Δ …).
 // „u strojů a spotřebičů technici nevědí, jak se píše na klávesnici menší,
 //  větší, nebo rovno, delta In" (uživatel 2026-09-18)
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 
 (async () => {

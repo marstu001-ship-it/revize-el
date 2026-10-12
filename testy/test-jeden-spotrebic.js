@@ -1,5 +1,5 @@
 // v9.78 — protokol jen pro jeden spotřebič z řádku (vzor ILLKO Studio).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?' — '+d:''));
 
 (async () => {

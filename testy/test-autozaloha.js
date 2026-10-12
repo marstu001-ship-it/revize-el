@@ -3,7 +3,7 @@
 // v plánu ji zařadil a uložil — po restartu prohlížeče ji poslední záloha
 // neměla. Příčina: 10min „throttle" změny v té době prostě zahodil a import
 // zálohu vůbec nespouštěl. Složka se v testu napodobí v paměti.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 const SLOZKA = () => {

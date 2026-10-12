@@ -4,7 +4,7 @@
 // nic netiskne. Text PDF se porovnává dál znak po znaku.
 // Vyplní stejnou zprávu v obou a porovná TEXT vygenerovaného PDF znak po
 // znaku, plus data zprávy a nadpisy kapitol. Hlavní záchranná síť projektu.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 
 async function otisk(page, v) {
   return await page.evaluate(async (v) => {

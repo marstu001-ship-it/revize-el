@@ -2,7 +2,7 @@
 // (32 provázaných rozváděčů) dal schéma na 2,5 listu, které nešlo rozdělit,
 // a stránkování se na něm zaseklo: dalších 31 rozváděčů skončilo na JEDNÉ
 // straně vysoké 29 000 px. Data jsou vymyšlená (repo je veřejné).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 

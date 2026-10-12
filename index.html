@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.116<span class="ver-date"> · 2026-10-09</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.117<span class="ver-date"> · 2026-10-12</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2661,6 +2661,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
     <div style="font-size:.78rem;color:var(--muted);padding:0 0 .4rem">
       Zaškrtněte, co se v tomto roce dělá. <strong>Každá revize může mít svůj měsíc</strong> —
       elektro třeba v lednu a hromosvod v září.
+      <strong>Nemá se tu dělat nic?</strong> Odškrtněte vše a uložte.
     </div>
     <table style="width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.8rem">
       <thead><tr style="text-align:left;color:var(--muted);font-size:.7rem;letter-spacing:.05em">
@@ -2672,7 +2673,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <input type="text" id="plan-t-poznamka" placeholder="např. po odstávce, dělal kolega, papírová zpráva č. 12/2019" autocomplete="off"></div>
     <div class="modal-actions" style="flex-wrap:wrap;gap:.5rem;margin-top:.8rem">
       <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="planTerminZavrit">← Zrušit</button>
-      <button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="planTerminSmazat">🗑 Vymazat termín</button>
+      <button class="btn btn-ghost" style="background:#fff;color:var(--accent);border:1px solid var(--accent)" data-action="planTerminSmazat" title="Zruší, co jste v tomto roce zadal ručně — buňka se vrátí k tomu, co plyne ze zpráv a z lhůty objektu">🗑 Vymazat termín</button>
       <button class="btn btn-gold" data-action="planTerminUlozit">💾 Uložit</button>
     </div>
   </div>
@@ -21872,7 +21873,7 @@ function archivHromadnyBeh(vyb, oboustranne) {
     pdfProgressHide();
     __hromadnyPopis = pocetZpravSklon(vyb.length) + ' · ' +
       (oboustranne ? 'oboustranně' : 'jednostranně') + ' · ' + (stranCelkem + prazdnych) + ' stran' +
-      (prazdnych ? ' (z toho ' + prazdnych + ' prázdných)' : '');
+      (prazdnych ? ' (z toho ' + prazdnych + (prazdnych === 1 ? ' prázdná' : (prazdnych < 5 ? ' prázdné' : ' prázdných')) + ')' : '');
     var info = document.getElementById('hromadny-pdf-info');
     if (info) info.textContent = __hromadnyPopis;
     showScreen('hromadny-pdf');
@@ -22584,6 +22585,16 @@ function planRadky() {
     if (r.o && Array.isArray(r.o.terminy)) {
       r.o.terminy.forEach(function(t) {
         if (!t || !t.rok) return;
+        // Prázdný ruční rok = „nic se tu nedělá": zahodí se plán i odhad,
+        // ale hotová revize ze zprávy v archivu zůstane — ta se opravdu stala.
+        if (!(t.polozky || []).length) {
+          var byl = r.roky[t.rok];
+          r.roky[t.rok] = { rucni: true, prazdny: true, poznamka: t.poznamka || '',
+                            polozky: byl ? (byl.polozky || []).filter(function(p) {
+                              return p.stav === 'hotovo' && p.uidy && p.uidy.length;
+                            }) : [] };
+          return;
+        }
         r.roky[t.rok] = { rucni: true, poznamka: t.poznamka || '',
                           polozky: (t.polozky || []).map(function(p) {
                             return { druh: p.druh, mesic: (typeof p.mesic === 'number' ? p.mesic : null),
@@ -23520,6 +23531,8 @@ function planDopocitat() {
   navrh.forEach(function(n) {
     var t = null;
     o.terminy.forEach(function(x) { if (x.rok === n.rok) t = x; });
+    // rok, který technik vědomě vyprázdnil („nic se tu nedělá"), se nezaplní
+    if (t && !(t.polozky || []).length) { preskoceno++; return; }
     if (!t) { t = { rok: n.rok, polozky: [], poznamka: '' }; o.terminy.push(t); }
     var uz = false;
     t.polozky.forEach(function(p) { if (p.druh === n.druh) uz = true; });
@@ -23655,14 +23668,22 @@ function planTerminUlozit() {
     var m = g('plan-t-mesic-' + k).value;
     polozky.push({ druh: d, mesic: m === '' ? null : parseInt(m, 10), stav: g('plan-t-stav-' + k).value });
   });
-  if (!polozky.length) { alert('Zaškrtněte aspoň jednu revizi (EL / LPS / T), nebo termín vymažte.'); return; }
+  // Nic nezaškrtnuto = „v tomto roce se nic nedělá". Do v9.116 to program
+  // odmítl („zaškrtněte aspoň jednu revizi") a „Vymazat termín" buňku jen
+  // vrátil k odvozenému — termín z lhůty nebo ze zprávy se tak nedal odstranit
+  // vůbec (hlášení uživatele 2026-10-12 u U3). Prázdný ruční rok potlačí
+  // naplánované a odhadnuté termíny; hotové revize ze zpráv zůstanou.
+  var rok = __planTermin.rok;
   var o = planZajistitObjekt(__planTermin.id);
   if (!Array.isArray(o.terminy)) o.terminy = [];
-  o.terminy = o.terminy.filter(function(t) { return t.rok !== __planTermin.rok; });
-  o.terminy.push({ rok: __planTermin.rok, polozky: polozky, poznamka: g('plan-t-poznamka').value.trim() });
+  o.terminy = o.terminy.filter(function(t) { return t.rok !== rok; });
+  o.terminy.push({ rok: rok, polozky: polozky, poznamka: g('plan-t-poznamka').value.trim() });
   planUlozit();
   planTerminZavrit();
   renderPlan();
+  if (!polozky.length) {
+    showToast('V roce ' + rok + ' se u objektu nic neplánuje. Vrátit to jde tlačítkem „Vymazat termín" v téže buňce.');
+  }
 }
 
 // Vymazání ručního termínu vrátí buňku k tomu, co plyne z archivu.
@@ -24732,6 +24753,8 @@ function planVybraneSloucit() {
     // termíny odvozené z archivu i ruční — vezmeme vše, co je v řádku vidět
     Object.keys(r.roky).forEach(function(rok) {
       var b = r.roky[rok];
+      // prázdný rok se nepřenáší — v cíli by znamenal „nic se tu nedělá"
+      if (!b || !(b.polozky || []).length) return;
       var t = null;
       cil.terminy.forEach(function(x) { if (x.rok === parseInt(rok, 10)) t = x; });
       if (!t) { t = { rok: parseInt(rok, 10), polozky: [], poznamka: '' }; cil.terminy.push(t); }

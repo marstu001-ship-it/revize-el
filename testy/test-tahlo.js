@@ -1,5 +1,5 @@
 // v9.96 — táhlo pro kopírování hodnot nesmí zůstat viset po kopii řádku.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || '8901';
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 (async () => {

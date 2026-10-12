@@ -1,6 +1,6 @@
 // v9.91 — pravý klik = kontextové menu. Tlačítka ⧉ ✕ 📄 v řádku ZŮSTÁVAJÍ
 // (pokyn uživatele 2026-09-23: „technici jsou už na to zvyklí").
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 
 (async () => {

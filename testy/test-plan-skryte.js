@@ -3,7 +3,7 @@
 // možnost nahlédnout, co je skryté, jen je můžu vrátit zpět, což nechci, a ještě
 // všechny najednou." Navíc se při skrytí ztrácel vlastní záznam objektu
 // (složka, technik, lhůty) — vrácený objekt přišel o všechno. Vymyšlená data.
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const PORT = process.env.PORT || 8901;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 

@@ -1,7 +1,7 @@
 // v9.48 — nové kolonky u stroje: hlavní jištění, předřazené jištění,
 // napětí řídicích obvodů, napájeno z rozváděče, přívodní kabel.
 // Doplněno dle vzoru od kolegy (pokyn uživatele 2026-09-15).
-const { chromium } = require('/opt/node22/lib/node_modules/playwright/node_modules/playwright-core');
+const { chromium } = require('./pw');
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 const POLE = ['stroj-jisteni-typ', 'stroj-jisteni-proud', 'stroj-predjisteni-typ',
               'stroj-predjisteni-proud', 'stroj-ridici-napeti', 'stroj-napajeno-z', 'stroj-privodni-kabel'];
