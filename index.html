@@ -1268,7 +1268,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.118<span class="ver-date"> · 2026-10-12</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.119<span class="ver-date"> · 2026-10-12</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -22595,11 +22595,23 @@ function planRadky() {
                             }) : [] };
           return;
         }
-        r.roky[t.rok] = { rucni: true, poznamka: t.poznamka || '',
-                          polozky: (t.polozky || []).map(function(p) {
-                            return { druh: p.druh, mesic: (typeof p.mesic === 'number' ? p.mesic : null),
-                                     stav: p.stav || 'plan', uidy: [] };
-                          }) };
+        var bylRok = r.roky[t.rok];
+        var polozkyR = (t.polozky || []).map(function(p) {
+          return { druh: p.druh, mesic: (typeof p.mesic === 'number' ? p.mesic : null),
+                   stav: p.stav || 'plan', uidy: [] };
+        });
+        // Hotová revize ze ZPRÁVY V ARCHIVU má přednost i před ručním
+        // termínem téhož roku — technik si rok naplánoval, pak revizi
+        // opravdu udělal a uložil v programu. Dřív buňka dál hlásila
+        // „naplánováno" (sonda 2026-10-12).
+        ((bylRok && bylRok.polozky) || []).forEach(function(p) {
+          if (p.stav !== 'hotovo' || !p.uidy || !p.uidy.length) return;
+          var shoda = null;
+          polozkyR.forEach(function(q) { if (q.druh === p.druh) shoda = q; });
+          if (shoda) { shoda.stav = 'hotovo'; shoda.mesic = p.mesic; shoda.uidy = p.uidy.slice(); }
+          else polozkyR.push({ druh: p.druh, mesic: p.mesic, stav: 'hotovo', uidy: p.uidy.slice() });
+        });
+        r.roky[t.rok] = { rucni: true, poznamka: t.poznamka || '', polozky: polozkyR };
       });
     }
     // Zpráva nemusí mít vyplněnou doporučenou lhůtu — pak plán nemá z čeho

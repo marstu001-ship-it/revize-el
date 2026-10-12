@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.118 · 2026-10-12**
+**Aktuální verze: v9.119 · 2026-10-12**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -106,7 +106,15 @@ a lhůt jako technik a našla pět věcí:
    **ZPĚT i Ctrl+Z** — `planSnimek()` / `planNabidnoutZpet()` (snímek celého
    `STORE.plan`). **Novou úpravu v plánu dělat stejně.**
 
-Test: `testy/test-plan-audit.js` (18 kontrol). **Na v9.117 spadne 13 z 18.**
+6. **(v9.119) Ruční termín přebil skutečnou revizi ze zprávy.** Technik si
+   rok 2027 naplánoval ručně, pak revizi opravdu udělal a uložil v programu
+   — buňka dál hlásila „naplánováno". Ruční rok teď převezme **hotové
+   položky ze zpráv v archivu** (`stav hotovo` s `uidy`) téhož druhu.
+   Našlo se, když se uživatel zeptal „předpokládám, že jsi vše našel" —
+   **nebylo všechno**, prohlídka v9.118 šla po úpravách termínů, ne po
+   souhře ručních termínů se zprávami.
+
+Test: `testy/test-plan-audit.js` (19 kontrol). **Na v9.117 spadne 13 z 18.**
 Do Novinek nejde (plán).
 
 ## Plán revizí: rok jde nastavit na „nic se tu nedělá" (v9.117)

@@ -123,6 +123,22 @@ const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' 
     hrom.a === '{"T":1}' && hrom.b === '{"LPS":4,"T":1}', hrom.a + ' / ' + hrom.b);
   check('bez lhůty se řada nedopočítá', (await roky('a', 'EL')) === '2026', await roky('a', 'EL'));
 
+  // ── 6. hotová revize ze zprávy má přednost před ručním termínem ────
+  const hot = await p.evaluate(() => {
+    localStorage.clear(); archiv.length = 0; STORE.archiv = archiv; STORE.plan = {};
+    const P = planData(); P.nastaveni.rokOd = 2024; P.nastaveni.pocetLet = 8; P.nastaveni.rucne = true;
+    archiv.push({ uid: 'z1', typ: 'elektro', ev_cislo: 'RE-23-1', misto: 'Dílna X', datum: '2023-05-10', data: { typ: 'elektro', pristi: '2027-05-10' } });
+    STORE.archiv = archiv;
+    const o = planZajistitObjekt(planRadky().find(x => x.nazev === 'Dílna X').id);
+    o.terminy = [{ rok: 2027, polozky: [{ druh: 'EL', mesic: 5, stav: 'plan' }], poznamka: '' }];
+    planUlozit();
+    archiv.push({ uid: 'z2', typ: 'elektro', ev_cislo: 'RE-27-1', misto: 'Dílna X', datum: '2027-06-02', data: { typ: 'elektro', pristi: '2031-06-02' } });
+    STORE.archiv = archiv;
+    const b = planRadky().find(x => x.nazev === 'Dílna X').roky[2027];
+    return b.polozky.map(q => q.druh + '/' + q.stav + '/' + q.mesic).join(',');
+  });
+  check('revize udělaná v programu přebije ručně naplánovaný termín téhož roku', hot === 'EL/hotovo/5', hot);
+
   check('žádná chyba stránky', chyby.length === 0, chyby.join(' | '));
   await br.close();
   console.log(res.join('\n'));
