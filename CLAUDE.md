@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.119 · 2026-10-12**
+**Aktuální verze: v9.120 · 2026-10-12**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -80,6 +80,43 @@ v `.claude/settings.json`) a na začátku regrese.
   Výstupy (snímky, sešity) jen do `testy/_beh/`.
 - `testy/` se nasazuje na Pages s celým repem; program ani `sw.js` na ni
   neodkazují, takže to nevadí.
+
+## Plán revizí: nabídka sloučit ruční objekt se zprávami v archivu (v9.120)
+
+Přání uživatele 2026-10-12: „našlo se v archivu zprávu, která je stejná jako
+ručně doplněná revize — a otázka, jestli to sloučit." Typicky ruční „U3"
+(fialový řádek) a zpráva z programu na „Budova U 3" = dva řádky jedné budovy.
+A hned k tomu: „dvě budovy vedle sebe mají každá svoji revizi elektro, ale
+LPS mají společné, tak mám objekt U1+U2, kde je jen LPS — tam chci mít
+duplikaci." Proto **nic se neslučuje samo**, jen se nabídne:
+
+- **Při otevření plánu** (`otevritPlan` → `planShodyNabidnout`) okno
+  `#modal-plan-shody` se seznamem dvojic: **🔗 Sloučit** · **Nechat zvlášť**
+  (pamatuje se natrvalo v `P.neslucovat` = `idRučního|klíčZpráv`, jde se
+  zálohou plánu) · **Rozhodnout později** (zeptá se při dalším otevření).
+  Obojí s ZPĚT a Ctrl+Z.
+- **Shoda = stejný název po očištění** (`planShodaNazev`: bez háčků, mezer,
+  interpunkce a slov budova/objekt), **ne podobnost** — „U1" × „U1+U2" shodu
+  nedá. Ruční řádek bez zpráv ↔ řádek se zprávami, **jen jednoznačné dvojice**
+  (dva ruční „U3" k jedné budově = neptá se). Co se nenabídne, jde sloučit
+  ručně lištou.
+- **Sloučení = spárování** (`planSparovat`): ruční objekt dostane `o.klic`
+  zpráv, zůstane jeho název, složka, technik, lhůty i ručně dopsané roky
+  a ukazují se v něm zprávy — **i ty uložené až příště**. Měl-li řádek ze
+  zpráv vlastní záznam, vlije se do ručního (ruční údaje mají přednost).
+- **Opraveno i ruční „🔗 Sloučit" v liště:** ruční objekt bez zpráv jako cíl
+  se teď taky spáruje. Dřív se zprávy zkopírovaly jako ruční roky a jejich
+  klíč se **skryl** — revize uložená v programu příště se v plánu už
+  neukázala vůbec.
+
+**Ve stejném vydání: šedý pruh složky přes celý řádek** (přání uživatele
+k témuž dni: „ve vygenerovaném PDF to je, ale při prohlížení v programu ne —
+šedivé políčko budovy je protáhnuté a vizuálně odděluje objekty"). Pozadí
+složky měla jen buňka s názvem, teď i `td.plan-bunka-slozka` ve sloupcích let
+(světlý i tmavý režim). Najetí myší a výběr ho dál přebarví.
+
+Test: `testy/test-plan-shody.js` (22 kontrol). Na v9.119 spadne (okno
+neexistuje). Do Novinek nejde (plán).
 
 ## Plán revizí: prohlídka slepých uliček (v9.118)
 
