@@ -36,8 +36,10 @@ const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?'
     realna.radku === 1 && realna.mistoVeZprave === '', realna.radku + ' řádků, místo „' + realna.mistoVeZprave + '"');
   check('objektem je STROJ, ne místnost', realna.nazev === 'Konvektomat', realna.nazev);
   check('a vedle názvu se drží jeho umístění', realna.popis === 'Budova M4 – kuchyně', realna.popis);
-  check('hotová kontrola i příští termín sedí v letech',
-    realna.roky === '2026:T/hotovo 2027:T/odhad', realna.roky);
+  // od v9.122 se z data kontroly a termínu příští kontroly bere i lhůta (1 rok)
+  // a řada pokračuje dál — dřív zůstala jen 2026 a 2027
+  check('hotová kontrola i příští termín sedí v letech (a řada jde dál po roce)',
+    /^2026:T\/hotovo 2027:T\/odhad 2028:T\/odhad 2029:T\/odhad/.test(realna.roky), realna.roky);
 
   // ══ 2. Soubor strojů = řádek za každý stroj ═══════════════════════
   const fixture = () => p.evaluate(async () => {
@@ -161,7 +163,10 @@ const res = []; const check = (n, ok, d) => res.push((ok?'✅':'❌')+' '+n+(d?'
   check('elektro + LPS + spotřebiče dál sdílejí jeden řádek podle místa',
     ostatni.radku === 1 && ostatni.nazev === 'Dům A' && ostatni.klic === 'dům a',
     ostatni.radku + ' řádků, klíč ' + ostatni.klic);
-  check('a jejich značky jsou beze změny', ostatni.druhy === '2026:EL+LPS+T 2027:T 2030:LPS 2031:EL', ostatni.druhy);
+  // od v9.122 se z termínů ve zprávách dopočítá i řada (T po roce, LPS po 4, EL po 5) —
+  // značky v letech ze zpráv (2026, 2030 LPS, 2031 EL) se ale nezměnily
+  const doRoku2031 = ostatni.druhy.split(' ').filter(x => parseInt(x, 10) <= 2031).join(' ');
+  check('a jejich značky jsou beze změny', doRoku2031 === '2026:EL+LPS+T 2027:T 2028:T 2029:T 2030:LPS+T 2031:EL+T', ostatni.druhy);
 
   check('bez chyb stránky', chyby.length === 0, chyby.join(' | '));
   await br.close();

@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.121 · 2026-10-12**
+**Aktuální verze: v9.122 · 2026-10-13**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -80,6 +80,37 @@ v `.claude/settings.json`) a na začátku regrese.
   Výstupy (snímky, sešity) jen do `testy/_beh/`.
 - `testy/` se nasazuje na Pages s celým repem; program ani `sw.js` na ni
   neodkazují, takže to nevadí.
+
+## Plán revizí: lhůta se bere ze ZPRÁVY (v9.122)
+
+Hlášení uživatele 2026-10-13 (stroj od kolegy, kontrola 10/2026, příští
+10/2028, v plánu zařazený pod objekt): „plán nachystá příští kontrolu správně
+za dva roky a teď, že je splněno, ale v kartě objektu není nastavená lhůta —
+proč to tak je?" A „už jsme to řešili asi třikrát" — **je to odpověď na
+otázku z v9.107** („odkud by se 2 roky měly brát"): **z data revize a termínu
+příští revize v téže zprávě.** Lhůta v okně objektu se do v9.121 nikdy
+nepřebírala, plán ze zprávy znal jen ty dva roky, 2030 a 2032 chyběly.
+
+- **`planLhutaZeZprav(r, druh)`** = rozdíl `datum` → `data.pristi`
+  NEJNOVĚJŠÍ zprávy daného druhu, **celé roky ±2 měsíce**, jinak nic
+  (půlroční spotřebiče se do ročních sloupců nevejdou). Není to odhad z textu
+  doporučené lhůty — ten se dál nepoužívá (rozhodnutí 2026-08-20); oba údaje
+  zadal technik do polí zprávy.
+- **V `planRadky()` platí, když objekt nemá vlastní lhůtu** (`o.cyklus[d]`
+  má přednost) — i pro objekty jen z archivu. Řada jde kotvami jako u ruční
+  lhůty (v9.118), takže od poslední hotové revize přes termín ze zprávy dál.
+- **Okno objektu ji ukáže v poli modře** (`.plan-lhuta-zprava`) s větou
+  „Lhůta ze zprávy: T 2 roky podle zprávy RS-… (datum → příští datum)".
+  **Uložení beze změny ji jako ruční NEULOŽÍ** (`dataset.zeZpravy`) —
+  příští zpráva s jinou lhůtou by jinak narazila na „ruční" lhůtu, kterou
+  nikdo nezadal. Přepsané číslo se uloží a má přednost.
+
+Test: `testy/test-plan-lhuta-zprava.js` (12 kontrol). **Na v9.121 spadne
+6 z 12.** Do Novinek nejde (plán).
+
+**Záměrně změněné chování:** `test-plan-stroje.js` čekal u stroje s kontrolou
+2026 → příští 2027 jen ty dva roky; teď jde řada po roce dál. Dvě kontroly
+upraveny ve stejném commitu (dřív platný začátek řady se hlídá dál).
 
 ## Plán revizí: nabídka sloučit ruční objekt se zprávami v archivu (v9.120)
 
@@ -531,9 +562,9 @@ se počítalo jen ze zprávy (`D.pristi`), takže po zadání lhůty 2 roky se �
   radí i lhůtu u objektu.
 - **Šedé 5 a 4 u EL/LPS v okně objektu byly jen nápověda (`placeholder`),
   ne nastavená lhůta** — od v9.118 je tam „nenastaveno", aby nemátly. U T nápověda
-  není. Uživatel hlásil i „nedoplnilo 2 roky do lhůty"; zeptáno, odkud
-  by se 2 měly brát — **nedělat bez odpovědi** (předvyplnění z textu lhůty
-  ve zprávě by šlo proti rozhodnutí z 2026-08-20).
+  není. Uživatel hlásil i „nedoplnilo 2 roky do lhůty" — **vyřešeno ve
+  v9.122**: lhůta se bere z data a termínu příští revize ve zprávě (ne
+  z textu doporučené lhůty), viz oddíl v9.122.
 
 Test: `test-plan-chybi-termin.js` (13 kontrol — lhůta zhasne varování i `?`
 a dopočítá řadu, ruční termín zhasne, zrušený termín ne, lhůta jiného druhu
