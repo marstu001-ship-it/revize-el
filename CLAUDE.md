@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.123 · 2026-10-15**
+**Aktuální verze: v9.124 · 2026-10-15**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -62,6 +62,12 @@ jste nic neudělali.
      *musí se uživatel kvůli tomu naučit něco nového, aby program ovládal?*
      Když ne — žádná karta, i když je to milé a pracné.
 
+4. **Každá nová funkce se musí zkontrolovat i v šířce 375 px — spustit
+   `testy/test-mobil.js`** (pokyn uživatele 2026-10-15). Nová obrazovka,
+   záložka nebo dialog = přidat stav do `vsechnyStavy()` v testu. Úprava
+   pro telefon patří **jen do bloku MOBIL** (oddíl „Mobil" níž), verze
+   pro PC se jí nesmí změnit.
+
 ## 🧪 Testy jsou v repozitáři — `testy/` (2026-10-07)
 
 Do 2026-10-07 žily testy jen ve scratchpadu session a s každou novou session
@@ -80,6 +86,141 @@ v `.claude/settings.json`) a na začátku regrese.
   Výstupy (snímky, sešity) jen do `testy/_beh/`.
 - `testy/` se nasazuje na Pages s celým repem; program ani `sw.js` na ni
   neodkazují, takže to nevadí.
+
+## Mobil — telefon na výšku i na šířku (blok `MOBIL` na konci stylu)
+
+Zadání uživatele 2026-10-15: program musí jít ovládat na
+telefonu a **„verze pro PC se nesmí změnit ani o pixel"**. Logika, uložená
+data (JSON) ani PDF se nemění.
+
+- **Jen CSS, jen v bloku `/* ═══ MOBIL ═══ … ═══ /MOBIL ═══ */` na konci
+  `<style>`** — na konci schválně, při stejné specificitě vyhrává pozdější
+  pravidlo. JavaScript se neměnil vůbec.
+- **Podmínka `@media (max-width:600px), (pointer:coarse) and (max-height:500px)`**
+  = telefon na výšku a telefon na šířku (dotyk + výška ≤ 500 px). Samotné
+  `max-width:600px` by telefon na šířku (844 px) nechytilo. Na PC s myší
+  neplatí nikdy — test to hlídá přes `matchMedia`. Výjimky: ⓘ u Zs má pruh
+  44 px jen na dotyku, a v zobrazení Mobil na úzkém okně.
+- **Nové pravidlo pro telefon = jen dovnitř bloku a té podmínky.** Pravidla
+  mimo blok se kvůli telefonu nemění.
+- Co blok dělá:
+  - **písmo ve vstupních polích 16 px** — iPhone jinak při klepnutí do pole
+    přiblíží stránku,
+  - **ovládací prvky aspoň 44 × 44 px**; text tlačítka se smí zalomit,
+    záložky a tlačítka v hlášce mají `flex-shrink:0` (jinak by min-width
+    zrušila „nejmenší šířku podle obsahu" a text by přetekl přes souseda),
+  - **vlastní zaškrtávátko a přepínač** (`appearance:none`, vidět je čtverec
+    22 px, průhledný rámeček 11 px kolem = 44 px na klepnutí). Je to jediná
+    věc, která nahrazuje vzhled prvku — na PC se proto ověřilo zvlášť
+    (styly, poloha, klik myší, mezerník, klik na popisek, uložená data
+    shodné před a po),
+  - lišta nahoře není přilepená (zabírala třetinu displeje), lišta záložek
+    se lepí k hornímu kraji,
+  - postranní archiv přes celou obrazovku, úchyt šířky schovaný,
+  - **tabulka měření** má pevnou šířku 1260 px a posouvá se ve svém rámečku;
+    ukotvené Č. + Název obvodu jsou užší (44 + 100 px), `scroll-padding-left`
+    drží buňku po Tab mimo ukotvený sloupec, ⓘ u Zsm je pruh 44 px vpravo
+    v buňce (sloupec Zsm 104 px), hlavička 11 px,
+  - malé tabulky (`.data-table`) se posouvají ve svém rámečku, rozbalovátka
+    v nich mají aspoň 8,5 rem,
+  - spotřebiče: list se nezmenšuje (`transform:none`), posouvá se v rámečku,
+  - náhledy PDF: lišta nepřilepená a zalomená, stránka A4 se posouvá v rámečku
+    od levého kraje,
+  - dialogy na celou šířku, nejvýš `100dvh − 16px` s vlastním posunem,
+    tlačítka se zalamují; okno termínu a okno objektu v plánu skládají
+    tabulku lhůt pod sebe (`:has()`).
+
+Test: `testy/test-mobil.js` (375 kontrol, běží ~4,5 min) — 70 stavů (všechny obrazovky,
+záložky každého typu zprávy, dialogy, nabídky, bubliny) × 5 šířek (360 / 375
+/ 390 / 414 na výšku, 844 × 390 na šířku). Hledá posun celé stránky, přesah,
+oříznutý text, nedosažitelné a zakryté prvky, velké pevné prvky, dialog mimo
+displej, písmo < 16 px, prvky < 40 px a nalepené prvky. Navíc ukotvení
+Č. + Název při posunu tabulky, vyplnění buňky klepnutím (hodnota v
+`getData()`) a na PC 1366 / 1920, že se mobilní pravidla neuplatní
+a zaškrtávátka mají nativní vzhled. Obsah v rámečku s vlastním posunem
+(tabulka, A4) je povolený, jen se vypíše.
+
+- `REZIM=soupis` = snímky 375 px + JSON do `testy/_beh/mobil`,
+  `REZIM=pc` = snímky celé stránky 1366 / 1920, **`REZIM=pcstyly`** = otisk
+  spočítaných stylů a polohy každého prvku ve všech stavech na PC.
+- **PC se porovnává přes `REZIM=pcstyly`, snímky jsou jen doplněk.** Snímky
+  celé stránky se mezi verzemi liší o pár pixelů i bez jediné změny stylu:
+  Chrome vykreslí text o 1 px jinak podle velikosti souboru (ověřeno —
+  samotný komentář `/*kkk…*/` o 1 000 znacích dal v postranním archivu
+  přesně tentýž rozdíl 643 px jako mobilní blok).
+- Výsledek: **před 1846 problémů v 70 stavech, po 0**. PC: otisky stylů a polohy shodné ve všech
+  stavech (liší se jen prvky zachycené uprostřed animace — hláška, přechod). PDF všech čtyř typů vygenerované na telefonu (375 px, na šířku)
+  i na PC je bajtově shodné s verzí před úpravou.
+- **Co emulace neověří** (zkusit na skutečném telefonu): přiblížení iOS při
+  klepnutí do pole, `100dvh` s vysunutou klávesnicí, nativní výběr
+  v rozbalovátku, vzhled vlastního zaškrtávátka v Safari, dlouhý stisk prstem
+  (kontextové menu), PDF z html2canvas na slabém telefonu, výřez displeje.
+
+## Zs mez — vyhodnocení impedance poruchové smyčky (blok `zsLim…`)
+
+Zadání uživatele 2026-10-15: program dosud mez Zs nikde
+nepočítal a vadu C1 „Impedance poruchové smyčky Zsm přesahuje (2/3) × U0/Ia"
+technik přidával ručně z katalogu.
+
+- **Mez:** Zs,lim = 2/3 × U0 / Ia, U0 = 230 V, **Ia = 5 / 10 / 20 × In pro
+  jistič B / C / D**. Charakteristika z `m.ch` tolerantně („b", „char. B",
+  „B16", „B/A" u RCBO — bere se část před lomítkem), In z `m.a` („16",
+  „16 A", „3x16A", desetinná čárka); když `m.a` chybí a Ch. je „B16", vezme
+  se In odtud.
+- **Hlavička chrániče bez lomítka** („A", „AC", „B", „F") je TYP CHRÁNIČE,
+  ne charakteristika — nevyhodnocuje se (jinak by RCD typu B vypadal jako
+  jistič B). RCBO („B/A") se vyhodnotí. Podřádky chrániče nikdy.
+- **Pojistky (gG/gL/aM) a cokoli nečitelného se NEVYHODNOCUJE** — buňka
+  zůstane neutrální, žádná chyba. Tabulku Ia pro pojistky dodá uživatel
+  **ověřenou**; místo je připravené (`ZS_LIM_POJISTKY`, větev `p.pojistka`
+  v `zsLimVypocet`). **Nevymýšlet ani nepřebírat z internetu.**
+- **Jen síť TN** (text zaškrtnuté napěťové soustavy obsahuje „TN"). TT, IT nic.
+- **Jen formulář, PDF se nemění.** Buňka Zsm: šedá nápověda „≤ 1,92 Ω",
+  zelená (vyhovuje) / červená (nevyhovuje) / **oranžová** (nevyhovuje jistič,
+  ale v řádku je vyplněné IΔn — „posuďte"), bublina s výpočtem krok za krokem
+  a normou (bere se z položky C1 katalogu `TYPICKE_ZAVADY`).
+- Naměřená hodnota „1,1" = „1.1"; „<X" vyhovuje jen když X ≤ mez, „>X"
+  nevyhovuje jen když X ≥ mez, jinak (a u textu) bez barvy.
+- **Porovnává se s PŘESNOU mezí, ukazuje se zaokrouhlená DOLŮ na setiny**
+  (pokyn uživatele 2026-10-15: C16 = 0,9583 → „≤ 0,95 Ω", B16 → 1,91,
+  D10 → 0,76) — co podle nápovědy vyhovuje, vyhoví i přesně. Bublina ukáže
+  obojí: „Zs,lim = 2/3 × 230 / 160 = 0,9583 Ω (≤ 0,95 Ω)". Vada C1 píše
+  zaokrouhlenou mez (`zsLimMezText`).
+- **Bublina jde otevřít i na dotyku** (`title` tam nefunguje): ikonka **ⓘ**
+  v rohu vyhodnocené buňky — **jen na dotykovém zařízení (`pointer: coarse`)
+  a v zobrazení Mobil** (pokyn uživatele 2026-10-15; na PC ji CSS schová,
+  bublina po najetí myší tam zůstává; ověřeno snímky 1366/1920 px, že se jinak
+  nic nezměnilo) (klepnutí/klik otevře a zavře; `<span>`, ne
+  `<button>` — u dokončené zprávy se tlačítka schovávají, výpočet se má dát
+  přečíst) a na dotykovém zařízení / v zobrazení Mobil **klepnutí do buňky**
+  Zsm (bublina se při psaní přepočítává, odchodem z buňky zmizí). Bublina
+  `.zs-lim-bublina` leží v `<body>`, zavře ji klepnutí jinam a Esc. Klepnutí
+  na ⓘ buňce nebere fokus (`pointerdown` s `preventDefault`) — na telefonu
+  by jinak vyjela klávesnice.
+- **Vada C1 se NIKDY nepřidá sama.** Při červeném obvodu se pod tabulkami
+  měření i nad „+ Přidat závadu" ukáže odkaz **„Přidat vadu C1 (obvody: RH 2,
+  RH 6)"**; klik přidá položku C1 z katalogu a do popisu dopíše rozváděč,
+  číslo, název, naměřenou hodnotu a mez. Oranžové obvody se nepočítají.
+  Odkaz zmizí, když už nějaká vada C1 všechny červené obvody jmenuje; nový
+  červený obvod ho vrátí. Má ZPĚT. U dokončené zprávy je schovaný.
+- **Žádná nová data v JSON** — počítá se za běhu, staré zprávy beze změny.
+  Na buňce zůstávají jen pomocné `data-zs-ph` (původní nápověda) a třídy.
+- **Přepočet:** vlastní posluchače `input`/`change` (buňky, napěťová
+  soustava, závady) + `MutationObserver` na `#rozvadece-container`,
+  `#napetova-checkboxy`, `#zavady-list` (nový / smazaný / zkopírovaný řádek,
+  vložení z Excelu a `.xlsx`). Do zbytku programu sahají jen tři řádky:
+  `zsLimNaplanovat()` v `autoSave()` (táhlo hodnoty nevolá události)
+  a v `renumberRows()` (ZPĚT vložení vrací hodnoty bez událostí),
+  `zsLimPrepocet()` na konci `nacistData()`.
+
+Test: `testy/test-zs-mez.js` (72 kontrol, včetně telefonu 390 px s dotykem
+a zobrazením Mobil — klepnutí se tam dělá `touchscreen.tap` na souřadnice,
+`locator.tap()` se o posouvanou stránku zasekne). Karta v Novinkách se
+nedělala (pokyn uživatele).
+
+**Ověřeno, že se data nemění:** uložený JSON téže zprávy (vyplněné v UI
+i otevřené z archivu a znovu uložené; zmrazený čas a náhoda) je ve verzi
+před funkcí a po ní **bajtově shodný** (archiv i `getData()`, sha256).
 
 ## Plán revizí: lhůta se bere ze ZPRÁVY (v9.122)
 
