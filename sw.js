@@ -1,4 +1,4 @@
-var CACHE_NAME = 'revize-el-v9.122-20261013';
+var CACHE_NAME = 'revize-el-v9.123-20261015';
 // Vlastní soubory — bez nich aplikace offline nefunguje.
 var URLS_TO_CACHE = [
   './',
@@ -37,11 +37,13 @@ self.addEventListener('install', function(e) {
 
 // Aktivace — smazat staré cache verze + převzít kontrolu nad otevřenými
 // záložkami (clients.claim) a poslat jim zprávu, ať se reloadnou.
+// Maže se JEN vlastní řada revize-el-v… — na témže původu běží i zkušební
+// verze /revize-el-lab/ (cache revize-el-lab-…) a tu nesmí smazat (v9.123).
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(names) {
       return Promise.all(
-        names.filter(function(n) { return n !== CACHE_NAME; })
+        names.filter(function(n) { return n.indexOf('revize-el-v') === 0 && n !== CACHE_NAME; })
              .map(function(n) { return caches.delete(n); })
       );
     }).then(function() {
