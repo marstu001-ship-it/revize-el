@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.124 · 2026-10-15**
+**Aktuální verze: v9.125 · 2026-10-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -67,6 +67,24 @@ jste nic neudělali.
    záložka nebo dialog = přidat stav do `vsechnyStavy()` v testu. Úprava
    pro telefon patří **jen do bloku MOBIL** (oddíl „Mobil" níž), verze
    pro PC se jí nesmí změnit.
+
+## 🧭 Přívětivost obrazovek — platí pro KAŽDOU novou obrazovku (pokyn uživatele 2026-10-16)
+
+Skutečný uživatel na seznamu protokolů nenašel, kde se protokol zakládá —
+klikal na vzory a na „Jako vlastní". Proto u každé nové obrazovky (a při
+úpravě stávající):
+
+- **Na obrazovce je JEDNA hlavní akce, vidět na první pohled** — plné
+  barevné tlačítko se slovesem („Vytvořit…", „Uložit…", „Vygenerovat PDF"),
+  nahoře, na telefonu přes celou šířku. Nesmí vypadat jako položka seznamu.
+- **Nastavení a málo používané věci jsou schované** — sbalené (`<details>`)
+  nebo na samostatné obrazovce přes malý odkaz. Upozornění, která nic
+  nevyžadují, jsou jeden nenápadný řádek, ne barevný rámeček.
+- **Tlačítka mají popisky, které říkají, co se stane**, ne zkratky ani
+  samotné symboly („🗑 Smazat", ne „✕").
+- **Před vydáním projít obrazovku očima staršího revizního technika**, který
+  ji vidí poprvé a nečte návody. V odpovědi napsat, **jestli ví, kam
+  kliknout** — a když ne, opravit to ještě před vydáním.
 
 ## 🧪 Testy jsou v repozitáři — `testy/` (2026-10-07)
 
@@ -221,6 +239,115 @@ nedělala (pokyn uživatele).
 **Ověřeno, že se data nemění:** uložený JSON téže zprávy (vyplněné v UI
 i otevřené z archivu a znovu uložené; zmrazený čas a náhoda) je ve verzi
 před funkcí a po ní **bajtově shodný** (archiv i `getData()`, sha256).
+
+## Tvorba dokumentace — Protokol o určení vnějších vlivů (blok `TVORBA DOKUMENTACE`)
+
+Zadání uživatele 2026-10-16: čtvrtá karta na úvodu
+**„Tvorba dokumentace"** (na PC v řádku s Elektro, LPS a Plánem revizí,
+na telefonu pod nimi) → **dlaždice typů dokumentů** `#screen-dokumentace`
+(vzhled karet z úvodu: název, krátký popis `dlazdice`, počet uložených;
+vlevo nahoře „← Úvod") →
+klik na dlaždici → **seznam dokumentů toho typu** `#screen-dok-seznam`
+(cesta zpět „← Tvorba dokumentace").
+
+**Seznam má jednu hlavní akci** (pokyn uživatele 2026-10-16 — skutečný
+uživatel nenašel, kde se protokol zakládá, a klikal na vzory): nahoře velké
+plné zelené tlačítko **„＋ Vytvořit nový protokol"** (`.dok-hlavni-akce`,
+text z `DOK_TYPY[typ].vytvorit`, na telefonu přes celou šířku), pod ním
+číslo, které dokument dostane. Pod tím seznam — **klik kamkoli na řádek
+dokument otevře** (`data-action` je na celém `.dok-polozka`; tlačítka
+📄 PDF / ⧉ Kopie / 🗑 Smazat mají vlastní akci). Prázdný seznam: „Zatím tu nic
+není. Začněte tlačítkem Vytvořit nový protokol." a hledání se schová.
+Upozornění na katalog je jeden nenápadný řádek s odkazem „zobrazit katalog
+kódů". **Vzory jsou úplně dole ve sbalené části „⚙ Správa vzorů"**
+(`<details id="dok-vzory-karta">`, výchozí zavřená) — vybírají se v protokolu,
+tady se jen upravují.
+První typ: **Protokol o určení vnějších vlivů** dle ČSN 33 2000-5-51 ed.3.
+Další typy přibudou — **nový typ = nový záznam v `DOK_TYPY`** (`nazev`,
+`dlazdice`, `tvary`, `prefix`, `vzory`, `novy()`, `form(d)`, `cist(koren)`,
+`pdf(d)` → bloky); dlaždice se z něj kreslí sama, prázdné „připravuje se"
+dlaždice se nedělají.
+
+**ZÁSADA Č. 1: ÚPLNĚ ODDĚLENO OD REVIZÍ.**
+- **Vlastní úložiště** `DOK` — localStorage `revize_el_dok`, v IndexedDB klíče
+  `dok_dokumenty`, `dok_vzory`, `dok_vzorySkryte`, `dok_osoby`, `dok_zapsano`.
+  **NENÍ ve STORE ani ve STORE_KEYS** — saveStore/loadStore na něj nesahají,
+  takže revize se s dokumenty nemůžou smíchat. Pravidlo „čtyři místa"
+  pro klíče STORE se tu neuplatní; místo něj platí: nový klíč = `DOK_IDB`.
+- Vlastní seznam, číslování **`POUVV-0001`…** (`dokDalsiCislo`, max + 1,
+  jde přepsat, ⟳ přidělí volné, duplicitu stavový řádek ohlásí), vlastní
+  texty, vlastní PDF. V archivu, naposledy otevřených, plánu, katalogu vad,
+  hledání ani filtrech archivu se dokumenty **neobjeví** (nic z toho DOK nečte).
+- **Záloha:** `buildZalohaBlob()` nese samostatnou část
+  **`dokumentace`** (`_format: 'revize-el-dokumentace'`), `obnovZeZalohy()`
+  ji vrátí (a v potvrzení ukáže počet); starší záloha bez ní dokumenty
+  nechá být. Uložení dokumentu naplánuje automatickou zálohu.
+- **Víc oken:** kanál `revize-el-dok`; uložení je „načti – uprav – zapiš"
+  (`dokUlozitOtevreny`), jiné okno si seznam / neupravený formulář překreslí.
+- Akce tlačítek: `data-action="td…"` → `TD_AKCE` (vlastní posluchač; hlavní
+  přepínač akcí je nezná). Do `init()` vede jediný řádek `dokNacist()`.
+
+**Protokol** (`#screen-dok-form`, obsah kreslí `DOK_TYPY.pouvv.form`):
+hlavička (číslo, investor a zpracovatel s **ARES** přes `lookupIcoFromAres`,
+autorizovaný projektant, stavba), **komise** (předseda přepínačem, osoby si
+program pamatuje v `DOK.osoby` a nabízí je i s funkcí), vypracoval / místo /
+datum, **A. Podklady** (tři normy, ↺ výchozí), **B. Popis** (tři pole
+s nabídkou textů ze vzorů), **C. Rozhodnutí a zdůvodnění** (obecný text
++ **skupiny prostorů**: prostory — i vložení z Excelu / textu nebo Ctrl+V
+(`dokRozborProstoru`), vzor, kódy a) b) c) po jedné třídě, souhrn, poznámka).
+- **Ukládá se samo** 800 ms po změně, Ctrl+S a 💾 hned, při zavření okna
+  synchronně do localStorage (`dokUlozitHned`; `_zapsano` rozhodne, který
+  zápis je novější). **Nový prázdný dokument se do seznamu neuloží.**
+- **Vzor** (`dokVzorPouzit`) přepíše kódy skupiny, doplní PRÁZDNOU poznámku
+  a PRÁZDNÁ pole B — se ZPĚT. Kód jde pak ručně změnit.
+- **Vlastní vzory** (`DOK.vzory`): uložit ze skupiny (kódy, poznámka,
+  texty B), upravit, smazat se ZPĚT, „⧉ Jako vlastní" z vestavěného.
+  **Vestavěné nejdou smazat, jen skrýt** (`DOK.vzorySkryte`).
+  **Stejné jméno** (bez ohledu na velikost písmen a mezery) = okno
+  `#modal-dok-vzor-jmeno` „Přepsat existující vzor, nebo uložit jako nový?"
+  — přepsat jde jen vlastní (jméno zůstane), nový dostane číslo
+  („Kotelna (vlastní) 2", `dokVzorVolneJmeno`); u vestavěného jen nový.
+
+**Katalog kódů je NÁVRH, který musí uživatel ověřit s normou** —
+`DOK_VV_KATALOG` (jeden datový blok, přesně podle podkladu 2026-10-16),
+`op` = krytí / opatření jen tam, kde ho uživatel uvedl. **Nic nedoplňovat
+z internetu ani z hlavy.** Dokud `DOK_VV_KATALOG_OVERENO = false`, ukazuje
+se „⚠ katalog čeká na kontrolu s normou". AM a BB v katalogu nejsou.
+**Vestavěné vzory (`DOK_VV_VZORY_VESTAVENE`) schválil uživatel 16. 10. 2026**
+— 20 vzorů ve skupinách (`DOK_VV_VZORY_SKUPINY`): Bydlení, Bytový dům,
+Technické prostory, Administrativa a výroba, Venkovní; vlastní vzory jdou
+jako poslední skupina. Pět vychází ze skutečných protokolů, ostatní jsou
+**schválené výchozí hodnoty, ne opis z protokolů** — technik je v protokolu
+vždy upraví. Kódy, poznámky, texty B i upozornění jsou doslova podle
+schváleného zadání; **nic nedoplňovat z hlavy**. Každý vzor má `pozn`
+(jde do PDF) a **`upozorneni`** — nápověda, kterou formulář ukáže pod
+výběrem vzoru (`.dk-upozorneni`, `vyrazne` = oranžově u prostředí
+s nebezpečím výbuchu); **do PDF ani do dat protokolu nejde nikdy** (bere se
+za běhu z vybraného vzoru). Skupinové nadpisy a pořadí platí i v nabídce
+„Vložit text ze vzoru…" a ve správě vzorů (`dokVzorySkupiny`).
+**`id` vzoru se nemění** ani při přejmenování („Sprcha / umývárna" →
+„Koupelna, sprcha, umývárna" je pořád `vest-sprcha`) — protokoly ho mají
+uložený ve skupině a staré se načtou beze změny (test).
+
+**PDF** (`#screen-dok-pdf`, vlastní stránkování, NE přes `generujPDF`):
+záhlaví s číslem na každé straně, „Strana i / N", titul, identifikace,
+komise, A–C, u skupiny seznam prostorů + věta „Podle ČSN 33 2000-5-51 ed.3
+jsou stanoveny…" + řádky a) / b) / c) **jen s kódy — vysvětlivky do PDF
+nejdou**, podpisové řádky předsedy, členů komise a vypracovatele. Písmo
+DM Sans (`.a4.a4-dok`), žádné prvky revizní zprávy.
+
+Telefon: obrazovky a dialogy jsou v `test-mobil.js` (stavy „dokumentace – …",
+`modal-dok-*`); pro telefon jen blok „Mobil: tvorba dokumentace" (lišta
+formuláře se nelepí).
+
+Test: `testy/test-dokumentace.js` (115 kontrol — karta, dlaždice, hlavní akce a sbalená
+správa vzorů na seznamu (i na telefonu), klik na řádek, dvě skupiny, vzory
+(každý vestavěný proti zadání, upozornění mimo PDF, starý protokol se Sprchou,
+dotaz při stejném jménu),
+ruční kód, restart, číslování, kopie, vlastní vzor, PDF bez vysvětlivek,
+záloha a obnova, dvě okna, rozbor seznamu prostorů a **oddělení**: protokol
+není v archivu, naposledy otevřených, plánu ani hledání a data revizí jsou
+po práci s protokoly **bajtově stejná**). Karta v Novinkách se nedělala.
 
 ## Plán revizí: lhůta se bere ze ZPRÁVY (v9.122)
 

@@ -162,7 +162,7 @@ html.view-mobile .topbar .btn{min-height:auto;padding:.35rem .55rem;font-size:.6
 .home-header{text-align:center;margin-bottom:2.5rem}
 .home-header h1{font-family:var(--mono);font-size:1.4rem;letter-spacing:.1em;color:var(--accent2)}
 .home-header p{color:var(--muted);margin-top:.4rem;font-size:.9rem}
-.home-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:2rem}
+.home-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-bottom:2rem}
 @media (max-width:1000px){.home-grid{grid-template-columns:1fr 1fr}}
 .home-card{background:var(--surface);border:1px solid var(--border);
   border-top:3px solid var(--accent2);padding:1.5rem;cursor:pointer;transition:all .15s}
@@ -1298,6 +1298,164 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 .plan-pdf-tab td.plan{background:#fdf3d0}
 .plan-pdf-tab td.po{background:#f7dad6}
 .plan-pdf-tab .m{display:block;font-size:6pt;color:#444}
+/* ═══ TVORBA DOKUMENTACE (2026-10-16) — samostatná část mimo revize ═══ */
+.dok-typy{display:flex;flex-wrap:wrap;gap:.75rem}
+/* hlavní akce seznamu dokumentů — plné barevné tlačítko, na první pohled */
+.dok-hlavni-wrap{margin:0 0 1.2rem}
+.dok-hlavni-akce{display:inline-flex;align-items:center;gap:.6rem;min-height:56px;padding:.85rem 1.8rem;
+  background:#0f7b5f;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:var(--sans);
+  font-size:1.2rem;font-weight:700;letter-spacing:.01em;box-shadow:0 2px 6px rgba(15,123,95,.35);transition:background .15s}
+.dok-hlavni-akce:hover{background:#0b6650}
+.dok-hlavni-akce:focus-visible{outline:3px solid #7fcfae;outline-offset:2px}
+.dok-hlavni-plus{font-size:1.5rem;line-height:1}
+.dok-hlavni-pod{display:block;margin-top:.4rem;font-size:.8rem;color:var(--muted)}
+.dok-drobky{margin:0 0 .5rem}
+.dok-dlazdice-pocet{margin-top:.7rem;font-size:.78rem;color:#0f7b5f;font-weight:600}
+html.dark .dok-dlazdice-pocet{color:#7fcfae}
+.dok-hledat{width:100%;padding:.45rem .6rem;border:1px solid var(--border);border-radius:2px;font-size:.88rem;
+  margin-bottom:.6rem;background:var(--input-bg);color:var(--text);font-family:var(--sans)}
+.dok-polozka{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem;padding:.35rem 0;border-bottom:1px solid var(--border);cursor:pointer}
+.dok-polozka:hover{background:#f0f4ff}
+html.dark .dok-polozka:hover{background:#2a3242}
+.dok-polozka:last-child{border-bottom:none}
+.dok-p-otevrit{flex:1 1 260px;display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .8rem;min-width:0;text-align:left;
+  background:none;border:none;padding:.35rem .4rem;cursor:pointer;color:var(--text);font-family:var(--sans);border-radius:3px}
+.dok-p-otevrit:hover{background:#f0f4ff}
+html.dark .dok-p-otevrit:hover{background:#2a3242}
+.dok-p-cislo{font-family:var(--mono);font-size:.82rem;font-weight:600;color:#0f7b5f;white-space:nowrap}
+.dok-p-hlavni{flex:1 1 200px;min-width:0}
+.dok-p-hlavni b{display:block;font-size:.9rem;font-weight:600;overflow-wrap:anywhere}
+.dok-p-pod{display:block;font-size:.76rem;color:var(--muted);overflow-wrap:anywhere}
+.dok-p-datum{font-size:.76rem;color:var(--muted);white-space:nowrap}
+.dok-p-akce{display:flex;flex-wrap:wrap;gap:.4rem;margin-left:auto}
+.dok-mini{font-family:var(--sans);font-size:.75rem;padding:.3rem .55rem;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);border-radius:3px;cursor:pointer;white-space:nowrap}
+.dok-mini:hover{border-color:var(--accent2);color:var(--accent2)}
+.dok-mini-del{color:var(--accent)}
+.dok-mini-del:hover{border-color:var(--accent);color:var(--accent)}
+.dok-prazdno{text-align:center;padding:2rem 1rem;color:var(--muted);font-size:.86rem}
+.dok-stitek{display:inline-block;font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;
+  padding:.1rem .35rem;border-radius:2px;background:#e6f2ec;color:#0f5c47;vertical-align:middle;margin-left:.3rem}
+.dok-stitek-vlastni{background:#e3f0ff;color:#2B579A}
+.dok-stitek-skryty{background:#eee;color:#777}
+html.dark .dok-stitek{background:#1e3328;color:#9fd8b8}
+html.dark .dok-stitek-vlastni{background:#1e2b3f;color:#9dc0ee}
+html.dark .dok-stitek-skryty{background:#333;color:#aaa}
+.dok-vzor-radek{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem;padding:.5rem 0;border-bottom:1px solid var(--border)}
+.dok-vzor-radek.skryty{opacity:.6}
+.dok-vzor-n{flex:1 1 300px;min-width:0;font-size:.86rem}
+.dok-vzor-kody{display:block;font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-top:.15rem;overflow-wrap:anywhere}
+/* upozornění na katalog — jeden nenápadný řádek */
+.dok-katalog-info{font-size:.76rem;color:var(--muted);margin:.2rem 0 1rem;line-height:1.5}
+.dok-katalog-odkaz{background:none;border:none;padding:0;font:inherit;color:var(--accent2);text-decoration:underline;cursor:pointer}
+/* Správa vzorů — výchozí sbalená, úplně dole */
+.dok-sprava{border:1px solid var(--border);border-radius:2px;background:var(--surface);margin-bottom:1rem}
+.dok-sprava>summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .7rem;padding:.75rem 1rem;cursor:pointer;
+  font-size:.92rem;font-weight:600;color:var(--text);list-style:none}
+.dok-sprava>summary::-webkit-details-marker{display:none}
+.dok-sprava>summary::before{content:'▸';color:var(--muted);width:.8rem}
+.dok-sprava[open]>summary::before{content:'▾'}
+.dok-sprava>summary small{font-weight:normal;font-size:.76rem;color:var(--muted)}
+.dok-sprava-obsah{padding:0 1rem 1rem}
+.dk-blok-t{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);
+  margin:1rem 0 .45rem}
+/* výběr kódů vnějších vlivů (protokol i vlastní vzor) */
+.dk-kody-hlava{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem .7rem;font-family:var(--mono);font-size:.62rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin:.2rem 0 .4rem}
+.dk-katalog-pozn{font-family:var(--sans);text-transform:none;letter-spacing:0;color:#a06a00;font-size:.72rem;cursor:help}
+html.dark .dk-katalog-pozn{color:#e0b150}
+.dk-kody-sk{margin-bottom:.6rem}
+.dk-kody-t{font-size:.8rem;font-weight:600;margin:.3rem 0 .3rem;color:var(--text)}
+.dk-kody-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.45rem .8rem}
+.dk-kod{display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.dk-kod-n{font-size:.72rem;color:var(--muted);line-height:1.3}
+.dk-kod-n b{color:var(--text);font-family:var(--mono)}
+.dk-in{font-family:var(--sans);font-size:.86rem;padding:.4rem .55rem;border:1px solid var(--border);background:var(--bg);
+  color:var(--text);border-radius:2px;min-width:0;width:100%}
+.dk-in:focus{outline:none;border-color:var(--accent2);background:#fff}
+html.dark .dk-in:focus{background:#332f28}
+select.dk-in.dk-vyplneno{border-color:#0f7b5f;box-shadow:inset 3px 0 0 #0f7b5f}
+.dk-kod-vysv{font-size:.7rem;color:#0f7b5f;line-height:1.3}
+.dk-kod-vysv:empty{display:none}
+html.dark .dk-kod-vysv{color:#7fcfae}
+/* katalog (okno jen ke čtení) */
+.dok-kat-vliv{margin-bottom:.7rem;font-size:.82rem}
+.dok-kat-vliv b{font-family:var(--mono)}
+.dok-kat-vliv ul{margin:.2rem 0 0 1.2rem;padding:0}
+.dok-kat-vliv li{line-height:1.45}
+.dok-kat-op{color:#0f7b5f}
+/* formulář dokumentu */
+.dok-lista{position:sticky;top:54px;z-index:150;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .8rem;
+  padding:.55rem 1.5rem;background:var(--surface);border-bottom:2px solid #0f7b5f;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.dok-lista-titul{flex:1 1 220px;min-width:0;font-family:var(--mono);font-size:.76rem;letter-spacing:.06em;color:var(--accent2);overflow-wrap:anywhere}
+.dok-stav{font-size:.76rem;color:var(--muted)}
+.dok-stav.neulozeno{color:#a06a00}
+.dok-stav.ulozeno{color:#0f7b5f}
+.dok-stav.varovani{color:var(--accent)}
+.dok-lista-akce{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.dok-wrap{max-width:1100px;margin:0 auto;padding:1.25rem 1.5rem 5rem}
+.dk-nepov{font-family:var(--sans);text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400}
+.dk-pozn{font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:.6rem}
+.dk-ares{display:flex;gap:.4rem;align-items:stretch}
+.dk-ares input{flex:1 1 auto;min-width:0}
+.dk-ares .magic-btn,.dk-ares .dok-mini{margin:0;white-space:nowrap;flex:0 0 auto}
+.dk-osoba{display:flex;flex-wrap:wrap;gap:.4rem .5rem;align-items:center;margin-bottom:.4rem}
+.dk-osoba input[data-k="jmeno"],.dk-osoba input[data-k="funkce"]{flex:1 1 220px;width:auto}
+.dk-predseda{display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;color:var(--muted);cursor:pointer;white-space:nowrap}
+.dk-predseda input{margin:0}
+.dk-skupina{border:1px solid var(--border);border-left:4px solid #0f7b5f;background:var(--bg);padding:1rem 1.1rem;margin:1rem 0}
+.dk-skupina .dk-in,.dk-skupina .f textarea{background:var(--surface)}
+.dk-skupina-hlava{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem}
+.dk-sk-titul{font-weight:600;font-size:.95rem;flex:1 1 auto}
+.dk-prostor{display:flex;gap:.4rem;align-items:center;margin-bottom:.35rem}
+.dk-prostor .dk-c{flex:0 0 6.5rem;width:6.5rem}
+.dk-prostor input[data-k="n"]{flex:1 1 auto;width:auto}
+.dk-akce-radek{display:flex;flex-wrap:wrap;gap:0 .5rem}
+.dk-vzor-vyber-radek{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.6rem}
+.dk-vzor-vyber{flex:1 1 280px;width:auto}
+.dk-upozorneni{font-size:.8rem;line-height:1.45;color:#5f4a12;background:#fff8e1;border:1px solid #ffe082;
+  border-radius:2px;padding:.45rem .65rem;margin:0 0 .7rem}
+.dk-upozorneni.vyrazne{color:#7a2e00;background:#ffe9d6;border:2px solid #e8590c;font-weight:500}
+html.dark .dk-upozorneni{color:#e8c07a;background:#33290f;border-color:#6b5414}
+html.dark .dk-upozorneni.vyrazne{color:#ffc29a;background:#3d2210;border-color:#e8590c}
+.dok-vzor-upoz{display:block;font-size:.72rem;color:#8a5200;margin-top:.15rem}
+.dok-vzor-upoz.vyrazne{color:#c2410c;font-weight:600}
+.dk-souhrn{font-family:var(--mono);font-size:.74rem;background:var(--surface);border:1px dashed var(--border-dark);
+  padding:.5rem .7rem;margin:.2rem 0 .8rem;line-height:1.6;overflow-wrap:anywhere}
+.dk-souhrn-t{font-family:var(--sans);font-size:.7rem;color:var(--muted)}
+.dk-nabidka-b{margin-top:.35rem}
+.dk-nabidka-b select{width:auto;max-width:100%;font-size:.8rem}
+/* PDF dokumentu — samostatný vzhled, žádné prvky revizní zprávy.
+   Dvě třídy schválně: `.a4` (psací stroj) stojí v souboru výš, ale shodná
+   specificita by nestačila u pravidel přidaných později. */
+#screen-dok-pdf{background:#888}
+.a4.a4-dok{font-family:'DM Sans',Arial,Helvetica,sans-serif;font-size:10pt;line-height:1.4;padding:11mm 16mm 9mm;color:#000}
+.dok-pdf-zahlavi{display:flex;justify-content:space-between;gap:4mm;font-size:8pt;color:#333;
+  border-bottom:.5pt solid #000;padding-bottom:1.5mm;margin-bottom:5mm}
+.dok-pdf-obsah{flex:1}
+.dok-pdf-paticka{margin-top:auto;display:flex;justify-content:space-between;gap:4mm;font-size:8pt;color:#333;
+  border-top:.5pt solid #000;padding-top:1.5mm}
+.dok-pdf-titul{text-align:center;margin:1mm 0 6mm}
+.dok-pdf-titul .t1{font-size:15pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.dok-pdf-titul .t2{font-size:9.5pt;margin-top:1mm}
+.dok-pdf-titul .t3{font-size:11pt;font-weight:700;margin-top:2mm}
+.dok-pdf-h{font-size:11pt;font-weight:700;margin:5mm 0 2mm;padding-bottom:.8mm;border-bottom:.5pt solid #888}
+.dok-pdf-h2{font-size:10pt;font-weight:700;margin:3mm 0 1mm}
+.dok-pdf-tab{width:100%;border-collapse:collapse;font-size:9.5pt}
+.dok-pdf-tab td{border:.5pt solid #666;padding:1.2mm 2mm;vertical-align:top}
+.dok-pdf-tab td.l{width:46mm;background:#f2f2f2;font-weight:600}
+.dok-pdf-p{margin:0 0 2mm;white-space:pre-wrap}
+.dok-pdf-ul{margin:0 0 2mm 5mm;padding:0}
+.dok-pdf-ul li{margin-bottom:.8mm}
+.dok-pdf-prostory{margin:0 0 2mm 5mm;padding:0;list-style:none}
+.dok-pdf-prostory.sloupce{columns:2;column-gap:8mm}
+.dok-pdf-prostory li{break-inside:avoid}
+.dok-pdf-kody{margin:1mm 0 2mm 5mm}
+.dok-pdf-kody div{margin-bottom:.8mm}
+.dok-pdf-podpisy{width:100%;border-collapse:collapse;font-size:9.5pt;margin-top:2mm}
+.dok-pdf-podpisy th{text-align:left;font-weight:600;border-bottom:.5pt solid #000;padding:1mm 2mm}
+.dok-pdf-podpisy td{border-bottom:.5pt solid #999;padding:6mm 2mm 1mm;vertical-align:bottom}
+.dok-pdf-podpisy td.podpis{width:55mm}
 /* ═══ MOBIL ═══════════════════════════════════════════════════════════════
    Telefon na výšku (≤ 600 px) a telefon na šířku (dotyk + výška ≤ 500 px).
    Platí JEN tady — verze pro PC se tím nemění ani o pixel (hlídá
@@ -1445,6 +1603,20 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   .pdf-pages{align-items:flex-start;overflow-x:auto;padding:.75rem;max-width:100%}
 }
 
+/* ── Mobil: tvorba dokumentace ── */
+@media (max-width:600px), (pointer:coarse) and (max-height:500px){
+  /* lišta formuláře se zalomí do víc řádků — přilepená by zabrala displej */
+  .dok-lista{position:static;padding:.5rem .6rem}
+  .dok-wrap{padding:.75rem .6rem 4rem}
+  .dk-skupina{padding:.75rem .6rem}
+  .dk-prostor .dk-c{flex-basis:5.5rem;width:5.5rem}
+  /* hlavní akce přes celou šířku */
+  .dok-hlavni-akce{display:flex;width:100%;justify-content:center;padding:.85rem 1rem}
+  .dok-sprava>summary{min-height:44px;align-items:center}
+  .dok-katalog-odkaz{display:inline-block;padding:12px 0;margin:-12px 0}
+  .dok-sprava>summary small{flex-basis:100%;padding-left:1rem}
+}
+
 /* ── Mobil: plán revizí ── */
 @media (max-width:600px), (pointer:coarse) and (max-height:500px){
   .plan-plus{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
@@ -1484,7 +1656,7 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.124<span class="ver-date"> · 2026-10-15</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.125<span class="ver-date"> · 2026-10-16</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1552,6 +1724,11 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
       <div class="home-card-icon">🗓</div>
       <div class="home-card-title">Plán revizí</div>
       <div class="home-card-desc">Kdy se kde revize dělaly a kdy jsou na řadě příště — objekt po objektu, rok po roce.</div>
+    </button>
+    <button class="home-card" data-action="tdOtevrit" style="border-top-color:#0f7b5f">
+      <div class="home-card-icon">📐</div>
+      <div class="home-card-title">Tvorba dokumentace</div>
+      <div class="home-card-desc">Protokol o určení vnějších vlivů a další dokumenty — samostatně, mimo revizní zprávy.</div>
     </button>
   </div>
   <div class="scard">
@@ -3853,6 +4030,136 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
   <div class="pdf-pages" id="teren-pdf-pages"></div>
 </div>
 
+<!-- ═══════════════════════════════════════════════
+     TVORBA DOKUMENTACE — dlaždice typů dokumentů (samostatná část, mimo revize)
+═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-dokumentace">
+<div class="home-wrap">
+  <div class="dok-drobky"><button class="dok-mini" data-action="tdUvod" title="Zpět na úvodní obrazovku">← Úvod</button></div>
+  <div class="home-header">
+    <h1>📐 Tvorba dokumentace</h1>
+    <p>Dokumenty mimo revizní zprávy — vlastní seznam, vlastní číslování a vlastní PDF</p>
+  </div>
+  <div class="home-grid" id="dok-dlazdice"></div>
+</div>
+</div>
+
+<!-- TVORBA DOKUMENTACE — seznam dokumentů jednoho typu -->
+<div class="screen" id="screen-dok-seznam">
+<div class="home-wrap">
+  <div class="dok-drobky"><button class="dok-mini" data-action="tdTypy" title="Zpět na typy dokumentů">← Tvorba dokumentace</button></div>
+  <div class="home-header">
+    <h1 id="dok-seznam-titul"></h1>
+    <p id="dok-seznam-popis"></p>
+  </div>
+  <!-- hlavní akce obrazovky: jedno velké plné tlačítko, nic jiného nahoře -->
+  <div class="dok-hlavni-wrap" id="dok-typy"></div>
+  <div class="scard">
+    <div class="scard-title"><span id="dok-seznam-nadpis">📁 Vytvořené dokumenty</span> <span id="dok-pocet" style="font-size:.65rem;color:var(--muted);font-weight:normal;margin-left:.5rem"></span></div>
+    <input type="text" id="dok-hledat" class="dok-hledat" autocomplete="off" placeholder="🔍 Hledat (číslo, stavba, investor, místo, prostor…)">
+    <div id="dok-seznam"></div>
+  </div>
+  <div class="dok-katalog-info" id="dok-katalog-info"></div>
+  <!-- vzory se vybírají v protokolu; tady jen jejich úprava — schovaná, ať nepřekáží -->
+  <details class="dok-sprava" id="dok-vzory-karta">
+    <summary>⚙ Správa vzorů <small>úprava vzorů skupin prostorů — vzor se vybírá přímo v protokolu</small></summary>
+    <div class="dok-sprava-obsah">
+      <div id="dok-vzory"></div>
+      <button class="add-row" data-action="tdVzorNovy">+ Nový vlastní vzor</button>
+    </div>
+  </details>
+</div>
+</div>
+
+<!-- MODAL: vzor téhož jména už existuje -->
+<div class="modal-overlay" id="modal-dok-vzor-jmeno" style="z-index:600">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title">🧩 Vzor se stejným jménem</div>
+    <div id="dok-vzor-jmeno-text" style="font-size:.9rem;line-height:1.5"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="tdVzorJmenoZpet">Zpět</button>
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--accent);border:1px solid var(--accent)" data-action="tdVzorJmenoPrepsat">Přepsat existující</button>
+      <button class="btn btn-gold" data-action="tdVzorJmenoNovy">Uložit jako nový</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: katalog kódů vnějších vlivů (jen ke čtení) -->
+<div class="modal-overlay" id="modal-dok-katalog">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-title">📖 Katalog kódů vnějších vlivů</div>
+    <div id="dok-katalog-obsah"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" data-action="tdKatalogZavrit">Zavřít</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: vlastní vzor skupiny prostorů -->
+<div class="modal-overlay" id="modal-dok-vzor">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-title" id="dok-vzor-titul">🧩 Vlastní vzor</div>
+    <div class="f" style="margin-bottom:.8rem"><label>Název vzoru <span class="req">*</span></label>
+      <input type="text" id="dok-vzor-nazev" autocomplete="off" placeholder="Např. Rodinný dům – obytné místnosti"></div>
+    <div id="dok-vzor-kody"></div>
+    <div class="f" style="margin-top:.8rem"><label>Poznámka ke skupině prostorů <span class="dk-nepov">(jde do PDF)</span></label>
+      <textarea id="dok-vzor-pozn" rows="3" spellcheck="true" lang="cs"></textarea></div>
+    <div class="f" style="margin-top:.6rem"><label>Upozornění <span class="dk-nepov">(jen nápověda ve formuláři po výběru vzoru, do PDF nejde)</span></label>
+      <textarea id="dok-vzor-upoz" rows="2" spellcheck="true" lang="cs"></textarea></div>
+    <div class="dk-blok-t">Texty oddílu B — protokol je nabídne k vložení</div>
+    <div class="f" style="margin-bottom:.5rem"><label>Popis stavebního objektu / technologie</label>
+      <textarea id="dok-vzor-t-popis" rows="3" spellcheck="true" lang="cs"></textarea></div>
+    <div class="f" style="margin-bottom:.5rem"><label>Technologie</label>
+      <textarea id="dok-vzor-t-technologie" rows="2" spellcheck="true" lang="cs"></textarea></div>
+    <div class="f"><label>Používané chemikálie</label>
+      <textarea id="dok-vzor-t-chemikalie" rows="2" spellcheck="true" lang="cs"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="tdVzorZavrit">Zrušit</button>
+      <button class="btn btn-gold" data-action="tdVzorUlozit">✓ Uložit vzor</button>
+    </div>
+  </div>
+</div>
+<!-- TVORBA DOKUMENTACE — formulář dokumentu (obsah kreslí JS podle DOK_TYPY) -->
+<div class="screen" id="screen-dok-form">
+  <div class="dok-lista">
+    <button class="dok-mini" data-action="tdZpetNaSeznam" title="Zpět na seznam dokumentů (dokument se uloží)">← Seznam dokumentů</button>
+    <span class="dok-lista-titul" id="dok-form-titul"></span>
+    <span class="dok-stav" id="dok-stav"></span>
+    <span class="dok-lista-akce">
+      <button class="dok-mini" data-action="tdUlozit" title="Uložit (Ctrl+S) — ukládá se i samo při psaní">💾 Uložit</button>
+      <button class="btn btn-gold" data-action="tdNahled" title="Náhled PDF, tisk a uložení (Ctrl+P)">📄 Náhled PDF</button>
+    </span>
+  </div>
+  <div class="dok-wrap" id="dok-form-obsah"></div>
+  <datalist id="dk-osoby-list"></datalist>
+</div>
+
+<!-- MODAL: vložit seznam prostorů z Excelu nebo textu -->
+<div class="modal-overlay" id="modal-dok-vlozit">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">📋 Vložit seznam prostorů</div>
+    <div class="dk-pozn">Vložte dva sloupce z Excelu (číslo místnosti, název) nebo text — každý prostor na samostatný
+      řádek, např. „101 Kancelář" nebo „1.02 – Sprcha". Prázdné řádky ve skupině se využijí, další přibudou.</div>
+    <div class="f"><textarea id="dok-vlozit-text" rows="8" spellcheck="false" placeholder="101&#9;Kancelář&#10;102&#9;Chodba&#10;103&#9;WC"></textarea></div>
+    <div id="dok-vlozit-nahled" class="dk-pozn" style="margin-top:.5rem"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:var(--bg);color:var(--text);border:1px solid var(--border)" data-action="tdVlozitZavrit">Zrušit</button>
+      <button class="btn btn-gold" data-action="tdVlozitPotvrdit">✓ Vložit</button>
+    </div>
+  </div>
+</div>
+<!-- TVORBA DOKUMENTACE — náhled PDF dokumentu (vlastní, nejde přes generujPDF) -->
+<div class="screen" id="screen-dok-pdf">
+  <div class="pdf-toolbar">
+    <div class="pdf-toolbar-title">📐 <span id="dok-pdf-info"></span></div>
+    <div class="pdf-actions">
+      <button class="pbtn" data-action="tdPdfZpet" style="background:#555;border-color:#555">← Zpět</button>
+      <button class="pbtn" data-action="tdPdfTisk" style="background:#b5291c;border-color:#b5291c" title="Vytiskne rovnou ve vyšší kvalitě, nic se do počítače neukládá">🖨️ Tisk přímo</button>
+      <button class="pbtn" data-action="tdPdfUlozit" style="background:#0f7b5f;border-color:#0f7b5f">💾 Uložit PDF</button>
+    </div>
+  </div>
+  <div class="pdf-pages" id="dok-pdf-pages"></div>
+</div>
 <!-- MODAL MĚŘICÍ LIST DO TERÉNU — co dát na list -->
 <div class="modal-overlay" id="modal-teren">
   <div class="modal" style="max-width:680px">
@@ -19002,7 +19309,9 @@ function buildZalohaBlob() {
     strojeKontroly: STORE.strojeKontroly || [],
     teren: STORE.teren || {},
     auto_cislovani: STORE.auto_cislovani !== false,
-    tisk_migrace_kolonky: STORE.tisk_migrace_kolonky || 0
+    tisk_migrace_kolonky: STORE.tisk_migrace_kolonky || 0,
+    // Tvorba dokumentace — samostatná část, oddělená od zpráv
+    dokumentace: dokZalohaData()
   };
   return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 }
@@ -19757,6 +20066,7 @@ function obnovZeZalohy(data) {
     '• Vlastní texty: ' + ((data.snippety || []).length) + '\n' +
     (vlastniNormyPocet ? '• Vlastní normy: ' + vlastniNormyPocet + '\n' : '') +
     planRadek +
+    dokZalohaRadek(data) +
     '• Profil technika: ' + (data.technik && data.technik.jmeno ? 'ano' : 'ne') + '\n\n' +
     'Tyto údaje nahradí aktuální data v prohlížeči.';
   if (!confirm(msg)) return;
@@ -19777,6 +20087,8 @@ function obnovZeZalohy(data) {
   if (data.teren) STORE.teren = data.teren;
   if (data.tisk_migrace_kolonky) STORE.tisk_migrace_kolonky = data.tisk_migrace_kolonky;
   if (data.auto_cislovani !== undefined) STORE.auto_cislovani = (data.auto_cislovani !== false);
+  // Tvorba dokumentace — starší záloha část nemá, pak se dokumenty nechají být
+  if (data.dokumentace) dokObnovitZeZalohy(data.dokumentace);
   archiv = STORE.archiv;
   odberatele = STORE.odberatele;
   saveStore();
@@ -22949,6 +23261,7 @@ async function init() {
     if (!t.getAttribute('lang')) t.setAttribute('lang', 'cs');
   });
   await loadStore();
+  try { await dokNacist(); } catch (e) {}   // tvorba dokumentace — vlastní úložiště
   migraceKolonky();
   archiv = STORE.archiv || [];
   odberatele = STORE.odberatele || [];
@@ -26921,6 +27234,1685 @@ document.addEventListener('focusout', function(e) {
 });
 
 document.getElementById('json-input').addEventListener('change', nacistJSON);
+
+// ═══════════════════════════════════════════════════════════════════════
+// TVORBA DOKUMENTACE (2026-10-16)
+//
+// Samostatná část programu VEDLE revizí. První dokument je Protokol o určení
+// vnějších vlivů (ČSN 33 2000-5-51 ed.3). Další typy přibudou — nový typ
+// dokumentu = nový záznam v DOK_TYPY (název, předpona čísla, funkce na
+// formulář, čtení formuláře a bloky PDF).
+//
+// **ÚPLNĚ ODDĚLENO OD REVIZÍ** (zadání uživatele):
+//  - vlastní úložiště — v localStorage klíč `revize_el_dok`, v IndexedDB
+//    klíče s předponou `dok_` (DOK_IDB). NENÍ ve STORE ani ve STORE_KEYS,
+//    takže ho saveStore() nezapisuje, loadStore() nečte a revize se s ním
+//    nemůžou smíchat ani přepsat,
+//  - vlastní seznam, číslování (POUVV-0001…), texty i PDF,
+//  - v archivu zpráv, naposledy otevřených, plánu revizí, katalogu vad,
+//    hledání ani filtrech se dokumenty neobjeví (nic z toho DOK nečte),
+//  - automatická záloha je nese jako SAMOSTATNOU část `dokumentace`
+//    (buildZalohaBlob / obnovZeZalohy).
+// Víc oken: vlastní kanál `revize-el-dok`; uložení dokumentu je
+// „načti – uprav – zapiš", takže okno nepřepíše dokument z jiného okna.
+// ═══════════════════════════════════════════════════════════════════════
+var DOK_LS = 'revize_el_dok';
+var DOK_IDB = ['dokumenty', 'vzory', 'vzorySkryte', 'osoby'];   // v IDB jako 'dok_' + název
+var DOK = dokPrazdny();
+var DOK_TYPY = {
+  pouvv: {
+    nazev: 'Protokol o určení vnějších vlivů',
+    kratce: 'Vnější vlivy',
+    vytvorit: 'Vytvořit nový protokol',   // hlavní tlačítko seznamu (sloveso + co vznikne)
+    seznamNadpis: 'Vytvořené protokoly',
+    ikona: '🌦',
+    prefix: 'POUVV',
+    norma: 'ČSN 33 2000-5-51 ed.3',
+    dlazdice: 'Dle ČSN 33 2000-5-51 ed.3',
+    tvary: ['protokol', 'protokoly', 'protokolů'],
+    vzory: true,                     // má vzory skupin prostorů a katalog kódů
+    popis: 'Určení vnějších vlivů komisí podle ČSN 33 2000-5-51 ed.3 — prostory, kódy vlivů, zdůvodnění, podpisy komise.'
+  }
+};
+
+function dokPrazdny() { return { dokumenty: [], vzory: [], vzorySkryte: [], osoby: [] }; }
+
+function dokNormalizovat(d) {
+  var o = dokPrazdny();
+  if (d && typeof d === 'object') {
+    DOK_IDB.forEach(function (k) { if (Array.isArray(d[k])) o[k] = d[k]; });
+  }
+  return o;
+}
+
+function dokIdbSnimek(d, zapsano) {
+  var o = { dok_zapsano: zapsano || '' };
+  DOK_IDB.forEach(function (k) { o['dok_' + k] = d[k]; });
+  return o;
+}
+
+function dokUid() { return 'dok' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+// Načte dokumenty z úložiště do DOK. Přednost má IndexedDB (jako u revizí),
+// localStorage je záloha a jediná cesta na iOS (tam se IDB nepoužívá).
+// Oba zápisy nesou čas (`_zapsano`): když se okno zavřelo dřív, než
+// IndexedDB dopsala, vyhraje novější zápis z localStorage.
+async function dokNacist() {
+  var d = null, tIdb = '';
+  if (idb) {
+    var z = {}, nalez = false;
+    for (var i = 0; i < DOK_IDB.length; i++) {
+      var v = await idbGet('dok_' + DOK_IDB[i]);
+      if (v !== undefined && v !== null) { z[DOK_IDB[i]] = v; nalez = true; }
+    }
+    if (nalez) { d = z; tIdb = String((await idbGet('dok_zapsano')) || ''); }
+  }
+  var ls = null;
+  try { var s = localStorage.getItem(DOK_LS); if (s) ls = JSON.parse(s); } catch (e) {}
+  if (ls && (!d || String(ls._zapsano || '') > tIdb)) {
+    d = ls;
+    if (idb) await idbSetMulti(dokIdbSnimek(dokNormalizovat(d), ls._zapsano || ''));
+  }
+  DOK = dokNormalizovat(d);
+  return DOK;
+}
+
+var __dokKanal = null;
+try { if ('BroadcastChannel' in window) __dokKanal = new BroadcastChannel('revize-el-dok'); } catch (e) {}
+
+async function dokZapsat() {
+  var t = new Date().toISOString();
+  try { localStorage.setItem(DOK_LS, JSON.stringify(Object.assign({ _zapsano: t }, DOK))); } catch (e) {}
+  if (idb) await idbSetMulti(dokIdbSnimek(DOK, t));
+  try { if (__dokKanal) __dokKanal.postMessage({ okno: __oknoId, t: Date.now() }); } catch (e) {}
+  // Dokumenty jdou i do automatické zálohy (samostatná část souboru)
+  if (!window.__autoZalohaVlastni && typeof autoZalohaNaplanovat === 'function') autoZalohaNaplanovat();
+}
+
+// Další volné číslo pro typ dokumentu: POUVV-0001, POUVV-0002… (max + 1).
+function dokDalsiCislo(typ) {
+  var t = DOK_TYPY[typ]; if (!t) return '';
+  var re = new RegExp('^' + t.prefix + '-(\\d+)$'), max = 0;
+  DOK.dokumenty.forEach(function (x) {
+    var m = re.exec(String(x.cislo || '').trim());
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  });
+  return t.prefix + '-' + String(max + 1).padStart(4, '0');
+}
+
+function dokNajit(uid) {
+  for (var i = 0; i < DOK.dokumenty.length; i++) if (DOK.dokumenty[i].uid === uid) return DOK.dokumenty[i];
+  return null;
+}
+
+function dokKopie(o) { return JSON.parse(JSON.stringify(o)); }
+
+// Lidé z komisí — program si je pamatuje a nabízí je v dalších protokolech.
+function dokZapamatovatOsoby(seznam) {
+  seznam.forEach(function (p) {
+    var j = String(p.jmeno || '').trim(); if (!j) return;
+    var f = String(p.funkce || '').trim();
+    var naj = null;
+    DOK.osoby.forEach(function (o) { if (!naj && o.jmeno.toLowerCase() === j.toLowerCase()) naj = o; });
+    if (naj) { if (f) naj.funkce = f; }
+    else DOK.osoby.push({ jmeno: j, funkce: f });
+  });
+  if (DOK.osoby.length > 300) DOK.osoby = DOK.osoby.slice(-300);
+}
+
+// Data se změnila v jiném okně → načíst znovu a překreslit, co je vidět.
+var __dokZnovuCasovac = null;
+function dokZJinehoOkna() {
+  clearTimeout(__dokZnovuCasovac);
+  __dokZnovuCasovac = setTimeout(function () {
+    dokNacist().then(function () {
+      if (typeof dokPoNacteniZJinehoOkna === 'function') dokPoNacteniZJinehoOkna();
+    });
+  }, 150);
+}
+if (__dokKanal) {
+  __dokKanal.onmessage = function (e) { if (e && e.data && e.data.okno !== __oknoId) dokZJinehoOkna(); };
+} else {
+  window.addEventListener('storage', function (e) { if (e.key === DOK_LS) dokZJinehoOkna(); });
+}
+
+// Akce tlačítek této části: data-action="td…" (td = tvorba dokumentace).
+// Hlavní přepínač akcí je nezná, takže se nic nepere; každá fáze si sem
+// doplní své akce.
+var TD_AKCE = {};
+document.addEventListener('click', function (e) {
+  var el = e.target.closest && e.target.closest('[data-action^="td"]');
+  if (!el) return;
+  var fn = TD_AKCE[el.getAttribute('data-action')];
+  if (fn) fn(el, e);
+});
+
+// ── Katalog kódů vnějších vlivů (ČSN 33 2000-5-51 ed.3) ────────────────
+// ⚠ NÁVRH, KTERÝ MUSÍ UŽIVATEL ZKONTROLOVAT S NORMOU. Obsah je přesně ten,
+// který dodal (2026-10-16) — nic se nedoplňovalo z internetu ani z hlavy.
+// Třetí hodnota u třídy (`op`) = opatření / krytí; je vyplněná JEN tam,
+// kde ji uživatel uvedl. Dokud katalog neověří, ukazuje program nenápadné
+// upozornění „katalog čeká na kontrolu s normou" — po ověření stačí
+// přepnout DOK_VV_KATALOG_OVERENO na true.
+// AM (elektromagnetické vlivy) a BB se ve skutečných protokolech
+// nepoužívají, proto v katalogu nejsou. Pořadí = pořadí ve výběru.
+// Vysvětlivky (text tříd) jsou JEN NÁPOVĚDA v programu — do PDF jdou kódy.
+var DOK_VV_KATALOG_OVERENO = false;
+var DOK_VV_SKUPINY = [
+  { id: 'a', pismeno: 'A', nazev: 'Vnější vlivy' },
+  { id: 'b', pismeno: 'B', nazev: 'Využití' },
+  { id: 'c', pismeno: 'C', nazev: 'Konstrukce budov' }
+];
+var DOK_VV_AA = [['AA1', '−60 až +5 °C'], ['AA2', '−40 až +5 °C'], ['AA3', '−25 až +5 °C'], ['AA4', '−5 až +40 °C'],
+                 ['AA5', '+5 až +40 °C'], ['AA6', '+5 až +60 °C'], ['AA7', '−25 až +55 °C'], ['AA8', '−50 až +40 °C']];
+var DOK_VV_KATALOG = [
+  { kod: 'AA', nazev: 'Teplota okolí', tridy: DOK_VV_AA },
+  { kod: 'AB', nazev: 'Atmosférické podmínky (teplota a vlhkost)',
+    tridy: DOK_VV_AA.map(function (t) { return ['AB' + t[0].slice(2), t[1]]; }) },
+  { kod: 'AC', nazev: 'Nadmořská výška', tridy: [['AC1', '≤ 2 000 m'], ['AC2', '> 2 000 m']] },
+  { kod: 'AD', nazev: 'Výskyt vody', tridy: [
+    ['AD1', 'zanedbatelný', 'IPX0'], ['AD2', 'volně padající kapky', 'IPX1/IPX2'], ['AD3', 'kropení', 'IPX3'],
+    ['AD4', 'stříkání', 'IPX4'], ['AD5', 'tryskání', 'IPX5'], ['AD6', 'vlny', 'IPX6'],
+    ['AD7', 'ponoření', 'IPX7'], ['AD8', 'potopení', 'IPX8']] },
+  { kod: 'AE', nazev: 'Cizí pevná tělesa', tridy: [
+    ['AE1', 'zanedbatelný'], ['AE2', 'malé předměty ≥ 2,5 mm', 'IP3X'], ['AE3', 'velmi malé předměty ≥ 1 mm', 'IP4X'],
+    ['AE4', 'slabá prašnost', 'IP5X, IP6X pokud prach nesmí vniknout'], ['AE5', 'střední prašnost', 'IP6X'],
+    ['AE6', 'silná prašnost', 'IP6X']] },
+  { kod: 'AF', nazev: 'Korozivní nebo znečišťující látky', tridy: [
+    ['AF1', 'zanedbatelný'], ['AF2', 'atmosférický'], ['AF3', 'občasný nebo náhodný'], ['AF4', 'trvalý']] },
+  { kod: 'AG', nazev: 'Mechanický ráz', tridy: [['AG1', 'slabý'], ['AG2', 'střední'], ['AG3', 'silný']] },
+  { kod: 'AH', nazev: 'Vibrace', tridy: [['AH1', 'slabé'], ['AH2', 'střední'], ['AH3', 'silné']] },
+  { kod: 'AK', nazev: 'Rostlinstvo, plísně', tridy: [['AK1', 'bez nebezpečí'], ['AK2', 'nebezpečí']] },
+  { kod: 'AL', nazev: 'Živočichové', tridy: [['AL1', 'bez nebezpečí'], ['AL2', 'nebezpečí']] },
+  { kod: 'AN', nazev: 'Sluneční záření', tridy: [['AN1', 'nízké'], ['AN2', 'střední'], ['AN3', 'vysoké']] },
+  { kod: 'AP', nazev: 'Seismické účinky', tridy: [['AP1', 'zanedbatelné'], ['AP2', 'slabé'], ['AP3', 'střední'], ['AP4', 'silné']] },
+  { kod: 'AQ', nazev: 'Bouřková činnost', tridy: [['AQ1', 'zanedbatelná'], ['AQ2', 'nepřímé ohrožení'], ['AQ3', 'přímé ohrožení']] },
+  { kod: 'AR', nazev: 'Pohyb vzduchu', tridy: [['AR1', 'pomalý'], ['AR2', 'střední'], ['AR3', 'silný']] },
+  { kod: 'AS', nazev: 'Vítr', tridy: [['AS1', 'slabý'], ['AS2', 'střední'], ['AS3', 'silný']] },
+  { kod: 'BA', nazev: 'Schopnost osob', tridy: [
+    ['BA1', 'běžné (laici)'], ['BA2', 'děti'], ['BA3', 'osoby nemocné a postižené'], ['BA4', 'poučené'], ['BA5', 'znalé']] },
+  { kod: 'BC', nazev: 'Dotyk osob s potenciálem země', tridy: [['BC1', 'žádný'], ['BC2', 'malý'], ['BC3', 'častý'], ['BC4', 'trvalý']] },
+  { kod: 'BD', nazev: 'Podmínky úniku v případě nebezpečí', tridy: [
+    ['BD1', 'nízká hustota osob, snadný únik'], ['BD2', 'nízká hustota, obtížný únik'],
+    ['BD3', 'vysoká hustota, snadný únik'], ['BD4', 'vysoká hustota, obtížný únik']] },
+  { kod: 'BE', nazev: 'Povaha zpracovávaných nebo skladovaných látek', tridy: [
+    ['BE1', 'bez významného nebezpečí'], ['BE2', 'nebezpečí požáru'], ['BE3', 'nebezpečí výbuchu'], ['BE4', 'nebezpečí kontaminace']] },
+  { kod: 'CA', nazev: 'Stavební materiály', tridy: [['CA1', 'nehořlavé'], ['CA2', 'hořlavé']] },
+  { kod: 'CB', nazev: 'Konstrukce budov', tridy: [
+    ['CB1', 'zanedbatelná rizika'], ['CB2', 'šíření požáru'], ['CB3', 'pohyb'], ['CB4', 'pružné nebo nestabilní']] }
+];
+
+// Třída podle kódu ('AD4' → { kod:'AD4', text:'stříkání', op:'IPX4', vliv }).
+function dokVvTrida(k) {
+  k = String(k || '');
+  for (var i = 0; i < DOK_VV_KATALOG.length; i++) {
+    var v = DOK_VV_KATALOG[i];
+    if (k.indexOf(v.kod) !== 0) continue;
+    for (var j = 0; j < v.tridy.length; j++) {
+      if (v.tridy[j][0] === k) return { kod: k, text: v.tridy[j][1], op: v.tridy[j][2] || '', vliv: v };
+    }
+  }
+  return null;
+}
+
+// Kódy skupiny prostorů seřazené podle katalogu a rozdělené na a) b) c).
+// Vrací jen skupiny, které mají aspoň jeden kód — tak jde i do PDF.
+function dokVvRadky(kody) {
+  kody = kody || {};
+  return DOK_VV_SKUPINY.map(function (s) {
+    var seznam = DOK_VV_KATALOG.filter(function (v) { return v.kod.charAt(0) === s.pismeno && kody[v.kod]; })
+      .map(function (v) { return kody[v.kod]; });
+    return { id: s.id, nazev: s.nazev, kody: seznam };
+  }).filter(function (r) { return r.kody.length; });
+}
+
+// ── Vzory skupin prostorů ──────────────────────────────────────────────
+// Vestavěné vzory SCHVÁLIL UŽIVATEL 16. 10. 2026. Pět z nich vychází ze
+// skutečných protokolů (administrativa, sprcha → „koupelna, sprcha,
+// umývárna", technická místnost, nevytápěný sklad, kotelna), ostatní jsou
+// schválené VÝCHOZÍ HODNOTY, ne opis z protokolů — technik je v protokolu
+// vždy může upravit. Kódy, poznámky, texty B i upozornění jsou doslova
+// podle schváleného zadání; nic nedoplňovat z hlavy ani z internetu.
+// - `pozn`        poznámka ke skupině — jde DO PDF,
+// - `upozorneni`  nápověda pro technika — jen ve formuláři, DO PDF NIKDY
+//                 (`vyrazne` = oranžově, u prostředí s nebezpečím výbuchu),
+// - `skupina`     nadpis ve výběru vzoru (pořadí DOK_VV_VZORY_SKUPINY).
+// `id` se nemění ani při přejmenování (vest-sprcha) — protokoly ho mají
+// uložené ve skupině. Vestavěné nejdou smazat, jen skrýt (DOK.vzorySkryte).
+function dokVvKody(seznam) {
+  var o = {};
+  seznam.split(/[\s,|]+/).forEach(function (k) { if (k) o[k.slice(0, 2)] = k; });
+  return o;
+}
+var DOK_VV_VZORY_SKUPINY = ['Bydlení', 'Bytový dům', 'Technické prostory', 'Administrativa a výroba', 'Venkovní'];
+var DOK_VV_ZONY_701 = 'Prostory umýváren a sprchovacích koutů jsou určeny dle ČSN 33 2000-7-701 zóny dle obrázku 701 A-f: ' +
+  'AD4 vliv stříkající vody všemi směry v prostoru sprch. koutu a 600 mm kolem vstupu se závěsem, ' +
+  'AD2 do vzdálenosti 2,4 m od hranice AD4.';
+var DOK_VV_VZORY_VESTAVENE = [
+  // ── Bydlení ──
+  { id: 'vest-byt', skupina: 'Bydlení', nazev: 'Byt – obytné místnosti, kuchyň, předsíň',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '',
+    texty: {
+      popis: 'Bytová jednotka v bytovém domě určená k trvalému bydlení. Obytné místnosti, kuchyň a předsíň jsou vytápěné ' +
+             'suché prostory bez zvýšeného výskytu vody, prachu a korozivních látek.',
+      technologie: 'Světelné a zásuvkové obvody, běžné domácí elektrické spotřebiče, spotřebiče v kuchyni (sporák, trouba, myčka, chladnička).',
+      chemikalie: 'Běžné čisticí prostředky pro domácnost v malém množství.' } },
+  { id: 'vest-sprcha', skupina: 'Bydlení', nazev: 'Koupelna, sprcha, umývárna',
+    kody: dokVvKody('AA5, AB5, AC1, AD4, AE1, AF1, AG2, AH2, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA1, CB1'),
+    pozn: DOK_VV_ZONY_701, upozorneni: '',
+    texty: {
+      popis: 'Koupelna se sprchovým koutem nebo vanou a umyvadlem. Prostor je rozdělen do zón podle ČSN 33 2000-7-701.',
+      technologie: 'Osvětlení, zásuvkové obvody, ohřívač vody, ventilátor, elektrické podlahové vytápění nebo otopný žebřík.',
+      chemikalie: 'Běžné hygienické a čisticí prostředky v malém množství.' } },
+  { id: 'vest-rd', skupina: 'Bydlení', nazev: 'Rodinný dům – obytné prostory',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '',
+    texty: {
+      popis: 'Rodinný dům určený k trvalému bydlení. Obytné místnosti, kuchyň, chodby a schodiště jsou vytápěné suché ' +
+             'prostory bez zvýšeného výskytu vody, prachu a korozivních látek.',
+      technologie: 'Světelné a zásuvkové obvody, běžné domácí spotřebiče, zdroj tepla a ohřev vody, případně tepelné čerpadlo, ' +
+                   'fotovoltaika a nabíjení elektromobilu.',
+      chemikalie: 'Běžné čisticí prostředky pro domácnost v malém množství.' } },
+  { id: 'vest-rd-garaz', skupina: 'Bydlení', nazev: 'Rodinný dům – garáž',
+    kody: dokVvKody('AA4, AB4, AC1, AD2, AE1, AF1, AG2, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'Při skladování pohonných hmot nebo hořlavin zvažte BE2.',
+    texty: {
+      popis: 'Garáž pro osobní automobily, nevytápěná nebo temperovaná.',
+      technologie: 'Osvětlení, zásuvkové obvody, pohon garážových vrat, případně nabíjecí stanice elektromobilu.',
+      chemikalie: 'Pohonné hmoty v nádržích vozidel, provozní kapaliny a autokosmetika v malém množství.' } },
+  { id: 'vest-sklep', skupina: 'Bydlení', nazev: 'Sklep, suterén',
+    kody: dokVvKody('AA4, AB4, AC1, AD2, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'U trvale vlhkého sklepa zvažte vyšší třídu AB / AD.',
+    texty: {
+      popis: 'Nevytápěné nebo temperované podzemní prostory sloužící jako sklady a sklepní kóje.',
+      technologie: 'Osvětlení, zásuvkové obvody.',
+      chemikalie: 'Bez skladování nebezpečných látek.' } },
+  // ── Bytový dům ──
+  { id: 'vest-bd-spolecne', skupina: 'Bytový dům', nazev: 'Bytový dům – společné prostory (chodby, schodiště, vstup)',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'U nevytápěných společných prostor AA4 / AB4. U vícepodlažních domů s obtížným únikem zvažte BD2.',
+    texty: {
+      popis: 'Společné prostory bytového domu – vstupní prostor, chodby a schodiště přístupné všem obyvatelům domu.',
+      technologie: 'Společné osvětlení se schodišťovými automaty nebo čidly, domovní zvonky a dorozumívací zařízení, zásuvky pro úklid.',
+      chemikalie: 'Úklidové prostředky v malém množství.' } },
+  { id: 'vest-bd-sklepy', skupina: 'Bytový dům', nazev: 'Bytový dům – sklepní kóje, kočárkárna, kolárna, sušárna',
+    kody: dokVvKody('AA4, AB4, AC1, AD2, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '',
+    texty: {
+      popis: 'Společné nevytápěné prostory bytového domu – sklepní kóje, kočárkárna, kolárna a sušárna prádla.',
+      technologie: 'Osvětlení, zásuvkové obvody.',
+      chemikalie: 'Bez skladování nebezpečných látek.' } },
+  { id: 'vest-bd-elektro', skupina: 'Bytový dům', nazev: 'Bytový dům – elektroměrová rozvodna, hlavní domovní rozvodna',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'BA4 platí pro uzamčený prostor přístupný jen poučeným osobám. U nevytápěné rozvodny AA4 / AB4.',
+    texty: {
+      popis: 'Uzamčený prostor s hlavní domovní rozvodnicí a elektroměrovými rozvaděči, přístupný pouze poučeným osobám.',
+      technologie: 'Hlavní domovní rozvodnice, elektroměrové rozvaděče, rozvodnice společné spotřeby, osvětlení.',
+      chemikalie: 'Bez skladování nebezpečných látek.' } },
+  { id: 'vest-bd-vytah', skupina: 'Bytový dům', nazev: 'Bytový dům – strojovna výtahu',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG1, AH2, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'U nevytápěné strojovny AA4 / AB4. U hydraulického výtahu uveďte hydraulický olej v chemikáliích.',
+    texty: {
+      popis: 'Uzamčená strojovna výtahu přístupná pouze poučeným osobám.',
+      technologie: 'Pohon výtahu, řídicí rozvaděč výtahu, osvětlení a zásuvka pro údržbu.',
+      chemikalie: 'Maziva a převodové oleje v malém množství.' } },
+  // ── Technické prostory ──
+  { id: 'vest-kotelna', skupina: 'Technické prostory', nazev: 'Kotelna (plynová, bez trvalé obsluhy)',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '',
+    texty: {
+      popis: 'Plně automatizovaný zdroj tepla pro vytápění a ohřev vody, provozovaný bez trvalé obsluhy. ' +
+             'Bezpečnost provozu je zajištěna interními ochrannými a blokovacími prvky samotných zdrojů tepla ' +
+             'a větráním prostoru kotelny.',
+      technologie: 'Plynové kotle s hořáky, vnitřní plynovod s uzavíracími armaturami, rozvody topné vody ' +
+                   's čerpadly, systém měření a regulace, větrání místnosti.',
+      chemikalie: 'Zemní plyn (palivo, hořlavý plyn); Otopná voda (médium v uzavřeném okruhu, případně s inhibitory koroze).' } },
+  { id: 'vest-vymenik', skupina: 'Technické prostory', nazev: 'Výměníková stanice',
+    kody: dokVvKody('AA5, AB5, AC1, AD2, AE1, AF1, AG1, AH2, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'AD2 kvůli možnému úkapu z armatur. Při vysoké teplotě v prostoru zvažte AA6. ' +
+                          'Při rozsáhlých uzemněných kovových rozvodech zvažte BC3.',
+    texty: {
+      popis: 'Výměníková stanice tepla provozovaná bez trvalé obsluhy, uzamčená a přístupná pouze poučeným osobám.',
+      technologie: 'Výměník tepla, oběhová čerpadla, ohřev teplé vody, systém měření a regulace, osvětlení.',
+      chemikalie: 'Otopná voda (médium v uzavřeném okruhu, případně s inhibitory koroze).' } },
+  { id: 'vest-technicka', skupina: 'Technické prostory', nazev: 'Technická místnost / sklad čerpadel',
+    kody: dokVvKody('AA5, AB5, AC1, AD2, AE1, AF1, AG2, AH2, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '', texty: {} },
+  { id: 'vest-sklad', skupina: 'Technické prostory', nazev: 'Nevytápěný sklad',
+    kody: dokVvKody('AA4, AB4, AC1, AD2, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '', texty: {} },
+  { id: 'vest-puda', skupina: 'Technické prostory', nazev: 'Půda, nevytápěné podkroví',
+    kody: dokVvKody('AA7, AB7, AC1, AD1, AE2, AF1, AG1, AH1, AK1, AL2, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA2, CB1'),
+    pozn: '', upozorneni: 'CA2 platí pro dřevěný krov, u nehořlavé konstrukce CA1. Při skladování hořlavin zvažte BE2.',
+    texty: {
+      popis: 'Nevytápěný půdní prostor pod střechou, bez trvalého pobytu osob.',
+      technologie: 'Osvětlení, případně vedení rozvodů k anténám a fotovoltaice.',
+      chemikalie: 'Bez skladování nebezpečných látek.' } },
+  // ── Administrativa a výroba ──
+  { id: 'vest-admin', skupina: 'Administrativa a výroba', nazev: 'Administrativa / kanceláře / sociální zázemí',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA1, BC1, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '', texty: {} },
+  { id: 'vest-vyroba-cista', skupina: 'Administrativa a výroba', nazev: 'Výrobní hala – čistá výroba (montáž)',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE1, AF1, AG2, AH2, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'Pokud se v hale pohybují nepoučené osoby, BA1.',
+    texty: {
+      popis: 'Výrobní hala pro montáž a lehkou výrobu, vytápěná, bez zvýšené prašnosti a výskytu vody.',
+      technologie: 'Montážní pracoviště, ruční elektrické nářadí, stroje a technologická zařízení, osvětlení haly.',
+      chemikalie: 'Provozní kapaliny a maziva v malém množství.' } },
+  { id: 'vest-vyroba-prasna', skupina: 'Administrativa a výroba', nazev: 'Výrobní hala – prašná výroba (nehořlavý prach)',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE4, AF1, AG2, AH2, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', vyrazne: true,
+    upozorneni: 'AE4 / AE5 / AE6 podle intenzity spadu prachu, AG3 při provozu vysokozdvižných vozíků. HOŘLAVÝ PRACH (dřevo, mouka, ' +
+                'plasty) = BE2 nebo BE3 – posoudit prostředí s nebezpečím výbuchu podle ČSN EN 60079-10-2, vzor nepoužít bez úpravy.',
+    texty: {
+      popis: 'Výrobní hala s prašným provozem, vytápěná.',
+      technologie: 'Stroje a technologická zařízení, odsávání, osvětlení haly.',
+      chemikalie: 'Provozní kapaliny a maziva v malém množství.' } },
+  { id: 'vest-dilna', skupina: 'Administrativa a výroba', nazev: 'Dílna, údržba',
+    kody: dokVvKody('AA5, AB5, AC1, AD1, AE2, AF1, AG2, AH2, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: '',
+    texty: {
+      popis: 'Dílna údržby s ručním a stolním obráběním a opravami.',
+      technologie: 'Stolní a ruční elektrické nářadí, svářečka, kompresor, osvětlení.',
+      chemikalie: 'Maziva, oleje a čisticí prostředky v malém množství.' } },
+  { id: 'vest-sklad-horlaviny', skupina: 'Administrativa a výroba', nazev: 'Sklad hořlavých látek',
+    kody: dokVvKody('AA4, AB4, AC1, AD1, AE1, AF1, AG1, AH1, AK1, AL1, AN1, AP1, AQ1, AR1, AS1 | BA4, BC2, BD1, BE2 | CA1, CB1'),
+    pozn: '', vyrazne: true,
+    upozorneni: 'HOŘLAVÉ KAPALINY I. TŘÍDY NEBO HOŘLAVÉ PLYNY = BE3 – prostředí s nebezpečím výbuchu podle ' +
+                'ČSN EN 60079-10-1, vzor nepoužít bez úpravy.',
+    texty: {
+      popis: 'Sklad hořlavých látek a materiálů, nevytápěný.',
+      technologie: 'Osvětlení, případně větrání.',
+      chemikalie: 'Doplnit konkrétní skladované látky.' } },
+  // ── Venkovní ──
+  { id: 'vest-venkovni', skupina: 'Venkovní', nazev: 'Venkovní prostory',
+    kody: dokVvKody('AA7, AB7, AC1, AD4, AE2, AF2, AG2, AH1, AK2, AL2, AN2, AP1, AQ2, AR2, AS2 | BA1, BC3, BD1, BE1 | CA1, CB1'),
+    pozn: '', upozorneni: 'Pod přístřeškem zvažte AD3. Při trvalém přímém oslunění AN3, u exponovaných míst AQ3 a AS3.',
+    texty: {
+      popis: 'Venkovní prostory objektu vystavené povětrnostním vlivům – fasáda, venkovní osvětlení, přípojková a elektroměrová skříň.',
+      technologie: 'Venkovní osvětlení, venkovní zásuvky, pohony vjezdových bran, přípojková a elektroměrová skříň.',
+      chemikalie: 'Bez nebezpečných látek.' } }
+];
+
+// Textová pole oddílu B — klíč v datech dokumentu i v `texty` vzoru.
+var DOK_VV_TEXTY_B = [
+  { k: 'popis', nazev: 'Popis stavebního objektu / technologie' },
+  { k: 'technologie', nazev: 'Technologie' },
+  { k: 'chemikalie', nazev: 'Používané chemikálie' }
+];
+
+// Všechny vzory: vestavěné (s příznakem) + vlastní. `vcetneSkrytych`
+// = i skryté vestavěné (správa vzorů, nebo vzor, který skupina už používá).
+function dokVzory(vcetneSkrytych) {
+  var skryte = DOK.vzorySkryte || [];
+  var vest = DOK_VV_VZORY_VESTAVENE.filter(function (v) { return vcetneSkrytych || skryte.indexOf(v.id) === -1; })
+    .map(function (v) { var o = dokKopie(v); o.vestaveny = true; o.skryty = skryte.indexOf(v.id) !== -1; return o; });
+  return vest.concat((DOK.vzory || []).map(function (v) { var o = dokKopie(v); o.skupina = 'Vlastní vzory'; return o; }));
+}
+
+// Vzory rozdělené do skupin v pořadí DOK_VV_VZORY_SKUPINY + „Vlastní vzory"
+// — stejně ve výběru vzoru, v nabídce textů B i ve správě vzorů.
+function dokVzorySkupiny(seznam) {
+  return DOK_VV_VZORY_SKUPINY.concat(['Vlastní vzory']).map(function (s) {
+    return { nazev: s, vzory: seznam.filter(function (v) { return v.skupina === s; }) };
+  }).filter(function (g) { return g.vzory.length; });
+}
+
+function dokVzor(id) {
+  var v = dokVzory(true).filter(function (x) { return x.id === id; });
+  return v.length ? v[0] : null;
+}
+
+// Krátký souhrn kódů vzoru / skupiny na jeden řádek („AA5, AB5 … | BA1 …").
+function dokVvSouhrn(kody) {
+  return dokVvRadky(kody).map(function (r) { return r.kody.join(', '); }).join(' | ');
+}
+// ── Obrazovka „Tvorba dokumentace": dlaždice typů dokumentů ────────────
+// Dlaždice se skládají z DOK_TYPY — nový typ dokumentu = nová dlaždice.
+// Prázdné „připravuje se" dlaždice se nekreslí.
+var __dokTyp = 'pouvv';   // typ, jehož seznam je otevřený
+
+function dokOtevritTypy() {
+  showScreen('dokumentace');
+  dokDlazdiceVykreslit();
+}
+
+function dokPocetTvar(n, tvary) {
+  return n + ' ' + (n === 1 ? tvary[0] : (n >= 2 && n <= 4 ? tvary[1] : tvary[2]));
+}
+
+function dokDlazdiceVykreslit() {
+  var box = document.getElementById('dok-dlazdice');
+  if (!box) return;
+  box.innerHTML = Object.keys(DOK_TYPY).map(function (k) {
+    var t = DOK_TYPY[k];
+    var n = DOK.dokumenty.filter(function (x) { return x.typ === k; }).length;
+    return '<button class="home-card dok-dlazdice" data-action="tdTyp" data-typ="' + k + '" style="border-top-color:#0f7b5f">' +
+      '<div class="home-card-icon">' + t.ikona + '</div>' +
+      '<div class="home-card-title">' + esc(t.nazev) + '</div>' +
+      '<div class="home-card-desc">' + esc(t.dlazdice || t.popis) + '</div>' +
+      '<div class="dok-dlazdice-pocet">' + (n ? 'Uloženo: ' + dokPocetTvar(n, t.tvary || ['dokument', 'dokumenty', 'dokumentů']) : 'Zatím žádný uložený') + '</div>' +
+    '</button>';
+  }).join('');
+}
+
+// ── Obrazovka se seznamem dokumentů jednoho typu ────────────────────────
+function dokOtevritSeznam(typ) {
+  if (typ && DOK_TYPY[typ]) __dokTyp = typ;
+  showScreen('dok-seznam');
+  dokSeznamVykreslit();
+}
+
+function dokDatumCz(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  return m ? (+m[3]) + '. ' + (+m[2]) + '. ' + m[1] : '';
+}
+
+// Text, ve kterém se v seznamu hledá — číslo, typ a údaje hlavičky,
+// u protokolu o vnějších vlivech i názvy prostorů.
+function dokHledatText(x) {
+  var d = x.data || {}, t = DOK_TYPY[x.typ] || {};
+  var s = [x.cislo, t.nazev, d.stavba, d.misto, d.predmet, d.investor && d.investor.nazev, d.investor && d.investor.ico,
+           d.zpracovatel && d.zpracovatel.nazev, d.vypracoval];
+  (d.skupiny || []).forEach(function (g) { (g.prostory || []).forEach(function (p) { s.push(p.c, p.n); }); });
+  return s.filter(Boolean).join(' ').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+function dokSeznamVykreslit() {
+  var t = DOK_TYPY[__dokTyp];
+  var tit = document.getElementById('dok-seznam-titul'), pop = document.getElementById('dok-seznam-popis');
+  if (tit) tit.textContent = t.ikona + ' ' + t.nazev;
+  if (pop) pop.textContent = t.popis;
+  // Hlavní akce obrazovky: jedno velké plné tlačítko se slovesem.
+  var typy = document.getElementById('dok-typy');
+  if (typy) typy.innerHTML = '<button class="dok-hlavni-akce" data-action="tdNovy" data-typ="' + __dokTyp + '">' +
+      '<span class="dok-hlavni-plus">＋</span> <span>' + esc(dokVytvoritText(t)) + '</span></button>' +
+      '<span class="dok-hlavni-pod">Dostane číslo ' + esc(dokDalsiCislo(__dokTyp)) + ' — jde ho pak přepsat.</span>';
+  var sn = document.getElementById('dok-seznam-nadpis');
+  if (sn) sn.textContent = '📁 ' + (t.seznamNadpis || 'Vytvořené dokumenty');
+  var vk = document.getElementById('dok-vzory-karta'), ki = document.getElementById('dok-katalog-info');
+  if (vk) vk.style.display = t.vzory ? '' : 'none';
+  if (ki) ki.style.display = t.vzory ? '' : 'none';
+  dokSeznamPolozky();
+  if (t.vzory) dokVzorySpravaVykreslit();
+}
+
+function dokVytvoritText(t) { return t.vytvorit || 'Vytvořit nový dokument'; }
+
+function dokSeznamPolozky() {
+  var box = document.getElementById('dok-seznam');
+  if (!box) return;
+  var q = ((document.getElementById('dok-hledat') || {}).value || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  var vse = DOK.dokumenty.filter(function (x) { return x.typ === __dokTyp; })
+    .sort(function (a, b) { return cisloPorovnat(b.cislo, a.cislo); });
+  var seznam = q ? vse.filter(function (x) {
+    var h = dokHledatText(x);
+    return q.split(/\s+/).every(function (w) { return h.indexOf(w) !== -1; });
+  }) : vse;
+  var pocet = document.getElementById('dok-pocet');
+  if (pocet) pocet.textContent = vse.length ? (q ? seznam.length + ' z ' + vse.length : String(vse.length)) : '';
+  var hl = document.getElementById('dok-hledat');
+  if (hl) hl.style.display = vse.length ? '' : 'none';   // hledat v prázdném seznamu nemá smysl
+  if (!vse.length) { box.innerHTML = '<div class="dok-prazdno">Zatím tu nic není. Začněte tlačítkem ' +
+    esc(dokVytvoritText(DOK_TYPY[__dokTyp])) + '.</div>'; return; }
+  if (!seznam.length) { box.innerHTML = '<div class="dok-prazdno">Hledání nic nenašlo.</div>'; return; }
+  box.innerHTML = seznam.map(function (x) {
+    var d = x.data || {}, t = DOK_TYPY[x.typ] || { kratce: x.typ };
+    var pod = [t.kratce, d.investor && d.investor.nazev, d.misto].filter(Boolean).map(esc).join(' · ');
+    return '<div class="dok-polozka" data-uid="' + esc(x.uid) + '" data-action="tdDokOtevrit" title="Otevřít ' + esc(x.cislo || 'dokument') + '">' +
+      '<button class="dok-p-otevrit" data-action="tdDokOtevrit" title="Otevřít dokument">' +
+        '<span class="dok-p-cislo">' + esc(x.cislo || '—') + '</span>' +
+        '<span class="dok-p-hlavni"><b>' + esc(d.stavba || '(bez názvu stavby)') + '</b><span class="dok-p-pod">' + pod + '</span></span>' +
+        '<span class="dok-p-datum">' + esc(dokDatumCz(d.datum)) + '</span>' +
+      '</button>' +
+      '<span class="dok-p-akce">' +
+        '<button class="dok-mini" data-action="tdDokPdf" title="Náhled PDF, tisk a uložení">📄 PDF</button>' +
+        '<button class="dok-mini" data-action="tdDokKopie" title="Založit nový dokument jako kopii tohoto (dostane další číslo)">⧉ Kopie</button>' +
+        '<button class="dok-mini dok-mini-del" data-action="tdDokSmazat" title="Smazat dokument (jde vzít zpět)">🗑 Smazat</button>' +
+      '</span></div>';
+  }).join('');
+}
+
+document.addEventListener('input', function (e) {
+  if (e.target && e.target.id === 'dok-hledat') dokSeznamPolozky();
+});
+
+function dokUidZ(el) { var r = el.closest('[data-uid]'); return r ? r.getAttribute('data-uid') : ''; }
+
+async function dokSmazat(uid) {
+  await dokNacist();
+  var i = -1;
+  DOK.dokumenty.forEach(function (x, j) { if (x.uid === uid) i = j; });
+  if (i < 0) return;
+  var x = DOK.dokumenty[i];
+  if (!confirm('Smazat dokument ' + (x.cislo || '') + ((x.data && x.data.stavba) ? ' – ' + x.data.stavba : '') + '?')) return;
+  DOK.dokumenty.splice(i, 1);
+  await dokZapsat();
+  if (window.__dokOtevreny && window.__dokOtevreny.uid === uid) window.__dokOtevreny = null;
+  dokSeznamPolozky();
+  showToast('Dokument ' + (x.cislo || '') + ' smazán', { timeout: 8000, actionLabel: '↩ ZPĚT', action: function () {
+    dokNacist().then(function () {
+      if (!dokNajit(x.uid)) DOK.dokumenty.splice(Math.min(i, DOK.dokumenty.length), 0, x);
+      return dokZapsat();
+    }).then(dokSeznamPolozky);
+  } });
+}
+
+// Kopie = nový dokument se stejným obsahem, dalším číslem a dnešním datem.
+async function dokKopirovat(uid) {
+  await dokNacist();
+  var x = dokNajit(uid); if (!x) return;
+  var n = dokKopie(x);
+  n.uid = dokUid();
+  n.cislo = dokDalsiCislo(x.typ);
+  n.vytvoreno = n.upraveno = new Date().toISOString();
+  n.data.cislo = n.cislo;
+  n.data.datum = new Date().toISOString().slice(0, 10);
+  DOK.dokumenty.unshift(n);
+  await dokZapsat();
+  dokSeznamPolozky();
+  showToast('Založena kopie ' + n.cislo + ' (z ' + (x.cislo || '') + ')', { timeout: 6000,
+    actionLabel: 'Otevřít', action: function () { if (typeof dokOtevrit === 'function') dokOtevrit(n.uid); } });
+}
+
+// ── Vzory skupin prostorů — správa ─────────────────────────────────────
+function dokVzorySpravaVykreslit() {
+  var info = document.getElementById('dok-katalog-info');
+  if (info) {
+    info.innerHTML = (DOK_VV_KATALOG_OVERENO ? '' : '⚠ Katalog kódů čeká na kontrolu s normou ČSN 33 2000-5-51 ed.3 · ') +
+      '<button class="dok-katalog-odkaz" data-action="tdKatalog">zobrazit katalog kódů</button>';
+  }
+  var box = document.getElementById('dok-vzory');
+  if (!box) return;
+  box.innerHTML = dokVzorySkupiny(dokVzory(true)).map(function (g) {
+    return '<div class="dk-blok-t">' + esc(g.nazev) + '</div>' + g.vzory.map(dokVzorRadekHtml).join('');
+  }).join('');
+}
+
+function dokVzorRadekHtml(v) {
+    var st = v.vestaveny
+      ? '<span class="dok-stitek">vestavěný</span>' + (v.skryty ? '<span class="dok-stitek dok-stitek-skryty">skrytý</span>' : '')
+      : '<span class="dok-stitek dok-stitek-vlastni">vlastní</span>';
+    var akce = v.vestaveny
+      ? '<button class="dok-mini" data-action="tdVzorSkryt">' + (v.skryty ? '👁 Zobrazit' : '🙈 Skrýt') + '</button>' +
+        '<button class="dok-mini" data-action="tdVzorJakoVlastni" title="Založit vlastní vzor podle tohoto a upravit ho">⧉ Jako vlastní</button>'
+      : '<button class="dok-mini" data-action="tdVzorUpravit">✏️ Upravit</button>' +
+        '<button class="dok-mini dok-mini-del" data-action="tdVzorSmazat">🗑 Smazat</button>';
+    return '<div class="dok-vzor-radek' + (v.skryty ? ' skryty' : '') + '" data-vzor="' + esc(v.id) + '">' +
+      '<span class="dok-vzor-n"><b>' + esc(v.nazev) + '</b>' + st +
+      '<span class="dok-vzor-kody">' + esc(dokVvSouhrn(v.kody) || 'bez kódů') + '</span>' +
+      (v.upozorneni ? '<span class="dok-vzor-upoz' + (v.vyrazne ? ' vyrazne' : '') + '">⚠ ' + esc(v.upozorneni) + '</span>' : '') +
+      '</span><span class="dok-p-akce">' + akce + '</span></div>';
+}
+
+function dokVzorIdZ(el) { var r = el.closest('[data-vzor]'); return r ? r.getAttribute('data-vzor') : ''; }
+
+// Výběr kódů — stejná komponenta v protokolu i ve vlastním vzoru.
+function dokKodVysv(k) { var t = dokVvTrida(k); return t && t.op ? 'krytí / opatření: ' + esc(t.op) : ''; }
+
+function dokKodyHtml(kody) {
+  kody = kody || {};
+  var upoz = DOK_VV_KATALOG_OVERENO ? '' :
+    '<span class="dk-katalog-pozn" title="Katalog kódů je návrh podle podkladu — čeká na kontrolu s ČSN 33 2000-5-51 ed.3">⚠ katalog čeká na kontrolu s normou</span>';
+  return '<div class="dk-kody"><div class="dk-kody-hlava"><span>Kódy vnějších vlivů</span>' + upoz +
+    '<button class="dok-mini" data-action="tdKatalog" title="Celý katalog tříd s vysvětlivkami">📖 Katalog</button></div>' +
+    DOK_VV_SKUPINY.map(function (s) {
+      return '<div class="dk-kody-sk"><div class="dk-kody-t">' + s.id + ') ' + esc(s.nazev) + '</div><div class="dk-kody-grid">' +
+        DOK_VV_KATALOG.filter(function (v) { return v.kod.charAt(0) === s.pismeno; }).map(function (v) {
+          var akt = kody[v.kod] || '';
+          return '<label class="dk-kod"><span class="dk-kod-n"><b>' + v.kod + '</b> ' + esc(v.nazev) + '</span>' +
+            '<select data-kod="' + v.kod + '" class="dk-in' + (akt ? ' dk-vyplneno' : '') + '"><option value="">—</option>' +
+            v.tridy.map(function (t) {
+              return '<option value="' + t[0] + '"' + (t[0] === akt ? ' selected' : '') + '>' + t[0] + ' · ' + esc(t[1]) + '</option>';
+            }).join('') +
+            '</select><span class="dk-kod-vysv">' + dokKodVysv(akt) + '</span></label>';
+        }).join('') + '</div></div>';
+    }).join('') + '</div>';
+}
+
+function dokKodyCist(koren) {
+  var o = {};
+  koren.querySelectorAll('select[data-kod]').forEach(function (s) { if (s.value) o[s.getAttribute('data-kod')] = s.value; });
+  return o;
+}
+
+function dokKodyNastavit(koren, kody) {
+  koren.querySelectorAll('select[data-kod]').forEach(function (s) {
+    s.value = (kody || {})[s.getAttribute('data-kod')] || '';
+    dokKodOznacit(s);
+  });
+}
+
+function dokKodOznacit(s) {
+  s.classList.toggle('dk-vyplneno', !!s.value);
+  var v = s.parentNode.querySelector('.dk-kod-vysv');
+  if (v) v.innerHTML = dokKodVysv(s.value);
+}
+
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.matches && e.target.matches('select[data-kod]')) dokKodOznacit(e.target);
+});
+
+function dokKatalogOtevrit() {
+  var box = document.getElementById('dok-katalog-obsah');
+  if (box) box.innerHTML = (DOK_VV_KATALOG_OVERENO ? '' :
+    '<div class="dok-katalog-info">⚠ Návrh podle podkladu — čeká na kontrolu s normou ČSN 33 2000-5-51 ed.3. ' +
+    'Do PDF jdou jen kódy; texty tříd jsou nápověda v programu.</div>') +
+    DOK_VV_SKUPINY.map(function (s) {
+      return '<div class="dk-blok-t">' + s.id + ') ' + esc(s.nazev) + '</div>' +
+        DOK_VV_KATALOG.filter(function (v) { return v.kod.charAt(0) === s.pismeno; }).map(function (v) {
+          return '<div class="dok-kat-vliv"><b>' + v.kod + '</b> – ' + esc(v.nazev) + '<ul>' +
+            v.tridy.map(function (t) {
+              return '<li><b>' + t[0] + '</b> ' + esc(t[1]) + (t[2] ? ' <span class="dok-kat-op">(' + esc(t[2]) + ')</span>' : '') + '</li>';
+            }).join('') + '</ul></div>';
+        }).join('');
+    }).join('');
+  document.getElementById('modal-dok-katalog').classList.add('open');
+}
+
+// Okno vlastního vzoru. `vzor` = obsah k předvyplnění, `id` = upravuje se
+// existující vlastní vzor (jinak vznikne nový).
+var __dokVzorEdit = null;
+function dokVzorDialog(vzor, id, titul) {
+  vzor = vzor || { nazev: '', kody: {}, pozn: '', texty: {} };
+  __dokVzorEdit = { id: id || null };
+  document.getElementById('dok-vzor-titul').textContent = titul || (id ? '🧩 Upravit vlastní vzor' : '🧩 Nový vlastní vzor');
+  document.getElementById('dok-vzor-nazev').value = vzor.nazev || '';
+  document.getElementById('dok-vzor-kody').innerHTML = dokKodyHtml(vzor.kody || {});
+  document.getElementById('dok-vzor-pozn').value = vzor.pozn || '';
+  document.getElementById('dok-vzor-upoz').value = vzor.upozorneni || '';
+  DOK_VV_TEXTY_B.forEach(function (b) {
+    document.getElementById('dok-vzor-t-' + b.k).value = (vzor.texty || {})[b.k] || '';
+  });
+  document.getElementById('modal-dok-vzor').classList.add('open');
+  setTimeout(function () { var n = document.getElementById('dok-vzor-nazev'); if (n && !n.value) n.focus(); }, 50);
+}
+
+// Jméno vzoru už existuje → zeptat se: přepsat existující (jen vlastní),
+// nebo uložit jako nový s číslem („Kotelna (vlastní) 2").
+function dokVzorJmenoKlic(s) { return String(s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+
+function dokVzorVolneJmeno(nazev, mimoId) {
+  var obsazena = dokVzory(true).filter(function (v) { return v.id !== mimoId; }).map(function (v) { return dokVzorJmenoKlic(v.nazev); });
+  for (var n = 2; ; n++) if (obsazena.indexOf(dokVzorJmenoKlic(nazev + ' ' + n)) === -1) return nazev + ' ' + n;
+}
+
+var __dokVzorJmeno = null;
+async function dokVzorUlozit(volba) {
+  var nazev = document.getElementById('dok-vzor-nazev').value.trim();
+  if (!nazev) { alert('Zadejte název vzoru.'); return; }
+  var editId = __dokVzorEdit && __dokVzorEdit.id;
+  var stejny = dokVzory(true).filter(function (x) { return x.id !== editId && dokVzorJmenoKlic(x.nazev) === dokVzorJmenoKlic(nazev); })[0];
+  if (stejny && !volba) {
+    __dokVzorJmeno = { stejny: stejny, nove: dokVzorVolneJmeno(nazev, editId) };
+    document.getElementById('dok-vzor-jmeno-text').innerHTML = 'Vzor „<b>' + esc(stejny.nazev) + '</b>" už ' +
+      (stejny.vestaveny ? 'existuje mezi vestavěnými — ten přepsat nejde.' : 'existuje.') +
+      ' Přepsat existující vzor, nebo uložit jako nový?';
+    var pr = document.querySelector('#modal-dok-vzor-jmeno [data-action="tdVzorJmenoPrepsat"]');
+    pr.style.display = stejny.vestaveny ? 'none' : '';
+    document.querySelector('#modal-dok-vzor-jmeno [data-action="tdVzorJmenoNovy"]').textContent = 'Uložit jako nový „' + __dokVzorJmeno.nove + '"';
+    document.getElementById('modal-dok-vzor-jmeno').classList.add('open');
+    return;
+  }
+  closeModal('modal-dok-vzor-jmeno');
+  var cilId = editId;
+  if (stejny && volba === 'prepsat' && !stejny.vestaveny) { cilId = stejny.id; nazev = stejny.nazev; }   // jméno zůstane, jak bylo
+  if (stejny && volba === 'novy') { nazev = __dokVzorJmeno ? __dokVzorJmeno.nove : dokVzorVolneJmeno(nazev, editId); document.getElementById('dok-vzor-nazev').value = nazev; }
+  var texty = {};
+  DOK_VV_TEXTY_B.forEach(function (b) {
+    var v = document.getElementById('dok-vzor-t-' + b.k).value.trim(); if (v) texty[b.k] = v;
+  });
+  var v = { id: cilId || ('vl-' + dokUid()), nazev: nazev,
+            kody: dokKodyCist(document.getElementById('dok-vzor-kody')),
+            pozn: document.getElementById('dok-vzor-pozn').value.trim(),
+            upozorneni: document.getElementById('dok-vzor-upoz').value.trim(), texty: texty };
+  await dokNacist();
+  var i = -1;
+  DOK.vzory.forEach(function (x, j) { if (x.id === v.id) i = j; });
+  if (i >= 0) DOK.vzory[i] = v; else DOK.vzory.push(v);
+  // přepsán jiný vzor, než který se upravoval → upravovaný zmizí (sloučily se)
+  if (editId && cilId !== editId) DOK.vzory = DOK.vzory.filter(function (x) { return x.id !== editId; });
+  __dokVzorJmeno = null;
+  await dokZapsat();
+  closeModal('modal-dok-vzor');
+  dokVzorySpravaVykreslit();
+  if (typeof dokFormVzoryObnovit === 'function') dokFormVzoryObnovit();
+  showToast('🧩 Vzor „' + nazev + '" uložen' + (i >= 0 ? '' : ' — najdete ho ve výběru vzoru u skupiny prostorů') + '.');
+}
+
+async function dokVzorSmazat(id) {
+  await dokNacist();
+  var i = -1;
+  DOK.vzory.forEach(function (x, j) { if (x.id === id) i = j; });
+  if (i < 0) return;
+  var v = DOK.vzory[i];
+  if (!confirm('Smazat vlastní vzor „' + v.nazev + '"?\n\nProtokoly, které ho použily, se nezmění.')) return;
+  DOK.vzory.splice(i, 1);
+  await dokZapsat();
+  dokVzorySpravaVykreslit();
+  if (typeof dokFormVzoryObnovit === 'function') dokFormVzoryObnovit();
+  showToast('Vzor „' + v.nazev + '" smazán', { timeout: 8000, actionLabel: '↩ ZPĚT', action: function () {
+    dokNacist().then(function () { DOK.vzory.splice(Math.min(i, DOK.vzory.length), 0, v); return dokZapsat(); })
+      .then(function () { dokVzorySpravaVykreslit(); if (typeof dokFormVzoryObnovit === 'function') dokFormVzoryObnovit(); });
+  } });
+}
+
+async function dokVzorSkrytPrepnout(id) {
+  await dokNacist();
+  var i = DOK.vzorySkryte.indexOf(id);
+  if (i >= 0) DOK.vzorySkryte.splice(i, 1); else DOK.vzorySkryte.push(id);
+  await dokZapsat();
+  dokVzorySpravaVykreslit();
+  if (typeof dokFormVzoryObnovit === 'function') dokFormVzoryObnovit();
+}
+
+// Data se změnila v jiném okně — překreslit, co je zrovna vidět.
+function dokPoNacteniZJinehoOkna() {
+  var d = document.getElementById('screen-dokumentace');
+  if (d && d.classList.contains('active')) dokDlazdiceVykreslit();
+  var s = document.getElementById('screen-dok-seznam');
+  if (s && s.classList.contains('active')) dokSeznamVykreslit();
+  if (typeof dokFormZJinehoOkna === 'function') dokFormZJinehoOkna();
+}
+
+TD_AKCE.tdOtevrit = function () { attemptLeaveForm(function () { dokOtevritTypy(); }); };
+TD_AKCE.tdTypy = function () { dokOtevritTypy(); };
+TD_AKCE.tdUvod = function () { showScreen('home'); };
+TD_AKCE.tdTyp = function (el) { dokOtevritSeznam(el.getAttribute('data-typ')); };
+TD_AKCE.tdNovy = function (el) { if (typeof dokNovy === 'function') dokNovy(el.getAttribute('data-typ')); };
+TD_AKCE.tdDokOtevrit = function (el) { if (typeof dokOtevrit === 'function') dokOtevrit(dokUidZ(el)); };
+TD_AKCE.tdDokPdf = function (el) { if (typeof dokNahledZeSeznamu === 'function') dokNahledZeSeznamu(dokUidZ(el)); };
+TD_AKCE.tdDokKopie = function (el) { dokKopirovat(dokUidZ(el)); };
+TD_AKCE.tdDokSmazat = function (el) { dokSmazat(dokUidZ(el)); };
+TD_AKCE.tdKatalog = function () { dokKatalogOtevrit(); };
+TD_AKCE.tdKatalogZavrit = function () { closeModal('modal-dok-katalog'); };
+TD_AKCE.tdVzorNovy = function () { dokVzorDialog(null, null); };
+TD_AKCE.tdVzorUpravit = function (el) { var v = dokVzor(dokVzorIdZ(el)); if (v) dokVzorDialog(v, v.id); };
+TD_AKCE.tdVzorJakoVlastni = function (el) {
+  var v = dokVzor(dokVzorIdZ(el)); if (!v) return;
+  v.nazev = v.nazev + ' (vlastní)';
+  dokVzorDialog(v, null, '🧩 Nový vlastní vzor podle „' + dokVzor(dokVzorIdZ(el)).nazev + '"');
+};
+TD_AKCE.tdVzorSmazat = function (el) { dokVzorSmazat(dokVzorIdZ(el)); };
+TD_AKCE.tdVzorSkryt = function (el) { dokVzorSkrytPrepnout(dokVzorIdZ(el)); };
+TD_AKCE.tdVzorZavrit = function () { closeModal('modal-dok-vzor'); };
+TD_AKCE.tdVzorUlozit = function () { dokVzorUlozit(); };
+TD_AKCE.tdVzorJmenoPrepsat = function () { dokVzorUlozit('prepsat'); };
+TD_AKCE.tdVzorJmenoNovy = function () { dokVzorUlozit('novy'); };
+TD_AKCE.tdVzorJmenoZpet = function () { __dokVzorJmeno = null; closeModal('modal-dok-vzor-jmeno'); };
+// ── Protokol o určení vnějších vlivů — výchozí obsah ─────────────────────
+var DOK_VV_PODKLADY = [
+  'ČSN 33 2000-5-51 ed. 3 – Elektrotechnické instalace budov, část 5-51: Výběr a stavba elektrických zařízení – Všeobecné předpisy',
+  'ČSN 33 2130 ed. 3 – Elektrické instalace nízkého napětí – Vnitřní elektrické rozvody',
+  'ČSN 33 2000-4-41 ed. 3 – Elektrické instalace nízkého napětí – Část 4-41: Ochranná opatření pro zajištění bezpečnosti – Ochrana před úrazem elektrickým proudem'
+].join('\n');
+var DOK_VV_ZDUVODNENI = 'Určení vnějších vlivů je v souladu s navrženou technologií, technologickými postupy jednotlivých ' +
+  'objektů, stavebního řešení a atmosférickými vlivy v dané lokalitě s přihlédnutím na mikroklima, které je ovlivněno ' +
+  'použitými technologiemi a činnostmi.';
+var DOK_VV_VETA = 'Podle ČSN 33 2000-5-51 ed.3 jsou stanoveny vnější vlivy pro objekty, uvedené v bodu B, následovně:';
+
+function pouvvSkupinaNova() { return { uid: dokUid(), prostory: [], vzor: '', kody: {}, pozn: '' }; }
+
+DOK_TYPY.pouvv.novy = function () {
+  // Vypracoval a místo z posledního protokolu, jinak z profilu technika
+  var posl = DOK.dokumenty.filter(function (x) { return x.typ === 'pouvv'; })
+    .sort(function (a, b) { return String(b.upraveno || '').localeCompare(String(a.upraveno || '')); })[0];
+  var pd = (posl && posl.data) || {}, t = (typeof STORE !== 'undefined' && STORE.technik) || {};
+  return {
+    cislo: '',
+    investor: { ico: '', nazev: '', adresa: '' },
+    zpracovatel: { ico: '', nazev: '', adresa: '' },
+    projektant: { titul: '', jmeno: '', evidence: '', obor: '' },
+    stavba: '', misto: '', predmet: '', druh: '', stupen: '',
+    komise: [{ jmeno: '', funkce: '', predseda: true }],
+    vypracoval: pd.vypracoval || t.jmeno || '',
+    vypracovalMisto: pd.vypracovalMisto || t.mesto || '',
+    datum: new Date().toISOString().slice(0, 10),
+    podklady: DOK_VV_PODKLADY,
+    popis: '', technologie: '', chemikalie: '',
+    zduvodneni: DOK_VV_ZDUVODNENI,
+    skupiny: [pouvvSkupinaNova()]
+  };
+};
+
+// ── Formulář — stavebnice ────────────────────────────────────────────────
+function dkPole(cesta, label, hodnota, o) {
+  o = o || {};
+  var attr = ' data-dk="' + cesta + '"' + (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') +
+             (o.list ? ' list="' + o.list + '"' : '') + (o.attr || '');
+  var pole = o.radky
+    ? '<textarea' + attr + ' rows="' + o.radky + '" spellcheck="true" lang="cs">' + esc(hodnota) + '</textarea>'
+    : '<input type="' + (o.typ || 'text') + '"' + attr + ' value="' + esc(hodnota) + '" autocomplete="off">';
+  return '<div class="f' + (o.span ? ' ' + o.span : '') + '"><label>' + esc(label) +
+    (o.nepov ? ' <span class="dk-nepov">(nepovinné)</span>' : '') + '</label>' + pole + (o.za || '') + '</div>';
+}
+
+function dkFirma(klic, titul, f, nepov) {
+  f = f || {};
+  return '<div class="dk-blok-t">' + esc(titul) + (nepov ? ' <span class="dk-nepov">(nepovinné)</span>' : '') + '</div>' +
+    '<div class="g3">' +
+      '<div class="f"><label>IČO</label><div class="dk-ares">' +
+        '<input type="text" data-dk="' + klic + '.ico" value="' + esc(f.ico) + '" inputmode="numeric" placeholder="12345678" autocomplete="off">' +
+        '<button class="magic-btn" data-action="tdAres" data-cil="' + klic + '" title="Doplní název a adresu z registru ARES">🔍 ARES</button></div></div>' +
+      dkPole(klic + '.nazev', 'Název / jméno', f.nazev, { span: 'span2' }) +
+      dkPole(klic + '.adresa', 'Adresa', f.adresa, { span: 'span3', ph: 'Ulice 123, 697 01 Kyjov' }) +
+    '</div>';
+}
+
+function dkOsobaHtml(p) {
+  p = p || {};
+  return '<div class="dk-osoba">' +
+    '<input class="dk-in" data-k="jmeno" list="dk-osoby-list" placeholder="Jméno a příjmení (s titulem)" value="' + esc(p.jmeno) + '" autocomplete="off">' +
+    '<input class="dk-in" data-k="funkce" placeholder="Funkce / za koho" value="' + esc(p.funkce) + '" autocomplete="off">' +
+    '<label class="dk-predseda" title="Předseda komise"><input type="radio" name="dk-predseda"' + (p.predseda ? ' checked' : '') + '> předseda</label>' +
+    '<button class="dok-mini dok-mini-del" data-action="tdOsobaSmazat" title="Odebrat z komise">✕</button></div>';
+}
+
+function dkProstorHtml(p) {
+  p = p || {};
+  return '<div class="dk-prostor">' +
+    '<input class="dk-in dk-c" data-k="c" placeholder="č. m." value="' + esc(p.c) + '" autocomplete="off">' +
+    '<input class="dk-in" data-k="n" placeholder="Název prostoru" value="' + esc(p.n) + '" autocomplete="off">' +
+    '<button class="dok-mini dok-mini-del" data-action="tdProstorSmazat" title="Odebrat prostor">✕</button></div>';
+}
+
+function dokVzorMoznosti(akt) {
+  var vse = dokVzory(true).filter(function (v) { return !v.skryty || v.id === akt; });
+  return '<option value="">— vybrat vzor (předvyplní kódy) —</option>' +
+    dokVzorySkupiny(vse).map(function (g) {
+      return '<optgroup label="' + esc(g.nazev) + '">' + g.vzory.map(function (v) {
+        return '<option value="' + esc(v.id) + '"' + (v.id === akt ? ' selected' : '') + '>' + esc(v.nazev) + '</option>';
+      }).join('') + '</optgroup>';
+    }).join('');
+}
+
+function dkSouhrnHtml(kody) {
+  var r = dokVvRadky(kody);
+  if (!r.length) return '<span class="dk-souhrn-t">Zatím žádné kódy — vyberte vzor nebo třídy ručně.</span>';
+  return '<div class="dk-souhrn-t">Do protokolu půjde:</div>' + r.map(function (x) {
+    return '<div>' + x.id + ') ' + esc(x.nazev) + ': <b>' + x.kody.join(', ') + '</b></div>';
+  }).join('');
+}
+
+function dkSkupinaHtml(g) {
+  var prostory = (g.prostory && g.prostory.length) ? g.prostory : [{}];
+  return '<div class="dk-skupina" data-sk="' + esc(g.uid || dokUid()) + '">' +
+    '<div class="dk-skupina-hlava"><span class="dk-sk-titul">Skupina prostorů <b class="dk-sk-cislo"></b></span>' +
+      '<span class="dok-p-akce"><button class="dok-mini" data-action="tdSkupinaKopie" title="Přidat další skupinu se stejnými kódy a poznámkou">⧉ Kopírovat</button>' +
+      '<button class="dok-mini dok-mini-del" data-action="tdSkupinaSmazat">✕ Smazat skupinu</button></span></div>' +
+    '<div class="dk-blok-t">Prostory</div>' +
+    '<div class="dk-prostory">' + prostory.map(dkProstorHtml).join('') + '</div>' +
+    '<div class="dk-akce-radek"><button class="add-row" data-action="tdProstorPridat">+ Přidat prostor</button>' +
+      '<button class="add-row" data-action="tdProstoryVlozit">📋 Vložit seznam z Excelu / textu</button></div>' +
+    '<div class="dk-blok-t">Vzor</div>' +
+    '<div class="dk-vzor-vyber-radek"><select class="dk-in dk-vzor-vyber" title="Vzor předvyplní kódy, poznámku a nabídne texty oddílu B">' +
+      dokVzorMoznosti(g.vzor) + '</select>' +
+      '<button class="dok-mini" data-action="tdVzorZeSkupiny" title="Uložit kódy, poznámku a texty oddílu B jako vlastní vzor">💾 Uložit jako vlastní vzor</button></div>' +
+    dkUpozorneniHtml(g.vzor) +
+    dokKodyHtml(g.kody) +
+    '<div class="dk-souhrn">' + dkSouhrnHtml(g.kody) + '</div>' +
+    '<div class="f"><label>Poznámka <span class="dk-nepov">(např. zóny dle ČSN 33 2000-7-701)</span></label>' +
+      '<textarea data-k="pozn" rows="2" spellcheck="true" lang="cs">' + esc(g.pozn) + '</textarea></div>' +
+  '</div>';
+}
+
+DOK_TYPY.pouvv.form = function (d) {
+  var komise = (d.komise && d.komise.length) ? d.komise : [{ predseda: true }];
+  return '' +
+    '<div class="scard"><div class="scard-title">🌦 Hlavička protokolu</div>' +
+      '<div class="g3">' +
+        '<div class="f"><label>Číslo protokolu</label><div class="dk-ares">' +
+          '<input type="text" data-dk="cislo" value="' + esc(d.cislo) + '" placeholder="POUVV-0001" autocomplete="off">' +
+          '<button class="dok-mini" data-action="tdCisloDalsi" title="Přidělit další volné číslo">⟳</button></div></div>' +
+      '</div>' +
+      dkFirma('investor', 'Investor', d.investor) +
+      dkFirma('zpracovatel', 'Zpracovatel', d.zpracovatel, true) +
+      '<div class="dk-blok-t">Autorizovaný projektant <span class="dk-nepov">(nepovinné)</span></div>' +
+      '<div class="g4">' +
+        dkPole('projektant.titul', 'Titul', (d.projektant || {}).titul, { ph: 'Ing.' }) +
+        dkPole('projektant.jmeno', 'Jméno a příjmení', (d.projektant || {}).jmeno) +
+        dkPole('projektant.evidence', 'Č. evidence', (d.projektant || {}).evidence) +
+        dkPole('projektant.obor', 'Obor autorizace', (d.projektant || {}).obor) +
+      '</div>' +
+      '<div class="dk-blok-t">Stavba</div>' +
+      '<div class="g2">' +
+        dkPole('stavba', 'Název stavby', d.stavba, { span: 'span2' }) +
+        dkPole('misto', 'Místo stavby', d.misto) +
+        dkPole('predmet', 'Předmět dokumentace', d.predmet) +
+        dkPole('druh', 'Druh stavby', d.druh, { nepov: true }) +
+        dkPole('stupen', 'Stupeň dokumentace', d.stupen, { nepov: true }) +
+      '</div>' +
+    '</div>' +
+    '<div class="scard"><div class="scard-title">👥 Komise a vypracování</div>' +
+      '<div class="dk-pozn">Předsedu komise označte přepínačem. Jména si program pamatuje a příště je nabídne i s funkcí.</div>' +
+      '<div id="dk-komise">' + komise.map(dkOsobaHtml).join('') + '</div>' +
+      '<button class="add-row" data-action="tdOsobaPridat">+ Přidat člena komise</button>' +
+      '<div class="g3" style="margin-top:1rem">' +
+        dkPole('vypracoval', 'Vypracoval', d.vypracoval, { list: 'dk-osoby-list' }) +
+        dkPole('vypracovalMisto', 'Místo', d.vypracovalMisto) +
+        dkPole('datum', 'Datum', d.datum, { typ: 'date' }) +
+      '</div>' +
+    '</div>' +
+    '<div class="scard"><div class="scard-title">A. Podklady</div>' +
+      dkPole('podklady', 'Seznam podkladů — každý na samostatném řádku', d.podklady, { radky: 4 }) +
+      '<button class="add-row" data-action="tdVychozi" data-pole="podklady">↺ Výchozí seznam norem</button>' +
+    '</div>' +
+    '<div class="scard"><div class="scard-title">B. Popis</div>' +
+      DOK_VV_TEXTY_B.map(function (b) {
+        return '<div class="dk-b" data-b="' + b.k + '" style="margin-bottom:.9rem">' +
+          dkPole(b.k, b.nazev, d[b.k], { radky: b.k === 'popis' ? 4 : 3 }) + '<div class="dk-nabidka-b"></div></div>';
+      }).join('') +
+    '</div>' +
+    '<div class="scard"><div class="scard-title">C. Rozhodnutí a zdůvodnění</div>' +
+      dkPole('zduvodneni', 'Obecné zdůvodnění', d.zduvodneni, { radky: 3 }) +
+      '<button class="add-row" data-action="tdVychozi" data-pole="zduvodneni">↺ Výchozí text</button>' +
+      '<div class="dk-pozn" style="margin-top:.9rem">Každá skupina prostorů má vlastní kódy — např. kanceláře zvlášť a sprchy zvlášť. ' +
+        'V PDF bude u skupiny seznam prostorů, věta „' + esc(DOK_VV_VETA) + '" a řádky a) / b) / c) jen s kódy.</div>' +
+      '<div id="dk-skupiny">' + (d.skupiny && d.skupiny.length ? d.skupiny : [pouvvSkupinaNova()]).map(dkSkupinaHtml).join('') + '</div>' +
+      '<button class="add-row" data-action="tdSkupinaPridat">+ Přidat skupinu prostorů</button>' +
+    '</div>';
+};
+
+function dkNastavCestu(o, cesta, v) {
+  var c = cesta.split('.');
+  for (var i = 0; i < c.length - 1; i++) { if (!o[c[i]] || typeof o[c[i]] !== 'object') o[c[i]] = {}; o = o[c[i]]; }
+  o[c[c.length - 1]] = v;
+}
+
+DOK_TYPY.pouvv.cist = function (koren) {
+  var d = { investor: {}, zpracovatel: {}, projektant: {} };
+  koren.querySelectorAll('[data-dk]').forEach(function (el) { dkNastavCestu(d, el.getAttribute('data-dk'), el.value); });
+  d.komise = Array.prototype.map.call(koren.querySelectorAll('#dk-komise .dk-osoba'), function (r) {
+    return { jmeno: r.querySelector('[data-k="jmeno"]').value.trim(), funkce: r.querySelector('[data-k="funkce"]').value.trim(),
+             predseda: r.querySelector('input[type=radio]').checked };
+  }).filter(function (p) { return p.jmeno || p.funkce; });
+  d.skupiny = Array.prototype.map.call(koren.querySelectorAll('.dk-skupina'), function (sk) {
+    return {
+      uid: sk.getAttribute('data-sk'),
+      prostory: Array.prototype.map.call(sk.querySelectorAll('.dk-prostor'), function (r) {
+        return { c: r.querySelector('[data-k="c"]').value.trim(), n: r.querySelector('[data-k="n"]').value.trim() };
+      }).filter(function (p) { return p.c || p.n; }),
+      vzor: sk.querySelector('.dk-vzor-vyber').value,
+      kody: dokKodyCist(sk),
+      pozn: sk.querySelector('[data-k="pozn"]').value.trim()
+    };
+  });
+  return d;
+};
+
+// ── Otevřený dokument, ukládání ─────────────────────────────────────────
+// Ukládá se samo (800 ms po poslední změně), Ctrl+S a 💾 hned. Nový
+// dokument se do seznamu dostane až po první změně — prázdný se neuloží.
+window.__dokOtevreny = null;
+var __dokCasovac = null, __dokGen = 0, __dokUlozenoGen = 0, __dokUklada = null;
+
+function dokForm() { return document.getElementById('dok-form-obsah'); }
+
+function dokFormVykreslit() {
+  var o = window.__dokOtevreny; if (!o) return;
+  var t = DOK_TYPY[o.typ];
+  dokForm().innerHTML = t.form(o.data);
+  dkSkupinyPrecislovat();
+  dokOsobyDatalist();
+  dokNabidkyB();
+  dokStav();
+}
+
+function dokStav() {
+  var o = window.__dokOtevreny, el = document.getElementById('dok-stav'), tit = document.getElementById('dok-form-titul');
+  if (!o || !el) return;
+  var cislo = ((dokForm().querySelector('[data-dk="cislo"]') || {}).value || '').trim();
+  if (tit) tit.textContent = DOK_TYPY[o.typ].nazev + (cislo ? ' · ' + cislo : '');
+  var dup = cislo && DOK.dokumenty.some(function (x) { return x.uid !== o.uid && String(x.cislo || '').trim() === cislo; });
+  if (dup) { el.className = 'dok-stav varovani'; el.textContent = '⚠ Číslo ' + cislo + ' už má jiný dokument'; return; }
+  if (__dokGen !== __dokUlozenoGen) { el.className = 'dok-stav neulozeno'; el.textContent = '● Ukládám…'; return; }
+  if (!o.ulozen) { el.className = 'dok-stav'; el.textContent = 'Nový dokument — uloží se, jakmile něco vyplníte'; return; }
+  var d = o.upraveno ? new Date(o.upraveno) : null;
+  el.className = 'dok-stav ulozeno';
+  el.textContent = '✓ Uloženo' + (d ? ' ' + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }) : '');
+}
+
+function dokZmena() {
+  if (!window.__dokOtevreny) return;
+  __dokGen++;
+  dokStav();
+  clearTimeout(__dokCasovac);
+  __dokCasovac = setTimeout(function () { dokUlozitOtevreny(); }, 800);
+}
+
+// Přečte formulář a zapíše dokument. „Načti – uprav – zapiš", aby okno
+// nepřepsalo dokumenty uložené mezitím v jiném okně.
+async function dokUlozitOtevreny() {
+  var o = window.__dokOtevreny; if (!o) return false;
+  clearTimeout(__dokCasovac); __dokCasovac = null;
+  if (__dokUklada) await __dokUklada;
+  var gen = __dokGen;
+  var data = DOK_TYPY[o.typ].cist(dokForm());
+  var ted = new Date().toISOString();
+  __dokUklada = (async function () {
+    await dokNacist();
+    var z = { uid: o.uid, typ: o.typ, cislo: String(data.cislo || '').trim(), vytvoreno: o.vytvoreno || ted, upraveno: ted, data: data };
+    var i = -1;
+    DOK.dokumenty.forEach(function (x, j) { if (x.uid === o.uid) i = j; });
+    if (i >= 0) DOK.dokumenty[i] = z; else DOK.dokumenty.unshift(z);
+    dokZapamatovatOsoby((data.komise || []).concat(data.vypracoval ? [{ jmeno: data.vypracoval, funkce: '' }] : []));
+    await dokZapsat();
+  })();
+  await __dokUklada; __dokUklada = null;
+  if (window.__dokOtevreny !== o) return true;
+  o.upraveno = ted; o.ulozen = true; o.data = data;
+  if (__dokGen === gen) __dokUlozenoGen = gen;
+  dokStav();
+  dokOsobyDatalist();
+  return true;
+}
+
+// Okno se zavírá — dopsat hned, synchronně do localStorage (IndexedDB
+// to nemusí stihnout; dokNacist pak vezme novější zápis podle času).
+function dokUlozitHned() {
+  var o = window.__dokOtevreny;
+  if (!o || !__dokCasovac) return;
+  clearTimeout(__dokCasovac); __dokCasovac = null;
+  var data = DOK_TYPY[o.typ].cist(dokForm()), ted = new Date().toISOString();
+  var z = { uid: o.uid, typ: o.typ, cislo: String(data.cislo || '').trim(), vytvoreno: o.vytvoreno || ted, upraveno: ted, data: data };
+  var i = -1;
+  DOK.dokumenty.forEach(function (x, j) { if (x.uid === o.uid) i = j; });
+  if (i >= 0) DOK.dokumenty[i] = z; else DOK.dokumenty.unshift(z);
+  dokZapsat();
+}
+window.addEventListener('pagehide', dokUlozitHned);
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden' && __dokCasovac) dokUlozitOtevreny();
+});
+
+async function dokDopsat() {
+  if (__dokCasovac) await dokUlozitOtevreny();
+  else if (__dokUklada) await __dokUklada;
+}
+
+async function dokOtevrit(uid) {
+  await dokDopsat();
+  await dokNacist();
+  var x = dokNajit(uid);
+  if (!x) { showToast('Dokument se nenašel — možná ho mezitím někdo smazal.'); dokOtevritSeznam(); return; }
+  window.__dokOtevreny = { uid: x.uid, typ: x.typ, vytvoreno: x.vytvoreno, upraveno: x.upraveno, ulozen: true, data: dokKopie(x.data || {}) };
+  __dokGen = __dokUlozenoGen = 0;
+  dokFormVykreslit();
+  showScreen('dok-form');
+}
+
+async function dokNovy(typ) {
+  if (!DOK_TYPY[typ]) return;
+  await dokDopsat();
+  await dokNacist();
+  var d = DOK_TYPY[typ].novy();
+  d.cislo = dokDalsiCislo(typ);
+  window.__dokOtevreny = { uid: dokUid(), typ: typ, vytvoreno: '', upraveno: '', ulozen: false, data: d };
+  __dokGen = __dokUlozenoGen = 0;
+  dokFormVykreslit();
+  showScreen('dok-form');
+}
+
+// Jiné okno uložilo — je-li otevřený dokument tady neupravený, ukáže novější verzi.
+function dokFormZJinehoOkna() {
+  var o = window.__dokOtevreny, s = document.getElementById('screen-dok-form');
+  if (!o || !o.ulozen || !s || !s.classList.contains('active')) return;
+  var x = dokNajit(o.uid);
+  if (!x) { showToast('⚠ Dokument ' + (o.data.cislo || '') + ' byl v jiném okně smazán. Další změnou ho zase uložíte.', { timeout: 10000 }); return; }
+  if (String(x.upraveno || '') <= String(o.upraveno || '')) return;
+  if (__dokGen !== __dokUlozenoGen) {
+    showToast('⚠ Dokument ' + (x.cislo || '') + ' jste mezitím uložil v jiném okně — tady máte rozepsané změny, uloží se přes něj.', { timeout: 10000 });
+    return;
+  }
+  var y = window.scrollY;
+  o.data = dokKopie(x.data || {}); o.upraveno = x.upraveno;
+  dokFormVykreslit();
+  window.scrollTo(0, y);
+  showToast('↻ Dokument ' + (x.cislo || '') + ' byl uložen v jiném okně — formulář ukazuje novější verzi.', { timeout: 8000 });
+}
+
+// ── Komise ──────────────────────────────────────────────────────────────
+function dokOsobyDatalist() {
+  var dl = document.getElementById('dk-osoby-list'); if (!dl) return;
+  dl.innerHTML = DOK.osoby.slice().sort(function (a, b) { return a.jmeno.localeCompare(b.jmeno, 'cs'); }).map(function (o) {
+    return '<option value="' + esc(o.jmeno) + '">' + esc(o.funkce || '') + '</option>';
+  }).join('');
+}
+
+function dokOsobaDoplnFunkci(inp) {
+  var r = inp.closest('.dk-osoba'); if (!r) return;
+  var f = r.querySelector('[data-k="funkce"]');
+  if (!f || f.value.trim()) return;
+  var j = inp.value.trim().toLowerCase();
+  DOK.osoby.forEach(function (o) { if (o.jmeno.toLowerCase() === j && o.funkce) f.value = o.funkce; });
+}
+
+// ── Skupiny prostorů ────────────────────────────────────────────────────
+function dkSkupinyPrecislovat() {
+  var sk = dokForm().querySelectorAll('.dk-skupina');
+  sk.forEach(function (s, i) {
+    s.querySelector('.dk-sk-cislo').textContent = String(i + 1);
+    var del = s.querySelector('[data-action="tdSkupinaSmazat"]');
+    if (del) del.style.display = sk.length > 1 ? '' : 'none';
+  });
+}
+
+function dkSouhrnObnovit(sk) {
+  var b = sk.querySelector('.dk-souhrn'); if (b) b.innerHTML = dkSouhrnHtml(dokKodyCist(sk));
+}
+
+function dkSkupinaZ(el) { return el.closest('.dk-skupina'); }
+
+// Upozornění vzoru — JEN nápověda pro technika ve formuláři, do dat
+// protokolu ani do PDF se nedostane (bere se za běhu z vybraného vzoru).
+function dkUpozorneniHtml(id) {
+  var v = id ? dokVzor(id) : null;
+  if (!v || !v.upozorneni) return '<div class="dk-upozorneni" style="display:none"></div>';
+  return '<div class="dk-upozorneni' + (v.vyrazne ? ' vyrazne' : '') + '"><b>⚠ Upozornění ke vzoru:</b> ' + esc(v.upozorneni) + '</div>';
+}
+
+function dkUpozorneniObnovit(sk) {
+  var el = sk.querySelector('.dk-upozorneni'); if (!el) return;
+  el.outerHTML = dkUpozorneniHtml(sk.querySelector('.dk-vzor-vyber').value);
+}
+
+function dokVzorPouzit(sk, id) {
+  var v = dokVzor(id); if (!v) return;
+  var f = dokForm();
+  var poznEl = sk.querySelector('[data-k="pozn"]');
+  var pred = { kody: dokKodyCist(sk), pozn: poznEl.value, vzor: sk.getAttribute('data-vzor') || '', b: {} };
+  DOK_VV_TEXTY_B.forEach(function (b) { pred.b[b.k] = f.querySelector('[data-dk="' + b.k + '"]').value; });
+  dokKodyNastavit(sk, v.kody);
+  if (!poznEl.value.trim() && v.pozn) poznEl.value = v.pozn;
+  var doplneno = [];
+  DOK_VV_TEXTY_B.forEach(function (b) {
+    var t = (v.texty || {})[b.k], el = f.querySelector('[data-dk="' + b.k + '"]');
+    if (t && !el.value.trim()) { el.value = t; doplneno.push(b.nazev.toLowerCase()); }
+  });
+  sk.setAttribute('data-vzor', id);
+  dkUpozorneniObnovit(sk);
+  dkSouhrnObnovit(sk);
+  dokNabidkyB();
+  dokZmena();
+  showToast('🧩 Vzor „' + v.nazev + '" — kódy předvyplněny' +
+    (doplneno.length ? ', do oddílu B doplněno: ' + doplneno.join(', ') : '') + '. Kterýkoli kód jde změnit.', {
+    timeout: 9000, actionLabel: '↩ ZPĚT', action: function () {
+      if (!document.body.contains(sk)) return;
+      dokKodyNastavit(sk, pred.kody);
+      poznEl.value = pred.pozn;
+      DOK_VV_TEXTY_B.forEach(function (b) { f.querySelector('[data-dk="' + b.k + '"]').value = pred.b[b.k]; });
+      var sel = sk.querySelector('.dk-vzor-vyber'); sel.value = pred.vzor;
+      sk.setAttribute('data-vzor', pred.vzor);
+      dkUpozorneniObnovit(sk); dkSouhrnObnovit(sk); dokNabidkyB(); dokZmena();
+    } });
+}
+
+function dokFormVzoryObnovit() {
+  var f = dokForm(); if (!f || !window.__dokOtevreny) return;
+  f.querySelectorAll('.dk-vzor-vyber').forEach(function (s) { var v = s.value; s.innerHTML = dokVzorMoznosti(v); s.value = v; });
+  f.querySelectorAll('.dk-skupina').forEach(dkUpozorneniObnovit);
+  dokNabidkyB();
+}
+
+// Texty oddílu B ze vzorů — nabídka pod každým polem. Vzory použité ve
+// skupinách tohoto protokolu jdou první.
+function dokNabidkyB() {
+  var f = dokForm(); if (!f) return;
+  var pouzite = Array.prototype.map.call(f.querySelectorAll('.dk-vzor-vyber'), function (s) { return s.value; });
+  var vzory = dokVzory(true).filter(function (v) { return !v.skryty || pouzite.indexOf(v.id) !== -1; });
+  f.querySelectorAll('.dk-b').forEach(function (box) {
+    var k = box.getAttribute('data-b');
+    var s = vzory.filter(function (v) { return v.texty && v.texty[k]; });
+    var cil = box.querySelector('.dk-nabidka-b');
+    cil.innerHTML = s.length ? '<select class="dk-in dk-nabidka" title="Vloží text vzoru do pole (prázdné pole vyplní, jinak připojí na konec). ✓ = vzor použitý ve skupině tohoto protokolu">' +
+      '<option value="">📋 Vložit text ze vzoru…</option>' + dokVzorySkupiny(s).map(function (g) {
+        return '<optgroup label="' + esc(g.nazev) + '">' + g.vzory.map(function (v) {
+          return '<option value="' + esc(v.id) + '">' + (pouzite.indexOf(v.id) !== -1 ? '✓ ' : '') + esc(v.nazev) + '</option>';
+        }).join('') + '</optgroup>';
+      }).join('') + '</select>' : '';
+  });
+}
+
+function dokVlozitTextB(sel) {
+  var box = sel.closest('.dk-b'), k = box.getAttribute('data-b'), v = dokVzor(sel.value);
+  sel.value = '';
+  if (!v || !v.texty || !v.texty[k]) return;
+  var el = box.querySelector('[data-dk="' + k + '"]'), t = v.texty[k], pred = el.value;
+  if (pred.indexOf(t) !== -1) { showToast('Text vzoru „' + v.nazev + '" už v poli je.'); return; }
+  el.value = pred.trim() ? pred.replace(/\s+$/, '') + '\n' + t : t;
+  dokZmena();
+  showToast('Vložen text ze vzoru „' + v.nazev + '" — můžete ho upravit.', { timeout: 7000, actionLabel: '↩ ZPĚT',
+    action: function () { el.value = pred; dokZmena(); } });
+}
+
+// ── Seznam prostorů z Excelu nebo textu ─────────────────────────────────
+// Dva sloupce z Excelu (tabulátor), nebo řádky „101 Kancelář" /
+// „1.02 – Sprcha". První slovo s číslicí (do 12 znaků) = číslo místnosti.
+// Hlavička tabulky („Číslo / Název místnosti") se přeskočí.
+function dokRozborProstoru(text) {
+  var out = [], prvni = true;
+  String(text || '').replace(/\r/g, '').split('\n').forEach(function (r) {
+    if (!r.trim()) return;
+    var c = '', n = '';
+    if (r.indexOf('\t') !== -1) {
+      var b = r.split('\t').map(function (s) { return s.trim(); }).filter(Boolean);
+      if (b.length >= 2 && /\d/.test(b[0]) && b[0].length <= 12) { c = b[0]; n = b.slice(1).join(' '); }
+      else n = b.join(' ');
+    } else {
+      var m = /^\s*(\S+)\s+(.*)$/.exec(r);
+      if (m && /\d/.test(m[1]) && m[1].length <= 12) { c = m[1].replace(/[-–—:]+$/, ''); n = m[2].replace(/^[-–—:]\s*/, '').trim(); }
+      else n = r.trim();
+    }
+    var hlavicka = prvni && !/\d/.test(c + n) && /(číslo|cislo|č\.|název|nazev|místnost|mistnost|prostor)/i.test(r);
+    prvni = false;
+    if (hlavicka) return;
+    out.push({ c: c, n: n });
+  });
+  return out;
+}
+
+// Vloží prostory do skupiny od řádku `od` (prvek .dk-prostor) — přepíše od
+// něj dál, zbytek přidá. Bez `od` se využijí prázdné řádky na konci.
+function dokProstoryVlozit(sk, seznam, od) {
+  var box = sk.querySelector('.dk-prostory');
+  var pred = Array.prototype.map.call(box.querySelectorAll('.dk-prostor'), function (r) {
+    return { c: r.querySelector('[data-k="c"]').value, n: r.querySelector('[data-k="n"]').value };
+  });
+  var radky = Array.prototype.slice.call(box.querySelectorAll('.dk-prostor'));
+  var i;
+  if (od) i = radky.indexOf(od);
+  else {
+    i = radky.length;
+    while (i > 0) {
+      var r = radky[i - 1];
+      if (r.querySelector('[data-k="c"]').value.trim() || r.querySelector('[data-k="n"]').value.trim()) break;
+      i--;
+    }
+  }
+  seznam.forEach(function (p) {
+    var r = radky[i];
+    if (!r) { box.insertAdjacentHTML('beforeend', dkProstorHtml({})); r = box.lastElementChild; radky.push(r); }
+    r.querySelector('[data-k="c"]').value = p.c;
+    r.querySelector('[data-k="n"]').value = p.n;
+    i++;
+  });
+  dokZmena();
+  showToast('Vloženo ' + seznam.length + ' ' + (seznam.length === 1 ? 'prostor' : (seznam.length < 5 ? 'prostory' : 'prostorů')) + '.', {
+    timeout: 8000, actionLabel: '↩ ZPĚT', action: function () {
+      if (!document.body.contains(box)) return;
+      box.innerHTML = (pred.length ? pred : [{}]).map(dkProstorHtml).join('');
+      dokZmena();
+    } });
+}
+
+var __dokVlozitSk = null;
+function dokVlozitDialog(sk) {
+  __dokVlozitSk = sk;
+  var t = document.getElementById('dok-vlozit-text'); t.value = '';
+  document.getElementById('dok-vlozit-nahled').textContent = '';
+  document.getElementById('modal-dok-vlozit').classList.add('open');
+  setTimeout(function () { t.focus(); }, 50);
+}
+
+function dokVlozitNahled() {
+  var s = dokRozborProstoru(document.getElementById('dok-vlozit-text').value);
+  document.getElementById('dok-vlozit-nahled').innerHTML = s.length
+    ? 'Rozpoznáno <b>' + s.length + '</b>: ' + s.slice(0, 6).map(function (p) { return esc((p.c ? p.c + ' – ' : '') + p.n); }).join(' · ') + (s.length > 6 ? ' …' : '')
+    : '';
+}
+
+// ── Posluchače formuláře ────────────────────────────────────────────────
+document.addEventListener('input', function (e) {
+  var t = e.target;
+  if (!t || !t.closest) return;
+  if (t.id === 'dok-vlozit-text') { dokVlozitNahled(); return; }
+  if (!t.closest('#dok-form-obsah')) return;
+  if (t.classList.contains('dk-vzor-vyber') || t.classList.contains('dk-nabidka')) return;   // řeší `change`
+  if (t.getAttribute('data-dk') === 'cislo') dokStav();
+  dokZmena();
+});
+
+document.addEventListener('change', function (e) {
+  var t = e.target;
+  if (!t || !t.closest || !t.closest('#dok-form-obsah')) return;
+  if (t.classList.contains('dk-vzor-vyber')) {
+    var sk = dkSkupinaZ(t);
+    if (t.value) dokVzorPouzit(sk, t.value);
+    else { sk.setAttribute('data-vzor', ''); dkUpozorneniObnovit(sk); dokNabidkyB(); dokZmena(); }
+    return;
+  }
+  if (t.classList.contains('dk-nabidka')) { dokVlozitTextB(t); return; }
+  if (t.matches('select[data-kod]')) dkSouhrnObnovit(dkSkupinaZ(t));
+  if (t.getAttribute('data-k') === 'jmeno') dokOsobaDoplnFunkci(t);
+  dokZmena();
+});
+
+// Ctrl+V do prostoru s víc řádky = vložit celý seznam od toho řádku
+document.addEventListener('paste', function (e) {
+  var t = e.target;
+  if (!t || !t.closest || !t.closest('#dok-form-obsah .dk-prostor')) return;
+  var text = (e.clipboardData || window.clipboardData).getData('text') || '';
+  if (!/[\n\t]/.test(text.replace(/\s+$/, ''))) return;
+  var s = dokRozborProstoru(text);
+  if (!s.length) return;
+  e.preventDefault();
+  dokProstoryVlozit(dkSkupinaZ(t), s, t.closest('.dk-prostor'));
+});
+
+document.addEventListener('keydown', function (e) {
+  var f = document.getElementById('screen-dok-form');
+  if (!f || !f.classList.contains('active') || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+  var k = String(e.key || '').toLowerCase();
+  if (k === 's') {
+    e.preventDefault();
+    dokUlozitOtevreny().then(function () { showToast('💾 Dokument uložen ✓'); });
+  } else if (k === 'p') {
+    e.preventDefault();
+    if (typeof dokNahled === 'function') dokNahled();
+  }
+});
+
+// ── Akce ────────────────────────────────────────────────────────────────
+TD_AKCE.tdZpetNaSeznam = function () {
+  var typ = window.__dokOtevreny ? window.__dokOtevreny.typ : __dokTyp;
+  dokDopsat().then(function () { dokOtevritSeznam(typ); });
+};
+TD_AKCE.tdUlozit = function () { dokUlozitOtevreny().then(function () { showToast('💾 Dokument uložen ✓'); }); };
+TD_AKCE.tdNahled = function () { if (typeof dokNahled === 'function') dokNahled(); };
+TD_AKCE.tdCisloDalsi = function () {
+  var o = window.__dokOtevreny; if (!o) return;
+  var el = dokForm().querySelector('[data-dk="cislo"]');
+  var ost = DOK.dokumenty.filter(function (x) { return x.uid !== o.uid; });
+  var zal = DOK.dokumenty; DOK.dokumenty = ost;
+  try { el.value = dokDalsiCislo(o.typ); } finally { DOK.dokumenty = zal; }
+  dokZmena();
+};
+TD_AKCE.tdAres = function (el) {
+  var cil = el.getAttribute('data-cil'), f = dokForm();
+  var pole = function (k) { return f.querySelector('[data-dk="' + cil + '.' + k + '"]'); };
+  lookupIcoFromAres(pole('ico').value, '__odberatel_inline', el, { targetCallback: function (data, ico) {
+    var s = data.sidlo || {};
+    var adr = s.textovaAdresa || [[s.nazevUlice || s.nazevObce, s.cisloDomovni ? s.cisloDomovni + (s.cisloOrientacni ? '/' + s.cisloOrientacni : '') : '']
+      .filter(Boolean).join(' '), [s.psc ? String(s.psc).replace(/(\d{3})(\d{2})/, '$1 $2') : '', s.nazevObce].filter(Boolean).join(' ')]
+      .filter(Boolean).join(', ');
+    if (data.obchodniJmeno) pole('nazev').value = data.obchodniJmeno;
+    if (adr) pole('adresa').value = adr;
+    pole('ico').value = ico;
+    dokZmena();
+    showToast('Načteno z ARES: ' + (data.obchodniJmeno || ico));
+  } });
+};
+TD_AKCE.tdVychozi = function (el) {
+  var k = el.getAttribute('data-pole'), p = dokForm().querySelector('[data-dk="' + k + '"]');
+  var v = k === 'podklady' ? DOK_VV_PODKLADY : DOK_VV_ZDUVODNENI, pred = p.value;
+  if (pred === v) return;
+  p.value = v; dokZmena();
+  showToast('Vrácen výchozí text.', { timeout: 7000, actionLabel: '↩ ZPĚT', action: function () { p.value = pred; dokZmena(); } });
+};
+TD_AKCE.tdOsobaPridat = function () {
+  var box = document.getElementById('dk-komise');
+  box.insertAdjacentHTML('beforeend', dkOsobaHtml({ predseda: !box.querySelector('input[type=radio]:checked') }));
+  box.lastElementChild.querySelector('input').focus();
+  dokZmena();
+};
+TD_AKCE.tdOsobaSmazat = function (el) {
+  var r = el.closest('.dk-osoba'), box = r.parentNode;
+  r.remove();
+  if (!box.children.length) box.insertAdjacentHTML('beforeend', dkOsobaHtml({ predseda: true }));
+  dokZmena();
+};
+TD_AKCE.tdSkupinaPridat = function () {
+  var box = document.getElementById('dk-skupiny');
+  box.insertAdjacentHTML('beforeend', dkSkupinaHtml(pouvvSkupinaNova()));
+  dkSkupinyPrecislovat(); dokZmena();
+  box.lastElementChild.scrollIntoView({ block: 'start', behavior: 'smooth' });
+};
+TD_AKCE.tdSkupinaKopie = function (el) {
+  var sk = dkSkupinaZ(el);
+  var g = { uid: dokUid(), prostory: [], vzor: sk.querySelector('.dk-vzor-vyber').value, kody: dokKodyCist(sk),
+            pozn: sk.querySelector('[data-k="pozn"]').value };
+  sk.insertAdjacentHTML('afterend', dkSkupinaHtml(g));
+  dkSkupinyPrecislovat(); dokZmena();
+  sk.nextElementSibling.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  showToast('Přidána skupina se stejnými kódy — doplňte její prostory.');
+};
+TD_AKCE.tdSkupinaSmazat = function (el) {
+  var sk = dkSkupinaZ(el), box = sk.parentNode, za = sk.nextElementSibling;
+  if (box.querySelectorAll('.dk-skupina').length < 2) return;
+  sk.remove(); dkSkupinyPrecislovat(); dokNabidkyB(); dokZmena();
+  showToast('Skupina prostorů smazána', { timeout: 8000, actionLabel: '↩ ZPĚT', action: function () {
+    if (!document.body.contains(box)) return;
+    box.insertBefore(sk, za && za.parentNode === box ? za : null);
+    dkSkupinyPrecislovat(); dokNabidkyB(); dokZmena();
+  } });
+};
+TD_AKCE.tdProstorPridat = function (el) {
+  var box = dkSkupinaZ(el).querySelector('.dk-prostory');
+  box.insertAdjacentHTML('beforeend', dkProstorHtml({}));
+  box.lastElementChild.querySelector('[data-k="c"]').focus();
+};
+TD_AKCE.tdProstorSmazat = function (el) {
+  var r = el.closest('.dk-prostor'), box = r.parentNode;
+  r.remove();
+  if (!box.children.length) box.insertAdjacentHTML('beforeend', dkProstorHtml({}));
+  dokZmena();
+};
+TD_AKCE.tdProstoryVlozit = function (el) { dokVlozitDialog(dkSkupinaZ(el)); };
+TD_AKCE.tdVlozitZavrit = function () { closeModal('modal-dok-vlozit'); };
+TD_AKCE.tdVlozitPotvrdit = function () {
+  var s = dokRozborProstoru(document.getElementById('dok-vlozit-text').value);
+  if (!s.length) { alert('Nic k vložení — vložte seznam prostorů.'); return; }
+  closeModal('modal-dok-vlozit');
+  if (__dokVlozitSk && document.body.contains(__dokVlozitSk)) dokProstoryVlozit(__dokVlozitSk, s);
+};
+TD_AKCE.tdVzorZeSkupiny = function (el) {
+  var sk = dkSkupinaZ(el), f = dokForm(), texty = {};
+  DOK_VV_TEXTY_B.forEach(function (b) { var v = f.querySelector('[data-dk="' + b.k + '"]').value.trim(); if (v) texty[b.k] = v; });
+  var puv = dokVzor(sk.querySelector('.dk-vzor-vyber').value);
+  dokVzorDialog({ nazev: '', kody: dokKodyCist(sk), pozn: sk.querySelector('[data-k="pozn"]').value, texty: texty,
+                  upozorneni: puv ? puv.upozorneni || '' : '' }, null,
+    '🧩 Uložit skupinu jako vlastní vzor');
+};
+// ── PDF dokumentu ────────────────────────────────────────────────────────
+// Vlastní obrazovka a vlastní stránkování — přes generujPDF() to jít nesmí
+// (ta ukládá revizní zprávu do archivu a kreslí její kapitoly). Typ
+// dokumentu dodá bloky (`pdf(d)` → [{ html, drz }]), `drz` = nadpis, který
+// nesmí zůstat sám na konci stránky. Vysvětlivky kódů do PDF nejdou.
+function dokPdfOdstavce(text, trida) {
+  return String(text || '').replace(/\r/g, '').split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean)
+    .map(function (p) { return { html: '<p class="' + (trida || 'dok-pdf-p') + '">' + esc(p) + '</p>' }; });
+}
+
+function dokPdfFirma(f) {
+  f = f || {};
+  return [esc(f.nazev), esc(f.adresa).replace(/\n/g, '<br>'), f.ico ? 'IČO: ' + esc(f.ico) : ''].filter(Boolean).join('<br>');
+}
+
+DOK_TYPY.pouvv.pdf = function (d) {
+  var B = [], tr = function (l, v) { return '<tr><td class="l">' + l + '</td><td>' + (v || '—') + '</td></tr>'; };
+  B.push({ html: '<div class="dok-pdf-titul"><div class="t1">Protokol o určení vnějších vlivů</div>' +
+    '<div class="t2">podle ČSN 33 2000-5-51 ed.3</div>' + (d.cislo ? '<div class="t3">č. ' + esc(d.cislo) + '</div>' : '') + '</div>' });
+  var p = d.projektant || {}, proj = [[p.titul, p.jmeno].filter(Boolean).join(' '),
+    p.evidence ? 'č. evidence: ' + p.evidence : '', p.obor ? 'obor autorizace: ' + p.obor : ''].filter(Boolean).map(esc).join(', ');
+  var t = '<table class="dok-pdf-tab">' + tr('Investor', dokPdfFirma(d.investor)) +
+    ((d.zpracovatel && (d.zpracovatel.nazev || d.zpracovatel.ico)) ? tr('Zpracovatel', dokPdfFirma(d.zpracovatel)) : '') +
+    (proj ? tr('Autorizovaný projektant', proj) : '') +
+    tr('Název stavby', esc(d.stavba)) + tr('Místo stavby', esc(d.misto)) + tr('Předmět dokumentace', esc(d.predmet)) +
+    (d.druh ? tr('Druh stavby', esc(d.druh)) : '') + (d.stupen ? tr('Stupeň dokumentace', esc(d.stupen)) : '') + '</table>';
+  B.push({ html: t });
+  var kom = (d.komise || []).filter(function (x) { return x.jmeno || x.funkce; });
+  var pred = kom.filter(function (x) { return x.predseda; }), cl = kom.filter(function (x) { return !x.predseda; });
+  if (kom.length) {
+    B.push({ html: '<div class="dok-pdf-h">Komise</div>', drz: true });
+    var os = function (x) { return esc(x.jmeno) + (x.funkce ? ' – ' + esc(x.funkce) : ''); };
+    B.push({ html: '<table class="dok-pdf-tab">' + (pred.length ? tr('Předseda komise', pred.map(os).join('<br>')) : '') +
+      (cl.length ? tr('Členové komise', cl.map(os).join('<br>')) : '') + '</table>' });
+  }
+  B.push({ html: '<div class="dok-pdf-h">A. Podklady</div>', drz: true });
+  var pod = String(d.podklady || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+  B.push({ html: pod.length ? '<ul class="dok-pdf-ul">' + pod.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>'
+    : '<p class="dok-pdf-p">—</p>' });
+  B.push({ html: '<div class="dok-pdf-h">B. Popis</div>', drz: true });
+  DOK_VV_TEXTY_B.forEach(function (b) {
+    B.push({ html: '<div class="dok-pdf-h2">' + esc(b.nazev) + '</div>', drz: true });
+    var o = dokPdfOdstavce(d[b.k]);
+    B.push.apply(B, o.length ? o : [{ html: '<p class="dok-pdf-p">—</p>' }]);
+  });
+  B.push({ html: '<div class="dok-pdf-h">C. Rozhodnutí a zdůvodnění</div>', drz: true });
+  B.push.apply(B, dokPdfOdstavce(d.zduvodneni));
+  var sk = d.skupiny || [];
+  sk.forEach(function (g, i) {
+    var pr = (g.prostory || []).filter(function (x) { return x.c || x.n; });
+    B.push({ html: '<div class="dok-pdf-h2">' + (sk.length > 1 ? (i + 1) + '. ' : '') + 'Prostory:</div>', drz: true });
+    B.push({ html: pr.length ? '<ul class="dok-pdf-prostory' + (pr.length > 8 ? ' sloupce' : '') + '">' + pr.map(function (x) {
+      return '<li>' + esc(x.c ? x.c + (x.n ? ' – ' + x.n : '') : x.n) + '</li>';
+    }).join('') + '</ul>' : '<p class="dok-pdf-p">—</p>', drz: true });
+    var r = dokVvRadky(g.kody);
+    B.push({ html: '<p class="dok-pdf-p">' + esc(DOK_VV_VETA) + '</p><div class="dok-pdf-kody">' + (r.length ? r.map(function (x) {
+      return '<div>' + x.id + ') ' + esc(x.nazev) + ': ' + x.kody.join(', ') + '</div>';
+    }).join('') : '<div>—</div>') + '</div>' });
+    if (g.pozn) B.push({ html: '<p class="dok-pdf-p"><b>Poznámka:</b> ' + esc(g.pozn) + '</p>' });
+  });
+  B.push({ html: '<p class="dok-pdf-p" style="margin-top:5mm">Vypracoval: ' + esc(d.vypracoval || '—') +
+    ' &nbsp;·&nbsp; V ' + esc(d.vypracovalMisto || '……………') + ' dne ' + esc(dokDatumCz(d.datum) || '……………') + '</p>' });
+  var radky = pred.map(function (x) { return ['Předseda komise', x]; })
+    .concat(cl.map(function (x) { return ['Člen komise', x]; }))
+    .concat([['Vypracoval', { jmeno: d.vypracoval }]]);
+  B.push({ html: '<table class="dok-pdf-podpisy"><tr><th>Funkce</th><th>Jméno a příjmení</th><th>Podpis</th></tr>' +
+    radky.map(function (r) {
+      return '<tr><td>' + r[0] + '</td><td>' + esc(r[1].jmeno || '') + (r[1].funkce ? '<br><small>' + esc(r[1].funkce) + '</small>' : '') +
+        '</td><td class="podpis"></td></tr>';
+    }).join('') + '</table>' });
+  return B;
+};
+
+var __dokPdf = null;   // { x: záznam dokumentu, zpet: obrazovka }
+
+function dokPdfStranka(x) {
+  var t = DOK_TYPY[x.typ], d = x.data || {};
+  var p = document.createElement('div');
+  p.className = 'a4 a4-dok';
+  p.style.minHeight = '0';
+  p.innerHTML = '<div class="dok-pdf-zahlavi"><span>' + esc(t.nazev) + '</span><span>' + (d.cislo ? 'č. ' + esc(d.cislo) : '') + '</span></div>' +
+    '<div class="dok-pdf-obsah"></div>' +
+    '<div class="dok-pdf-paticka"><span>' + esc(d.stavba || '') + '</span><span class="dok-pdf-strana"></span></div>';
+  return p;
+}
+
+function dokPdfVykreslit(x) {
+  var box = document.getElementById('dok-pdf-pages');
+  showScreen('dok-pdf');   // ve skryté obrazovce mají prvky nulovou výšku
+  box.innerHTML = '';
+  var limit = 297 * 96 / 25.4 + 0.5;
+  var bloky = DOK_TYPY[x.typ].pdf(x.data || {});
+  var str = dokPdfStranka(x); box.appendChild(str);
+  var obsah = str.querySelector('.dok-pdf-obsah');
+  bloky.forEach(function (b) {
+    var el = document.createElement('div');
+    el.innerHTML = b.html;
+    if (b.drz) el.setAttribute('data-drz', '1');
+    obsah.appendChild(el);
+    if (str.getBoundingClientRect().height > limit && obsah.children.length > 1) {
+      var presun = [obsah.removeChild(el)];
+      while (obsah.children.length > 1 && obsah.lastElementChild.getAttribute('data-drz')) presun.unshift(obsah.removeChild(obsah.lastElementChild));
+      str = dokPdfStranka(x); box.appendChild(str);
+      obsah = str.querySelector('.dok-pdf-obsah');
+      presun.forEach(function (e) { obsah.appendChild(e); });
+    }
+  });
+  var str2 = box.querySelectorAll('.a4');
+  str2.forEach(function (s, i) {
+    s.style.minHeight = '';
+    s.querySelector('.dok-pdf-strana').textContent = 'Strana ' + (i + 1) + ' / ' + str2.length;
+  });
+  var info = document.getElementById('dok-pdf-info');
+  if (info) info.textContent = DOK_TYPY[x.typ].nazev + (x.data && x.data.cislo ? ' · ' + x.data.cislo : '') +
+    ' · ' + str2.length + (str2.length === 1 ? ' strana' : (str2.length < 5 ? ' strany' : ' stran'));
+  window.scrollTo(0, 0);
+}
+
+async function dokNahled() {
+  var o = window.__dokOtevreny; if (!o) return;
+  await dokUlozitOtevreny();
+  __dokPdf = { x: { uid: o.uid, typ: o.typ, data: o.data }, zpet: 'dok-form' };
+  dokPdfVykreslit(__dokPdf.x);
+}
+
+async function dokNahledZeSeznamu(uid) {
+  await dokNacist();
+  var x = dokNajit(uid); if (!x) return;
+  __dokPdf = { x: x, zpet: 'dok-seznam' };
+  dokPdfVykreslit(x);
+}
+
+function dokPdfNazev() {
+  var x = __dokPdf.x, d = x.data || {};
+  return ((d.cislo || DOK_TYPY[x.typ].prefix) + '_' + DOK_TYPY[x.typ].kratce + (d.stavba ? '_' + d.stavba : ''))
+    .replace(/[\\\/:*?"<>|]+/g, '').replace(/\s+/g, '_').slice(0, 90) + '.pdf';
+}
+
+function dokPdfStranky() { return Array.prototype.slice.call(document.querySelectorAll('#dok-pdf-pages .a4')); }
+
+TD_AKCE.tdPdfZpet = function () {
+  var z = __dokPdf ? __dokPdf.zpet : 'dok-seznam';
+  if (z === 'dok-seznam') dokOtevritSeznam(__dokPdf && __dokPdf.x.typ); else showScreen(z);
+};
+TD_AKCE.tdPdfUlozit = function () {
+  var els = dokPdfStranky(); if (!els.length || !__dokPdf) return;
+  renderPagesToPDF(els, dokPdfNazev());
+};
+TD_AKCE.tdPdfTisk = function () {
+  var els = dokPdfStranky(); if (!els.length || !__dokPdf) return;
+  var w = window.open('', '_blank');
+  if (!w) { alert('Prosím povolte vyskakovací okna — bez nich se tiskové okno neotevře.'); return; }
+  w.document.write('<!DOCTYPE html><html><body style="margin:0;background:#f5f5f5;font-family:sans-serif;' +
+    'display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px">' +
+    '<p style="font-size:1.1rem;color:#333">⏳ Připravuji dokument k tisku…</p></body></html>');
+  w.document.close();
+  Promise.resolve(renderPagesToPDF(els, dokPdfNazev(), { vratitBlob: true, kvalita: 'tisk' })).then(function (blob) {
+    if (!blob) { try { w.close(); } catch (e) {} return; }
+    var url = URL.createObjectURL(blob);
+    w.location.href = url;
+    setTimeout(function () {
+      try { w.print(); } catch (e) {}
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    }, 2500);
+  }).catch(function (err) {
+    try { w.close(); } catch (e) {}
+    alert('Chyba při přípravě tisku: ' + ((err && err.message) || err));
+  });
+};
+// ── Záloha ───────────────────────────────────────────────────────────────
+// V souboru zálohy je tvorba dokumentace SAMOSTATNÁ část `dokumentace`
+// (vlastní _format), oddělená od zpráv. Obnova ji vrátí celou; záloha
+// z doby před touto částí ji nemá a dokumenty se pak nechají být.
+function dokZalohaData() {
+  return { _format: 'revize-el-dokumentace', _version: 1,
+           dokumenty: DOK.dokumenty, vzory: DOK.vzory, vzorySkryte: DOK.vzorySkryte, osoby: DOK.osoby };
+}
+
+function dokZalohaRadek(data) {
+  var z = data && data.dokumentace;
+  if (!z) return '• Tvorba dokumentace: v této záloze není — vaše dokumenty zůstanou\n';
+  var n = (z.dokumenty || []).length, ted = DOK.dokumenty.length;
+  return '• Dokumenty (tvorba dokumentace): ' + n + ((z.vzory || []).length ? ', vlastní vzory: ' + z.vzory.length : '') +
+    (ted > n ? '   ⚠ teď jich máte ' + ted + ' — přijdete o rozdíl!' : '') + '\n';
+}
+
+function dokObnovitZeZalohy(z) {
+  DOK = dokNormalizovat(z);
+  window.__dokOtevreny = null;
+  dokZapsat();
+  var d = document.getElementById('screen-dokumentace');
+  if (d && d.classList.contains('active')) dokDlazdiceVykreslit();
+  var s = document.getElementById('screen-dok-seznam');
+  if (s && s.classList.contains('active')) dokSeznamVykreslit();
+  var f = document.getElementById('screen-dok-form');
+  if (f && f.classList.contains('active')) dokOtevritSeznam();
+}
+// ═══ /TVORBA DOKUMENTACE ═══
 
 // Init wrapnutý — kdyby v něm něco selhalo (např. IDB v Safari iOS PWA),
 // chyba se v console zalogue, ale stránka neumře. Bez catch by error
