@@ -377,6 +377,8 @@ tr.row-nested>td:first-child{box-shadow:inset 3px 0 0 #d5d0c4}
     linear-gradient(45deg,transparent 75%,#e2e2e2 75%),linear-gradient(-45deg,transparent 75%,#e2e2e2 75%);
   background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0}
 .rt-badge{background:#f0f6ff;border:1px solid #b8d0f0;padding:.6rem 1rem;border-radius:2px;margin-bottom:.75rem}
+.rt-badge .rt-z-profilu{margin-left:.5rem}
+.rt-cizi{font-size:.78rem;color:var(--muted);margin:-.45rem 0 .75rem}
 html.dark .rt-badge{background:#1e2733;border-color:#39506e;color:var(--text)}
 
 /* ═══ FORMULÁŘ ═══ */
@@ -1298,6 +1300,13 @@ td.plan-zruseno{color:var(--muted);text-decoration:line-through}
 .plan-pdf-tab td.plan{background:#fdf3d0}
 .plan-pdf-tab td.po{background:#f7dad6}
 .plan-pdf-tab .m{display:block;font-size:6pt;color:#444}
+/* Pruh „nová verze" — nenápadný, dole uprostřed; stránka se obnoví až po kliknutí */
+#nova-verze{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:.7rem;
+  max-width:calc(100vw - 24px);background:#2b2b2b;color:#fff;font-family:var(--sans);font-size:.84rem;padding:.4rem .5rem .4rem .9rem;
+  border-radius:4px;box-shadow:0 3px 12px rgba(0,0,0,.25)}
+#nova-verze button{background:#0f7b5f;color:#fff;border:none;border-radius:3px;padding:.35rem .9rem;font-family:var(--sans);font-size:.84rem;
+  font-weight:600;cursor:pointer;flex:0 0 auto}
+#nova-verze button:hover{background:#0b6650}
 /* ═══ TVORBA DOKUMENTACE (2026-10-16) — samostatná část mimo revize ═══ */
 .dok-typy{display:flex;flex-wrap:wrap;gap:.75rem}
 /* hlavní akce seznamu dokumentů — plné barevné tlačítko, na první pohled */
@@ -1656,7 +1665,7 @@ html.dark .dk-upozorneni.vyrazne{color:#ffc29a;background:#3d2210;border-color:#
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.125<span class="ver-date"> · 2026-10-16</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.126<span class="ver-date"> · 2026-10-21</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -1809,6 +1818,33 @@ html.dark .dk-upozorneni.vyrazne{color:#ffc29a;background:#3d2210;border-color:#
     <button type="button" class="nov-lupa-x" data-action="novinkyHledatZrusit" title="Zrušit hledání (Esc)">✕</button>
   </div>
   <div id="nov-hledat-info" class="nov-lupa-info"></div>
+
+  <div class="scard" data-nov-datum="2026-10-21">
+    <div class="scard-title">👷 Zpráva od kolegy zůstane jeho <span class="nov-datum">21. 10. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Když otevřete zprávu, kterou dělal jiný technik (od kolegy, ze souboru, z balíku), <strong>zůstane v ní jeho jméno, osvědčení i jeho měřicí přístroje</strong>. Dřív je program při otevření přepsal vaším profilem — teď je z archivu vždycky vidět, kdo zprávu opravdu dělal.</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Nová zpráva, 🔗 Navázat a ⧉ Kopírovat</strong> se vyplní z vašeho profilu jako dřív — je to vaše práce.</li>
+        <li>Je-li ve zprávě jiný technik než ve vašem profilu, pod štítkem technika je řádek <strong>„Zprávu zpracoval jiný technik"</strong>.</li>
+        <li>Tlačítko <strong>↻ Vyplnit z mého profilu</strong> u technika a u přístrojů dosadí vaše údaje — hodí se třeba po vydání nového osvědčení nebo po kalibraci přístroje u zprávy, kterou už máte rozdělanou.</li>
+        <li><strong>Vaše razítko a podpis se do cizí zprávy nevloží</strong>, panel tisku to řekne.</li>
+      </ul>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:.6rem">Starší vlastní zprávy, ve kterých technik vyplněný není, dostanou údaje z profilu jako dřív. Pouhým otevřením se uložená zpráva nemění.</p>
+    </div>
+  </div>
+
+  <div class="scard" data-nov-datum="2026-10-21">
+    <div class="scard-title">🔄 Nová verze programu vás nevyruší <span class="nov-datum">21. 10. 2026</span></div>
+    <p style="font-size:.88rem;line-height:1.6;margin-bottom:.6rem">Program se dřív po stažení nové verze sám obnovil a skočil na úvod — i uprostřed práce. Teď:</p>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Když máte otevřenou zprávu nebo dokument</strong>, dole se jen objeví pruh <strong>„Je k dispozici nová verze programu. Načíst"</strong>. Klepnete, až se vám to hodí — nebo nic nedělejte, nová verze se načte sama, jakmile zprávu zavřete.</li>
+        <li><strong>Na úvodu, v archivu, v nastavení nebo v plánu</strong> se nová verze načte sama, když zrovna nic neděláte, a řekne to hláškou „Program se aktualizoval na novou verzi."</li>
+        <li><strong>Po načtení stránky jste tam, kde jste byli</strong> — v téže zprávě na téže záložce, v plánu, v nastavení nebo v rozepsaném dokumentu. Platí to i tehdy, když prohlížeč kartu na pozadí uspí a pak ji načte znovu.</li>
+        <li>Co jste právě psali, se neztratí.</li>
+      </ul>
+    </div>
+  </div>
 
   <div class="scard" data-nov-datum="2026-09-24">
     <div class="scard-title">📋 Excel ↔ tabulka měření — tam i zpátky <span class="nov-datum">24. 9. 2026</span></div>
@@ -3489,6 +3525,7 @@ html.dark .dk-upozorneni.vyrazne{color:#ffc29a;background:#3d2210;border-color:#
     </table>
     <button class="add-row" data-action="addPristroj">+ Přidat přístroj</button>
     <button class="add-row" data-action="ulozitPristrojeJakoVychozi" style="margin-left:.5rem;border-color:var(--accent2);color:var(--accent2)" title="Zkopíruje přístroje z této zprávy do Nastavení — předvyplní se v každé další nové zprávě">💾 Uložit jako výchozí pro příští zprávy</button>
+    <button class="add-row" data-action="pristrojeZProfilu" style="margin-left:.5rem" title="Nahradí přístroje v této zprávě přístroji z vašeho Nastavení (nová kalibrace, nový přístroj)">↻ Vyplnit z mého profilu</button>
   </div>
   <div class="scard" id="scard-d1-prohlidka">
     <div class="scard-title">D.1 – Prohlídka el. zařízení <span style="font-size:.52rem;color:var(--muted);font-family:var(--mono)">dle ČSN 33 2000-6 ed.2 čl. 6.4.2</span></div>
@@ -8723,13 +8760,78 @@ function propsatTechnika() {
   // město v 1. pádě; revizak si případně upraví.
   var predMisto = document.getElementById('f_predano_misto');
   if (predMisto && !predMisto.value && mesto) predMisto.value = mesto;
+  rtBadgeVykreslit();
+}
+
+// ═══ TECHNIK ZPRÁVY × MŮJ PROFIL (pokyn uživatele 2026-10-19) ═══════════
+// Otevřená zpráva ukazuje technika a přístroje, které jsou v ní ULOŽENÉ —
+// zpráva od kolegy tak zůstane jeho. Z profilu se vyplňuje jen nová zpráva,
+// „Navázat" a „⧉ Kopírovat" (moje nové zprávy), stará zpráva bez jména
+// i osvědčení technika (jako dřív) a tlačítkem „Vyplnit z mého profilu".
+function rtNorm(x) { return String(x == null ? '' : x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s.,]+/g, ''); }
+// Technik zprávy = já? Shoda ev. čísla osvědčení, případně jména (nové
+// osvědčení po obnově má jiné číslo). Zpráva bez technika se bere jako moje.
+function technikZpravyJeMuj(D) {
+  var t = STORE.technik || {}, o = rtNorm(D && D.rt_osvedceni), j = rtNorm(D && D.rt_jmeno);
+  if (!o && !j) return true;
+  return !!((o && o === rtNorm(t.osvedceni)) || (j && j === rtNorm(t.jmeno)));
+}
+function technikFormular() {
+  var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+  return { rt_jmeno: g('f_rt_jmeno'), rt_osvedceni: g('f_rt_osvedceni'), rt_ico: g('f_rt_ico') };
+}
+// Údaje technika pro tisk existující zprávy: jméno, osvědčení, IČO, adresa
+// ze ZPRÁVY; telefon, e-mail, DIČ, firma, město, razítko a podpis z profilu
+// jen u vlastní zprávy (cizí zpráva je nemá a vymýšlet se nesmí).
+function technikProTisk(D) {
+  var t = STORE.technik || {}, muj = technikZpravyJeMuj(D || {});
+  var T = muj ? Object.assign({}, t) : {};
+  D = D || {};
+  var bez = !String(D.rt_jmeno || '').trim() && !String(D.rt_osvedceni || '').trim();
+  if (!bez) {
+    T.jmeno = D.rt_jmeno || ''; T.osvedceni = D.rt_osvedceni || '';
+    if (D.rt_ico || !muj) T.ico = D.rt_ico || '';
+    if (D.rt_opravneni || !muj) T.opravneni = D.rt_opravneni || '';
+  }
+  T.muj = muj;
+  return T;
+}
+function rtBadgeVykreslit() {
   var badge = document.getElementById('rt-badge');
   if (!badge) return;
-  if (t.jmeno) {
-    badge.innerHTML = '<div class="rt-badge"><strong>' + t.jmeno + '</strong> | Ev.c.: ' + (t.osvedceni || '—') + ' | IČO: ' + (t.ico || '—') + '</div>';
+  var F = technikFormular(), t = STORE.technik || {};
+  var tlac = '<button type="button" class="dok-mini rt-z-profilu" data-action="technikZProfilu" ' +
+    'title="Přepíše technika v této zprávě údaji z vašeho Nastavení (např. nové osvědčení)">↻ Vyplnit z mého profilu</button>';
+  if (F.rt_jmeno || F.rt_osvedceni) {
+    badge.innerHTML = '<div class="rt-badge"><strong>' + esc(F.rt_jmeno || '—') + '</strong> | Ev.č.: ' + esc(F.rt_osvedceni || '—') +
+      ' | IČO: ' + esc(F.rt_ico || '—') + (t.jmeno ? ' ' + tlac : '') + '</div>' +
+      (t.jmeno && !technikZpravyJeMuj(F) ? '<div class="rt-cizi">Zprávu zpracoval jiný technik než je ve vašem profilu.</div>' : '');
+  } else if (t.jmeno) {
+    badge.innerHTML = '<div class="rt-badge">Technik ve zprávě není vyplněný. ' + tlac + '</div>';
   } else {
     badge.innerHTML = '<div class="warn-box">Profil RT neni nastaven. <a href="#" data-action="nastaveni" style="color:var(--accent2);font-weight:600">Nastavit</a></div>';
   }
+}
+document.addEventListener('input', function (e) {
+  if (e.target && /^f_rt_(jmeno|osvedceni|ico)$/.test(e.target.id)) rtBadgeVykreslit();
+});
+function technikZProfilu() {
+  if (window.__formReadOnly) return;
+  propsatTechnika();
+  window.__formDirty = true; autoSave(); updateUlozitStav();
+  showToast('Technik vyplněn z vašeho profilu.');
+}
+function pristrojeZProfilu() {
+  if (window.__formReadOnly) return;
+  if (!(STORE.pristroje && STORE.pristroje.length)) { showToast('V Nastavení nemáte uložené žádné přístroje.'); return; }
+  propsatPristroje();
+  window.__formDirty = true; autoSave(); updateUlozitStav();
+  showToast('Přístroje vyplněny z vašeho profilu.');
+}
+// Moje NOVÁ zpráva (Navázat, ⧉ Kopírovat): technik a přístroje z profilu.
+function technikAPristrojeZProfilu() {
+  if (STORE.technik && STORE.technik.jmeno) propsatTechnika();
+  if (STORE.pristroje && STORE.pristroje.length > 0) propsatPristroje();
 }
 
 // Předvolby norem dle podtypu: true = zaškrtnuto, false = nezaškrtnuto, undefined = skryté
@@ -10363,7 +10465,7 @@ function schemaNazevSouboru(D) {
 
 // Hlavička listu — ať je z papíru poznat, ke které zprávě schéma patří
 function schemaHlavicka(D) {
-  var t = STORE.technik || {};
+  var t = technikProTisk(D);
   var den = D.ukonceni || D.vypracovani || '';
   var polozky = [
     ['Místo revize', D.misto || ''],
@@ -14608,6 +14710,7 @@ function getData() {
   var psc = t.psc || '';
   var mesto = t.mesto || '';
   var adr = [t.ulice, (psc + ' ' + mesto).trim()].filter(Boolean).join(', ');
+  var rtPrazdny = !gv('f_rt_jmeno') && !gv('f_rt_osvedceni');
   return {
     typ: aktTyp, podtyp: aktPodtyp,
     ev_cislo: gv('f_ev_cislo'), vytisk: gv('f_vytisk'), druh: gv('f_druh'),
@@ -14620,11 +14723,13 @@ function getData() {
     pritomen2: gv('f_pritomen2'),
     firma_zmena2: gv('f_firma_zmena2'), firma_opravneni2: gv('f_firma_opravneni2'),
     napetova_soustava: getNapetoveSoustavy(),
-    rt_jmeno: gv('f_rt_jmeno') || t.jmeno || '',
-    rt_osvedceni: gv('f_rt_osvedceni') || t.osvedceni || '',
-    rt_opravneni: gv('f_rt_opravneni') || t.opravneni || '',
-    rt_adresa: gv('f_rt_adresa') || adr,
-    rt_ico: gv('f_rt_ico') || t.ico || '',
+    // Z profilu jen když technik ve formuláři chybí úplně — jinak by se do
+    // zprávy od kolegy při uložení dopsaly MOJE IČO nebo oprávnění.
+    rt_jmeno: gv('f_rt_jmeno') || (rtPrazdny ? t.jmeno || '' : ''),
+    rt_osvedceni: gv('f_rt_osvedceni') || (rtPrazdny ? t.osvedceni || '' : ''),
+    rt_opravneni: gv('f_rt_opravneni') || (rtPrazdny ? t.opravneni || '' : ''),
+    rt_adresa: gv('f_rt_adresa') || (rtPrazdny ? adr : ''),
+    rt_ico: gv('f_rt_ico') || (rtPrazdny ? t.ico || '' : ''),
     trida: gv('f_trida'),
     zdroj: gv('f_zdroj'), ochrana: gv('f_ochrana'),
     predano_misto: gv('f_predano_misto'), predano_datum: gv('f_predano_datum'),
@@ -15149,7 +15254,7 @@ function pdfChybejiciPole() {
   if (!D.zahajeni) chybi.push('datum zahájení');
   if (!D.ukonceni) chybi.push('datum ukončení');
   if (!D.celkovy_vysledek) chybi.push('celkový výsledek');
-  if (!t.jmeno) chybi.push('jméno technika (⚙️ Nastavení)');
+  if (!D.rt_jmeno && !t.jmeno) chybi.push('jméno technika (⚙️ Nastavení)');
   return chybi;
 }
 
@@ -15576,8 +15681,8 @@ function generujPDF() {
     '<div class="podp-grid">' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center"><div class="podp-line"></div><div class="podp-lbl">podpis provozovatele</div></div></div></div>' +
     '<div><div class="podp-inner"><div style="width:100%;text-align:center">' +
-      ((pdfOpts.razitko && STORE.technik && STORE.technik.razitko) ? '<img class="razitko-pdf" src="' + STORE.technik.razitko + '" alt="razítko">' : '') +
-      ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis) ? '<img src="' + STORE.technik.podpis + '" style="max-height:20mm;max-width:70mm;display:block;margin:0 auto -3mm;position:relative;z-index:5" alt="podpis">' : '') +
+      ((pdfOpts.razitko && STORE.technik && STORE.technik.razitko && technikZpravyJeMuj(D)) ? '<img class="razitko-pdf" src="' + STORE.technik.razitko + '" alt="razítko">' : '') +
+      ((pdfOpts.podpis && STORE.technik && STORE.technik.podpis && technikZpravyJeMuj(D)) ? '<img src="' + STORE.technik.podpis + '" style="max-height:20mm;max-width:70mm;display:block;margin:0 auto -3mm;position:relative;z-index:5" alt="podpis">' : '') +
       '<div class="podp-line"></div><div class="podp-lbl">' + PJ.podpisPdf + '</div></div></div></div>' +
     '</div></div>' + ftr();
   p1.classList.add('a4-titulni');   // titulní strana se NIKDY nedělí
@@ -18542,7 +18647,10 @@ function saveToArchiv() {
   window.__formDirty = false; // právě uložené data
   window.__poslednUlozeno = new Date().toTimeString().slice(0, 5);   // do stavového řádku
   try { stavovyRadek(); } catch (e) {}
-  // Práce je v archivu — koncept pro obnovu po pádu už není potřeba
+  // Práce je v archivu — koncept pro obnovu po pádu už není potřeba.
+  // Čekající zápis konceptu (psaní těsně před uložením) se musí zrušit,
+  // jinak by ho za 1,5 s zapsal znovu a příští start by nabízel obnovu.
+  if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
   try { localStorage.removeItem('revize_el_autosave'); } catch(e) {}
   updateBreadcrumb();
   return true;
@@ -18717,8 +18825,13 @@ function nacistData(D) {
   });
   window.__tiskZpravy = (D.tisk && typeof D.tisk === 'object') ? Object.assign({}, D.tisk) : {};
   updateLhutaInfo();   // doporučená lhůta je jen ke čtení, ukázat ji
-  // Vždy přepsat pole revizního technika z vlastního profilu uživatele
-  if (STORE.technik && STORE.technik.jmeno) propsatTechnika();
+  // Technik se bere ZE ZPRÁVY — zpráva od kolegy zůstane jeho (pokyn
+  // uživatele 2026-10-19; dřív se tu VŽDY přepsal vlastním profilem).
+  // Výjimka: zpráva bez jména i osvědčení technika (stará vlastní) — tu
+  // doplní profil jako dřív.
+  var bezTechnika = !String(D.rt_jmeno || '').trim() && !String(D.rt_osvedceni || '').trim();
+  if (bezTechnika && STORE.technik && STORE.technik.jmeno) propsatTechnika();
+  else rtBadgeVykreslit();
   // Restore zkousky
   if (D.zkousky) {
     Object.keys(D.zkousky).forEach(function(k) {
@@ -18748,8 +18861,8 @@ function nacistData(D) {
   if (D.pristroje && D.pristroje.length > 0) {
     D.pristroje.forEach(function(pr, i) { addPristrojRow(pr, i + 1); });
   }
-  // Přepsat přístroje vlastními uloženými z profilu (stejná logika jako u technika)
-  if (STORE.pristroje && STORE.pristroje.length > 0) propsatPristroje();
+  // Přístroje taky ZE ZPRÁVY; z profilu jen u zprávy bez technika (viz výš)
+  if (bezTechnika && STORE.pristroje && STORE.pristroje.length > 0) propsatPristroje();
   // Provázání rozváděčů: zpráva uložená dřív, než funkce vznikla, klíč
   // nemá — a musí zůstat vypnuté, aby se starým zprávám nic nezměnilo.
   __rozvStrom = (D.rozvStrom && typeof D.rozvStrom === 'object')
@@ -20337,7 +20450,7 @@ function spotrKolonka(o, id, sirka, obsah, stred) {
 
 function spotrHlavickaHtml(D, o, stran) {
   var S = D.spotrebice || {};
-  var t = STORE.technik || {};
+  var t = technikProTisk(D);
   var firma = D.provozovatel || t.firma || t.jmeno || '';
   var pop = function(x) {
     return '<td style="padding:.4mm 2mm .4mm 0;white-space:nowrap;font-weight:600;' +
@@ -20492,7 +20605,7 @@ function spotrVysvetlivkyHtml(D) {
 // čára, nad ní razítko a podpis technika, pod ní dva popisky:
 // vlevo „Jméno a příjmení revizního technika", vpravo „podpis".
 function spotrPodpisHtml(D, o) {
-  var t = STORE.technik || {};
+  var t = technikProTisk(D);   // razítko a podpis jen u vlastní zprávy
   var pdfOpts = tiskNastaveni(D);
   var razitko = (pdfOpts.razitko && t.razitko)
     ? '<img class="razitko-pdf" src="' + t.razitko + '" alt="razítko">' : '';
@@ -21072,7 +21185,7 @@ var SPOTR_PRIPOJENI = {
 };
 
 function spotrJedenHtml(D, r) {
-  var t = STORE.technik || {};
+  var t = technikProTisk(D);   // technik ZPRÁVY; razítko a podpis jen u vlastní
   var ok = spotrVyhovuje(r);
   var pdfOpts = tiskNastaveni(D);
   var esc2 = function (x) { return esc(String(x == null ? '' : x).trim()); };
@@ -21772,6 +21885,7 @@ function formArchivKopirovat(uid, idx) {
     D.timestamp = new Date().toISOString();
     vycistitNamerene(D);
     nacistData(D);
+    technikAPristrojeZProfilu();   // kopie je MOJE nová zpráva
     // Žádný řetěz — novaZprava() uvnitř nacistData() už __predchudceUid
     // vynulovala, tohle je pojistka, aby se to při úpravách neztratilo.
     window.__predchudceUid = '';
@@ -22604,6 +22718,7 @@ function navazatZpravu(i) {
   if (D.druh === 'Výchozí' && D.predchozi) D.druh = 'Pravidelná';
   // Načíst do formuláře a přepnout na form obrazovku
   nacistData(D);
+  technikAPristrojeZProfilu();   // navázaná zpráva je MOJE nová zpráva
   // Navázaná zpráva se stane nástupcem staré — stará se v archivu vnoří
   // pod novou (řetěz revizí objektu) a přestane hlásit končící platnost.
   if (!old.uid && archiv[i]) archiv[i].uid = genZpravaUid();
@@ -23294,6 +23409,10 @@ async function init() {
   // Obnova po pádu: koncept se ukládá průběžně při psaní a maže při
   // uložení do archivu (nebo vědomém zahození). Pokud tu po startu je,
   // prohlížeč spadl / zavřel se s neuloženou prací — nabídnout obnovu.
+  // Načetla-li se jen stránka v témže okně, kde byla zpráva otevřená
+  // (nová verze, uspaná karta), vrátí se rozepsaná zpráva bez ptaní.
+  var obnova = null, draftObnoven = false;
+  try { obnova = JSON.parse(sessionStorage.getItem(OBNOVA_KLIC) || 'null'); } catch (e) {}
   try {
     var draftRaw = localStorage.getItem('revize_el_autosave');
     if (draftRaw) {
@@ -23301,7 +23420,9 @@ async function init() {
       var draftD = (draft && draft.data) ? draft.data : draft; // starší koncept bez obálky
       if (draftD && (draftD.ev_cislo || draftD.misto || draftD.adresa)) {
         var draftKdy = draft && draft._t ? new Date(draft._t).toLocaleString('cs-CZ') : '';
-        if (confirm('Našla se neuložená rozepsaná zpráva' +
+        var tichaObnova = !!(obnova && (obnova.s === 'form' || obnova.s === 'pdf') &&
+          (!obnova.zprava || !obnova.zprava.uid || !draft.uid || obnova.zprava.uid === draft.uid));
+        if (tichaObnova || confirm('Našla se neuložená rozepsaná zpráva' +
               (draftD.ev_cislo ? ' ' + draftD.ev_cislo : '') +
               (draftKdy ? ' (naposledy upravena ' + draftKdy + ')' : '') +
               '.\n\nObnovit ji a pokračovat v práci?')) {
@@ -23312,6 +23433,7 @@ async function init() {
           if (draft && draft.uid) window.__openZpravaUid = draft.uid;
           showScreen('form');
           window.__formDirty = true;
+          draftObnoven = true;
         } else {
           localStorage.removeItem('revize_el_autosave');
         }
@@ -23346,6 +23468,9 @@ async function init() {
     var btn = document.getElementById('pt-' + pt);
     if (btn) btn.addEventListener('click', function() { volbaPodtypu(pt); });
   });
+  // Návrat tam, kde uživatel byl před načtením stránky (nová verze, uspaná karta)
+  await obnovaObrazovky(obnova, draftObnoven);
+  novaVerzeHlaska();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -26676,8 +26801,11 @@ function renderTiskPanel() {
   var box = document.getElementById('pdf-nastaveni');
   if (!box) return;
   var t = tiskNastaveni();
-  var maRazitko = !!(STORE.technik && STORE.technik.razitko);
-  var maPodpis = !!(STORE.technik && STORE.technik.podpis);
+  var cizi = false;
+  try { cizi = !technikZpravyJeMuj(getData()); } catch (e) {}
+  var maRazitko = !!(STORE.technik && STORE.technik.razitko) && !cizi;
+  var maPodpis = !!(STORE.technik && STORE.technik.podpis) && !cizi;
+  var proc = cizi ? ' <span class="tisk-pozn2">(zprávu zpracoval jiný technik — vaše se nevloží)</span>' : ' <span class="tisk-pozn2">(nahrajte v Nastavení)</span>';
   var zeZpravy = window.__tiskZpravy || {};
   var upraveno = Object.keys(zeZpravy).length > 0;
   box.innerHTML =
@@ -26735,11 +26863,11 @@ function renderTiskPanel() {
     '<label class="tisk-check' + (maRazitko ? '' : ' tisk-nedostupne') + '">' +
       '<input type="checkbox" id="tisk-razitko"' + (t.razitko ? ' checked' : '') +
       (maRazitko ? '' : ' disabled') + '> Razítko' +
-      (maRazitko ? '' : ' <span class="tisk-pozn2">(nahrajte v Nastavení)</span>') + '</label>' +
+      (maRazitko ? '' : proc) + '</label>' +
     '<label class="tisk-check' + (maPodpis ? '' : ' tisk-nedostupne') + '">' +
       '<input type="checkbox" id="tisk-podpis"' + (t.podpis ? ' checked' : '') +
       (maPodpis ? '' : ' disabled') + '> Podpis' +
-      (maPodpis ? '' : ' <span class="tisk-pozn2">(nahrajte v Nastavení)</span>') + '</label>' +
+      (maPodpis ? '' : proc) + '</label>' +
 
     '<div class="tisk-akce">' +
       '<button type="button" class="tisk-btn tisk-btn-hlavni" data-action="tiskUlozitVychozi">💾 Uložit jako výchozí</button>' +
@@ -26995,6 +27123,8 @@ document.addEventListener('click', function(e) {
     case 'addDokumentace': addDokumentace(); break;
     case 'addPristroj': addPristroj(); break;
     case 'ulozitPristrojeJakoVychozi': ulozitPristrojeJakoVychozi(); break;
+    case 'technikZProfilu': technikZProfilu(); break;
+    case 'pristrojeZProfilu': pristrojeZProfilu(); break;
     case 'addMereniRow': addMereniRow(el); break;
     case 'addRcdRow': addRcdRow(el); break;
     case 'addInfoRow': addInfoRow(el); break;
@@ -28939,27 +29069,152 @@ window.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Service Worker — offline podpora (PWA) + auto-reload po aktualizaci
+// ═══ NOVÁ VERZE A NÁVRAT NA OBRAZOVKU PO NAČTENÍ STRÁNKY ═══════════════
+// Hlášení uživatele 2026-10-19: „program sám skočí na úvod, když jsem chvíli
+// neaktivní". Příčiny byly dvě:
+//  1. sw.js po nové verzi hned převezme kontrolu (skipWaiting + clients.claim)
+//     a stránka na `controllerchange` sama volala location.reload() — prohlížeč
+//     přitom aktualizaci hledá sám, typicky po návratu k oknu. Výjimkou byla
+//     jen rozepsaná ZPRÁVA; dokument z Tvorby dokumentace, plán ani nastavení
+//     výjimku neměly.
+//  2. Prohlížeč uspanou kartu (šetřič paměti v Chrome, telefon) po návratu
+//     načte znovu.
+// Po každém načtení program začínal na úvodu. Teď:
+//  - nová verze se jen NABÍDNE pruhem „Je k dispozici nová verze – Načíst",
+//    stránka se obnoví až po kliknutí (a předtím se dopíše rozpracované),
+//  - kde uživatel byl (obrazovka, otevřená zpráva + záložka, dokument, typ
+//    dokumentů, posun stránky), se pamatuje v sessionStorage a po JAKÉMKOLI
+//    načtení stránky v témže okně se tam vrátí.
+var OBNOVA_KLIC = 'revize_el_obnova';
+
+function obnovaStav() {
+  var akt = document.querySelector('.screen.active');
+  var s = { s: akt ? akt.id.replace(/^screen-/, '') : 'home', y: Math.round(window.scrollY || 0), t: Date.now() };
+  if (s.s === 'form' || s.s === 'pdf') {
+    s.zprava = { uid: window.__openZpravaUid || '', typ: typeof aktTyp !== 'undefined' ? aktTyp : '' };
+    var tb = document.querySelector('#screen-form .tab-btn.active');
+    if (tb) s.zprava.tab = tb.getAttribute('data-tab');
+  }
+  if (/^dok-/.test(s.s) || s.s === 'dokumentace') {
+    s.dokTyp = typeof __dokTyp !== 'undefined' ? __dokTyp : '';
+    var o = window.__dokOtevreny;
+    if (o && (s.s === 'dok-form' || (s.s === 'dok-pdf' && __dokPdf && __dokPdf.zpet === 'dok-form'))) s.dok = { uid: o.uid, typ: o.typ };
+  }
+  return s;
+}
+function obnovaZapsat() {
+  try { sessionStorage.setItem(OBNOVA_KLIC, JSON.stringify(obnovaStav())); } catch (e) {}
+}
+// Rozepsaná zpráva se do konceptu zapisuje 1,5 s po psaní — při odchodu ze
+// stránky se musí dopsat hned, jinak by se poslední slova po obnovení ztratila.
+function autoSaveHned() {
+  if (!autoSaveTimer) return;
+  clearTimeout(autoSaveTimer); autoSaveTimer = null;
+  try {
+    localStorage.setItem('revize_el_autosave', JSON.stringify({ _t: new Date().toISOString(), uid: window.__openZpravaUid || '', data: getData() }));
+  } catch (e) {}
+}
+window.addEventListener('pagehide', function () { autoSaveHned(); obnovaZapsat(); });
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') { autoSaveHned(); obnovaZapsat(); }
+});
+
+// Návrat po načtení stránky. `draftObnoven` = init() už rozepsanou zprávu
+// z konceptu vrátil do formuláře.
+async function obnovaObrazovky(st, draftObnoven) {
+  if (!st || !st.s || st.s === 'home') return;
+  var cil = st.s;
+  try {
+    if (cil === 'form' || cil === 'pdf') {
+      if (!draftObnoven) {
+        var i = st.zprava && st.zprava.uid ? archiv.findIndex(function (z) { return z.uid === st.zprava.uid; }) : -1;
+        if (i < 0) return;                  // nová, nikdy neuložená a nevyplněná zpráva — není kam
+        otevritZpravu(i);
+      }
+      showScreen('form');
+      if (st.zprava && st.zprava.tab) formArchivObnovitTab(st.zprava.tab);
+    } else if (cil === 'dok-form' || cil === 'dok-pdf') {
+      if (st.dok && dokNajit(st.dok.uid)) await dokOtevrit(st.dok.uid);
+      else dokOtevritSeznam(st.dokTyp);
+    } else if (cil === 'dok-seznam') dokOtevritSeznam(st.dokTyp);
+    else if (cil === 'dokumentace') dokOtevritTypy();
+    else if (cil === 'plan' || cil === 'plan-pdf') otevritPlan();
+    else if (cil === 'nastaveni' || cil === 'novinky' || cil === 'podtyp') showScreen(cil);
+    else return;                            // náhledy PDF a ostatní — zpět na úvod
+  } catch (e) { return; }
+  if (st.y) setTimeout(function () { window.scrollTo(0, st.y); }, 60);
+}
+
+// Nová verze se načte SAMA, jen když technik nic nedělá (pokyn uživatele
+// 2026-10-19): není otevřená zpráva, dokument ani rozvaděč (obrazovka je
+// v NOVA_VERZE_KLIDNE), není otevřený dialog ani nabídka, neběží hromadný
+// tisk — a navíc je okno schované, nebo technik nepíše do pole a chvíli
+// se ničeho nedotkl. Jinak jen pruh „Načíst"; jakmile podmínky začnou platit
+// (zavře zprávu, schová okno), načte se sama. Po načtení jedna hláška.
+var NOVA_VERZE_KLIDNE = ['home', 'nastaveni', 'novinky', 'podtyp', 'dokumentace', 'dok-seznam', 'plan'];
+var NOVA_VERZE_HOTOVO = 'revize_el_aktualizovano';
+window.__novaVerzeCeka = false;
+var __novaVerzeAktivita = 0;
+['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (t) {
+  document.addEventListener(t, function () { __novaVerzeAktivita = Date.now(); }, { capture: true, passive: true });
+});
+function novaVerzeMuzeSama() {
+  var akt = document.querySelector('.screen.active');
+  var s = akt ? akt.id.replace(/^screen-/, '') : 'home';
+  if (NOVA_VERZE_KLIDNE.indexOf(s) < 0) return false;
+  if (window.__hromadnyTisk) return false;
+  if (document.querySelector('.modal-overlay.open, .kt-menu')) return false;
+  if (document.visibilityState === 'hidden') return true;
+  var f = document.activeElement;
+  if (f && f !== document.body && (f.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(f.tagName))) return false;
+  return Date.now() - __novaVerzeAktivita > 1500;
+}
+function novaVerzeZkusit() {
+  if (!window.__novaVerzeCeka || window.__novaVerzeNacita) return;
+  if (!novaVerzeMuzeSama()) { novaVerzePruh(); return; }
+  window.__novaVerzeNacita = true;
+  try { sessionStorage.setItem(NOVA_VERZE_HOTOVO, '1'); } catch (e) {}
+  novaVerzeNacist();
+}
+function novaVerzeHlaska() {
+  var v = null;
+  try { v = sessionStorage.getItem(NOVA_VERZE_HOTOVO); sessionStorage.removeItem(NOVA_VERZE_HOTOVO); } catch (e) {}
+  if (v) showToast('Program se aktualizoval na novou verzi.');
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') novaVerzeZkusit();
+});
+setInterval(novaVerzeZkusit, 2000);
+
+// Pruh „nová verze" — nenápadný, dole (když se nová verze nemůže načíst sama).
+function novaVerzePruh() {
+  if (document.getElementById('nova-verze')) return;
+  var p = document.createElement('div');
+  p.id = 'nova-verze';
+  p.setAttribute('role', 'status');
+  p.innerHTML = '<span>Je k dispozici nová verze programu.</span>' +
+    '<button type="button" id="nova-verze-nacist" title="Načte novou verzi — rozpracovaná práce se předtím uloží a vrátíte se, kde jste byli">Načíst</button>';
+  document.body.appendChild(p);
+  document.getElementById('nova-verze-nacist').addEventListener('click', novaVerzeNacist);
+}
+async function novaVerzeNacist() {
+  autoSaveHned();
+  try { if (typeof dokDopsat === 'function') await dokDopsat(); } catch (e) {}
+  obnovaZapsat();
+  window.location.reload();
+}
+
+// Service Worker — offline podpora (PWA). Nová verze se načte sama jen
+// v klidu, jinak se NABÍDNE pruhem „Načíst" — viz oddíl výš.
 if ('serviceWorker' in navigator) {
+  // Bez řídicího workeru = první návštěva: worker se teprve instaluje
+  // a stránka je už nejnovější, takže jeho převzetí není nová verze.
+  var swMelKontrolu = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('./sw.js').catch(function() {});
-  // Když nový SW převezme kontrolu (po bumpu CACHE_NAME v sw.js),
-  // stránku reloadni, ať uživatel hned vidí novou verzi. Výjimka: pokud
-  // má rozepsanou neuloženou zprávu, reload by ho vylekal — místo toho
-  // se ukáže lišta s tlačítkem OBNOVIT a reload si odklikne sám.
-  var swRefreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', function() {
-    if (swRefreshing) return;
-    swRefreshing = true;
-    var form = document.getElementById('screen-form');
-    if (form && form.classList.contains('active') && window.__formDirty) {
-      showToast('Je připravena nová verze programu', {
-        actionLabel: 'OBNOVIT',
-        timeout: 600000,
-        action: function() { window.location.reload(); }
-      });
-    } else {
-      window.location.reload();
-    }
+    if (!swMelKontrolu) { swMelKontrolu = true; return; }
+    window.__novaVerzeCeka = true;
+    novaVerzeZkusit();
   });
 }
 

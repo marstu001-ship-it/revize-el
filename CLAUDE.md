@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.125 · 2026-10-16**
+**Aktuální verze: v9.126 · 2026-10-21**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -173,6 +173,140 @@ a zaškrtávátka mají nativní vzhled. Obsah v rámečku s vlastním posunem
   klepnutí do pole, `100dvh` s vysunutou klávesnicí, nativní výběr
   v rozbalovátku, vzhled vlastního zaškrtávátka v Safari, dlouhý stisk prstem
   (kontextové menu), PDF z html2canvas na slabém telefonu, výřez displeje.
+
+## Nová verze se jen nabídne, po načtení stránky zpět, kde byl uživatel (v9.126)
+
+Hlášení uživatele: „program sám skočí na úvod, když jsem chvíli neaktivní."
+**Příčiny byly dvě:**
+
+1. **Automatické obnovení po nové verzi.** `sw.js` při instalaci volá
+   `skipWaiting()` a při aktivaci `clients.claim()`, takže nový worker hned
+   převezme otevřenou stránku a ta dostane `controllerchange`. Na něj
+   stránka volala **`location.reload()`** — výjimkou byla jen rozepsaná
+   zpráva (`__formDirty`), dokument z Tvorby dokumentace, plán ani
+   nastavení výjimku neměly. Prohlížeč přitom aktualizaci hledá sám, typicky
+   po návratu k oknu — proto to vypadalo jako „po chvíli nečinnosti".
+2. **Uspaná karta.** Chrome (šetřič paměti) i telefon kartu na pozadí
+   zahodí a po návratu ji načtou znovu.
+
+Po každém načtení program začínal na úvodu (`init()` nikam jinam nevedl).
+
+**Kompromis (pokyn uživatele 2026-10-19, po vyzkoušení pruhu):** nová verze
+se **načte sama, jen když technik nic nedělá** (`novaVerzeMuzeSama()`):
+obrazovka je v `NOVA_VERZE_KLIDNE` (úvod s archivem, nastavení, novinky,
+výběr podtypu, dlaždice a seznam dokumentů, plán) — tedy **není otevřená
+zpráva, dokument ani rozvaděč v editoru** — není otevřený dialog
+(`.modal-overlay.open`) ani kontextové menu, neběží hromadný tisk, **a navíc**
+je okno schované, nebo technik nepíše do pole a 1,5 s se ničeho nedotkl
+(`pointerdown`/`keydown`/`wheel`/`touchstart`). Jinak jen pruh „Načíst".
+Čekající verze (`__novaVerzeCeka`) se zkouší při `controllerchange`, při
+schování okna a každé 2 s — takže **po zavření zprávy a návratu na úvod se
+načte sama**. Před načtením se do `sessionStorage` zapíše
+`revize_el_aktualizovano` a po startu ukáže **jedna hláška „Program se
+aktualizoval na novou verzi."** (`novaVerzeHlaska()` na konci `init()`).
+Otevřený dialog se nezahodí ani při schovaném okně (mohl by v něm být
+rozepsaný odběratel).
+
+**Při té příležitosti opraveno:** `saveToArchiv()` mazal koncept, ale
+nerušil **čekající zápis konceptu** (`autoSaveTimer`, 1,5 s po psaní) —
+psaní těsně před uložením tak koncept za chvíli zapsalo znovu a příští start
+nabízel „Našla se neuložená rozepsaná zpráva", i když byla uložená.
+
+**Oprava (blok „NOVÁ VERZE A NÁVRAT NA OBRAZOVKU" před registrací workeru):**
+
+- **Na `controllerchange` se stránka sama neobnoví, pokud technik pracuje** (viz kompromis výš) — ukáže se nenápadný pruh
+  dole **„Je k dispozici nová verze programu. [Načíst]"** (`#nova-verze`,
+  `novaVerzePruh()`), obnoví se až po kliknutí (`novaVerzeNacist()`: dopíše
+  koncept zprávy i dokument, zapíše polohu, pak `reload`). **První návštěva
+  (stránku ještě žádný worker neřídil) pruh neukáže** — převzetí čerstvě
+  nainstalovaným workerem není nová verze (`swMelKontrolu`). `sw.js` se
+  neměnil (skipWaiting/claim zůstávají, jen stránka se už sama neobnoví).
+- **Poloha se pamatuje v `sessionStorage` `revize_el_obnova`** (`obnovaStav`:
+  obrazovka, u zprávy `uid` + záložka, u tvorby dokumentace typ a otevřený
+  dokument, posun stránky). Zapisuje se při `pagehide` a skrytí okna
+  (`visibilitychange`) — tím se chytí obnovení, nová verze i uspaná karta.
+  **sessionStorage patří jednomu oknu** — v novém okně se nic neobnovuje.
+- **`obnovaObrazovky()` na konci `init()`**: zpráva z archivu (`otevritZpravu`
+  → formulář, záložka přes `formArchivObnovitTab`, dokončená zůstane jen pro
+  čtení), náhled PDF zprávy → formulář, dokument (`dokOtevrit`; neuložený
+  nový → jeho seznam), seznam a dlaždice dokumentů, plán (i z náhledu
+  plánu), nastavení, novinky, výběr podtypu. Ostatní náhledy PDF → úvod.
+- **Rozepsané se neztratí:** koncept zprávy se ukládá 1,5 s po psaní —
+  **`autoSaveHned()`** ho při odchodu dopíše hned. Byla-li zpráva otevřená
+  v témže okně, vrátí se z konceptu **bez dotazu** (`tichaObnova` v
+  `init()`) a zůstane „neuloženo"; v novém okně se na koncept ptá jako dřív.
+  Dokument tvorby dokumentace dopisuje `dokUlozitHned` (pagehide, už dřív).
+
+Test: `testy/test-obnova.js` (21 kontrol — zpráva i záložka, psaní těsně
+před obnovením, pruh místo obnovení a „Načíst", dokončená zpráva, plán,
+nastavení s posunem, protokol, seznam dokumentů, rozvaděč s čerstvě
+vloženými přístroji — jen když program má `DOK_TYPY.rozv`, jinak se
+tytéž kontroly dělají s protokolem vnějších vlivů —, náhled PDF dokumentu; samočinné načtení: na úvodu ano,
+s otevřeným rozvaděčem / zprávou jen pruh i po schování okna, po zavření
+ano s hláškou, dialog a kurzor v poli ho odloží, rozepsaný text zůstane;
+nové okno, první návštěva).
+
+## Zpráva od kolegy: technik a přístroje zůstanou jeho (v9.126)
+
+Pokyn uživatele: „historicky má jít vidět, že zprávu dělal někdo jiný."
+**Zjištění (ověřeno v kódu):** `nacistData()` při KAŽDÉM otevření volal
+`propsatTechnika()` a `propsatPristroje()` („Vždy přepsat pole revizního
+technika z vlastního profilu") — zpráva od kolegy po otevření ukazovala mě
+jako technika a moje přístroje, a po uložení to tak i zapsala. `getData()`
+navíc doplňoval prázdná pole technika z profilu (`|| t.ico`), takže kolegovo
+prázdné IČO dostalo moje. PDF bralo razítko a podpis vždy z profilu.
+
+- **Otevření existující zprávy** (archiv, soubor, balík, postranní archiv,
+  koncept, hromadný tisk — všechno jde přes `nacistData()`) **technika
+  (`f_rt_*`) ani přístroje nepřepisuje** — ukáže, co je ve zprávě.
+- **Z profilu se vyplní jen moje NOVÁ zpráva:** `novaZprava()`,
+  „🔗 Navázat" a „⧉ Kopírovat" (`technikAPristrojeZProfilu()` hned po
+  `nacistData()`).
+- **Výjimka pro staré vlastní zprávy:** zpráva bez jména I ev. čísla
+  osvědčení technika (`bezTechnika` v `nacistData`) dostane technika
+  i přístroje z profilu jako dřív. Takové zprávy existovat můžou —
+  `getData()` ukládal `gv('f_rt_jmeno') || t.jmeno`, tedy prázdno, když byl
+  prázdný i profil (a zprávy ze starších verzí / cizí soubory klíče nemají).
+- **`getData()` doplní z profilu jen úplně prázdného technika**
+  (`rtPrazdny` = prázdné jméno i osvědčení) — jinak by do zprávy kolegy
+  dopsal moje IČO, oprávnění nebo adresu.
+- **Štítek `#rt-badge`** ukazuje technika ZE ZPRÁVY (z polí formuláře,
+  překresluje se při psaní — `rtBadgeVykreslit()`); liší-li se od profilu
+  (`technikZpravyJeMuj`: shoda ev. č. osvědčení, nebo jména — nové
+  osvědčení po obnově má jiné číslo), pod ním jeden nenápadný řádek
+  „Zprávu zpracoval jiný technik než je ve vašem profilu."
+- **„↻ Vyplnit z mého profilu"** ve štítku technika a u přístrojů
+  (`technikZProfilu`, `pristrojeZProfilu` — nové osvědčení, nová
+  kalibrace). Jsou v `.tab-panel`, takže je u dokončené zprávy CSS schová;
+  funkce to navíc hlídají přes `__formReadOnly`. Tlačítko u přístrojů jde
+  s kartou i do okna přístrojů u spotřebičů.
+- **Razítko a podpis jen u vlastní zprávy** (`technikZpravyJeMuj(D)`) —
+  hlavní PDF, seznam i protokol jednoho spotřebiče. Panel tisku u cizí
+  zprávy razítko/podpis nenabídne a řekne „(zprávu zpracoval jiný technik
+  — vaše se nevloží)".
+- **Tisk existující zprávy bere technika ze zprávy:** `technikProTisk(D)` =
+  jméno, osvědčení, IČO, oprávnění ze zprávy; telefon, e-mail, DIČ, firma,
+  město, razítko a podpis z profilu **jen u vlastní zprávy** (cizí je nemá
+  a vymýšlet se nesmí). Používá ho schéma rozváděčů (`schemaHlavicka`),
+  hlavička, podpis i protokol jednoho spotřebiče (`spotrHlavickaHtml`,
+  `spotrPodpisHtml`, `spotrJedenHtml`, kolonka „Dodavatel" tím u cizí
+  zprávy zůstane prázdná, je-li prázdné IČO). Měřicí list a tisk měření
+  braly `D.rt_jmeno` už dřív. **E-mail s přílohou** (podpis odesílatele)
+  zůstává z profilu — posílám ho já.
+- **Data se pouhým otevřením nemění** a zpráva od kolegy po otevření
+  a uložení má `rt_*` i `pristroje` přesně jako v souboru; profil se nemění.
+- Štítek 📥 a body 4–7 návrhu „Převzaté zprávy od kolegů" se NEDĚLALY.
+
+Test: `testy/test-technik-zpravy.js` (25 kontrol, vymyšlení technici —
+soubor, balík, archiv, postranní archiv, nová / Navázat / Kopírovat, stará
+zpráva bez technika, tlačítka a dokončená zpráva, razítko u cizí ne
+a u vlastní ano, spotřebiče seznam i jeden protokol, data a profil beze
+změny). Na kódu před úpravou spadne. Karta v Novinkách se nedělala.
+
+**Záměrně změněné chování:** `test-jeden-spotrebic.js` měnil IČO jen
+v profilu a čekal ho v už založené zprávě (kolonka „Dodavatel"). Teď si
+zpráva drží svého technika, takže test změnu přenese tlačítkem
+„Vyplnit z mého profilu" (`technikZProfilu()`) — upraveno ve stejném commitu.
 
 ## Zs mez — vyhodnocení impedance poruchové smyčky (blok `zsLim…`)
 
@@ -4338,8 +4472,9 @@ trafo, osvětlení…), sáhněte na tahle místa:
   nativního tažení běží normálně. Konec tažení hlásí prohlížeč jako (0,0),
   což se musí ignorovat, jinak seznam vystřelí nahoru.
 - ✅ **PWA auto-reload po update** — network-first pro HTML,
-  listener `controllerchange` → `location.reload()`. Uživatel
-  nemusí hard-reloadovat; cache bump v sw.js stačí.
+  listener `controllerchange` → načte se sama jen v klidu, jinak pruh
+  „Načíst" (od v9.126, viz oddíl „Nová verze se jen nabídne…").
+  Uživatel nemusí hard-reloadovat; cache bump v sw.js stačí.
 
 - ✅ **Knihovna textů — ukládání části a vkládání na kurzor** (2026-08-20):
   `ulozitDoKnihovny` uloží **jen označený úsek** textarey, když v ní nějaký
