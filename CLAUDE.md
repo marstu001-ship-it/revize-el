@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.125 · 2026-10-16**
+**Aktuální verze: v9.127 · 2026-10-21**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -174,6 +174,140 @@ a zaškrtávátka mají nativní vzhled. Obsah v rámečku s vlastním posunem
   v rozbalovátku, vzhled vlastního zaškrtávátka v Safari, dlouhý stisk prstem
   (kontextové menu), PDF z html2canvas na slabém telefonu, výřez displeje.
 
+## Nová verze se jen nabídne, po načtení stránky zpět, kde byl uživatel (v9.126)
+
+Hlášení uživatele: „program sám skočí na úvod, když jsem chvíli neaktivní."
+**Příčiny byly dvě:**
+
+1. **Automatické obnovení po nové verzi.** `sw.js` při instalaci volá
+   `skipWaiting()` a při aktivaci `clients.claim()`, takže nový worker hned
+   převezme otevřenou stránku a ta dostane `controllerchange`. Na něj
+   stránka volala **`location.reload()`** — výjimkou byla jen rozepsaná
+   zpráva (`__formDirty`), dokument z Tvorby dokumentace, plán ani
+   nastavení výjimku neměly. Prohlížeč přitom aktualizaci hledá sám, typicky
+   po návratu k oknu — proto to vypadalo jako „po chvíli nečinnosti".
+2. **Uspaná karta.** Chrome (šetřič paměti) i telefon kartu na pozadí
+   zahodí a po návratu ji načtou znovu.
+
+Po každém načtení program začínal na úvodu (`init()` nikam jinam nevedl).
+
+**Kompromis (pokyn uživatele 2026-10-19, po vyzkoušení pruhu):** nová verze
+se **načte sama, jen když technik nic nedělá** (`novaVerzeMuzeSama()`):
+obrazovka je v `NOVA_VERZE_KLIDNE` (úvod s archivem, nastavení, novinky,
+výběr podtypu, dlaždice a seznam dokumentů, plán) — tedy **není otevřená
+zpráva, dokument ani rozvaděč v editoru** — není otevřený dialog
+(`.modal-overlay.open`) ani kontextové menu, neběží hromadný tisk, **a navíc**
+je okno schované, nebo technik nepíše do pole a 1,5 s se ničeho nedotkl
+(`pointerdown`/`keydown`/`wheel`/`touchstart`). Jinak jen pruh „Načíst".
+Čekající verze (`__novaVerzeCeka`) se zkouší při `controllerchange`, při
+schování okna a každé 2 s — takže **po zavření zprávy a návratu na úvod se
+načte sama**. Před načtením se do `sessionStorage` zapíše
+`revize_el_aktualizovano` a po startu ukáže **jedna hláška „Program se
+aktualizoval na novou verzi."** (`novaVerzeHlaska()` na konci `init()`).
+Otevřený dialog se nezahodí ani při schovaném okně (mohl by v něm být
+rozepsaný odběratel).
+
+**Při té příležitosti opraveno:** `saveToArchiv()` mazal koncept, ale
+nerušil **čekající zápis konceptu** (`autoSaveTimer`, 1,5 s po psaní) —
+psaní těsně před uložením tak koncept za chvíli zapsalo znovu a příští start
+nabízel „Našla se neuložená rozepsaná zpráva", i když byla uložená.
+
+**Oprava (blok „NOVÁ VERZE A NÁVRAT NA OBRAZOVKU" před registrací workeru):**
+
+- **Na `controllerchange` se stránka sama neobnoví, pokud technik pracuje** (viz kompromis výš) — ukáže se nenápadný pruh
+  dole **„Je k dispozici nová verze programu. [Načíst]"** (`#nova-verze`,
+  `novaVerzePruh()`), obnoví se až po kliknutí (`novaVerzeNacist()`: dopíše
+  koncept zprávy i dokument, zapíše polohu, pak `reload`). **První návštěva
+  (stránku ještě žádný worker neřídil) pruh neukáže** — převzetí čerstvě
+  nainstalovaným workerem není nová verze (`swMelKontrolu`). `sw.js` se
+  neměnil (skipWaiting/claim zůstávají, jen stránka se už sama neobnoví).
+- **Poloha se pamatuje v `sessionStorage` `revize_el_obnova`** (`obnovaStav`:
+  obrazovka, u zprávy `uid` + záložka, u tvorby dokumentace typ a otevřený
+  dokument, posun stránky). Zapisuje se při `pagehide` a skrytí okna
+  (`visibilitychange`) — tím se chytí obnovení, nová verze i uspaná karta.
+  **sessionStorage patří jednomu oknu** — v novém okně se nic neobnovuje.
+- **`obnovaObrazovky()` na konci `init()`**: zpráva z archivu (`otevritZpravu`
+  → formulář, záložka přes `formArchivObnovitTab`, dokončená zůstane jen pro
+  čtení), náhled PDF zprávy → formulář, dokument (`dokOtevrit`; neuložený
+  nový → jeho seznam), seznam a dlaždice dokumentů, plán (i z náhledu
+  plánu), nastavení, novinky, výběr podtypu. Ostatní náhledy PDF → úvod.
+- **Rozepsané se neztratí:** koncept zprávy se ukládá 1,5 s po psaní —
+  **`autoSaveHned()`** ho při odchodu dopíše hned. Byla-li zpráva otevřená
+  v témže okně, vrátí se z konceptu **bez dotazu** (`tichaObnova` v
+  `init()`) a zůstane „neuloženo"; v novém okně se na koncept ptá jako dřív.
+  Dokument tvorby dokumentace dopisuje `dokUlozitHned` (pagehide, už dřív).
+
+Test: `testy/test-obnova.js` (21 kontrol — zpráva i záložka, psaní těsně
+před obnovením, pruh místo obnovení a „Načíst", dokončená zpráva, plán,
+nastavení s posunem, protokol, seznam dokumentů, rozvaděč s čerstvě
+vloženými přístroji — jen když program má `DOK_TYPY.rozv`, jinak se
+tytéž kontroly dělají s protokolem vnějších vlivů —, náhled PDF dokumentu; samočinné načtení: na úvodu ano,
+s otevřeným rozvaděčem / zprávou jen pruh i po schování okna, po zavření
+ano s hláškou, dialog a kurzor v poli ho odloží, rozepsaný text zůstane;
+nové okno, první návštěva).
+
+## Zpráva od kolegy: technik a přístroje zůstanou jeho (v9.126)
+
+Pokyn uživatele: „historicky má jít vidět, že zprávu dělal někdo jiný."
+**Zjištění (ověřeno v kódu):** `nacistData()` při KAŽDÉM otevření volal
+`propsatTechnika()` a `propsatPristroje()` („Vždy přepsat pole revizního
+technika z vlastního profilu") — zpráva od kolegy po otevření ukazovala mě
+jako technika a moje přístroje, a po uložení to tak i zapsala. `getData()`
+navíc doplňoval prázdná pole technika z profilu (`|| t.ico`), takže kolegovo
+prázdné IČO dostalo moje. PDF bralo razítko a podpis vždy z profilu.
+
+- **Otevření existující zprávy** (archiv, soubor, balík, postranní archiv,
+  koncept, hromadný tisk — všechno jde přes `nacistData()`) **technika
+  (`f_rt_*`) ani přístroje nepřepisuje** — ukáže, co je ve zprávě.
+- **Z profilu se vyplní jen moje NOVÁ zpráva:** `novaZprava()`,
+  „🔗 Navázat" a „⧉ Kopírovat" (`technikAPristrojeZProfilu()` hned po
+  `nacistData()`).
+- **Výjimka pro staré vlastní zprávy:** zpráva bez jména I ev. čísla
+  osvědčení technika (`bezTechnika` v `nacistData`) dostane technika
+  i přístroje z profilu jako dřív. Takové zprávy existovat můžou —
+  `getData()` ukládal `gv('f_rt_jmeno') || t.jmeno`, tedy prázdno, když byl
+  prázdný i profil (a zprávy ze starších verzí / cizí soubory klíče nemají).
+- **`getData()` doplní z profilu jen úplně prázdného technika**
+  (`rtPrazdny` = prázdné jméno i osvědčení) — jinak by do zprávy kolegy
+  dopsal moje IČO, oprávnění nebo adresu.
+- **Štítek `#rt-badge`** ukazuje technika ZE ZPRÁVY (z polí formuláře,
+  překresluje se při psaní — `rtBadgeVykreslit()`); liší-li se od profilu
+  (`technikZpravyJeMuj`: shoda ev. č. osvědčení, nebo jména — nové
+  osvědčení po obnově má jiné číslo), pod ním jeden nenápadný řádek
+  „Zprávu zpracoval jiný technik než je ve vašem profilu."
+- **„↻ Vyplnit z mého profilu"** ve štítku technika a u přístrojů
+  (`technikZProfilu`, `pristrojeZProfilu` — nové osvědčení, nová
+  kalibrace). Jsou v `.tab-panel`, takže je u dokončené zprávy CSS schová;
+  funkce to navíc hlídají přes `__formReadOnly`. Tlačítko u přístrojů jde
+  s kartou i do okna přístrojů u spotřebičů.
+- **Razítko a podpis jen u vlastní zprávy** (`technikZpravyJeMuj(D)`) —
+  hlavní PDF, seznam i protokol jednoho spotřebiče. Panel tisku u cizí
+  zprávy razítko/podpis nenabídne a řekne „(zprávu zpracoval jiný technik
+  — vaše se nevloží)".
+- **Tisk existující zprávy bere technika ze zprávy:** `technikProTisk(D)` =
+  jméno, osvědčení, IČO, oprávnění ze zprávy; telefon, e-mail, DIČ, firma,
+  město, razítko a podpis z profilu **jen u vlastní zprávy** (cizí je nemá
+  a vymýšlet se nesmí). Používá ho schéma rozváděčů (`schemaHlavicka`),
+  hlavička, podpis i protokol jednoho spotřebiče (`spotrHlavickaHtml`,
+  `spotrPodpisHtml`, `spotrJedenHtml`, kolonka „Dodavatel" tím u cizí
+  zprávy zůstane prázdná, je-li prázdné IČO). Měřicí list a tisk měření
+  braly `D.rt_jmeno` už dřív. **E-mail s přílohou** (podpis odesílatele)
+  zůstává z profilu — posílám ho já.
+- **Data se pouhým otevřením nemění** a zpráva od kolegy po otevření
+  a uložení má `rt_*` i `pristroje` přesně jako v souboru; profil se nemění.
+- Štítek 📥 a body 4–7 návrhu „Převzaté zprávy od kolegů" se NEDĚLALY.
+
+Test: `testy/test-technik-zpravy.js` (25 kontrol, vymyšlení technici —
+soubor, balík, archiv, postranní archiv, nová / Navázat / Kopírovat, stará
+zpráva bez technika, tlačítka a dokončená zpráva, razítko u cizí ne
+a u vlastní ano, spotřebiče seznam i jeden protokol, data a profil beze
+změny). Na kódu před úpravou spadne. Karta v Novinkách se nedělala.
+
+**Záměrně změněné chování:** `test-jeden-spotrebic.js` měnil IČO jen
+v profilu a čekal ho v už založené zprávě (kolonka „Dodavatel"). Teď si
+zpráva drží svého technika, takže test změnu přenese tlačítkem
+„Vyplnit z mého profilu" (`technikZProfilu()`) — upraveno ve stejném commitu.
+
 ## Zs mez — vyhodnocení impedance poruchové smyčky (blok `zsLim…`)
 
 Zadání uživatele 2026-10-15: program dosud mez Zs nikde
@@ -270,7 +404,8 @@ dlaždice se nedělají.
 
 **ZÁSADA Č. 1: ÚPLNĚ ODDĚLENO OD REVIZÍ.**
 - **Vlastní úložiště** `DOK` — localStorage `revize_el_dok`, v IndexedDB klíče
-  `dok_dokumenty`, `dok_vzory`, `dok_vzorySkryte`, `dok_osoby`, `dok_zapsano`.
+  `dok_dokumenty`, `dok_vzory`, `dok_vzorySkryte`, `dok_osoby`, `dok_zapsano`
+  (a pro rozvaděče `dok_rozvKnihovna`, `dok_rozvOblibene`, `dok_rozvObjekty`).
   **NENÍ ve STORE ani ve STORE_KEYS** — saveStore/loadStore na něj nesahají,
   takže revize se s dokumenty nemůžou smíchat. Pravidlo „čtyři místa"
   pro klíče STORE se tu neuplatní; místo něj platí: nový klíč = `DOK_IDB`.
@@ -348,6 +483,857 @@ ruční kód, restart, číslování, kopie, vlastní vzor, PDF bez vysvětlivek
 záloha a obnova, dvě okna, rozbor seznamu prostorů a **oddělení**: protokol
 není v archivu, naposledy otevřených, plánu ani hledání a data revizí jsou
 po práci s protokoly **bajtově stejná**). Karta v Novinkách se nedělala.
+
+## Rozvaděč DBO — návrh a dokumentace (v9.127; konfigurátor, `DOK_TYPY.rozv`, blok `ROZVADĚČ DBO`)
+
+Zadání uživatele 2026-10-18: technik poskládá rozvaděč
+z knihovny skříní a přístrojů v čelním pohledu (jako elektro-konstrukt.cz)
+a program z toho později udělá štítek, EU prohlášení o shodě, protokol
+o kusovém ověření a schéma. **Etapy:** 1) knihovna a skládání (tohle),
+2) dokumenty z návrhu, 3) schéma zapojení, 4) symetrie fází a oteplení,
+5) výkonové rozvaděče PSC / 3D. Druhý typ v Tvorbě dokumentace — dlaždice
+„Rozvaděč DBO – návrh a dokumentace" (ČSN EN 61439-3), číslování
+**`ROZ-0001`**, platí všechny zásady oddílu výš (vlastní úložiště, oddělení
+od revizí, záloha jako část `dokumentace`).
+
+- **Seznam:** hlavní akce „＋ Navrhnout nový rozvaděč", pod seznamem sbalená
+  **„⚙ Knihovna přístrojů a skříní"** (`#dok-knihovna-karta`, ukazuje se
+  podle `DOK_TYPY[typ].knihovna`). Řádek seznamu skládá `DOK_TYPY.rozv.polozka`
+  (označení – zakázka; odběratel, místo, skříň), hledání `DOK_TYPY.rozv.hledat`
+  („3x12" najde „3×12").
+- **Editor** (`#screen-dok-form[data-typ="rozv"]`, širší `.dok-wrap`):
+  nahoře **sbalená hlavička** (souhrn v záhlaví), pod ní tři sloupce:
+  **knihovna** (karty Přístroje / Skříně, rychlé přidání, hledání, sbalené
+  filtry) · **čelní pohled** · **vlastnosti**. Na užším okně vlastnosti pod
+  ostatním, na telefonu všechno pod sebou. Bez skříně je knihovna na kartě
+  Skříně a pohled vyzve „Nejdřív vyberte skříň".
+- **Filtry knihovny jsou jen v paměti** (`__rzF`) a psaní do nich NENÍ
+  změna dokumentu — panel má `data-dk-mimo`, obecné posluchače formuláře ho
+  přeskočí (nový prázdný rozvaděč se tak neuloží jen kvůli hledání).
+- **Filtry jsou VIDĚT, ne sbalené** (pokyn uživatele 2026-10-19 — sbalené
+  filtry technik nenašel a s importem výrobců jsou stovky položek). Karta
+  Přístroje: pod hledáním **kategorie jako řada tlačítek**
+  (`ROZV_KAT_SKUPINY`: Vše · Jističe · Chrániče · RCBO · AFDD · SPD ·
+  Hl. vypínače · Pojistky · Ostatní = KM, KT, KA, PJ, HL, SF, X, REZ)
+  a vždy **výrobce, póly, In, charakteristika**; sbalené „Další filtry" jen
+  IΔn, typ chrániče, jen ověřené, jen oblíbené. Karta Skříně vždy: **typ
+  skříně jako řada tlačítek** (Vše · Domovní · Průmyslové · Historické,
+  `__rzF.typSkrine`, `tdRTypSkrine`), výrobce, počet řad, modulů v řadě,
+  provedení, materiál (jen ověřené sbalené) a tlačítko **„📐 Vlastní
+  velikost skříně"** (viz Zakreslení — tentýž formulář v okně
+  `#modal-rz-velikost`, „Použít" = `rozvSkrinNastavit`).
+  **Volby rozbalovátek se berou z dat** (`rozvVolbyZDat` — i importovaní
+  výrobci; „obecný" = vestavěné), zvolená hodnota v nabídce zůstane.
+  Přepnutí karty filtry vynuluje (hledaný text zůstane) — výrobce bez skříní
+  by jinak seznam skříní tiše vyprázdnil; změna kategorie vynuluje póly, In,
+  charakteristiku a IΔn.
+- **Seznam se kreslí po `ROZV_STRANKA` = 50 řádcích** — počítadlo
+  „Zobrazeno 50 z 340 (v knihovně 600)" + „Zrušit filtry" a dole
+  „▼ Zobrazit dalších 50 (zbývá …)" (`rozvPocetText`, `rozvViceHtml`).
+  Stovky řádků naráz by stránku zpomalily; s ~670 položkami trvá vykreslení
+  i filtr pod 30 ms.
+- **Správa knihovny na seznamu** (sbalená „⚙ Knihovna…") má filtr
+  **výrobce + kategorie (i Skříně)** (`__rzSF`, jen v paměti), stránkování
+  a při zapnutém filtru **„🗑 Smazat všech N nalezených"**
+  (`tdRPolSmazatNalezene` — ptá se, jmenuje výrobce; ZPĚT vrátí smazané)
+  — tak jde zkontrolovat a smazat import jednoho výrobce.
+- Hlavička: `cislo`, `oznaceni`, `stavba` (zakázka/název), `investor`
+  (odběratel, ARES přes `dkFirma`), `misto`, `soustava` (`ROZV_SOUSTAVY`),
+  `privodIn`, `privodSmer` (shora/zespodu), `privodKabel`, `privodPrurez`,
+  `krytiZavreno`, `krytiOtevreno`, `icc` (nepovinné), `vyrobce` (předvyplněný
+  z profilu technika: firma, adresa, IČO), `datum`.
+
+### Datový model — navržený tak, aby etapy 2–4 nic nepřestavovaly
+
+`data.skrin` = **KOPIE** skříně z knihovny (`knih` = id v knihovně),
+`data.rady = [{ prvky: [...] }]`, přístroj
+`{ uid, knih, p, ozn, vyvod, faze, kabel, prurez, nadr, nadrRucne, ib, pozn }`,
+kde **`p` je KOPIE parametrů z knihovny** — pozdější úprava knihovny hotový
+rozvaděč nezmění. Řada je **zleva doprava bez mezer** (volné místo =
+přístroj kategorie Rezerva), pořadí = poloha. Z toho jde: strom pro schéma
+(přívod → QM → SPD → chrániče přes `nadr` → vývody), In / Ib po fázích
+(`faze` L1/L2/L3/3f), oteplení Σ `p.pv` × (`ib` / `p.In`)², štítek
+a prohlášení (hlavička + `skrin` + `p`). `data.model = 1`.
+
+### Knihovna
+
+- **Kategorie `ROZV_KAT`** (`k`, `nazev`, `ozn` = předpona označení, `barva`,
+  `etim`, `pole` = parametry, které u ní dávají smysl): QM -QM, FA -FA,
+  FI -FI, FIFA -FI/FA (RCBO), AFDD (-FA, sdílí řadu s jističi), SPD (bez
+  pomlčky „SPD1"), FU -FU, KM -KM, KT -KT, KA -KA, PJ -PJ, HL -HL, SF -SF,
+  X -X, REZ (bez označení).
+- **ETIM 10:** u kategorií jen známé třídy — MCB EC000042, RCD EC000003,
+  RCBO EC000905, SPD EC000941, skříň EC000214 (`ROZV_SKRIN_ETIM`). U polí
+  (`ROZV_POLE`) je v komentáři název vlastnosti ETIM; **kódy vlastností (EF…)
+  se nevymýšlejí**, doplní se z ověřené tabulky při importu dat výrobců.
+- Parametry přístroje: `kat, nazev, vyrobce, rada, typ, poly (1, 1+N, 2, 3,
+  3+N, 4), In, char (B/C/D/K/Z), icn (kA, ČSN EN 60898), icu, ics (kA,
+  ČSN EN 60947-2), idn (mA), rcdTyp (AC/A/F/B), spdTrida, up (kV), sirka
+  (moduly, DESETINNÉ), pv (W/pól při In), ue, pozn, zdroj, overeno`.
+  Skříň: `vyrobce, rada, typ, typSkrine, provedeni, material, rady, modulu,
+  ip, ik, ina, penc, rozmery, trida, pozn, zdroj, overeno`. Prázdné =
+  neuvedeno; `rozvPolozkaNorm()` srovná tvar a čísla (desetinná čárka).
+  **`typSkrine`** (2026-10-20) = `domovni` (výchozí — **i všechny dosavadní
+  skříně bez klíče**, doplní ho `rozvPolozkaNorm`), `prumyslova`,
+  `historicka` (staré rozvaděče z ČSSR). Provedení `nástěnná`, `zapuštěná`,
+  `polozapuštěná` (staré plechové chodbové rozvaděče, 2026-10-20 — v CSV
+  projde i „polozapustena"), `dutá stěna`, `stojanová` (`ROZV_PROVEDENI`).
+- **Vestavěné jen OBECNÉ položky** (`rozvVestavene()`, id `v-…`, výrobce
+  „obecný", `overeno = false`): jističe 1P/1+N/3P/3+N × B/C × 6–63 A,
+  chrániče 2P/4P 25/40/63 A 30 mA A/AC (+ 4P 40/63 A 300 mA), RCBO 1+N,
+  AFDD, SPD T1+T2 / T2, hlavní vypínače, pojistkové odpínače 10×38, stykače,
+  relé, hodiny, elektroměry, signálky, ovladače, svorka ½ modulu, rezervy
+  ½–3 moduly; skříně plast 1–4×12 a 2–4×18 nástěnné i zapuštěné, oceloplech
+  3–4×24 (domovní), **oceloplech nástěnné 5–8×24 a stojanové 10×24, 12×24
+  (průmyslové)**. Historické vestavěné nejsou — data pošle uživatel. **Pv, Icn, Icu, Ics, InA a Penc jsou prázdné — nic se nevymýšlí;
+  šířky jsou běžné modulové a neověřené.** Žádná data výrobců (repozitář je
+  veřejný).
+- **Položky uživatele** v `DOK.rozvKnihovna`, oblíbené (hvězdička) v
+  `DOK.rozvOblibene` — obojí v úložišti tvorby dokumentace (`DOK_IDB`)
+  a v záloze (`dokZalohaData`). Oblíbené jdou v seznamu nahoru a do
+  rychlého přidání; **rychlé přidání** = `ROZV_NEJCASTEJSI` (B10 1P, B16 1P,
+  C16 1P, B25 3P, chránič 40 A/30 mA 4P, hlavní vypínač 3P, rezerva 1 M).
+- **Informační pruh nahoře v knihovně** (pokyn uživatele 2026-10-19,
+  `ROZV_INFO_KNIHOVNA`, `rozvInfoKnihovnaHtml`) — v editoru nad kartami
+  Přístroje/Skříně i ve správě knihovny na seznamu, text doslova:
+  „Knihovna obsahuje jen obecné přístroje. Skříně a přístroje konkrétních
+  výrobců (OEZ, ABB, Eaton, Hager…) vám pošle Martin – stačí mu napsat.
+  Z licenčních důvodů nejsou součástí programu. Soubor pak stačí přetáhnout
+  sem." **Zavřít nejde** (záměr), ale **jde sbalit** (2026-10-20): ▴ v rohu
+  ho sbalí na jeden řádek „ℹ Data výrobců – přetáhněte soubor sem ▾", ▾
+  rozbalí (`tdRInfoPrepni`, `rozvInfoPrekreslit`). **Sám se sbalí, když
+  knihovna obsahuje importované položky** (`zdroj === 'import'`), a text je
+  pak „V knihovně máte data výrobců (N položek). Nová data přetáhněte sem."
+  Stav jen v localStorage `revize_el_rz_info` (`sbaleno` / `rozbaleno`, bez
+  klíče = podle importu; try/catch); po uloženém importu se klíč smaže, ať
+  se pruh sbalí sám. Pruh (i sbalený) je zároveň plocha pro přetažení
+  souboru (`.rz-drop-cil`, tytéž posluchače jako `#rz-drop`) a v editoru má
+  „📂 Vybrat soubor…" (sbalený jen ikonu 📂; na telefonu přetáhnout nejde).
+  Klidná modrá (`#e8f1fb`, levý pruh `--accent2`), na telefonu celý.
+- **Skříň** se vybírá „Použít" na kartě Skříně (`rozvSkrinNastavit`);
+  výměna se ptá a přístroje z řad navíc přesune na konec poslední řady.
+- **Každá změna skříně a přístrojů jde přes `rozvZmena(popis, fn)`** —
+  snímek pro ZPĚT (zapíše se do společného zásobníku `zpetZapsat`, takže
+  funguje **Ctrl+Z**), přepočet nadřazených chráničů, překreslení, uložení.
+  Otevření rozvaděče zásobník vyprázdní.
+
+### Objekty (složky) v seznamu rozvaděčů (2026-10-19)
+
+Pokyn uživatele: rozvaděče jedné stavby pohromadě — jako složky v Plánu
+revizí a v Průzkumníku. `DOK_TYPY.rozv.objekty = true` zapne v obecném
+`dokSeznamPolozky()` vykreslení po skupinách (`dokObjSeznamHtml`); protokol
+o vnějších vlivech má seznam dál plochý.
+
+- **Data:** `DOK.rozvObjekty = [{ id, nazev, vytvoreno }]` (IDB `dok_rozvObjekty`,
+  v `DOK_IDB`, v záloze v části `dokumentace` — `dokZalohaData`; řádek
+  potvrzení obnovy je vypíše), rozvaděč má `data.objekt` = id (`''` / neexistující
+  id = „Bez objektu"). Číslování ROZ se nemění.
+- **Seznam:** 🏠 objekty podle jména, pod nimi rozvaděče **podle stromu napájení**
+  (`dokObjStrom` přes `data.napajenZ.uid` — hlavní nahoře, podružné odsazené
+  `dok-p-podN` se „└" a „napájen z RH1 (-FA3)", `dokNapajenText`), sourozenci
+  podle označení (`cisloPorovnat`). Na konci 📦 „Bez objektu" — prázdná se
+  neukazuje. Prázdný objekt má jednořádkovou nápovědu.
+- **Pořadí se pod rukama nemění** (pravidlo v9.116): `__dokObjZamek` = pořadí
+  z posledního vykreslení, `dokZamekSerad` vrací už viděné položky na jejich
+  místo, nové jdou na přirozené. Znovu se seřadí otevřením seznamu
+  (`dokOtevritSeznam` zámek zruší).
+- **Hlavní akce zůstává „＋ Navrhnout nový rozvaděč"**; objekt zakládá malý
+  odkaz „＋ Nový objekt" — vznikne „Nový objekt" a jméno se hned píše přímo
+  v řádku (jako nová složka v Průzkumníku, `dokObjPrejmenovatStart`).
+- **Do objektu:** tažením řádku myší na objekt (HTML5 drag, vlastní typ
+  `text/x-revize-dok` — obecný import souborů reaguje jen na `Files`), pravým
+  klikem na řádek („Přesunout do objektu: …", „do „Bez objektu"", „do nového
+  objektu…") a polem **„Objekt"** v hlavičce rozvaděče (`rozvObjektVolby`,
+  volba „＋ Nový objekt…" se zeptá na jméno). Přesun má ZPĚT i Ctrl+Z.
+- **Objekt:** klik / Enter sbalí a rozbalí (bez překreslení — dvojklik na
+  název by jinak netrefil), **F2 nebo dvojklik = přejmenovat** (Enter uloží,
+  Esc zruší), **Delete nebo 🗑 Smazat objekt** = objekt zmizí, **rozvaděče se
+  nikdy nemažou** — přejdou do „Bez objektu"; obojí se ZPĚT i Ctrl+Z. Pravý klik
+  na objekt: Sbalit, Přejmenovat, Smazat, Nový objekt. Delete na řádku
+  rozvaděče = smazat rozvaděč (s dotazem a ZPĚT). Sbalení jen v paměti.
+- **Hledání** najde i název objektu (`DOK_TYPY.rozv.hledat`); při hledání je
+  všechno rozbalené a skupiny bez nálezu se schovají.
+- `DOK_TYPY.rozv.cist` **začíná kopií otevřených dat** — co formulář nemá
+  (`napajenZ`, `zdrojRevize`), se uložením neztratí.
+
+Test: `testy/test-rozvadec-objekty.js` (28 kontrol — tažení, menu, pole
+v hlavičce i nový objekt z něj, strom napájení, zámek pořadí, sbalení, hledání,
+F2 / dvojklik / Esc, Delete se ZPĚT a Ctrl+Z, záloha a obnova, data revizí
+bajtově stejná, telefon). V `test-mobil.js` stav „rozvaděč – seznam s objekty".
+
+### Zakreslení z revizní zprávy (2026-10-19)
+
+Pokyn uživatele: rozvaděče, které už jsou popsané v revizní zprávě, se nemají
+skládat znovu ručně. Na seznamu vedle hlavní akce **obrysové tlačítko
+„📋 Zakreslit z revizní zprávy"** (`DOK_TYPY.rozv.zRevize`, `.dok-druha-akce`,
+na telefonu pod hlavní akcí přes celou šířku) → okno `#modal-rz-zrevize`.
+
+- **Krok 1 — zpráva:** jen zprávy **elektro** z archivu (`rzzZpravy`; LPS,
+  stroje ani spotřebiče ne), od nejnovější, hledání (ev. číslo, místo, adresa,
+  provozovatel, **názvy rozvaděčů**), filtr roku. Zpráva bez rozvaděčů je šedá.
+- **Krok 2 — rozvaděče:** zaškrtávátka (název, umístění, počet obvodů,
+  „napájen z …", navržená skříň), „Označit vše", **„Zařadit do objektu"**
+  (nový objekt předvyplněný místem revize, nebo existující — objekt téhož
+  jména se předvybere, nebo bez objektu), poznámka ke skříni, **výběr řady
+  výrobce** (jen když data výrobce nabízejí víc řad — předvolená je řada
+  napsaná ve značce „OEZ LTN", jinak ta s nejvíc shodami), **souhrn**
+  („11 přístrojů: 5 podle dat …, 2 obecných …, 4 bez značky · ⚠ 3 k doplnění")
+  a „✓ Zakreslit vybrané (N)".
+- **Po zakreslení** seznam s rozbaleným objektem a hláška se **ZPĚT / Ctrl+Z**
+  (smaže zakreslené rozvaděče i nově založený objekt).
+- **Archiv se JEN ČTE** (`dokKopie(z.data)`) — data revizí po zakreslení
+  bajtově stejná (test).
+
+**Převod (`rzzPrevod`, nic se nevymýšlí):**
+- Hlavička: `oznaceni` = název rozvaděče, `stavba` = místo revize,
+  `investor` = provozovatel (1. řádek název, další adresa, řádek „IČ: …" →
+  IČO, jinak `provozovatel_ico`), `misto` = umístění + adresa zprávy,
+  `privodKabel` = text Přívod, `privodIn` jen když jde z hlavního jističe
+  přečíst číslo, `soustava` jen při **jednoznačné** shodě s `ROZV_SOUSTAVY`
+  (`rzzSoustava`; víc soustav a rozvaděč má 3pólový přístroj → ta 3f, IT nic),
+  `pozn` = **jiné řádky** zprávy (nepřevádějí se na přístroje), `zdrojRevize =
+  { uid, ev_cislo, rozvUid, datum, zakresleno }` → v hlavičce nenápadně
+  „📋 Zakresleno ze zprávy RE-26-0012 (19. 10. 2026)".
+- Řádky (`rzzRadekPozadavek`): obvod → **jistič** (In z `a`: „16", „16 A",
+  „3x16A", „1×20"; charakteristika z `ch`), `ch` gG/gL/aM → **pojistkový
+  odpínač** (vložka do poznámky přístroje), `ch` „B/A" s IΔn → **RCBO**,
+  hlavička chrániče → **chránič** (IΔn „0,03" A → 30 mA, typ AC/A/F/B) nebo
+  RCBO („B/A"). Podřádky chrániče a prázdné řádky se přeskočí. Vývod = název
+  obvodu, kabel ze sloupce Kabel (typ + průřez), fáze L1–L3 u 1pólových,
+  označení automaticky v pořadí tabulky.
+- **Póly jen z dat** (`rzzPoly`: „3x16", „1×", „4P", „1+N"); jinak
+  nejčastější provedení kategorie (`RZZ_POLY_VYCHOZI`) a upozornění
+  „doplňte póly". Chybí In → „doplňte jmenovitý proud".
+- **Značka = výrobce** (`rzzVyrobce`: bez háčků a velikosti písmen, známí
+  výrobci z knihovny i `RZZ_ZNAMI`, aliasy `RZZ_ALIAS`, zbytek = řada).
+  Knihovna (`rzzShoda`: kategorie + póly + In + charakteristika, u chráničů
+  IΔn + typ): shoda u výrobce → **kopie jeho dat** (ve zvolené řadě);
+  výrobce bez dat → **obecná vestavěná položka** s výrobcem ze značky
+  a upozorněním „doplňte typ – data výrobce nejsou v knihovně" (výrobce
+  s daty, ale bez shody → „…shodný přístroj není"); prázdná značka →
+  obecná bez výrobce; bez jakékoli shody → položka **z údajů zprávy**
+  (1 modul na pól, neověřená, `knih` prázdné).
+- **Upozornění** = `prvek.upoz` (pole textů): oranžové „!" v čelním pohledu
+  (ne v PDF), ve vlastnostech pruh s „✓ Hotovo" (`tdRUpozHotovo`).
+- **Skříň — návrh** (`rzzSkrin`): nejmenší **vestavěná nástěnná nebo
+  stojanová** (domovní plast → oceloplech → průmyslové, `rzzSkrineNavrhu`;
+  historické a vlastní se jen nabízejí), do které se přístroje vejdou
+  s rezervou ~20 % (`RZZ_REZERVA`) a skupiny chrániče zůstanou celé
+  (`rzzVejdeSe` → `rzzSkladat().cele`). **Když se nevejde nic** → vlastní
+  velikost (`rzzVlastniVelikost`: 24 modulů v řadě, řad tolik, aby zbyla
+  rezerva; přes 20 řad 36/48/72 modulů). Nadřazené chrániče přes
+  `rozvNadrazeneAuto`.
+- **Skládání do řad** (`rzzSkladat`, připomínka 2026-10-20 — budova s 86
+  obvody přeplnila poslední řadu): skupina chránič + obvody jde do řady
+  **celá**, když se vejde do zbytku řady; jinak celá do další řady; delší
+  než celá řada se **rozdělí** (chránič první, obvody pokračují v další
+  řadě). Nejdou-li skupiny poskládat celé a celkem se přístroje vejdou,
+  poskládají se jednotlivě — **dokud je jinde volno, nic se nepřeplní**.
+  Přeplní se (poslední řada) jen to, co se do skříně celkem nevejde.
+- **Výběr skříně v kroku 2** (2026-10-20): u každého vybraného rozvaděče
+  rozbalovátko „🗄 Skříň" (`data-rzz-skrin`) s předvybraným návrhem
+  („(návrh)") a stavem „✓ vejde se · obsazeno 8 z 12 M" / „⚠ nevejde se…";
+  volby ve skupinách (`RZZ_SKUPINY_SKRINI`) **Domovní plastové ·
+  Oceloplechové · Průmyslové · Historické (ČSSR) · Moje vlastní** (prázdná
+  skupina „(zatím žádné)") a na konci **„＋ Vlastní velikost…"**. Nad
+  seznamem věta „…Skříň můžete kdykoli změnit v editoru rozvaděče
+  (Vyměnit skříň)." Pod seznamem nenápadně **„Použít pro všechny:
+  [skříň]"** (`#rzz-skrin-vse`). Volby v `__rzZR.volba[uid]` (nic = návrh,
+  id knihovny, `@vlastni` + `__rzZR.vlastni[uid]`), do převodu jdou jako
+  `volby.skrine` (`rzzVolbySkrini` → `rzzSkrinZvolena`). Když se nevejde
+  nic, je předvybraná vlastní velikost **oranžově** (`.rzz-skrin-vlastni`)
+  s formulářem a dopočtenými hodnotami.
+- **Vlastní velikost** (`rozvVelikostHtml` / `rozvVelikostCist` /
+  `rozvVelikostSkrin`, totéž v kroku 2 pod rozvaděčem i v okně editoru):
+  **řady × moduly**, nebo u starých rozvaděčů bez modulů **počet DIN lišt
+  × délka lišty v mm** → moduly = ⌊mm / 17,5⌋ (do poznámky skříně „DIN
+  lišty 3 × 420 mm"); materiál, provedení, typ skříně, název (prázdný =
+  „Vlastní velikost R×M modulů"), **„Uložit do mé knihovny"** (zdroj
+  `vlastni`, příště pod „Moje vlastní"). Kontrola přes `rozvValidovat`.
+  Psaní do formuláře v kroku 2 jen přepočítá stav (`rzzStavAktualizovat`),
+  formulář se nepřekresluje (kurzor zůstane). Neplatná vlastní velikost
+  zakreslení zastaví s hláškou.
+- **Soustava:** není-li ze zprávy jednoznačná, rozvaděč dostane
+  `data.upoz = ['doplňte soustavu']` — krok 2 i hláška to spočítají,
+  v editoru je hlavička otevřená s oranžovým pruhem (`.rz-hl-upoz`, „✓ Hotovo"
+  = `tdRHlUpozHotovo`) a oranžovým polem Soustava, souhrn hlavičky začíná ⚠.
+  Výběr soustavy upozornění schová a `cist` ho z dat smaže.
+- **Napájení:** přístroj, který ve zprávě napájí jiný rozvaděč, dostane
+  `napaji = [uid dokumentu]` (vlastnosti „→ napájí: RS1"), napájený rozvaděč
+  `napajenZ = { uid, ozn, nazev }` (hlavička „⚡ Napájen z RH (-FA2)",
+  seznam strom napájení). Nezakreslený rodič zůstane jen jménem.
+
+Test: `testy/test-rozvadec-z-revize.js` (67 kontrol, vymyšlená revize:
+RH → RS1, RS2; chránič s obvody; RCBO; 3x16A; pojistka gG; jiný řádek;
+obvod bez čitelného In; zpráva LPS a stroje se v nabídce neobjeví; vymyšlený
+„Výrobce A" s řadami R1/R2 v knihovně testu; skládání (chránič +
+15 obvodů ve 4×18, skupiny celé, přeplnění jen co se nevejde), nabídka
+skříní, „Použít pro všechny", vlastní velikost z DIN lišt s uložením do
+knihovny, soustava, vymyšlená administrativní budova se 72 a 300 obvody,
+okno vlastní velikosti v editoru). V `test-mobil.js` stavy „rozvaděč –
+zakreslit z revizní zprávy, krok 1 / 2", „…krok 2 s vlastní velikostí
+skříně", „vlastní velikost skříně (okno v editoru)" a „editor, sbalený
+informační pruh, karta Skříně".
+
+### Vlastní položky a import (část 2)
+
+- **„＋ Vlastní přístroj / skříň"** (v editoru pod knihovnou, na seznamu ve
+  sbalené knihovně) → okno `#modal-rz-polozka`; parametry podle kategorie
+  (`ROZV_KAT[].pole`), šířka a u skříně řady + moduly povinné, zaškrtávátko
+  „Údaje jsou ověřené…". Kontrola je **jedna funkce pro formulář i import:
+  `rozvValidovat(raw)`** → `{ polozka, chyby }`. Úprava a smazání (se ZPĚT)
+  ve správě knihovny; **navržené rozvaděče se nezmění** (mají kopii).
+- **Import:** soubor přetažený na vyznačenou plochu `#rz-drop` (posluchače
+  zastaví obecný import zálohy/zprávy) nebo „Vybrat soubor…". **Vždy se
+  nejdřív ukáže náhled** (`#modal-rz-import`: kolik položek, nových /
+  aktualizovaných, chyby PO ŘÁDCÍCH, neznámé sloupce, ukázka) a uloží se až
+  po „✓ Uložit do knihovny (N)" — chybné řádky se přeskočí, uložení jde
+  vzít ZPĚT. **Totožnost** = druh + kategorie + výrobce + typ (bez typu
+  název) → shoda položku aktualizuje, nic se nezdvojí. Importované mají
+  zdroj `import`. Data jen v prohlížeči, **nikdy v repozitáři**.
+- **Formát CSV** (šablona „⬇ Prázdná šablona CSV" = jen hlavička, UTF-8
+  s BOM, středníky): sloupce `druh;kategorie;nazev;vyrobce;rada;typ;poly;in;
+  charakteristika;icn;icu;ics;idn;typ_chranice;trida_spd;up;sirka_moduly;pv;
+  ue;provedeni;material;typ_skrine;rady;moduly_v_rade;ip;ik;ina;penc;rozmery;
+  trida_ochrany;overeno;poznamka`. Pořadí ani všechny sloupce nejsou
+  povinné, hlavička se porovnává bez háčků a velikosti písmen (`ROZV_CSV`).
+  Oddělovač `;`, `,` nebo tabulátor se pozná sám, uvozovky podle CSV,
+  kódování UTF-8, jinak windows-1250 (CSV z českého Excelu).
+  - `druh` = `pristroj` / `skrin` (prázdné: skříň, když má řady a nemá
+    kategorii), `kategorie` = kód (QM, FA, FI, FI/FA nebo RCBO, AFDD, SPD,
+    FU, KM, KT, KA, PJ, HL, SF, X, REZ; i s pomlčkou) nebo české slovo
+    (jistič, chránič, svodič přepětí, stykač…), `poly` = 1, 1+N, 2, 3, 3+N,
+    4 (projde i „1P", „3P+N"), `in` A, `icn/icu/ics` kA, `idn` mA, `up` kV,
+    `pv` W/pól při In, `ue` V — **čísla s čárkou i tečkou, jednotka za
+    číslem se toleruje** („16 A"), `charakteristika` B/C/D/K/Z,
+    `typ_chranice` AC/A/F/B, `trida_spd` T1, T2, T3 nebo kombinace (T1+T2),
+    `sirka_moduly` povinná u přístroje (desetinná), u skříně povinné `rady`
+    a `moduly_v_rade`, `provedeni` nástěnná/zapuštěná/polozapuštěná/dutá
+    stěna/stojanová,
+    `material` plast/oceloplech, **`typ_skrine` domovni / prumyslova /
+    historicka** (i s háčky a velkým písmenem; prázdné nebo soubor bez
+    sloupce = domovní, jiný text = chyba řádku), `trida_ochrany` I/II,
+    `overeno` ano/ne.
+- **Formát JSON** = export „⬇ Export mé knihovny (JSON)":
+  `{ "_format": "revize-el-knihovna-rozvadecu", "_version": 1,
+  "pristroje": [ … ], "skrine": [ … ] }`, položky s vnitřními klíči (výš).
+  Import bere i holý seznam položek. `TYPY_SOUBORU` zná `text/csv`.
+
+### Dokumenty z návrhu — etapa 2 (2026-10-20, blok „DOKUMENTY Z NÁVRHU")
+
+Zadání uživatele: z navrženého rozvaděče výrobní štítek, EU prohlášení
+o shodě, protokol o kusovém ověření a technické údaje. **Texty jsou
+z rešerše norem, kterou dodal uživatel** (ČSN EN IEC 61439-1 ed. 3, -3 ed. 2,
+NV 118/2016 Sb.) — **nic se nedoplňuje z hlavy, normy samotné nikdo
+nečetl.** Co rešerše uvádí jen z paměti, má ve formuláři štítek
+**„čeká na ověření v ČSN"** (`rozvCeka()`, do PDF nejde): RoHS (NV 481/2012,
+ČSN EN IEC 63000), značka třídy II, krytí IP, IK, umístění, stupeň
+znečištění, rozměry, 11.4 (způsob ověření celistvosti PE), 11.9 zkušební
+napětí (tab. 8), kvalifikace podle NV 194/2022 Sb. **Naměřené hodnoty
+a výsledky zkoušek program nikdy nevymýšlí.**
+
+- **Editor má nahoře přepínač „🧩 Návrh | 📄 Dokumenty"** (`.rz-zal`,
+  `rozvZalozkaNastavit`, `__rz.zalozka` — jen v paměti; nové otevření
+  začíná na Návrhu, překreslení téhož otevřeného rozvaděče záložku drží).
+  Na záložce Dokumenty klávesy návrhu neplatí (`rozvEditorAktivni`).
+  Obsah záložky se kreslí při každém přepnutí z aktuálního `cist()`
+  (`rozvDokHtml`), takže vidí i neuložené změny návrhu.
+- **Záložka Dokumenty:** jedna hlavní akce **„📄 Vygenerovat dokumentaci
+  (PDF)"**, pod ní zaškrtávátka co do PDF patří (`dokVyber`: čelní pohled
+  a seznam · technické údaje · prohlášení · protokol; chybí = vše),
+  **„🏷 Tisk štítku"** zvlášť, řádek **„Chybí: …"** s odkazy na pole
+  (`rozvDokChybi`: výrobce, adresa, výrobní číslo, typ, datum výroby, InA,
+  Un). Oddíly sbalitelné: Výroba a značení · Technické údaje · Prohlášení ·
+  Kusové ověření. Lištové „📄 Náhled PDF" dělá totéž co hlavní akce.
+- **Data (vše VOLITELNÉ, starý rozvaděč se načte beze změny — test):**
+  `rezim` ('DBO'; PSC v etapě 5), `rohs`, `dokVyber`, `vyroba {cislo, typ,
+  datum}`, `tech {un, fn, sit, ina, ik, trida, umisteni, znec, rdf, rozmery,
+  hmotnost}`, `stitek {vel, kusu, rozsirena, tridaII}`, `prohl {cislo,
+  overeni, otepleni, misto, datum, jmeno, funkce, razitko}`, `ko {cislo,
+  v {k11_2…}, p {k11_2…}, metoda, a {u, t, i, v}, b {u, l1, l2, l3, n},
+  pomocne, pristroje [], zapojil, zkousel}`. Vše v dokumentu rozvaděče
+  (úložiště tvorby dokumentace) — **žádný nový klíč úložiště**.
+- **Odvozené hodnoty se ukládají PRÁZDNÉ** (`rozvDokOdvozene`, pole mají
+  `data-odv`, `cist` uloží '' když se hodnota rovná odvozené) — mění se
+  s návrhem (přejmenování → typ, soustava → Un / druh sítě, skříň → IK,
+  třída, rozměry, výrobní číslo → PS-… / KO-…, profil → jméno a místo,
+  přístroje → poznámky protokolu). Přepsaná hodnota se uloží a platí.
+  Tiskne se `rozvDokEff(d)`.
+- **Icc, krytí a výrobce jsou v hlavičce** — v Dokumentech jsou zrcadlová
+  pole (`data-zrc`), která píšou do téhož pole hlavičky (žádná druhá hodnota).
+- **Výrobní číslo** = vlastní řada rozvaděčů `RRRR-NNNN` (`rozvVyrDalsi`,
+  max + 1 v letošním roce, s čísly zpráv nesouvisí), předvyplní se při
+  otevření Dokumentů a uloží s první změnou, ⟳ přidělí volné, jde přepsat,
+  duplicitu ohlásí řádek pod polem.
+- **Štítek** (jako tabulka, viz oddíl níž; `rozvStitekVykreslit`, vlastní náhled v `#screen-dok-pdf`,
+  `__dokPdf.nazev`): skutečná velikost v mm na A4 (90 × 45 výchozí, 70 × 35,
+  100 × 60), počet kusů, ořezové značky, pokyn „Tiskněte ve skutečné
+  velikosti (100 %)" s kontrolní úsečkou 50 mm. Povinné: výrobce + kontaktní
+  adresa, typ, výr. č., rok/měsíc, „ČSN EN IEC 61439-3 (IEC 61439-3)", CE,
+  InA (u DBO vždy). Rozšířená část (výchozí zapnutá): druh sítě s Un a fn,
+  Icc, IP, třída; značka třídy II jen při zaškrtnutí a třídě II. **CE kreslí
+  `rozvCeSvg`** (dva oblouky na stejných kružnicích se svislým řezem a příčka
+  E, výška ≥ 5 mm), žádný obrázek. Písmo se zmenší, dokud se obsah nevejde.
+- **Prohlášení** (`rozvPdfProhlaseni`): vzor přílohy č. 4 NV 118/2016 —
+  7 bodů a „Podepsáno za a jménem:" **doslova**; bod 5 NV 118/2016 a 117/2016
+  (+ 481/2012 jen s RoHS), bod 6 normy ed. 3 / ed. 2 (+ ČSN EN IEC 63000 jen
+  s RoHS) — u norem se „harmonizovaná" nepíše, jen nadpis bodu; bod 7
+  ověření návrhu, oteplení (obojí prázdné, nic se nevymýšlí; od etapy 4 navíc odkaz na výpočet oteplení, když vyhovuje) a odkaz na
+  protokol kusového ověření. Razítko a podpis z profilu, když jsou nahrané
+  a zaškrtnuté.
+- **Protokol o kusovém ověření** (`ROZV_KO_POLOZKY`, `rozvPdfProtokol`):
+  9 položek čl. 11.2–11.10 se způsobem S / S/P / P, výsledky prázdné,
+  poznámky z návrhu. „✓ Všechny prohlídky (S) vyhovují" vyplní jen prázdné
+  položky se způsobem S (11.2, 11.5, 11.7), se ZPĚT. 11.9: metoda A (napětí
+  NEpředvyplněné — tab. 8 jen z paměti, doba 1 s, vybavovací proud ≥ 3,5 mA)
+  nebo B — **nabídne se jen při přívodním přístroji (-QM, jinak přívod)
+  do 630 A a Un do 500 V** (`rozvKoMetodaB`); izolační odpory se jen porovnají
+  s ≥ 1 MΩ a obarví (`rozvIsoStav`). Pomocné obvody, měřicí přístroje
+  (kopie z profilu), podpisy „Zapojení provedl" a „Zkoušku provedl".
+- **Technické údaje** (`rozvPdfTech`): jen vyplněné řádky.
+- **PDF:** `dokPdfVykreslit` umí blok `strana: 'sirka' | 'vyska'` (+ `zahlavi`)
+  = nová strana s orientací a záhlavím — čelní pohled a seznam na šířku,
+  technické údaje, prohlášení a protokol každý od nové strany na výšku se
+  záhlavím „výrobce · Výrobní číslo". Prázdná první strana se jen přestaví.
+
+### Štítek jako tabulka, popisky pod přístroje, mix výrobců (v9.127)
+
+Uživatel porovnal štítek s elektro-konstrukt.cz: obsahově úplný, ale „sedm
+řádků textu s prázdnou spodní polovinou".
+
+- **Štítek = tabulka s popsanými políčky** (`rozvStitekTabulkaHtml`, výchozí;
+  `d.stitek.styl` = `'jednoduche'` vrátí původní řádky textu
+  `rozvStitekJednoducheHtml` — volba „Rozvržení štítku"; chybí = tabulka).
+  Tenká mřížka, v každém políčku drobný šedý popisek (česky, plnými slovy)
+  a tučná hodnota. Řádky: **Výrobce** (název, pod ním adresa · IČO) + **CE**
+  (a logo) · Typové označení + **Označení rozvaděče** (nové, `d.oznaceni`) ·
+  Výrobní číslo + Datum výroby (RRRR/MM) · Jmenovité napětí a kmitočet +
+  Soustava · Jmenovitý proud InA + Zkratová odolnost Icc · Krytí IP +
+  Třída ochrany · spodní pás „ČSN EN IEC 61439-3 (IEC 61439-3)" beze změny.
+  **Obsah je přesně ten, co štítek tiskl dřív** — nové je jen označení
+  rozvaděče a logo. Prázdné nepovinné políčko se nekreslí a soused se
+  roztáhne (Icc, IP, třída, soustava, označení); prázdné povinné = tečky.
+- **Velikosti** (`ROZV_STITKY[].tab`): 90 × 45 CE 8 mm, 100 × 60 CE 11 mm,
+  **70 × 35** CE 5,5 mm a úspornější řádky — soustava + napětí + kmitočet
+  v jednom políčku, InA · Icc · Krytí IP · Třída v jednom řádku (jinak by
+  písmo kleslo pod 5 pt). Řádky se roztahují do výšky štítku (`flex:auto`).
+- **Písmo se zmenšuje, dokud se KAŽDÉ políčko nevejde** (`rozvStitekVejde`:
+  výška i šířka políčka, popisek na jednom řádku), **nikdy pod 5 pt**
+  (`ROZV_ST_MIN`). U 70 × 35 se pak zkusí vynechat adresu výrobce; nevejde-li
+  se ani tak → hláška „Pro tolik údajů zvolte větší štítek" (i v liště
+  náhledu). Políčka mají `justify-content:safe center` — při obyčejném
+  `center` přetéká obsah i nahoru a `scrollHeight` to nepozná.
+- **Logo výrobce** (nepovinné): v oddílu Výroba a značení „📂 Nahrát logo…",
+  PNG/JPG, zmenší se na nejvýš 400 px (`rozvLogoZmensit`, PNG zůstane PNG),
+  uloží se do **`STORE.technik.logo`** (klíč v technikovi, ne nový klíč
+  STORE — jde se zálohou, `ulozitTechnika()` ho nepřepíše). Na štítku
+  vlevo od CE, nejvýš tak vysoké jako CE; zaškrtávátko `stitek.logo`
+  (chybí = tisknout), „🗑 Odebrat logo" se ZPĚT. Řádek s nahráním má
+  `data-dk-mimo` (výběr souboru není změna dokumentu).
+- **Popisky pod přístroje** („🏷 Tisk popisků přístrojů" vedle Tisku štítku,
+  `rozvPopiskyVykreslit`, a zaškrtávátko `dokVyber.popisky` = i do PDF
+  dokumentace za ostatní strany přes obecný háček `DOK_TYPY[typ].pdfNavic`;
+  výchozí vypnuté). Pro každou řadu s přístroji **jeden pásek přesně
+  široký jako řada** (moduly × 17,5 mm, `rozvPopiskyRady`), výška
+  `d.popisky.vyska` 9 / 12 / 15 mm (výchozí 12). Políčko přístroje má jeho
+  šířku: označení, název vývodu, hodnota (`rozvPopiskaHodnota`: B16,
+  40A/30mA, B16/30mA u RCBO, 40 A u QM a pojistek). Rezerva a volné místo
+  = prázdná políčka (volno po modulech, čárkovaně). Text se zalomí,
+  zmenší (nejvýš na 72 %) a pak zkrátí „…" — **nikdy nepřeteče**. Listy na
+  šířku (`a4-landscape rz-popisky-list`), ořezové značky, pokyn a úsečka
+  50 mm. **Pásek delší než list** (nad 259 mm, tedy 18 a 24 M) se rozdělí
+  po políčkách s **překryvem jednoho políčka** (`rz-pp-prekryv`, šrafované)
+  a značkou „pokračuje ▶" (`rozvPopiskyCasti`).
+- **Přístroje různých výrobců** (`rozvVyrobciMix`): v souhrnu rozvaděče
+  (vlastnosti bez výběru) jeden nenápadný řádek „Přístroje 3 výrobců: OEZ
+  (12), ABB (2), Hager (1)"; klepnutí na výrobce jeho přístroje v pohledu
+  vybere (výběr víc přístrojů, viz níž). Obecné vestavěné („obecný") a rezervy se
+  nepočítají. Jen informace — nic neblokuje a do PDF nejde.
+- Data (vše volitelné): `stitek.styl`, `stitek.logo`, `popisky.vyska`,
+  `dokVyber.popisky`. Rozvaděč uložený bez těchto údajů (starší podoba dat z vývoje) se načte beze změny (test).
+
+Test: `testy/test-rozvadec-dokumenty.js` (71 kontrol — k tomu: tabulka
+s popsanými políčky a hodnotami, popisky 5–7,2 pt, CE ≥ 8 mm, všechny tři
+velikosti bez přetečení po políčkách, 70 × 35 s 12 kusy a třídou II,
+Icc prázdné = políčko chybí, bez rozšířené části, jednoduché rozvržení,
+přeplněný štítek → hláška a nikdy pod 5 pt, logo 900 → 400 px do profilu
+a zálohy a na štítku ≤ CE, popisky byt 3+1 (3 × 210 mm, šířky políček,
+hodnoty, rezerva, dlouhý název, 9 mm), 6 × 24 rozdělené s překryvem,
+popisky v PDF dokumentace, mix výrobců, rozvaděč ve starší podobě dat). V
+`test-mobil.js` stavy „…popisky pod přístroje", „…výrobní štítek,
+jednoduché rozvržení" a „…vlastnosti s přístroji různých výrobců".
+
+Test etapy 2: `testy/test-rozvadec-dokumenty.js` (50 kontrol, byt 3+1 —
+záložky, předvyplnění a prázdné odvozené hodnoty, zrcadlo, výrobní číslo,
+štítek v mm s CE, 70 × 35 s 12 kusy a třídou II, prohlášení doslova a RoHS,
+protokol, metoda B do 630 A, technické údaje, celé PDF, starý rozvaděč beze
+změny, polozapuštěná, data revizí beze změny, telefon). V `test-mobil.js`
+stavy „rozvaděč – záložka Dokumenty…", „…kusové ověření, měření izolačního
+odporu" a „…výrobní štítek". **`test-rozvadec.js` upraven:** PDF etapy 1
+kontroluje jen čelní pohled a seznam (`dokVyber`).
+
+### Schéma zapojení — etapa 3 (v9.127, blok „SCHÉMA ZAPOJENÍ")
+
+Zadání uživatele: výkres jako od projektanta (vzor ELMER, rozvaděč RS),
+generovaný z návrhu. **Editor má tři záložky „🧩 Návrh | ⚡ Schéma |
+📄 Dokumenty"** (`rozvZalozkaNastavit('sch')`; klávesy návrhu platí jen na
+Návrhu — `rozvEditorAktivni`). **Nic se nevymýšlí** — hodnoty jen z návrhu,
+co chybí, je prázdné, „L?" nebo „–".
+
+- **Kreslí JEDNA funkce `rozvSchemaListy(d)` pro náhled i PDF** → `[{ g, svg }]`,
+  každý list samostatné SVG **v mm** (A4 297 × 210, A3 420 × 297, `d.schema.format`).
+  **Jen jednoduché prvky** (line, rect, path, circle, ellipse, text s výslovným
+  stroke/fill — pomocníci `rsCara`, `rsObd`, `rsKruh`, `rsCesta`, `rsText`),
+  **žádné třídy, style, filtry, masky, foreignObject, image** (test to hlídá),
+  písmo `RozvSchema`, svislé texty `rotate(-90)`. `data-puid` (klik),
+  `data-znacka`, `data-ram`, `data-razitko` jsou jen atributy pro náhled a test.
+- **Rám se zónami** (`rsRam`: 1–8 nahoře i dole, A–F vlevo i vpravo) a **rohové
+  razítko** (`rsRazitko`, 128 × 36 mm vpravo dole): Vypracoval (profil), Datum,
+  Akce (= stavba), Investor (= odběratel), Název výkresu, Projekt, Zakázka,
+  Soubor (název PDF), Listů N, Výkres i — na **každém** listu.
+- **List 1** (`rsListOsazeni`): vlevo osazení = **`rozvSvg(rz, { osazeni: true })`**
+  (žádný nový kreslič — černobílý režim bez obalu `<svg>`, svislé označení,
+  rezerva i volné místo v řadě přeškrtnuté úhlopříčkou), nad ním
+  „Rozvodnice R×M modulů, IP…, třída …, rozměry …"; vpravo **tabulka 12 řádků**:
+  Rozvaděč, Rozvodná soustava, Ochrana před nebezpečným dotykem (odvozená
+  `rsOchranaOdv`: „automatickým odpojením od zdroje" + „; doplňková ochrana
+  proudovým chráničem 30 mA", když je v návrhu chránič ≤ 30 mA — **bez čísla
+  normy**), Typ, Provedení, Přívod / vývody, Rozměr, Krytí, Vnější vlivy,
+  Pi, Pm, Hmotnost. Prázdné řádky zůstanou prázdné.
+- **Listy 2…N — jednopólové schéma** (`rsListSchema`, geometrie `rsGeom`):
+  čárkovaný obrys „Rozvaděč RH1" (přívod i vývody ho kříží), fázová sběrnice
+  nahoře se značkami /// a textem soustavy, N a PE sběrnice dole přes celou
+  šířku. **Přívod** (první list) vlevo: kabel `privodKabel privodPrurez`,
+  „z RH1 (-FA3)" u napájeného rozvaděče, **čárkovaný „Elektroměrový rozvaděč"
+  s předřazeným jističem jen při vyplněném `privodJistic`** (hlavička,
+  + `privodIn`), **první hlavní vypínač (QM) na přívodu**. **Chránič** visí
+  z L, má vlastní sběrnici skupiny a vlastní N můstek; přístroje bez chrániče
+  visí přímo z L. Každý vývod = jeden sloupec 11 mm: značka se svorkami 1/2,
+  označení nad ní, svisle hodnota (B16 6 kA, 40 A 30 mA typ A…) a typ, L plnou
+  čarou ven, **N a PE čárkovanými odbočkami**, lomítka podle počtu vodičů,
+  svisle „L1 · CYKY-J 3×2,5" a název vývodu, dole **značka spotřebiče**
+  (zásuvka / světlo / motor / jiné) nebo u `napaji` šipka a „RS1". Pod tím
+  tabulka **OBVOD č.** (`x.obvod`) a **Pi /kW/** (`x.pi`, prázdné = „–").
+  **1f bez fáze → červené „L?"**, 3f → „L1 L2 L3". **MET** vpravo jen při
+  `schema.metKreslit` (řádky `schema.met`, uzemnění). Stykače, relé, hodiny,
+  elektroměry, signálky, ovladače (`RS_RIDICI`) se **nekreslí** — první list má
+  poznámku „Ovládací obvody nejsou na výkresu zakresleny…" s jejich značkami.
+  Pořadí sloupců = pořadí čelního pohledu; obvody chrániče (`nadr`) jdou za
+  svým chráničem (`rsModel`).
+- **Zlom listu jen na hranici skupiny chrániče** (`rsRozlozit`); skupina delší
+  než celý list se rozdělí a obě části mají odkaz **„-FI1 pokračuje na /3.1"**
+  a **„-FI1 (pokračování z /2.8)"** (`/list.sloupec zóny`), sběrnice „L, N, PE
+  pokračují na /3.1" / „L, N, PE z /2.8". A3 = víc sloupců na list (26 proti 15),
+  **ne menší písmo**; spotřebiče na A3 nejvýš 50 mm pod rozvaděčem.
+- **Značky** `RS_ZNACKY` (vlastní šablony ve stylu IEC 60617, svisle, horní
+  bod 0;0, dolní 0;h, mm): jistič, chránič, RCBO, AFDD, SPD s uzemněním,
+  pojistka, hlavní vypínač, stykač, relé, elektroměr, hodiny, signálka, svorka,
+  zásuvka, svítidlo, motor (3~ u 3f), jiné, uzemnění. **Z QElectroTech nic
+  (CC-BY).**
+- **Záložka Schéma** (`rozvSchHtml`, `rozvSchKreslit` — kreslí se z aktuálního
+  `cist()`, i s neuloženými změnami): hlavní akce **„🖨 Tisk schématu (PDF)"**
+  (`tdRSchPdf` → `rozvSchemaVykreslit`, náhled v obrazovce PDF tvorby
+  dokumentace), ◀ ▶ listy, − ＋ zoom, formát A4 / A3, řádek **„Ve schématu
+  chybí: 3× fáze (…), 2× kabel (…)"** s odkazy, které přístroj vyberou
+  (`rsChybi`), náhled se nedá upravovat — **klik na přístroj → Návrh s ním
+  vybraným** (`rozvSchVybrat`). Sbalené „🏷 Razítko, tabulka údajů a MET":
+  název výkresu, projekt, zakázka, ochrana, vnější vlivy, Pi, Pm, Kreslit MET
+  + řádky. **Vlastnosti přístroje** (jen FA, AFDD, FI/FA, FU — `RS_OBVODOVE`):
+  „Spotřebič ve schématu" (`podle názvu (zásuvka)` = předpověď
+  `rsSpotrPredikce`: „zás…"/„zásuv…" → zásuvka, „svět"/„osvět" → světlo, jinak
+  jiné; **předpověď se neukládá**, jen ruční volba), Obvod č., v „Dalších
+  údajích" Pi.
+- **Dokumenty:** zaškrtávátko **„schéma zapojení"** (`dokVyber.schema`, chybí =
+  zapnuto) — v souhrnném PDF za čelním pohledem a seznamem jako celé listy
+  (blok `{ cela: html }` v `dokPdfVykreslit`, bez záhlaví a patičky).
+- **Data (vše VOLITELNÉ, starý rozvaděč se načte beze změny — test):**
+  `d.schema = { format, nazev, projekt, zakazka, metKreslit, met: [řádky] }`,
+  `tech.pi`, `tech.pm`, `tech.vlivy`, `tech.ochrana`, `privodJistic`, prvek
+  `spotr`, `obvod`, `pi`. Odvozené (název „Rozvaděč RH1", projekt = stavba,
+  zakázka = číslo, ochrana) se ukládají prázdné (`rozvSchOdvozene`, `data-odv`).
+  **Zakreslení z revizní zprávy** vyplní `obvod` číslem řádku (sloupec Č.).
+
+**PDF — vektorově** (ověřeno 2026-10-21): **svg2pdf.js 2.8.1 (MIT)** má peer
+závislost jspdf ^2.0.0 a s programovým **jsPDF 2.5.1 funguje** beze změny
+jsPDF. **Na cdnjs svg2pdf.js NENÍ** (v `cdnjs/packages` chybí), proto leží
+s písmem **v repozitáři ve složce `vektor/`** (README tam: zdroj, licence):
+`svg2pdf.umd.min.js` (z npm `svg2pdf.js@2.8.1/dist`, bez řádku sourceMappingURL)
+a **Roboto Condensed** Regular + Bold (OFL 1.1) zmenšené `pyftsubset` na
+latinku s háčky (33 kB každé). **Knihovna má přesto kontrolní otisk SRI**
+(`VEKTOR_OTISK`, pokyn uživatele při přenosu do v9.127): `vektorNacist()` ho
+nastaví skriptu jen přes http(s) — **z disku (`file://`, offline varianta ze
+ZIPu) se otisk nenastaví**, kontrolu by tam prohlížeč neprošel. Soubor je
+ověřený bajt po bajtu proti `svg2pdf.js@2.8.1` z registry.npmjs.org (otisk
+balíčku sedí s registrem). **Při výměně souboru otisk přepočítat**
+(`openssl dgst -sha384 -binary vektor/svg2pdf.umd.min.js | openssl base64 -A`),
+jinak se schéma do PDF dá jen jako obrázek. Hlídá `test-sri.js` (otisk sedí,
+o bit jiný soubor se nenačte, `file://` bez otisku) a `test-zip-kodu.js`
+(`vektor/` v ZIPu bajtově shodné). Soubory jsou
+**v `sw.js` URLS_TO_CACHE** (offline) a **v `ZIP_VLASTNI`** (záloha programu;
+`testy/servery.sh` je kopíruje i do 8904). Na obrazovce totéž písmo přes
+`@font-face RozvSchema`.
+- `vektorNacist()` načte knihovnu a písma **až při prvním PDF se schématem**;
+  `renderPagesToPDF` u stránek s `data-vektor` volá `vektorStrana()` — list
+  na šířku se **otočí o 90° doleva na stránku na výšku** (jako ostatní listy na
+  šířku), A3 (`.rz-sch-a3`) jde na stránku A3. jsPDF založený před načtením
+  svg2pdf metodu `svg` v instanci nemá — bere se z `jsPDF.API.svg`.
+  `window.__pdfVektor` = šlo to vektorově. **Když svg2pdf nejde načíst, list jde
+  jako obrázek 300 dpi.** Výsledek: byt 3+1 na A3 = 35 kB, 60 vývodů = 63 kB,
+  písmo vložené (CID TrueType), háčky jsou text (`pdftotext`).
+
+Test: `testy/test-rozvadec-schema.js` (53 kontrol — záložky, hlavní akce,
+list 1 s osazením a tabulkou, razítko a zóny, byt 3+1 (QM na přívodu, SPD,
+sporák 3f, dva chrániče, RCBO, AFDD), spotřebič z názvu i ručně, 1f bez fáze,
+napájení RS1, Pi a obvod, nic nepřetéká rám ani razítko, jen jednoduché prvky,
+◀ ▶ a zoom, klik na přístroj i odkaz „chybí", vlastnosti, MET, předřazený
+jistič, A3, vektorové PDF přes pdfinfo / pdffonts / pdftotext, souhrnné PDF,
+skříň 6×24 se 60 vývody přes 4 listy s rozdělenou skupinou a odkazy oběma
+směry, starý rozvaděč beze změny, data revizí, telefon). V `test-mobil.js`
+stavy „…záložka Schéma, list 1", „…jednopólový list a údaje výkresu"
+a „…náhled schématu (PDF)". **Upraveno ve stejném commitu:**
+`test-rozvadec-dokumenty.js` (tři záložky, zaškrtávátko schématu, `pdfJen`
+ho vypíná), `test-rozvadec.js` (PDF etapy 1 bez schématu),
+`test-rozvadec-z-revize.js` (číslo obvodu).
+
+### Symetrie fází a ověření oteplení — etapa 4 (v9.127, bloky „SYMETRIE FÁZÍ" a „OVĚŘENÍ OTEPLENÍ VÝPOČTEM")
+
+Zadání uživatele. **Normu nikdo nečetl** — podklad je rešerše sekundárních
+zdrojů (BEAMA, Hager CZ, Electrosuisse, IET, Schneider). Co z ní není ověřené
+v ČSN, má ve formuláři `rozvCeka()` a v PDF se **neuvádí jako požadavek
+normy**. **Pv přístrojů a Penc skříně se nevymýšlejí** — jen `p.pv` (W/pól při
+In, kopie v rozvaděči), `skrin.penc`, nebo co technik zadá.
+
+**Fáze** (`rozvFazeSouhrn(rady, mapa)`):
+- Počítají se **jen vývody** (`rfVyvod` = `RS_OBVODOVE`: jistič, AFDD, RCBO,
+  pojistka) — ne QM, SPD, chrániče, rezervy, svorky. 3f (`rsTrif`) na všech
+  třech fázích. Zatížení = Ib, chybí-li, In (`rfProud`); ΣIn zvlášť.
+- **Nesymetrie = (max − min) / průměr × 100 %**, vzorec s čísly v bublině
+  (`rfNesVzorec`). **Mez z normy se nevymýšlí** — práh upozornění si technik
+  zadá (`d.faze = { prah }`, ve vlastnostech „Nastavení"); nad prahem je
+  ukazatel oranžový (`rz-faze-nad`).
+- **Ukazatel v liště** nad čelním pohledem `#rz-faze-ukaz`:
+  „L1 83 A · L2 93 A · L3 89 A · 11,3 %" (`rozvFazeUkazatel`, volá ho
+  `rozvPohledVykreslit` i `rozvSvgPrekreslit`).
+- **Panel „⚖ Fáze"** ve vlastnostech bez výběru (`rozvFazePanelHtml`): sloupce
+  grafu, „Ib nevyplněno u N přístrojů – počítá se In", „bez fáze: N vývodů,
+  X A — ukázat v pohledu" (`tdRFazeBez` je vybere), „⚖ Přefázovat…",
+  „Barvy fází" (pruh dole na přístroji L1 hnědá / L2 černá / L3 šedá, jen
+  v paměti `__rzFazeBarvy`, **do PDF ne** — `rozvSvg` jen bez `o.tisk`).
+- **Přefázovat** (`rozvPrefazovatNavrh`): hladově největší zátěž na nejméně
+  zatíženou fázi, pak doladění přesunem a výměnou dvojic. **Pod dvoupólovým
+  chráničem jde celá skupina (i chránič) na jednu fázi**, pod 4pólovým se
+  vývody rozkládají jednotlivě, RCBO/AFDD 1+N jsou samostatné. **3f a zamčené
+  (`prvek.fazeZamek`, „🔒 Zamknout fázi" ve vlastnostech) se nemění.**
+  Nepomůže-li návrh, nenavrhne nic. **Vždy nejdřív náhled** `#modal-rz-faze`
+  (před → po, změny zvýrazněné, nesymetrie před/po) → Použít přes `rozvZmena`
+  (ZPĚT, Ctrl+Z) / Zrušit nic nezmění. S výběrem víc = „⚖ Přefázovat vybrané…"
+  (ostatní pevně).
+
+**Oteplení — čl. 10.10.4.2** (`rozvOteplVypocet(d)`, oddíl Dokumentů mezi
+Technickými údaji a Prohlášením):
+- **Jen DBO a InA ≤ 630 A** (`rotInA`: tech.ina → privodIn → QM), jinak
+  stav `nelze` a řádek „platí jen pro jeden prostor do 630 A – ověřte jinak".
+- Řádky `ROT_KAT` (QM, FA, FI, FIFA, AFDD, FU, KM): Inc = ručně → Ib → In
+  (vývody × RDF); u chrániče a QM součet vývodů za ním (nejzatíženější fáze
+  u 3/4pólových), nejvýš In. **Pv při Inc = Pv/pól × póly × (Inc / In)²**,
+  „Inc ≤ 0,8 In" [ověřit]. Chybí Pv → oranžový řádek „doplňte Pv", výsledek
+  neúplné. **Pv psané v tabulce jde do kopie přístroje (`x.p.pv`), ne do
+  knihovny.**
+- Pevné ztráty (W), přirážka **50 % (odhad BEAMA) / 30 % (Schneider – jen
+  spoje) / vlastní**, RDF **bez** (výchozí) / tabulka 2–3 0,8 · 4–5 0,7 ·
+  6–9 0,6 · 10+ 0,5 [ověřit IET] / výrobce — RDF jde jako odvozená hodnota
+  do `tech.rdf`. Penc ze skříně (přepsatelné), ΔT z poznámky skříně
+  („ΔT = 30 K") nebo ručně. **Bez zaškrtnutí „Přístroje jsou určeny pro
+  teplotu okolí 55 °C" je výsledek neúplný.**
+- Výsledek: vyhovuje při ΣPv ≤ Penc s rezervou W a %, jinak „Překročeno
+  o X W – větší skříň, nižší Inc, nebo ověřit zkouškou." **Výsledek se
+  neukládá, vždy se počítá.**
+- **PDF:** stránka „Ověření oteplení výpočtem" (`rozvPdfOtepleni`, na výšku)
+  přes zaškrtávátko `dokVyber.otepleni` — výchozí (odvozené, ukládá se
+  prázdné) = přiložit jen při „vyhovuje" (`rozvOteplPriloha`). **Odkaz
+  v prohlášení (bod 7) a „Přílohy" v protokolu kusového ověření jen když
+  vyhovuje A stránka jde do PDF** (`rozvOteplOdkaz`).
+- **Data (vše volitelné, starý rozvaděč beze změny — test):** `d.faze { prah }`,
+  `prvek.fazeZamek`, `d.otepleni { inc: { uid: A }, pevne, prirazka,
+  prirazkaVlastni, rdfRezim, rdfVyrobce, penc, dt, okoli55 }` (odvozené
+  prázdné, `vysledek` se neukládá).
+
+Test: `testy/test-rozvadec-faze-otepleni.js` (40 kontrol — byt 3+1 přesně
+po fázích, 3f, Ib, bez fáze, práh, barvy jen na obrazovce; přefázování
+s 2P skupinou, zámkem, 3f, náhled + Zrušit, Použít + Ctrl+Z, jen vybrané;
+oteplení na W přesně, (Inc/In)², přirážka 30 %, RDF tabulka, ruční Inc,
+chybějící Pv / Penc / 55 °C, Pv do kopie, nevyhovuje, nad 630 A, PDF stránka
+a odkazy jen při vyhovuje, uložená data, starý rozvaděč, data revizí, telefon).
+V `test-mobil.js` stavy „rozvaděč – panel fází…", „…přefázovat, náhled změn"
+a „…oteplení výpočtem (Dokumenty)".
+
+### Čelní pohled a skládání (část 3)
+
+- **SVG v milimetrech, modul 17,5 mm** (`RZG`: okraj 14, výška přístroje 50,
+  mezera mezi řadami 20). Kreslí **jedna funkce `rozvSvg(rz, o)` pro
+  obrazovku i PDF** (`o.tisk` = rozměry v mm, bez výběru a značky).
+  Skříň, DIN lišty, číslo řady vlevo, pod řadou „volno X / Y M" nebo
+  červeně „přeplněno o …"; přístroj = obdélník barvy kategorie
+  (`ROZV_KAT[].barva`), nahoře označení, pod ním hodnota (`rozvCelo`:
+  B16, 40A/30mA A, T1+T2…), páčka, dole vývod (svisle, u širokých
+  vodorovně), vpravo fáze; co přetéká skříň, je šrafované červeně.
+  `<title>` u přístroje = celý popis.
+- **Měřítko na obrazovce** `rozvMeritko()`: vejít se do rámečku, ale
+  2,3–4 px/mm (čitelnost); širší skříň se posouvá **ve svém rámečku**
+  (`.rz-svg-ram`), tlačítka − / ＋ zoom (jen v paměti). Rámeček je na PC
+  nejvýš `max(380px, 100vh − 150px)` vysoký a posouvá se **v obou směrech**
+  (vodorovný posuvník byl u vysoké skříně až pod koncem stránky);
+  na telefonu `max-height:none` (blok MOBIL), posouvá se stránka.
+- **Poloha posuvníku se překreslením NIKDY nemění** (chyba „klik vedle
+  přístroje odroluje rámeček"): `rozvPohledVykreslit()` staví rámeček znovu
+  přes `innerHTML`, takže si **před přepsáním zapamatuje `scrollLeft/Top`
+  a vrátí je**; u zoomu zůstane na místě **střed rámečku** (`ram.__k` =
+  měřítko posledního kreslení). Vrácení polohy vyvolá `scroll` — ten nesmí
+  zavřít právě otevřené menu (`ram.__tichyPosun`, hlídá posluchač `scroll`
+  menu). Kde stačí překreslit jen kresbu, je **`rozvSvgPrekreslit()`**
+  (rámeček zůstane). Klávesy (šipky, Ctrl+D, Ctrl+V) a rychlé přidání
+  posunou rámeček jen o tolik, aby byl vybraný přístroj vidět
+  (`rozvVyberUkazat`); myš rámečkem nehýbe nikdy.
+- **Myš:** tažení z knihovny (řádek i rychlá tlačítka) a přesun přístroje
+  v pohledu — vlastní pointer events (žádná knihovna), žlutá svislá značka
+  místa (`rozvCilZBodu` → řada + pořadí podle středu přístrojů,
+  `rozvZnacka`; cíl jen ve **viditelné** části rámečku). Po tažení se
+  potlačí následný `click` (zachytávací posluchač), aby rychlé tlačítko
+  nevložilo přístroj podruhé.
+  - **Duch** = přístroj nebo celý blok nakreslený **stejnou funkcí
+    `rozvPrvekSvg` ve stejném měřítku** (`rozvDuchSvg`, `.rz-duch`,
+    poloprůhledný, u bloku štítek „5 ks", mimo skříň šedý); u přesunu je
+    kurzor na stejném místě přístroje, jako kde se chytil. **Původní místo
+    zešedne** (`__rz.tazene`, třída `rz-tazeny`). **Esc během tažení** ho
+    zruší (`rozvTahZrusit`, tažení dojede do puštění myši se značkou
+    `zruseno`) — nic se nezmění.
+  - **Automatický posun** (`rozvAutoKrok`, requestAnimationFrame — při
+    stojící myši `pointermove` nechodí): ukazatel ve 56 px u okraje rámečku
+    (nebo do 36 px za ním) posouvá rámeček vodorovně i svisle, tím rychleji,
+    čím blíž okraji (2–26 px za snímek); **stránka se posouvá až u horního /
+    dolního kraje okna a jen když rámeček svisle už nemůže**. Po posunu se
+    znovu spočítá cíl pod kurzorem.
+  - **Označený text na stránce** (třeba po Shift+klik) Chrome při stisku
+    myši začal táhnout jako text a tažení přístroje **zrušil `pointercancel`**
+    — tažení pak tiše nedělalo nic (našla prohlídka). Shift/Ctrl
+    v pohledu proto text neoznačuje (`mousedown` → `preventDefault`), začátek
+    tažení označení zruší a `dragstart` se během tažení potlačí.
+- **Výběr víc přístrojů** (jako v Průzkumníku): **Ctrl+klik** přidá /
+  ubere, **Shift+klik** úsek od posledního kliknutého (`__rz.kotva`) přes
+  řady zleva doprava a shora dolů (`rozvPoradi`), **obdélník** tažením
+  z prázdného místa pohledu (Ctrl + obdélník přidá; `__rz.obdelnik` kreslí
+  `rozvSvg`, začátek je v mm skříně, takže roste i s automatickým posunem),
+  **Ctrl+A** vše, Esc / klik do prázdna zruší. Model: `__rz.vyber` = hlavní
+  přístroj, `__rz.vic` = celý výběr — **platí jen, když v něm hlavní je**
+  (`rozvVic()`), takže kód, který vybere jeden přístroj, výběr víc zruší
+  sám. `rozvVybrane()` = výběr v pořadí ve skříni.
+  - **Tažení kteréhokoli vybraného přesune celý výběr** jako souvislý blok
+    v původním pořadí na místo značky (`rozvPresunBlok`). Co se do cílové
+    řady nevejde, **pokračuje na začátku další řady**, pak na konci řad nad
+    ní (`rozvRozmistit` — stejné pravidlo jako zakreslení: nepřeplnit, dokud
+    je jinde volno). Přeplní se jen cílová řada, když se blok do skříně
+    nevejde vůbec (u přesunu nenastane — uvolní si místo; u kopií ano),
+    a hláška to řekne. Hláška: „Přesunuto: 5 přístrojů — 4 do řady 2,
+    pokračuje 1 v řadě 3…" se ZPĚT.
+  - Klávesy nad výběrem: Delete, Ctrl+C / Ctrl+V (`__rzSchranka` je teď
+    **pole** kopií), Ctrl+D (kopie za výběr, `rozvKopiePrvku` — nové uid
+    a označení, **bez `napaji`**), šipky (blok o místo, ↑ ↓ do sousední
+    řady). Pravý klik nad výběrem: Duplikovat, Kopírovat, Vložit za ně,
+    Přesunout do řady N, Smazat vybrané (N) (`rozvKontextVic`).
+  - **Vlastnosti výběru** (`rozvVlastnostiVicHtml`): „Vybráno 5 přístrojů",
+    označení, **fáze všem** (i „postupně L1, L2, L3" u jednopólových),
+    nadřazený chránič, ◀ ▶ ▲ ▼, ✥ Přesunout jinam, ⧉ Duplikovat, 🗑 Smazat
+    vybrané (N), Zrušit výběr. Všechno přes `rozvZmena` = jedno ZPĚT / Ctrl+Z.
+  - **Dotyk:** dlouhý stisk přístroje (`window.__ktDotykem` z časovače
+    dlouhého stisku) zapne **výběr více** (`__rz.rezimVyberu`, modrý pruh
+    „☑ Výběr více přístrojů — Vybráno: N · ✥ Přesunout jinam · ⋯ Další akce
+    · ✓ Hotovo"), klepnutí pak přidává a ubírá; další dlouhý stisk otevře
+    menu. Puštění prstu po dlouhém stisku se nebere jako klepnutí
+    (`__rz.dlouhyStisk`). „☑ Vybrat víc" je i ve vlastnostech přístroje.
+- **Dotyk (pravidlo 375 px):** žádné tažení — **klepnout na přístroj
+  v knihovně → banner „klepněte do řady" → klepnout na místo v řadě**;
+  „＋ Vložit" a rychlá tlačítka dají přístroj na konec vybrané řady (je-li
+  plná, do první řady s místem — `rozvRadaProVlozeni`); přesun přes
+  vlastnosti „✥ Přesunout jinam" a klepnutí do řady, nebo ◀ ▶ ▲ ▼.
+  Na úzkém okně se po výběru posune na pohled / vlastnosti.
+- **Klávesy** (když se nepíše do pole): Delete smaže (hláška se ZPĚT),
+  Ctrl+Z vrací (společný zásobník), ← → posun v řadě, ↑ ↓ do sousední
+  řady na podobné místo, Ctrl+D duplikát vedle, Ctrl+A vše, Esc zruší
+  tažení / výběr / vkládání.
+- **Označení** automaticky `předpona + (max + 1)` podle kategorie
+  (`rozvDalsiOzn`; -FI/FA má vlastní řadu, AFDD sdílí -FA); jde přepsat
+  ve vlastnostech; **„🔢 Přečíslovat označení"** = podle pořadí v řadách
+  zleva doprava, každá předpona od 1 (se ZPĚT). Tlačítko je **natrvalo
+  v liště nad čelním pohledem vedle − / ＋** (i s vybraným přístrojem)
+  a v kontextovém menu přístroje pod čarou před Smazat — ve vlastnostech
+  bez výběru ho starší technik nenašel (pokyn uživatele 2026-10-19).
+- **Nadřazený chránič** (`rozvNadrazeneAuto`, běží v každé `rozvZmena`):
+  jistič a AFDD (`ROZV_NADR_AUTO`) automaticky pod nejbližším **FI vlevo ve
+  stejné řadě**; ve vlastnostech jde zvolit ručně (`nadrRucne`) i „žádný
+  (přímo z přívodu)"; smazaný ručně zvolený chránič → zpátky automaticky.
+  U QM, SPD, FI, RCBO, rezervy a svorek se nevolí (`ROZV_NADR_BEZ`).
+- **Vlastnosti** (`#rz-vlastnosti`): označení, název vývodu (nabídka názvů
+  obvodů), fáze (— / L1 / L2 / L3 / 3f; 3pólové dostanou 3f), vývodový
+  kabel typ + průřez, nadřazený chránič, sbalené „Další údaje" (Ib pro
+  oteplení, poznámka), souhrn parametrů z kopie, ◀ ▶ ▲ ▼, ⧉ Duplikovat,
+  🗑 Smazat, Hotovo. Psaní překreslí jen pohled (kurzor zůstane v poli).
+  Bez výběru: souhrn rozvaděče, Přečíslovat, Vyměnit skříň.
+- **Pravý klik na přístroj = kontextové menu** (2026-10-19) — **totéž menu
+  programu jako v tabulce měření** (`ktOtevrit`, stejný vzhled, Esc, šipky,
+  Shift + pravý klik = nabídka prohlížeče, na dotyku dlouhý stisk 550 ms).
+  `ktZkusit` se nejdřív zeptá `rozvKontextZkusit()`; pravý klik přístroj
+  i vybere. Položky (`rozvKontextPolozky`): Vlastnosti (skočí do pole
+  Název vývodu), Duplikovat · Ctrl+D, Kopírovat · Ctrl+C, Vložit za něj ·
+  Ctrl+V (bez schránky šedá — `ktOtevrit` nově umí `vypnuto` a `klavesa`),
+  Vložit rezervu vedle (1 M), Přesunout do řady N (každá jiná řada, na
+  konec), 🔢 Přečíslovat označení, Smazat · Delete. **Schránka `__rzSchranka` je v paměti** (kopie
+  přístroje), takže jde vložit i do jiného rozvaděče; Ctrl+V s vybraným
+  přístrojem vkládá za něj, bez výběru na konec vybrané řady; vložená kopie
+  dostane nové `uid` a další volné označení. Klávesy platí, jen když se
+  nepíše do pole (tam Ctrl+C/V patří prohlížeči).
+- Vymyšlený **byt 3+1** pro testy: `testy/rozvadec-byt.js` (skříň 3×12:
+  QM, SPD, sporák B25 3P; dva chrániče 4P 40/30 s jističi; RCBO balkon).
+
+### PDF (část 4)
+
+- `DOK_TYPY.rozv.pdf(d)` → bloky pro společné stránkování tvorby
+  dokumentace; **`naSirku: true`** = stránky `a4 a4-landscape a4-dok`
+  (`dokPdfStranka`, limit výšky 210 mm — obecné, platí pro každý typ
+  s `naSirku`). Obsah: titul (Rozvaděč RH1, DBO dle ČSN EN 61439-3,
+  číslo), hlavička ve 4 sloupcích, **„Čelní pohled"** (`rozvSvg` s
+  `o.tisk`, rozměry v mm, zmenšený nejvýš na 265 × 140 mm, popisek
+  „Zmenšeno na N %" / „Skutečná velikost 1 : 1", varování u přeplněné
+  řady) a **„Seznam přístrojů"** bez rezerv po 18 řádcích (záhlaví se
+  opakuje): označení, popis vývodu, typ, In, charakteristika, póly, IΔn,
+  fáze, kabel. **Neověřené přístroje mají `*`** a pod seznamem vysvětlivku.
+  Štítek, prohlášení, kusové ověření a technické údaje viz etapa 2 výš, schéma zapojení etapa 3 výš.
+- **Čelní pohled vektorově přes svg2pdf.js NEJDE** (ověřeno 2026-10-18; listy
+  **schématu** od etapy 3 vektorově jdou — viz výš, s vloženým písmem): svg2pdf 2.x
+  by s jsPDF 2.5.1 technicky šel, ale (1) text kreslí písmy jsPDF, které
+  nemají české háčky — popisky vývodů by se rozbily, šlo by to jen
+  s vloženým TTF písmem (stovky kB navíc a offline cache), a (2) celý
+  program skládá PDF z obrázků stránek (html2canvas → `renderPagesToPDF`),
+  vektorový obrázek by potřeboval vlastní cestu skládání. Čelní pohled jde
+  proto **jako obrázek se stránkou** (html2canvas umí vložené SVG);
+  „🖨️ Tisk přímo" ho kreslí ve vyšší kvalitě. Žádná knihovna třetí strany
+  se nepřidala (ani pro tažení — vlastní pointer events).
+
+Test: `testy/test-rozvadec.js` (vymyšlená data; velká knihovna = ~670
+vymyšlených položek „Výrobce A" / „Výrobce B" generovaných v testu, do
+repozitáře nejdou žádná data výrobců; 166 kontrol — i typ skříně,
+nové vestavěné skříně, filtr typu, CSV s `typ_skrine` i bez, sbalení
+a samočinné sbalení pruhu; skříň 6×24 **skutečnou myší**: Ctrl / Shift
+/ obdélník, tažení 5 přístrojů s pokračováním do další řady, duch ve
+stejném měřítku a zašedlé místo, Esc, automatický posun rámečku doleva,
+doprava i dolů (i z knihovny), poloha posuvníku po kliku vedle přístroje,
+vložení, smazání, Ctrl+Z a zoomu, Shift+klik neoznačí text, klávesy, menu
+a vlastnosti výběru, přeplnění kopiemi; telefon: dlouhý stisk → výběr více
+a přesun dvou přístrojů klepnutím). **Dlouhý stisk** dřív rovnou otevřel
+menu — test upraven ve stejném commitu (první stisk = výběr, další = menu).
+V `test-mobil.js` stavy
+„rozvaděč – …" a v přípravě rozvaděč RH1 (byt 3+1, skříň 3×12).
+**`test-dokumentace.js` upraven ve stejném commitu:** dlaždic je víc
+a „správa vzorů úplně dole" se počítá z viditelných prvků.
 
 ## Plán revizí: lhůta se bere ze ZPRÁVY (v9.122)
 
@@ -3677,6 +4663,8 @@ panel scan + závada scan u všech 3 providerů, ke kterým má klíč.**
 - `sw.js` — service worker (network-first pro HTML, stale-while-revalidate
   pro fonty a CDN)
 - `manifest.json` — PWA manifest
+- `vektor/` — svg2pdf.js a písmo Roboto Condensed pro vektorové PDF schématu
+  rozvaděče (README.txt: zdroj, verze, licence; svg2pdf na cdnjs není)
 - `literatura/` — odborné podklady (vzory zpráv Macháček/Dolenský,
   normy ČSN) — read-only reference pro implementaci, neměnit
 
@@ -4338,8 +5326,9 @@ trafo, osvětlení…), sáhněte na tahle místa:
   nativního tažení běží normálně. Konec tažení hlásí prohlížeč jako (0,0),
   což se musí ignorovat, jinak seznam vystřelí nahoru.
 - ✅ **PWA auto-reload po update** — network-first pro HTML,
-  listener `controllerchange` → `location.reload()`. Uživatel
-  nemusí hard-reloadovat; cache bump v sw.js stačí.
+  listener `controllerchange` → načte se sama jen v klidu, jinak pruh
+  „Načíst" (od v9.126, viz oddíl „Nová verze se jen nabídne…").
+  Uživatel nemusí hard-reloadovat; cache bump v sw.js stačí.
 
 - ✅ **Knihovna textů — ukládání části a vkládání na kurzor** (2026-08-20):
   `ulozitDoKnihovny` uloží **jen označený úsek** textarey, když v ní nějaký

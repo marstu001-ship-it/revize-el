@@ -113,9 +113,25 @@ function pomocnik() {
     dokProstoryVlozit(sk, dokRozborProstoru('104 Sprcha'));
     sel = sk.querySelector('.dk-vzor-vyber'); sel.value = 'vest-sprcha'; sel.dispatchEvent(new Event('change', { bubbles: true }));
     await dokUlozitOtevreny();
+    // ROZVADĚČ DBO — byt 3+1 ve skříni 3×12
+    await dokNovy('rozv');
+    dk('[data-dk="oznaceni"]', 'RH1'); dk('[data-dk="stavba"]', 'Byt 3+1, Vymyšlená 12'); dk('[data-dk="investor.nazev"]', 'Petr Smyšlený');
+    rozvSkrinNastavit(rozvKnihPolozka('v-sk-3x12-n'));
+    if (window.__rozvByt) window.__rozvByt();   // testy/rozvadec-byt.js
+    await dokUlozitOtevreny();
     showScreen('home');
   };
-  M.dok = async () => { await dokOtevrit(DOK.dokumenty[0].uid); await w(150); };
+  M.dok = async () => { await dokOtevrit(DOK.dokumenty.find(x => x.typ === 'pouvv').uid); await w(150); };
+  M.zrevize = async () => {
+    // vymyšlená zpráva jen v paměti (nic se neukládá)
+    const o = (c, n, typ, ch, a, x) => Object.assign({ rowtype: 'obvod', napaji: [], c, n, typ, ch, a, idn: '', kabel: '' }, x || {});
+    if (!archiv.some(z => z.uid === 'm-zr')) archiv.unshift({ uid: 'm-zr', typ: 'elektro', ev_cislo: 'RE-26-0012', misto: 'Byt Polní 12', datum: '2026-10-19', stav: '',
+      data: { typ: 'elektro', ev_cislo: 'RE-26-0012', misto: 'Byt Polní 12', zahajeni: '2026-10-19', provozovatel: 'Jan Vymyšlený\nPolní 12', napetova_soustava: '1NPE ~50Hz 230V / TN-C-S',
+        rozvadece: [{ uid: 'm-rh', nazev: 'RH', umisteni: 'Chodba', mereni: [o('1', 'Sporák', 'Hager', 'B', '3x16A'), o('2', 'Vývod RS1', '', 'B', '1x20', { napaji: ['m-rs1'] })] },
+          { uid: 'm-rs1', nazev: 'RS1 kuchyň', umisteni: 'Kuchyň', mereni: [o('1', 'Chránič', '', 'A', '40', { rowtype: 'rcd-header', idn: '0,03' }), o('2', 'Zásuvky', '', 'B', '1x16')] }] } });
+    dokOtevritSeznam('rozv'); await w(100); TD_AKCE.tdRZRevize(); await w(100);
+  };
+  M.rozv = async () => { await dokOtevrit(DOK.dokumenty.find(x => x.typ === 'rozv').uid); await w(200); };
   M.otevri = async (ev) => {
     const i = archiv.findIndex(z => (z.ev_cislo || (z.data && z.data.ev_cislo)) === ev);
     otevritZpravu(i); await w(400);
@@ -131,6 +147,7 @@ function pomocnik() {
     if (typeof formArchivZapnut === 'function' && formArchivZapnut()) formArchivNastavit(false);
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     if (window.__formReadOnly) setFormReadOnly(false);
+    try { localStorage.removeItem('revize_el_rz_info'); } catch (e) {}
     window.__formDirty = false;
     showScreen('home'); window.scrollTo(0, 0); await w(30);
   };
@@ -167,6 +184,18 @@ function pomocnik() {
       if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && a.scrollWidth > a.clientWidth + 1) return a;
     }
     return null;
+  };
+  // Prvek celý mimo viditelnou část předka s vlastním posunem (položka dlouhého
+  // seznamu odrolovaná pryč) není vidět — nemůže být „nalepený" na nic.
+  const vRameci = el => {
+    const r = el.getBoundingClientRect();
+    for (let a = el.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const q = a.getBoundingClientRect();
+      if (r.bottom <= q.top || r.top >= q.bottom || r.right <= q.left || r.left >= q.right) return false;
+    }
+    return true;
   };
   const pevnyPredek = el => {
     for (let a = el; a && a !== document.documentElement; a = a.parentElement) {
@@ -277,7 +306,7 @@ function pomocnik() {
     // Buňky tabulky (včetně záhlaví) sousedí jako v Excelu, to vadu nedělá;
     // pevně umístěné prvky (mikrofon) se posouvají přes obsah — u nich
     // rozhoduje kontrola „zakryto", ne sousedství.
-    const seznam = Array.from(plochy.entries()).filter(([el]) => !(el.closest('td, th') && el.closest('table')) && !pevnyPredek(el));
+    const seznam = Array.from(plochy.entries()).filter(([el]) => !(el.closest('td, th') && el.closest('table')) && !pevnyPredek(el) && vRameci(el));
     for (let i = 0; i < seznam.length; i++) for (let j = i + 1; j < seznam.length; j++) {
       const [a, ra] = seznam[i], [b, rb] = seznam[j];
       if (a.contains(b) || b.contains(a)) continue;
@@ -458,15 +487,126 @@ function vsechnyStavy(zalozky) {
   }));
   // tvorba dokumentace (samostatná část mimo revize)
   add('dokumentace – typy dokumentů', 'Tvorba dokumentace', E(async () => { dokOtevritTypy(); await __M.w(100); }));
-  add('dokumentace – seznam', 'Tvorba dokumentace', E(async () => { dokOtevritSeznam(); await __M.w(100); }));
+  add('dokumentace – seznam', 'Tvorba dokumentace', E(async () => { dokOtevritSeznam('pouvv'); await __M.w(100); }));
   add('dokumentace – seznam, správa vzorů rozbalená', 'Tvorba dokumentace', E(async () => {
-    dokOtevritSeznam(); await __M.w(100); document.getElementById('dok-vzory-karta').open = true; await __M.w(100);
+    dokOtevritSeznam('pouvv'); await __M.w(100); document.getElementById('dok-vzory-karta').open = true; await __M.w(100);
   }));
   add('dokumentace – protokol', 'Tvorba dokumentace', E(async () => { await __M.dok(); }));
   add('dokumentace – protokol, skupiny prostorů', 'Tvorba dokumentace', E(async () => {
     await __M.dok(); document.querySelector('.dk-skupina').scrollIntoView({ block: 'start' }); await __M.w(100);
   }));
   add('dokumentace – náhled PDF', 'Tvorba dokumentace', E(async () => { await __M.dok(); await dokNahled(); await __M.w(300); }));
+  // rozvaděč DBO (konfigurátor)
+  add('rozvaděč – seznam, knihovna rozbalená', 'Tvorba dokumentace', E(async () => {
+    dokOtevritSeznam('rozv'); await __M.w(100); document.getElementById('dok-knihovna-karta').open = true; await __M.w(100);
+  }));
+  add('rozvaděč – seznam s objekty', 'Tvorba dokumentace', E(async () => {
+    // vymyšlené objekty a rozvaděče, jen v paměti (nic se neukládá)
+    DOK.rozvObjekty = [{ id: 'm-o1', nazev: 'Byt Polní 12, Kyjov' }, { id: 'm-o2', nazev: 'Dům Lipová 5' }];
+    const r = (uid, c, ozn, obj, nz) => ({ uid, typ: 'rozv', cislo: c, data: Object.assign(DOK_TYPY.rozv.novy(), { cislo: c, oznaceni: ozn, objekt: obj, napajenZ: nz, stavba: 'Byt Polní 12' }) });
+    DOK.dokumenty = DOK.dokumenty.filter(x => x.typ !== 'rozv').concat([r('m-a', 'ROZ-0001', 'RH1', 'm-o1'),
+      r('m-b', 'ROZ-0002', 'RS1', 'm-o1', { uid: 'm-a', ozn: '-FA12' }), r('m-c', 'ROZ-0003', 'RS2 kuchyň', 'm-o1', { uid: 'm-a', ozn: '-FA13' }),
+      r('m-d', 'ROZ-0004', 'RX', '')]);
+    dokOtevritSeznam('rozv'); await __M.w(100);
+  }));
+  add('rozvaděč – zakreslit z revizní zprávy, krok 1', 'Tvorba dokumentace', E(async () => { await __M.zrevize(); }), '#modal-rz-zrevize');
+  add('rozvaděč – zakreslit z revizní zprávy, krok 2', 'Tvorba dokumentace', E(async () => {
+    await __M.zrevize(); document.querySelector('#rzz-zpravy [data-zuid="m-zr"]').click(); await __M.w(150);
+  }), '#modal-rz-zrevize');
+  add('rozvaděč – zakreslit, krok 2 s vlastní velikostí skříně', 'Tvorba dokumentace', E(async () => {
+    await __M.zrevize(); document.querySelector('#rzz-zpravy [data-zuid="m-zr"]').click(); await __M.w(150);
+    const s = document.querySelector('select[data-rzz-skrin="m-rs1"]'); s.value = '@vlastni'; s.dispatchEvent(new Event('change', { bubbles: true })); await __M.w(150);
+    document.querySelector('.rz-vel input[data-vel="zpusob"][value="listy"]').click(); await __M.w(100);
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }), '#modal-rz-zrevize');
+  add('rozvaděč – vlastní velikost skříně (okno v editoru)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = ''; TD_AKCE.tdRVelikost(); await __M.w(100);
+  }), '#modal-rz-velikost');
+  add('rozvaděč – editor, sbalený informační pruh, karta Skříně', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); localStorage.setItem('revize_el_rz_info', 'sbaleno'); rozvInfoPrekreslit();
+    TD_AKCE.tdRTab(document.querySelector('.rz-tab[data-tab="skrine"]')); document.querySelector('.rz-knihovna').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – správa knihovny s importem výrobce', 'Tvorba dokumentace', E(async () => {
+    // vymyšlený výrobce, jen v paměti (nic se neukládá)
+    DOK.rozvKnihovna = [];
+    for (let i = 0; i < 70; i++) DOK.rozvKnihovna.push({ id: 'u-m' + i, druh: 'pristroj', kat: i % 5 ? 'FA' : 'FI', nazev: '', vyrobce: 'Výrobce A',
+      typ: 'A-' + i, poly: '1', In: 16, char: 'B', sirka: 1, zdroj: 'import' });
+    dokOtevritSeznam('rozv'); await __M.w(100); document.getElementById('dok-knihovna-karta').open = true;
+    const e = document.querySelector('#rz-sprava .rz-sf[data-sf="vyrobce"]'); e.value = 'Výrobce A'; e.dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector('#rz-sprava .rz-sf-radek').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – editor', 'Tvorba dokumentace', E(async () => { await __M.rozv(); }));
+  add('rozvaděč – filtry knihovny, Jističe', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.querySelector('#rz-filtry-hlavni .rz-skup[data-k="FA"]').click();
+    document.getElementById('rz-filtry-hlavni').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – editor, hlavička a filtry rozbalené', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.querySelector('.rz-hlavicka').open = true; document.getElementById('rz-filtry').open = true; await __M.w(100);
+  }));
+  add('rozvaděč – čelní pohled', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – vybraný přístroj a vlastnosti', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); __rz.vyber = __rz.rady[1].prvky[3].uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.getElementById('rz-vlastnosti').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – výběr více přístrojů (pruh a vlastnosti výběru)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvRezimVyberu(__rz.rady[1].prvky[1].uid);
+    rozvVyberNastavit(__rz.rady[1].prvky.slice(1, 4).map(x => x.uid)); rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.querySelectorAll('.toast').forEach(t => t.remove());
+    document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – výběr více přístrojů, vlastnosti výběru', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvVyberNastavit(__rz.rady[1].prvky.slice(1, 4).map(x => x.uid)); rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.getElementById('rz-vlastnosti').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – přístroj vybraný k vložení klepnutím', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); __rz.knihVyber = 'v-fa-1-B16'; rozvKnihovnaVykreslit(); rozvPohledVykreslit();
+    document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – kontextové menu přístroje', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(100);
+    const g = document.querySelector('#rz-pohled [data-puid]'), r = g.getBoundingClientRect();
+    rozvKontextZkusit(r.left + r.width / 2, r.top + 10, g); await __M.w(100);
+  }), '.kt-menu');
+  add('rozvaděč – záložka Dokumenty, všechny oddíly otevřené', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvZalozkaNastavit('dok'); document.querySelectorAll('.rz-dok-oddil').forEach(d => { d.open = true; }); await __M.w(100);
+  }));
+  add('rozvaděč – kusové ověření, měření izolačního odporu', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvZalozkaNastavit('dok'); const o = document.querySelector('[data-oddil="ko"]'); o.open = true;
+    const m = document.querySelector('.rz-ko-metoda'); m.value = 'B'; m.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('.rz-ko-met[data-met="B"]').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – záložka Schéma, list 1', 'Tvorba dokumentace', E(async () => { await __M.rozv(); rozvZalozkaNastavit('sch'); await __M.w(300); }));
+  add('rozvaděč – záložka Schéma, jednopólový list a údaje výkresu', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvZalozkaNastavit('sch'); __rzSch.list = 1; rozvSchKreslit();
+    const o = document.querySelector('[data-oddil="schema"]'); o.open = true; await __M.w(200);
+  }));
+  add('rozvaděč – náhled schématu (PDF)', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await TD_AKCE.tdRSchPdf(); await __M.w(300); }));
+  add('rozvaděč – výrobní štítek', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await TD_AKCE.tdRStitek(); await __M.w(300); }));
+  add('rozvaděč – popisky pod přístroje', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await TD_AKCE.tdRPopisky(); await __M.w(300); }));
+  add('rozvaděč – výrobní štítek, jednoduché rozvržení', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvZalozkaNastavit('dok'); const e = dokForm().querySelector('[data-dk="stitek.styl"]');
+    e.value = 'jednoduche'; e.dispatchEvent(new Event('change', { bubbles: true })); await TD_AKCE.tdRStitek(); await __M.w(300); }));
+  add('rozvaděč – vlastnosti s přístroji různých výrobců', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); __rz.rady[1].prvky[1].p.vyrobce = 'Výrobce A'; __rz.rady[1].prvky[2].p.vyrobce = 'Výrobce B';
+    __rz.vyber = null; rozvVlastnostiVykreslit(); document.getElementById('rz-vlastnosti').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – panel fází (nesymetrie, bez fáze, nastavení)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); __rz.rady[1].prvky[1].faze = ''; __rz.vyber = null; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    const pf = document.querySelector('#rz-vlastnosti .rp-faze'); pf.querySelector('details').open = true; pf.scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – přefázovat, náhled změn', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); __rz.vyber = null; rozvVlastnostiVykreslit(); TD_AKCE.tdRPrefazovat(); await __M.w(150);
+  }), '#modal-rz-faze');
+  add('rozvaděč – oteplení výpočtem (Dokumenty)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvZalozkaNastavit('dok'); const o = document.querySelector('[data-oddil="otepleni"]'); o.open = true;
+    o.scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – náhled PDF', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await dokNahled(); await __M.w(400); }));
+  add('rozvaděč – přeplněná řada', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvVlozit('v-fa-3-C32', 0, 0); document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
   // dialogy
   const D = (id, krok) => add('dialog ' + id, 'Dialogy', krok, '#' + id);
   D('modal-revize', E(async () => { await __M.otevri('RE-26-0101'); showScreen('form'); openModalRevize(); await __M.w(100); }));
@@ -492,10 +632,15 @@ function vsechnyStavy(zalozky) {
   D('modal-vnorit', E(async () => { showScreen('home'); otevritVnoritModal(0); await __M.w(100); }));
   D('modal-dok-vzor', E(async () => { await __M.dok(); TD_AKCE.tdVzorZeSkupiny(document.querySelector('.dk-skupina [data-action="tdVzorZeSkupiny"]')); await __M.w(100); }));
   D('modal-dok-vlozit', E(async () => { await __M.dok(); dokVlozitDialog(document.querySelector('.dk-skupina')); await __M.w(100); }));
-  D('modal-dok-katalog', E(async () => { dokOtevritSeznam(); dokKatalogOtevrit(); await __M.w(100); }));
+  D('modal-dok-katalog', E(async () => { dokOtevritSeznam('pouvv'); dokKatalogOtevrit(); await __M.w(100); }));
   D('modal-dok-vzor-jmeno', E(async () => {
     await __M.dok(); dokVzorDialog({ nazev: 'Kotelna (plynová, bez trvalé obsluhy)', kody: {}, pozn: '', texty: {} }, null);
     await dokVzorUlozit(); await __M.w(100);
+  }));
+  D('modal-rz-polozka', E(async () => { await __M.rozv(); TD_AKCE.tdRVlastni(); await __M.w(100); }));
+  D('modal-rz-import', E(async () => {
+    dokOtevritSeznam('rozv');
+    await rozvImportSoubor(new File(['kategorie;typ;sirka_moduly;poly\nFA;VYM-1;1;1\nXY;VYM-2;;5\n'], 'vymysleny.csv')); await __M.w(100);
   }));
   D('modal-plan-objekt', E(async () => {
     otevritPlan(); await __M.w(300); document.querySelectorAll('.modal-overlay.open').forEach(o => o.classList.remove('open'));
@@ -584,6 +729,7 @@ async function zvlastni(p, vp) {
     await p.goto('http://127.0.0.1:' + PORT + '/index.html', { waitUntil: 'load' });
     await p.waitForTimeout(900);
     await p.evaluate(pomocnik);
+    await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString());
     await p.evaluate(() => __M.fixture());
     const zalozky = await rozbalitZalozky(p);
     const S = vsechnyStavy(zalozky).filter(s => !JEN || JEN.test(s.id));
@@ -638,6 +784,8 @@ async function zvlastni(p, vp) {
       await p.goto('http://127.0.0.1:' + PORT + '/index.html', { waitUntil: 'load' });
       await p.waitForTimeout(900);
       await p.evaluate(pomocnik);
+      await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString());
+    await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString());
       await p.evaluate(() => __M.fixture());
       const v = await p.evaluate(async () => {
         const out = { mq: matchMedia('(max-width:600px), (pointer:coarse) and (max-height:500px)').matches, spatne: [], n: 0 };
