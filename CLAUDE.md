@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.127 · 2026-10-21**
+**Aktuální verze: v9.128 · 2026-10-21**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -841,7 +841,9 @@ a výsledky zkoušek program nikdy nevymýšlí.**
 - **Záložka Dokumenty:** jedna hlavní akce **„📄 Vygenerovat dokumentaci
   (PDF)"**, pod ní zaškrtávátka co do PDF patří (`dokVyber`: čelní pohled
   a seznam · technické údaje · prohlášení · protokol; chybí = vše),
-  **„🏷 Tisk štítku"** zvlášť, řádek **„Chybí: …"** s odkazy na pole
+  **„🏷 Tisk štítku"** zvlášť (od v9.128 spolu s „🏷 Tisk popisků přístrojů"
+  jako obrysová zelená tlačítka `.rz-dok-tisk2` — drobná čárkovaná technik
+  přehlédl; menší než hlavní akce, na telefonu přes celou šířku), řádek **„Chybí: …"** s odkazy na pole
   (`rozvDokChybi`: výrobce, adresa, výrobní číslo, typ, datum výroby, InA,
   Un). Oddíly sbalitelné: Výroba a značení · Technické údaje · Prohlášení ·
   Kusové ověření. Lištové „📄 Náhled PDF" dělá totéž co hlavní akce.
