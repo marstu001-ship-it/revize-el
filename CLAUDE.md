@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.130 · 2026-10-22**
+**Aktuální verze: v9.131 · 2026-10-22**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -492,8 +492,8 @@ a program z toho později udělá štítek, EU prohlášení o shodě, protokol
 o kusovém ověření a schéma. **Etapy:** 1) knihovna a skládání (tohle),
 2) dokumenty z návrhu, 3) schéma zapojení, 4) symetrie fází a oteplení,
 5) výkonové rozvaděče PSC / 3D. Druhý typ v Tvorbě dokumentace — dlaždice
-„Rozvaděč DBO – návrh a dokumentace" (ČSN EN 61439-3), číslování
-**`ROZ-0001`**, platí všechny zásady oddílu výš (vlastní úložiště, oddělení
+„Rozvaděč DBO – návrh a dokumentace" (ČSN EN IEC 61439-3), číslování
+**`ROZ-0001`** (třetí typ, výkonový rozvaděč PSC, viz „etapa 5a" níž), platí všechny zásady oddílu výš (vlastní úložiště, oddělení
 od revizí, záloha jako část `dokumentace`).
 
 - **Seznam:** hlavní akce „＋ Navrhnout nový rozvaděč", pod seznamem sbalená
@@ -514,7 +514,8 @@ od revizí, záloha jako část `dokumentace`).
   filtry technik nenašel a s importem výrobců jsou stovky položek). Karta
   Přístroje: pod hledáním **kategorie jako řada tlačítek**
   (`ROZV_KAT_SKUPINY`: Vše · Jističe · Chrániče · RCBO · AFDD · SPD ·
-  Hl. vypínače · Pojistky · Ostatní = KM, KT, KA, PJ, HL, SF, X, REZ)
+  Hl. vypínače · Pojistky · Trafa a zdroje = TR, ZD · Ostatní = KM, KT, KA,
+  PJ, HL, SF, X, XS, JINE, REZ)
   a vždy **výrobce, póly, In, charakteristika**; sbalené „Další filtry" jen
   IΔn, typ chrániče, jen ověřené, jen oblíbené. Karta Skříně vždy: **typ
   skříně jako řada tlačítek** (Vše · Domovní · Průmyslové · Historické,
@@ -562,7 +563,9 @@ a prohlášení (hlavička + `skrin` + `p`). `data.model = 1`.
   `etim`, `pole` = parametry, které u ní dávají smysl): QM -QM, FA -FA,
   FI -FI, FIFA -FI/FA (RCBO), AFDD (-FA, sdílí řadu s jističi), SPD (bez
   pomlčky „SPD1"), FU -FU, KM -KM, KT -KT, KA -KA, PJ -PJ, HL -HL, SF -SF,
-  X -X, REZ (bez označení).
+  X -X, REZ (bez označení); od 2026-10-22 TR -T (transformátor), ZD -G
+  (napájecí zdroj), XS -XS (zásuvka na lištu), JINE „Ostatní přístroj"
+  s vlastní předponou (viz oddíl „Transformátory, zdroje…" níž).
 - **ETIM 10:** u kategorií jen známé třídy — MCB EC000042, RCD EC000003,
   RCBO EC000905, SPD EC000941, skříň EC000214 (`ROZV_SKRIN_ETIM`). U polí
   (`ROZV_POLE`) je v komentáři název vlastnosti ETIM; **kódy vlastností (EF…)
@@ -583,7 +586,8 @@ a prohlášení (hlavička + `skrin` + `p`). `data.model = 1`.
   „obecný", `overeno = false`): jističe 1P/1+N/3P/3+N × B/C × 6–63 A,
   chrániče 2P/4P 25/40/63 A 30 mA A/AC (+ 4P 40/63 A 300 mA), RCBO 1+N,
   AFDD, SPD T1+T2 / T2, hlavní vypínače, pojistkové odpínače 10×38, stykače,
-  relé, hodiny, elektroměry, signálky, ovladače, svorka ½ modulu, rezervy
+  relé, hodiny, elektroměry, signálky, ovladače, transformátory, zdroje,
+  zásuvka na lištu (2026-10-22), svorka ½ modulu, rezervy
   ½–3 moduly; skříně plast 1–4×12 a 2–4×18 nástěnné i zapuštěné, oceloplech
   3–4×24 (domovní), **oceloplech nástěnné 5–8×24 a stojanové 10×24, 12×24
   (průmyslové)**. Historické vestavěné nejsou — data pošle uživatel. **Pv, Icn, Icu, Ics, InA a Penc jsou prázdné — nic se nevymýšlí;
@@ -617,6 +621,66 @@ a prohlášení (hlavička + `skrin` + `p`). `data.model = 1`.
   snímek pro ZPĚT (zapíše se do společného zásobníku `zpetZapsat`, takže
   funguje **Ctrl+Z**), přepočet nadřazených chráničů, překreslení, uložení.
   Otevření rozvaděče zásobník vyprázdní.
+
+### Transformátory, zdroje, zásuvka na lištu a ostatní přístroje (v9.131, 2026-10-22)
+
+Hlášení uživatele: do rozvaděče nešel přidat transformátor ani napájecí zdroj
+(zvonek, LED pásky, domácí telefon) — v knihovně ta kategorie nebyla a
+**„＋ Vlastní přístroj" nabízel jen pevné kategorie** (`ROZV_KAT`), mezi
+kterými nic takového nebylo. To byla celá příčina; další překážka se
+našla jen jedna — kontrola čísel neznala jednotku „VA" (`16 VA` hlásilo
+„není číslo"). In povinné nebylo u žádné kategorie. Platí pro DBO i PSC.
+
+- **Nové kategorie** (`ROZV_KAT`): **TR** Transformátor (zvonkový,
+  bezpečnostní, ovládací) **-T**, **ZD** Napájecí zdroj (spínaný – LED,
+  elektronika) **-G**, **XS** Zásuvka na DIN lištu **-XS**, **JINE** Ostatní
+  přístroj — **předponu si nese v přístroji (`p.ozn`, výchozí -A)**,
+  `rozvPredpona(p)`; `rozvDalsiOzn` i přečíslování ji respektují. Žádná
+  předpona nekoliduje (regex `^-T(\d+)$` nechytí -TA1, `^-X(\d+)$` -XS1).
+- **Parametry** (`ROZV_POLE`, vše volitelné kromě šířky): `vykon` (VA, u zdroje
+  W — `ROZV_KAT[].vykonW`), `uVstup`, `uVystup` (text: „230", „8/12",
+  „24 DC"), `iVystup` (A), u JINE `ozn`; In a póly u zásuvky a ostatních.
+  **Ukládají se jen vyplněné** (`ROZV_PRISTROJ_NAVIC`, jako PSC klíče) —
+  staré položky a rozvaděče zůstávají bajt po bajtu stejné. JINE: název
+  povinný, předpona bez mezery a nesmí končit číslicí.
+- **Vestavěné obecné** (neověřené, Pv prázdné, šířky běžné modulové):
+  zvonkový transformátor 8/12 V 8 a 16 VA (2 M), bezpečnostní 230/24 V 25
+  a 63 VA (3 M), zdroj 24 V DC 30 W (2 M) a 60 W (3 M), 12 V DC 15 W (1 M),
+  zásuvka na lištu 16 A 1+N (3 M). Knihovna: tlačítko **„Trafa a zdroje"**
+  (TR, ZD), XS a JINE jsou v „Ostatní".
+- **Hodnota na čele** (`rozvCelo`): TR „230/8/12 V · 16 VA", ZD „24 V · 60 W",
+  XS „zás. 16 A", JINE zkrácený název; popisky pod přístroje „12 V 16 VA",
+  „24 V 60 W"; v seznamu PDF napětí a výkon pod názvem, když v něm nejsou
+  (`rozvTrZdText`, `rozvNapeti`).
+- **Schéma**: `RS_VYSTUPNI` = TR, ZD, XS, JINE mají vlastní sloupec
+  (`RS_SLOUPCE`), značky `trafo` (dvě kružnice), `zdroj` (obdélník s ~ a =),
+  `zasuvka`, `ostatni` (obdélník s názvem). TR a ZD: napájení z fáze
+  (`z L1`), výstup jako vývod s napětím dole, bez N a PE (malé napětí);
+  zásuvka sloupec končí. Pod chráničem jako jeho vývody — **nadřazený
+  chránič automaticky** (`ROZV_NADR_AUTO`). Chybějící fáze se hlásí,
+  chybějící kabel jen u jističů/pojistek.
+- **Symetrie fází**: jsou to vývody (`rfVyvod` = `RS_SLOUPCE`); **bez In
+  i bez Ib se proud nevymýšlí** — do součtu nejdou a panel řekne „bez In:
+  N přístrojů – zatížení zadejte jako Ib"; vyplněné Ib se počítá.
+- **Oteplení**: XS jako ostatní (Pv/pól × (Inc/In)²), **TR, ZD, JINE Pv
+  celkem za přístroj, nepřepočítává se** (`ROT_KONST`, řádek „celkem");
+  chybí-li Pv, „doplňte Pv" a výsledek neúplný.
+- **Zakreslení z revizní zprávy**: obvod (jistič, RCBO, AFDD, pojistka)
+  s názvem „trafo", „transformátor", „zvon…", „zdroj" nebo „LED" dostane
+  v kroku 2 **nezaškrtnutý návrh** „💡 Obvod „Zvonek": přidat za jistič
+  transformátor" (`rzzNavrh`, `rzzNavrhyHtml`, `__rzZR.navrhy`). Jen po
+  potvrzení se za jistič přidá obecný transformátor / zdroj s upozorněním
+  „ověřte typ, napětí a výkon"; jistič zůstane jističem.
+- Novinky se nedělaly.
+
+Testy: `test-rozvadec.js` (+16: kategorie, vestavěné, tlačítko knihovny,
+čelo, popisky, PDF, vlastní „Ostatní" s předponou, přečíslování, import CSV
+s novými sloupci i bez, šablona, návrh při zakreslení),
+`test-rozvadec-schema.js` (+5: značky, výstup s napětím, „L?", skupina pod
+chráničem), `test-rozvadec-faze-otepleni.js` (+4: bez In se nesčítá, Ib,
+Pv celkem). **Upraveno:** `test-rozvadec.js` (seznam skupin, „Ostatní",
+18 kategorií), `test-rozvadec-psc.js` (šablona 43 sloupců, editor DBO se
+porovnává bez knihovny).
 
 ### Objekty (složky) v seznamu rozvaděčů (2026-10-19)
 
@@ -794,19 +858,26 @@ informační pruh, karta Skříně".
   zdroj `import`. Data jen v prohlížeči, **nikdy v repozitáři**.
 - **Formát CSV** (šablona „⬇ Prázdná šablona CSV" = jen hlavička, UTF-8
   s BOM, středníky): sloupce `druh;kategorie;nazev;vyrobce;rada;typ;poly;in;
-  charakteristika;icn;icu;ics;idn;typ_chranice;trida_spd;up;sirka_moduly;pv;
-  ue;provedeni;material;typ_skrine;rady;moduly_v_rade;ip;ik;ina;penc;rozmery;
-  trida_ochrany;overeno;poznamka`. Pořadí ani všechny sloupce nejsou
+  charakteristika;icn;icu;ics;icw;idn;typ_chranice;trida_spd;up;sirka_moduly;
+  sirka_mm;vyska_mm;hloubka_mm;uzitna_sirka_mm;uzitna_vyska_mm;pv;ue;vykon;
+  u_vstup;u_vystup;i_vystup;nastaveni;
+  provedeni;material;typ_skrine;rady;moduly_v_rade;ip;ik;ina;penc;rozmery;
+  trida_ochrany;overeno;poznamka` (sloupce `icw`, `*_mm` a `nastaveni` přibyly
+  s PSC v etapě 5a, `vykon;u_vstup;u_vystup;i_vystup` 2026-10-22 —
+  staré CSV bez nich se načte beze změny). Pořadí ani všechny sloupce nejsou
   povinné, hlavička se porovnává bez háčků a velikosti písmen (`ROZV_CSV`).
   Oddělovač `;`, `,` nebo tabulátor se pozná sám, uvozovky podle CSV,
   kódování UTF-8, jinak windows-1250 (CSV z českého Excelu).
   - `druh` = `pristroj` / `skrin` (prázdné: skříň, když má řady a nemá
     kategorii), `kategorie` = kód (QM, FA, FI, FI/FA nebo RCBO, AFDD, SPD,
-    FU, KM, KT, KA, PJ, HL, SF, X, REZ; i s pomlčkou) nebo české slovo
-    (jistič, chránič, svodič přepětí, stykač…), `poly` = 1, 1+N, 2, 3, 3+N,
+    FU, KM, KT, KA, PJ, HL, SF, X, REZ, TR, ZD, XS, JINE; i s pomlčkou) nebo
+    české slovo (jistič, chránič, svodič přepětí, stykač, transformátor,
+    trafo, zdroj, napájecí zdroj, zásuvka, ostatní…), `poly` = 1, 1+N, 2, 3, 3+N,
     4 (projde i „1P", „3P+N"), `in` A, `icn/icu/ics` kA, `idn` mA, `up` kV,
-    `pv` W/pól při In, `ue` V — **čísla s čárkou i tečkou, jednotka za
-    číslem se toleruje** („16 A"), `charakteristika` B/C/D/K/Z,
+    `pv` W/pól při In (u TR, ZD, JINE celkem za přístroj), `ue` V,
+    `vykon` VA u transformátoru / W u zdroje, `u_vstup` a `u_vystup` text
+    („230", „8/12", „24 DC"), `i_vystup` A — **čísla s čárkou i tečkou,
+    jednotka za číslem se toleruje** („16 A", „16 VA"), `charakteristika` B/C/D/K/Z,
     `typ_chranice` AC/A/F/B, `trida_spd` T1, T2, T3 nebo kombinace (T1+T2),
     `sirka_moduly` povinná u přístroje (desetinná), u skříně povinné `rady`
     a `moduly_v_rade`, `provedeni` nástěnná/zapuštěná/polozapuštěná/dutá
@@ -1169,6 +1240,144 @@ chybějící Pv / Penc / 55 °C, Pv do kopie, nevyhovuje, nad 630 A, PDF stránk
 a odkazy jen při vyhovuje, uložená data, starý rozvaděč, data revizí, telefon).
 V `test-mobil.js` stavy „rozvaděč – panel fází…", „…přefázovat, náhled změn"
 a „…oteplení výpočtem (Dokumenty)".
+
+### Výkonový rozvaděč PSC — etapa 5a (v9.131; pole, montážní deska, sběrnice; blok „ROZVADĚČ PSC")
+
+Zadání uživatele 2026-10-21. **Třetí dlaždice** v Tvorbě dokumentace
+„Rozvaděč PSC – návrh a dokumentace" (ČSN EN IEC 61439-2), číslování
+**`PSC-0001`**. **Žádný druhý editor** — `DOK_TYPY.psc = Object.create(DOK_TYPY.rozv)`
+(dědí `form`, `cist`, `pdf`…), liší se jen prefixem, barvou, `novy()` a
+`data.rezim = 'PSC'`. Kde kód dřív kontroloval `typ === 'rozv'`, ptá se teď
+`rozvTyp(typ)` (= `DOK_TYPY[typ].rozvadec`) — výrobní čísla, editor, klávesy.
+
+**🛑 DBO se nesmí změnit ani o pixel.** Každá větev PSC je za
+`__rz.rezim === 'PSC'` / `pscJe(rz)`, nové klíče knihovny se ukládají jen
+neprázdné a výstraha nad 250 A se do DOM vkládá jen, když je důvod.
+`test-rozvadec-psc.js` porovnává **s předchozí verzí (8902 = poslední commit)**
+editor DBO (innerHTML bez knihovny — ta se 2026-10-22 záměrně rozšířila
+o transformátory a zdroje), čelní pohled na obrazovce i v tisku, PDF návrhu
+a data po otevření a uložení — **znak po znaku**. Nový kód PSC tedy musí
+projít i touhle kontrolou.
+
+- **Barvy dlaždic** (`DOK_TYPY[].barva` → třída `dok-b-<barva>`, i `data-barva`
+  na obrazovce seznamu a editoru — nadpis seznamu, spodní čára a titul lišty):
+  protokol `modra` #2B579A, DBO `zelena` #0f7b5f, PSC `oranzova` **#a85400**
+  (#b85c00 měl na dlaždici kontrast jen 4,4 : 1); tmavý režim #8fb0e3 /
+  #7fcfae / #f0a35e. Kontrast ≥ 4,5 : 1 v obou režimech hlídá test.
+- **Texty dlaždic** (doslova podle zadání): DBO „Rozvodnice pro obsluhu laiky
+  (byty, domy, kanceláře) – do 250 A, vývody do 125 A. ČSN EN IEC 61439-3",
+  PSC „Výkonové rozvaděče – nad 250 A nebo s obsluhou jen poučenou osobou.
+  ČSN EN IEC 61439-2".
+- **Meze 250 A / 125 A** jsou z **rešerše k ČSN EN IEC 61439-3:2024, kterou
+  dodal uživatel (dva nezávislé zdroje)** — normu samotnou nikdo nečetl.
+  Ve formuláři se ukazují bez štítku „čeká na ověření" (rozhodnutí uživatele).
+- **Výstraha u DBO** (`rozvPscDuvody`: InA / přívod přes `rotInA` > 250 A nebo
+  vývod `rfVyvod` s In > 125 A): jeden oranžový řádek nad hlavičkou
+  `.rz-psc-upoz` „⚠ Nad 250 A / 125 A jde o PSC – převést na PSC?
+  [⚡ Převést na PSC]" s důvodem (`rozvPscUpozObnovit`, volá se z `rozvZmena`,
+  po vykreslení a při psaní do Jmenovitého proudu přívodu). Jinak v DOM nic.
+- **Převod** (`rozvPrevest(cil)`): **stejný dokument (uid)**, nové číslo řady
+  cíle (`dokDalsiCislo`), uloží se hned, hláška se ZPĚT (vrátí typ, data
+  i číslo). DBO → PSC: skříň → jedno pole s DIN segmentem (`pscZDbo`, řady
+  i přístroje zůstanou). PSC → DBO (tlačítko „Převést na DBO…" v hlavičce PSC)
+  **jen když návrh nemá nic, co DBO neumí** (`pscDoDboDuvody`: víc polí, jiné
+  díly než DIN, různé moduly v DIN segmentech, přístroje jen pro PSC, nad
+  250 A / 125 A) — jinak `alert` s výčtem důvodů a nic se nezmění.
+- **Zakreslení z revizní zprávy:** rozvaděč s přívodem > 250 A má v kroku 2
+  zaškrtnuté „⚡ vytvořit jako výkonový rozvaděč PSC" (`rzzPscVychozi`, `data-rzz-psc`) —
+  dostane typ `psc`, číslo PSC a skříň převedenou `pscZDbo`.
+- **Hlavička PSC navíc** (`pscHlavickaHtml`): forma vnitřního oddělení
+  (1, 2a, 2b, 3a, 3b, 4a, 4b), Icw (kA) + doba (s), Ipk (kA), provedení
+  (nástěnné / volně stojící / zapuštěné). Icw a Ipk zadá technik, nic se
+  nepočítá.
+
+**Datový model** (vše volitelné, starý DBO beze změny):
+`data.rezim = 'PSC'`, `data.skrin = { pole: [ … ] }`, pole = **kopie** z
+knihovny `{ uid, knih, nazev, vyrobce, …, sirka, vyska, hloubka, uzitnaSirka,
+uzitnaVyska, ip, ik, ina, penc, icw, dily: [ … ] }`, díl `{ uid, druh, vyska }`
++ podle druhu: `din` (`rady`, `modulu`), `deska`, `sbernice` (`faze`
+3 / 3+N / 3+N+PE, `pas` text, `In`, `icw`, `spojka`), `kabely`, `zaslepka`.
+**`data.rady` zůstává plochý seznam** v pořadí pole → díl (DIN segment = tolik
+řad, kolik má `rady`; montážní deska = jedna „řada") — proto výběr, schránka,
+fáze, seznam přístrojů i označení fungují beze změny. Přístroj na desce má
+navíc **`pos { x, y }` v mm** od levého horního rohu desky; v řadě DIN `pos`
+nemá. Přístroj ve sběrnicovém poli může mít `sbernice` = uid sběrnice.
+- `pscGeo(rz)` = geometrie (pole vedle sebe, díly shora dolů, užitný prostor
+  vystředěný), `pscUklid()` po každé `rozvZmena` (z řady DIN `pos` smaže,
+  přístroj bez modulů / s kategorií `mm` přesune na desku, na desce bez
+  polohy dá první volné místo), `pscSrovnat()` při otevření,
+  `pscRozlozit()` / `pscSlozit(R)` pro strukturní změny (přidání / odebrání /
+  přeskládání polí a dílů — řady se nesmí rozjet s díly).
+- **Knihovna:** `druh: 'pole'` (vestavěná pole 400 / 600 / 800 × 2000 mm
+  volně stojící, nástěnná 600 × 800 a 800 × 1000 — `pscVestavene()`, obecná,
+  neověřená). Kategorie jen pro PSC (`psc: true`, v DBO se nenabízejí): **QF**
+  -QF výkonový jistič (MCCB), **QS** -QS odpínač (obě `mm: true` = rozměry
+  v mm povinné), **TA** -TA, **PM** -PM, **XN** / **XPE** přípojnice;
+  pojistkové odpínače NH jsou kategorie FU. Pole přístroje navíc `icw`,
+  `nastaveni` (spouště, text), `sirkaMm`, `vyskaMm`, `hloubkaMm`; u QF je `pv`
+  **celkem za přístroj** (`pvCelkem`). Vestavěné QF / QS / NH / TA / PM / XN /
+  XPE jsou obecné, **Pv, Icu, Icw prázdné** — rozměry jsou zástupné.
+- **Vlastní položka** (`rozvPolozkaDialog`): druh Pole s rozměry a užitným
+  prostorem; přístroj s rozměry v mm (u QF/QS povinné, šířka v modulech
+  pak nepovinná). Kontrola zůstává jedna `rozvValidovat` (i pro import).
+
+**Editor PSC** (knihovna vlevo s kartou „🗄 Pole a skříně", pohled, vlastnosti):
+- **Pole** se přidávají „＋ Přidat pole" v knihovně (`pscPolePridat` — nové pole
+  dostane DIN segment a pod ním montážní desku, když zbývá ≥ 300 mm). Panel
+  vlastností bez výběru = **záložky Pole 1…N** a vlastnosti pole (rozměry,
+  užitné rozměry, **díly shora dolů** s výškou, řadami, moduly, údaji sběrnice
+  a spojkou do dalšího pole, ▲ ▼ 🗑 u dílu, „＋ DIN segment / Montážní deska /
+  Sběrnice / Kabelový prostor / Záslepka", ◀ ▶ ⧉ 🗑 u pole). Obsazení
+  „Obsazeno X / Y mm"; **díly vyšší než užitná výška = červeně** (panel,
+  pohled, hlášení přeplnění). Klepnutí na pole v pohledu ho vybere.
+- **DIN segment = řada DBO** — skládání zleva bez mezer, šířka v modulech,
+  nadřazený chránič, přeplnění, vše jako u DBO. **Mezery po ½ modulu
+  (v9.130) PSC zatím nemá** — `pscCilZBodu` nevrací `poz`, ◀ ▶ u PSC jen
+  vyměňují sousedy, „↔ Mezera vlevo" se nenabízí a `pscUklid` klíč
+  `mezera` maže (`pscSvg` ho nekreslí). Doplní se v některé další etapě PSC.
+  Volné položení předává volající jako `poz` (moduly, DBO), místo na desce
+  jako `pos` ({x, y} mm, PSC) — `rozvVlozit / rozvPresunout /
+  rozvPresunBlok(…, idx, poz, pos)`.
+- **Montážní deska — volné umístění:** tažení myší (tentýž `rozvTahZacit`…,
+  duch ve stejném měřítku), **přichycení na mřížku 5 mm a k okrajům sousedů
+  do 4 mm** (`pscPrichytit`, `PSC_MRIZKA`, `PSC_PRICHYT`) se žlutým vodítkem
+  (`#rz-zd-vx` / `-vy`), šipky posouvají o 5 mm (`pscPostrcit`), **překryv
+  nebo přesah z desky = červený obrys** (`pscKolize`, `.rz-kolize`) a hlášení.
+  Výběr víc, Ctrl+C / Ctrl+V (`pscKopieNaDesku` — kopie na volné místo),
+  kontextové menu („Přesunout do pole 2 – montážní deska"), ZPĚT a Ctrl+Z
+  jako u DBO. Na telefonu klepnout na přístroj v knihovně a pak na desku
+  (banner „klepněte na montážní desku").
+- **Sběrnice:** díl `sbernice` se **spojkou** do dílu sběrnice v dalším poli
+  tvoří jednu sběrnici (`pscSbernice` → řetězy); údaje (vodiče, pas, In, Icw)
+  platí pro celý řetěz. Přístroj má ve vlastnostech „Napájen ze sběrnice"
+  (pro schéma v další etapě).
+- **Čelní pohled v mm** (`pscSvg`, volá ho `rozvSvg` — obrazovka i PDF;
+  hodnota na čele přístroje z `rozvCelo`: QF „630 A" + „Icu … kA", QS, TA,
+  PM, N, PE — nové větve, kategorie DBO beze změny),
+  **kóty** šířky a výšky polí (📏 Kóty v liště, výchozí zapnuto), široký
+  rozvaděč se posouvá ve svém rámečku (měřítko 0,9–3 px/mm).
+- **PDF:** titul „výkonový rozvaděč (PSC) podle ČSN EN IEC 61439-2", řádek
+  Pole (počet a rozměry) a forma / Icw / Ipk, čelní pohled, v seznamu
+  přístrojů navíc **Umístění** („pole 2 / deska", „pole 1 / řada 1")
+  a **Rozměry**. Dokumenty, schéma, fáze a oteplení zatím jen DBO (záložky
+  se u PSC neukazují) — přijdou v dalších etapách.
+- **Objekty:** PSC i DBO sdílejí `DOK.rozvObjekty`; seznam jednoho typu u
+  objektu, který má jen rozvaděče druhého typu, napíše nenápadně, kolik jich
+  tam je.
+
+Test: `testy/test-rozvadec-psc.js` (51 kontrol — tři dlaždice, texty, barvy
+a kontrast ve světlém i tmavém režimu; výstraha DBO nad 250 A i vývod nad
+125 A, převod na PSC a ZPĚT; PSC-0001, forma; tři pole, DIN segment jako DBO,
+přeplnění řady i pole a Ctrl+Z; MCCB na desku, **tažení skutečnou myší
+s přichycením k okraji souseda**, šipky, kolize a Ctrl+Z, Ctrl+C/V; sběrnice
+přes dvě pole, napájení ze sběrnice; kopie, přesun a ZPĚT pole; kóty; PDF;
+CSV s rozměry, povinné mm u MCCB, staré CSV; PSC → DBO odmítnutý i povolený;
+data revizí; **DBO znak po znaku jako předchozí verze**; telefon). V
+`test-mobil.js` stavy „rozvaděč – výstraha DBO nad 250 A" a „rozvaděč PSC –
+…" (seznam, editor se třemi poli, hlavička, karta Pole a skříně, MCCB na
+desce, vložení klepnutím, náhled PDF, okno vlastního pole).
+**Upraveno ve stejném commitu:** `test-rozvadec.js` (tři dlaždice a text
+„ČSN EN IEC 61439-3").
 
 ### Čelní pohled a skládání (část 3)
 
