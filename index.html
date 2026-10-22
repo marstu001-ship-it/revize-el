@@ -2075,7 +2075,7 @@ html.dark .rz-imp-chyby{background:#3a1f1c;border-color:#6b2c25}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.128<span class="ver-date"> · 2026-10-21</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.129<span class="ver-date"> · 2026-10-22</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -29873,12 +29873,34 @@ function dokPdfVykreslit(x) {
     var el = document.createElement('div');
     el.innerHTML = b.html;
     if (b.drz) el.setAttribute('data-drz', '1');
-    obsah.appendChild(el);
-    if (str.getBoundingClientRect().height > limit && obsah.children.length > 1) {
+    var vejde = function () { return str.getBoundingClientRect().height <= limit; };
+    var novaStrana = function () { str = dokPdfStranka(x, ns, zahl); box.appendChild(str); obsah = str.querySelector('.dok-pdf-obsah'); };
+    // `delit`: tabulka (první řádek = záhlaví), která se dělí po řádcích podle
+    // skutečné výšky — pevný počet řádků na stranu přetekl, když měly řádky
+    // dva řádky textu (typ + výrobce), a konec seznamu se uřízl.
+    while (el) {
+      obsah.appendChild(el);
+      if (vejde()) break;
+      var tab = b.delit ? el.querySelector('table') : null, zbytek = [];
+      if (tab) {
+        while (!vejde() && tab.rows.length > 2) { var r = tab.rows[tab.rows.length - 1]; zbytek.unshift(r); r.parentNode.removeChild(r); }
+        if (vejde() && zbytek.length) {   // část zůstala, zbytek s opakovaným záhlavím na další stranu
+          var t2 = tab.cloneNode(false), cg = tab.querySelector('colgroup');
+          if (cg) t2.appendChild(cg.cloneNode(true));
+          t2.appendChild(tab.rows[0].cloneNode(true));
+          zbytek.forEach(function (r) { t2.appendChild(r); });
+          el = document.createElement('div'); el.appendChild(t2);
+          novaStrana();
+          continue;
+        }
+        zbytek.forEach(function (r) { tab.rows[0].parentNode.appendChild(r); });   // nevejde se ani jeden řádek — celá tabulka dál
+      }
+      // na straně je jen ona (a nadpisy, které k ní patří) — dál ji posunout nemá smysl
+      if (!Array.prototype.some.call(obsah.children, function (c) { return c !== el && !c.getAttribute('data-drz'); })) break;
       var presun = [obsah.removeChild(el)];
       while (obsah.children.length > 1 && obsah.lastElementChild.getAttribute('data-drz')) presun.unshift(obsah.removeChild(obsah.lastElementChild));
-      str = dokPdfStranka(x, ns, zahl); box.appendChild(str);
-      obsah = str.querySelector('.dok-pdf-obsah');
+      novaStrana();
+      el = presun.pop();
       presun.forEach(function (e) { obsah.appendChild(e); });
     }
   });
@@ -32806,7 +32828,6 @@ TD_AKCE.tdRZZakreslit = async function () {
 // stránky (svg2pdf.js by s jsPDF 2.5.1 šel, ale jeho písma nemají české
 // háčky a celý program skládá PDF z obrázků stránek — viz CLAUDE.md).
 var ROZV_PDF_MAX = { w: 265, h: 140 };   // mm pro čelní pohled na listu A4 na šířku
-var ROZV_PDF_RADKU = 18;                 // řádků seznamu na jednu tabulku (záhlaví se opakuje)
 
 function rozvPdfCislo(v, jedn) { return v === '' || v == null ? '' : rozvCisloText(v) + (jedn ? ' ' + jedn : ''); }
 
@@ -32841,7 +32862,7 @@ DOK_TYPY.rozv.pdf = function (d) {
       ' · modul 17,5 mm · ' + rady.length + ' × ' + sk.modulu + ' modulů' +
       (rozvPreplnene(rz).length ? ' · <b class="rz-pdf-chyba">⚠ přeplněná řada: ' + rozvPreplnene(rz).map(function (x) { return x.i + 1; }).join(', ') + '</b>' : '') + '</div>' });
   } else B.push({ html: '<p class="dok-pdf-p">Skříň zatím není vybraná.</p>' });
-  // Seznam přístrojů (rezervy ne) — tabulky po ROZV_PDF_RADKU, záhlaví se opakuje
+  // Seznam přístrojů (rezervy ne) — dělí se podle výšky, záhlaví se opakuje
   var seznam = [], neover = false;
   rady.forEach(function (r) { (r.prvky || []).forEach(function (x) { if (x.p && x.p.kat !== 'REZ') seznam.push(x); }); });
   var hlava = '<tr><th>Označení</th><th>Popis vývodu</th><th>Typ</th><th>In</th><th>Char.</th><th>Póly</th><th>IΔn</th><th>Fáze</th><th>Kabel</th></tr>';
@@ -32856,11 +32877,10 @@ DOK_TYPY.rozv.pdf = function (d) {
   };
   B.push({ html: '<div class="dok-pdf-h">Seznam přístrojů</div>', drz: true });
   if (!seznam.length) B.push({ html: '<p class="dok-pdf-p">V rozvaděči zatím nejsou žádné přístroje.</p>' });
-  for (var i = 0; i < seznam.length; i += ROZV_PDF_RADKU) {
-    B.push({ html: '<table class="rz-pdf-tab"><colgroup><col style="width:20mm"><col style="width:58mm"><col><col style="width:14mm"><col style="width:12mm">' +
+  // jedna tabulka, stránkovač ji dělí podle skutečné výšky řádků (`delit`)
+  if (seznam.length) B.push({ delit: true, html: '<table class="rz-pdf-tab"><colgroup><col style="width:20mm"><col style="width:58mm"><col><col style="width:14mm"><col style="width:12mm">' +
       '<col style="width:12mm"><col style="width:20mm"><col style="width:12mm"><col style="width:32mm"></colgroup>' + hlava +
-      seznam.slice(i, i + ROZV_PDF_RADKU).map(radek).join('') + '</table>' });
-  }
+      seznam.map(radek).join('') + '</table>' });
   if (neover) B.push({ html: '<p class="rz-pdf-pozn">* Údaje přístroje nejsou ověřené (obecná položka knihovny nebo neověřený záznam) — před výrobou je ověřte podle katalogu výrobce.</p>' });
   return B;
 };
