@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.128 · 2026-10-21**
+**Aktuální verze: v9.129 · 2026-10-22**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -1305,9 +1305,20 @@ a „…oteplení výpočtem (Dokumenty)".
   číslo), hlavička ve 4 sloupcích, **„Čelní pohled"** (`rozvSvg` s
   `o.tisk`, rozměry v mm, zmenšený nejvýš na 265 × 140 mm, popisek
   „Zmenšeno na N %" / „Skutečná velikost 1 : 1", varování u přeplněné
-  řady) a **„Seznam přístrojů"** bez rezerv po 18 řádcích (záhlaví se
+  řady) a **„Seznam přístrojů"** bez rezerv, dělený podle výšky (záhlaví se
   opakuje): označení, popis vývodu, typ, In, charakteristika, póly, IΔn,
   fáze, kabel. **Neověřené přístroje mají `*`** a pod seznamem vysvětlivku.
+  **Seznam se dělí podle SKUTEČNÉ VÝŠKY, ne po pevném počtu řádků** (v9.129,
+  hlášení uživatele 2026-10-22 se snímkem: „řádek 33 a 34 zmizel"). Do v9.128
+  šel po 18 řádcích; s dvouřádkovým typem (výrobce pod ním) a zalomeným
+  popisem vývodu bylo 18 řádků vyšší než list a konec se v PDF uřízl.
+  Teď je to jedna tabulka s příznakem bloku **`delit: true`** a obecný
+  stránkovač `dokPdfVykreslit` z ní na konci strany odebírá řádky, dokud se
+  strana vejde, a zbytek dá na další stranu do kopie tabulky se záhlavím
+  (`colgroup` + první řádek). Nevejde-li se ani jeden řádek, jde celá tabulka
+  i s nadpisem (`drz`) dál. `delit` může mít kterákoli tabulka tvorby
+  dokumentace. Test: `test-rozvadec.js` — 42 přístrojů s dvouřádkovým typem,
+  žádný list vyšší než 210 mm (na v9.128 spadne: list 995 px místo 794).
   Štítek, prohlášení, kusové ověření a technické údaje viz etapa 2 výš, schéma zapojení etapa 3 výš.
 - **Čelní pohled vektorově přes svg2pdf.js NEJDE** (ověřeno 2026-10-18; listy
   **schématu** od etapy 3 vektorově jdou — viz výš, s vloženým písmem): svg2pdf 2.x
