@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.131 · 2026-10-22**
+**Aktuální verze: v9.132 · 2026-10-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -1331,11 +1331,8 @@ nemá. Přístroj ve sběrnicovém poli může mít `sbernice` = uid sběrnice.
   „Obsazeno X / Y mm"; **díly vyšší než užitná výška = červeně** (panel,
   pohled, hlášení přeplnění). Klepnutí na pole v pohledu ho vybere.
 - **DIN segment = řada DBO** — skládání zleva bez mezer, šířka v modulech,
-  nadřazený chránič, přeplnění, vše jako u DBO. **Mezery po ½ modulu
-  (v9.130) PSC zatím nemá** — `pscCilZBodu` nevrací `poz`, ◀ ▶ u PSC jen
-  vyměňují sousedy, „↔ Mezera vlevo" se nenabízí a `pscUklid` klíč
-  `mezera` maže (`pscSvg` ho nekreslí). Doplní se v některé další etapě PSC.
-  Volné položení předává volající jako `poz` (moduly, DBO), místo na desce
+  nadřazený chránič, přeplnění, **mezery po ½ modulu (v9.130)** — vše jako
+  u DBO, týmž kódem (etapa 5b, viz níž). Volné položení předává volající jako `poz` (moduly, DBO), místo na desce
   jako `pos` ({x, y} mm, PSC) — `rozvVlozit / rozvPresunout /
   rozvPresunBlok(…, idx, poz, pos)`.
 - **Montážní deska — volné umístění:** tažení myší (tentýž `rozvTahZacit`…,
@@ -1359,8 +1356,7 @@ nemá. Přístroj ve sběrnicovém poli může mít `sbernice` = uid sběrnice.
 - **PDF:** titul „výkonový rozvaděč (PSC) podle ČSN EN IEC 61439-2", řádek
   Pole (počet a rozměry) a forma / Icw / Ipk, čelní pohled, v seznamu
   přístrojů navíc **Umístění** („pole 2 / deska", „pole 1 / řada 1")
-  a **Rozměry**. Dokumenty, schéma, fáze a oteplení zatím jen DBO (záložky
-  se u PSC neukazují) — přijdou v dalších etapách.
+  a **Rozměry**. Dokumenty, schéma, fáze a oteplení — etapa 5b níž.
 - **Objekty:** PSC i DBO sdílejí `DOK.rozvObjekty`; seznam jednoho typu u
   objektu, který má jen rozvaděče druhého typu, napíše nenápadně, kolik jich
   tam je.
@@ -1378,6 +1374,163 @@ data revizí; **DBO znak po znaku jako předchozí verze**; telefon). V
 desce, vložení klepnutím, náhled PDF, okno vlastního pole).
 **Upraveno ve stejném commitu:** `test-rozvadec.js` (tři dlaždice a text
 „ČSN EN IEC 61439-3").
+
+### Výkonový rozvaděč PSC — etapa 5b (v9.132; dokumenty, schéma, oteplení, mezery; bloky „ROZVADĚČ PSC — etapa 5b")
+
+Zadání uživatele 2026-10-22. **Všechno přes existující kód DBO** (Dokumenty
+etapy 2, štítek jako tabulka v9.127, schéma etapy 3, fáze a oteplení etapy 4) — PSC má teď
+tytéž záložky **„🧩 Návrh | ⚡ Schéma | 📄 Dokumenty"** a liší se jen tím, co
+je tady. **DBO se nezměnil** — `test-rozvadec-psc.js` porovnává s v9.131
+(8902 = předchozí verze) záložku Dokumenty, štítek, všechny listy schématu, výpočet
+oteplení, fáze a celé PDF znak po znaku. Normu nikdo nečetl, podklad je
+rešerše: [ověřit] = `rozvCeka()` ve formuláři, do PDF ne jako požadavek normy.
+
+- **Přívodní přístroj** (`prvek.privod`, `pscPrivodni(d)`): první vložený
+  QF / QS do PSC bez QM se označí sám, ve vlastnostech QM / QF / QS / FU
+  zaškrtávátko „⚡ Přívodní přístroj (napájí sběrnici)" (jen jeden). Bez
+  označení platí první QM (jako u DBO). **QF a QS kromě přívodního jsou
+  vývody** (`rfVyvod`, `RS_PSC_VYVODY`) — fáze (3f na všechny fáze), RDF,
+  Inc, schéma, „chybí kabel". `rotInA` a metoda B kusového ověření berou
+  přívodní přístroj jako hlavní vypínač.
+- **Dokumenty PSC** (`rozvDokHtml` s větvemi `psc`, funkce `psc…` v bloku
+  „ROZVADĚČ PSC — etapa 5b: dokumenty"): nadpis ČSN EN IEC 61439-2 (PSC),
+  bez popisků pod přístroje, navíc zaškrtávátko „ověření návrhu".
+  **Technické údaje (čl. 6.2.1, `pscTechHtml`):** Un, fn, druh sítě, InA,
+  **Icw + doba, Ipk, forma, způsob montáže = zrcadla hlavičky** (`data-zrc`,
+  i výběr — `rzZrcadloVolba`), Icc + typ a In předřazeného přístroje
+  (`tech.iccTyp`, `tech.iccIn`), RDF, třída, krytí, IK, umístění, vnější
+  provedení (skříňový / pultový / otevřený) [ověřit], druh připojení
+  funkčních jednotek F / D / W [ověřit], EMC A / B [ověřit], znečištění
+  [ověřit], kategorie přepětí [ověřit], rozměry (odvozené: max výška ×
+  součet šířek × max hloubka), hmotnost a pod tím řádek **„Jmenovité proudy
+  vývodů Inc"** ze seznamu (`pscIncText`). Odvozený typ „RH1 PSC 3 pole".
+- **Štítek PSC** (`pscStitekTabulkaHtml`, totéž vykreslení): výchozí
+  **100 × 60 mm**, norma „ČSN EN IEC 61439-2 (IEC 61439-2)", InA, **Icw / doba,
+  nebo Icc** (co je vyplněné), Ipk, forma, IP zavřeno / otevřeno, třída,
+  hmotnost. 70 × 35 úsporně (bez označení rozvaděče a hmotnosti).
+- **Prohlášení:** bod 4 „Výkonový rozvaděč (PSC) dle ČSN EN IEC 61439-2"
+  + údaje (`pscPredmet`), bod 6 ČSN EN IEC 61439-1 ed. 3 (EN IEC 61439-1:2021)
+  a **ČSN EN IEC 61439-2 ed. 3 (EN IEC 61439-2:2021)**, RoHS jako u DBO;
+  bod 7 odkaz na přílohu „Ověření návrhu" a oteplení ověřené zkouškou /
+  odvozením (`pscOteplOvereno`).
+- **Ověření návrhu** (oddíl jen u PSC, `pscOvereniHtml`, stránka PDF
+  `pscPdfOvereni`): systém (výrobce, řada — odvozený z polí), dokumentace
+  ověření návrhu výrobce (název, číslo, datum) a tabulka charakteristik se
+  způsobem ověření (dokumentace výrobce systému / zkouška / výpočet /
+  odvození, **výchozí prázdné**). Charakteristiky jen ty, které program zná
+  (`pscOvPolozky`: položky 11.2–11.9 protokolu + oteplení + zkratová
+  odolnost) — seznam podle přílohy D má rešerše jen z paměti, další přidá
+  technik volným řádkem (`ov.volne`, „＋ Přidat charakteristiku").
+- **Kusové ověření:** jako DBO; metoda B jen při přívodním přístroji
+  ≤ 630 A a Un ≤ 500 V, hláška u PSC dodá „bývá přívod nad 630 A".
+- **Oteplení:** jedno pole a InA ≤ 630 A → výpočet 10.10.4.2 (Penc z pole,
+  **Pv MCCB celkem za přístroj** `pvCelkem`, přirážka, RDF). Víc polí nebo
+  nad 630 A → výpočet ne, „Výpočet podle IEC TR 60890 (čl. 10.10.4.3)
+  program zatím neumí" + volba **„ověřeno zkouškou / odvozením od ověřeného
+  referenčního návrhu výrobce systému"** a dokument (`otepleni.overeno`,
+  `otepleni.dokument`). **RDF PSC** [ověřit, Schneider nepřímo]
+  `ROT_RDF_PSC`: 2–3 0,9 · 4–5 0,8 · 6–9 0,7 · 10+ 0,6.
+- **Schéma PSC** (`pscSchModel` → tentýž `rsModel` / `rsRozlozit` /
+  `rsListSchema`): list 1 = osazení polí (`pscOsazeniSvg` — černobíle,
+  jen jednoduché prvky, písmo přepočtené na měřítko ~7 %; měřítko se u PSC
+  nezaokrouhluje na setiny, jinak by přetékalo) + tabulka údajů PSC (forma,
+  InA / Icw / Ipk…). Jednopólové listy: přívodní přístroj na přívodu se
+  svou značkou, **TA a měřidlo PM na přívodu**, sběrnice jako **zesílené
+  přípojnice L1 L2 L3** (+ N, PE silněji) s popisem „Sběrnice Cu 3× 40×10,
+  In 630 A, Icw 25 kA" (jen co zadal technik, `pscSchSbText`), -XN / -XPE
+  u sběrnic N a PE, vývody z desky (značky **`mccb`** — jistič se spouští,
+  **`odpinac`**, **`pojOdp`** — lištový NH; hodnoty In, `nastaveni` Ir/Isd,
+  Icu; NH velikost a vložka), DIN segment jako dosud. **Hranice polí**
+  čárkovaně s „Pole N" v záhlaví sloupců (`pscSchPole`), zlom listu
+  přednostně na hranici pole (`rsRozlozit`, `model.psc`), odkazy
+  /list.sloupec jako dosud.
+- **Mezery po ½ modulu v DIN segmentech PSC** (v9.130) — sdílený kód:
+  `rozvCilPoz` (volné místo pod ukazatelem, vytažené z `rozvCilZBodu`) volá
+  DBO i `pscCilZBodu`; `rozvPosun` / `rozvMezeraPosun` berou moduly řady
+  `rozvModR`; `pscUklid` mezeru v DIN segmentu nemaže (na desce ano);
+  `pscSvg` a `pscPrvkyGeom` kreslí podle `rozvPozice`; obrys
+  `#rz-znacka-misto` má i PSC. Na montážní desce mezery nejsou (tam je mm).
+- **Data (vše volitelné):** `prvek.privod`, `tech { vnejsi, pripojeni, emc,
+  kp, iccTyp, iccIn }`, `ov { system, dokNazev, dokCislo, dokDatum, z, p,
+  volne }`, `otepleni { overeno, dokument }`, `dokVyber.overeni`.
+
+Test: `testy/test-rozvadec-psc.js` (+33 kontrol, vymyšlená hala
+`testy/rozvadec-psc-hala.js`: 3 pole, přívodní MCCB 400 A s TA a PM, sběrnice
+přes tři pole, deska s MCCB 250 / 160 A, NH00, odpínačem, DIN segment s
+chráničem a mezerou). V `test-mobil.js` stavy „rozvaděč PSC – záložka
+Dokumenty…", „…záložka Schéma, jednopólový list" a „…výrobní štítek".
+**`test-rozvadec-mezery.js` upraven:** uložený rozvaděč zapisuje až po načtení
+stránky (přes `localStorage` programu) a stránku znovu načte; součet fází
+porovnává bez prázdného `bezIn` u obou verzí.
+
+### Pohled 3D — etapa 5c (v9.132; DBO i PSC; blok „ROZVADĚČ — 3D NÁHLED")
+
+Zadání uživatele 2026-10-22. Editor má čtyři záložky **„🧩 Návrh | ⚡ Schéma |
+🧊 3D | 📄 Dokumenty"** (u DBO i PSC). **V 3D se nic needituje**; kreslí se
+z aktuálního `cist()` při každém přepnutí (`rozvZalozkaNastavit('3d')` →
+`rozv3dHtml` + `rozv3dKreslit`). **Žádná knihovna, žádné CDN** (offline, bez
+otisku SRI).
+
+- **Jeden zdroj: `rozv3dScena(d)`** = seznam kvádrů v mm (`x, y, z, w, h, d`,
+  x doprava, y dolů, z k divákovi, z = 0 zadní stěna) + skříně / pole
+  (`sc.kab`, každé s dveřmi). Na obrazovce **CSS 3D** (`transform-style:
+  preserve-3d`, stěny `r3StenaHtml`, kamera `r3Kamera` = jediný `transform`
+  na `#r3-svet`), do PDF **tatáž scéna vlastní pravoúhlou projekcí do SVG**
+  (`rozv3dSvg` — html2canvas CSS 3D nevykreslí; jen `polygon` a kresba čela
+  přes `matrix()`, malíř: vnitřní stěny skříně → obsah podle hloubky →
+  vnější stěny → otevřené dveře).
+- **Rozměry:** DBO — vodorovně přesně jako čelní pohled (`RZG.okraj` + moduly
+  × 17,5 mm), řady po **125 mm** (`R3.roztec`), skříň = větší z rozvržení
+  a `skrin.rozmery` („v × š × h"); chybí-li hloubka, **100 mm**. PSC — pole
+  z `pscGeo` (skutečné mm), hloubka `pl.hloubka`, chybí-li, **400 mm**.
+  Bez hloubky se v pruhu nad pohledem i pod obrázkem v PDF píše „hloubka
+  neuvedena – kreslí se … mm".
+- **Výchozí hodnoty jen pro vzhled** (`R3`): modulový přístroj **výška 90 mm,
+  hloubka 70 mm** na liště TS35 (35 × 7,5 mm); na montážní desce přístroj
+  ve svých mm (`pscRozmer`), hloubka `p.hloubkaMm`, jinak 120 mm u QF / QS
+  a 70 mm u ostatních. **Nikde se netvrdí, že jsou to údaje výrobce.**
+- **Čelo přístroje = táž kresba jako čelní pohled** (`rozvPrvekSvg`, barva,
+  označení, hodnota, páčka) vložená do přední stěny; rezerva = záslepka.
+  Barva skříně: plast **#f3f3ef**, oceloplech **RAL 7035 (#cbd0cc)**.
+  Montážní deska, **sběrnice jako měděné pasy** (i spojky do dalšího pole),
+  kabelový prostor průhledně, záslepka, mezery po ½ modulu (podle
+  `rozvPozice`), u PSC pole vedle sebe se svislým spojem.
+- **Dveře** na pantu vlevo, otevřené **pootočené o 100°**; „🚪 Zavřít /
+  Otevřít dveře" je hlavní akce záložky. **U PSC s víc poli se otevřené dveře
+  kreslí průhledně** — při 100° by zakryly sousední pole. Ukládá se jen po
+  přepnutí jako **`d.pohled3d = { dvere: 'otevrene' | 'zavrene' }`**
+  (`__rz.p3dDvere`, obal `DOK_TYPY.rozv.cist`) — starý rozvaděč beze změny.
+- **Ovládání:** tažení = otáčení (sklon ±80°), kolečko / − ＋ = přiblížení,
+  pravé tlačítko nebo Shift + tažení = posun, dvojklik = výchozí pohled;
+  tlačítka **Zepředu · Zboku · Zhora · Šikmo**, ↺ Výchozí; dotyk: jeden prst
+  otáčí, dva přibližují. **Klepnutí na přístroj = Návrh s ním vybraným**
+  (`rozvSchVybrat`, jako ve schématu). Kamera jen v paměti (`__r3`).
+  Výchozí měřítko spočítá promítnuté rohy skříně i otevřených dveří, ať je
+  celý rozvaděč vidět i na telefonu.
+- **Výkon** (cíl ≥ 30 snímků/s u PSC se 150 přístroji): modulové přístroje
+  těsně vedle sebe mají **společné tělo** (boky, horní a dolní plocha jednou
+  za skupinu, `r3Telo`), přístroj má vlastní čelo; 3D páčka se nekreslí
+  (je v kresbě čela); za zavřenými dveřmi jen čela; stěny mají tenký okraj
+  místo stínu. PSC se 150 přístroji = ~340 stěn; v headless Chromiu bez
+  GPU 25–36 snímků/s (test bere nejlepší z pěti měření).
+- **PDF:** zaškrtávátko **„pohled 3D (ilustrační)"** v Dokumentech
+  (`dokVyber.pohled3d`, výchozí vypnuto, `rozvVyber().pohled3d`) → strana na
+  šířku „Pohled 3D (ilustrační)" hned za čelním pohledem a seznamem
+  (`rozvPdf3d`, šikmý pohled se stavem dveří, vejde se 265 × 150 mm).
+- DBO se kromě záložky 3D, zaškrtávátka a CSS záložek na telefonu
+  (4 záložky, blok MOBIL) nezměnil — `test-rozvadec-psc.js` porovnává
+  s v9.131 bez těchto dvou prvků.
+
+Test: `testy/test-rozvadec-3d.js` (40 kontrol — byt 3+1 a hala PSC: kvádrů
+= přístroje + skříň / pole + lišty, šířky a polohy čel zepředu úměrné
+čelnímu pohledu (bez perspektivy), otáčení skutečnou myší, sklon ±80°,
+pohledy, posun, kolečko, dvojklik, dveře (uložení, jen čela za zavřenými),
+klik na přístroj, PDF strana a html2canvas, starý rozvaděč bajtově, sběrnice
+a desky PSC, výkon 150 přístrojů, telefon 390 px — prst, dva prsty, klepnutí).
+V `test-mobil.js` stavy „rozvaděč – záložka 3D…" a „rozvaděč PSC – záložka 3D".
+**Upraveno:** `test-rozvadec-psc.js` (záložky PSC, DBO porovnání bez 3D
+záložky a zaškrtávátka), `test-rozvadec-dokumenty.js` a
+`test-rozvadec-schema.js` (seznam záložek a zaškrtávátek v Dokumentech).
 
 ### Čelní pohled a skládání (část 3)
 
@@ -1609,6 +1762,12 @@ vložení, smazání, Ctrl+Z a zoomu, Shift+klik neoznačí text, klávesy, menu
 a vlastnosti výběru, přeplnění kopiemi; telefon: dlouhý stisk → výběr více
 a přesun dvou přístrojů klepnutím). **Dlouhý stisk** dřív rovnou otevřel
 menu — test upraven ve stejném commitu (první stisk = výběr, další = menu).
+**Test „telefon" klepe, až se stránka přestane hýbat** (`__T.klid()`, 2026-10-22):
+program po klepnutí na přístroj / „✥ Přesunout jinam" plynule roluje k vlastnostem
+a k pohledu (`scrollIntoView smooth`). Pod zátěží celé regrese animace trvala déle
+než pevné čekání a test klepl během ní vedle — 4 ❌ (přesun klepnutím, menu, výběr
+více, přesun bloku) jen občas, i na čisté v9.131. Program je v pořádku (technik
+klepne na tlačítko, které vidí stát); zastaralé bylo čekání v testu.
 V `test-mobil.js` stavy
 „rozvaděč – …" a v přípravě rozvaděč RH1 (byt 3+1, skříň 3×12).
 **`test-dokumentace.js` upraven ve stejném commitu:** dlaždic je víc

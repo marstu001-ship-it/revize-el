@@ -593,6 +593,8 @@ function vsechnyStavy(zalozky) {
     await __M.rozv(); rozvZalozkaNastavit('sch'); __rzSch.list = 1; rozvSchKreslit();
     const o = document.querySelector('[data-oddil="schema"]'); o.open = true; await __M.w(200);
   }));
+  // pohled 3D (etapa 5c) — jen na prohlížení
+  add('rozvaděč – záložka 3D, šikmo s otevřenými dveřmi', 'Tvorba dokumentace', E(async () => { await __M.rozv(); rozvZalozkaNastavit('3d'); await __M.w(300); }));
   add('rozvaděč – náhled schématu (PDF)', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await TD_AKCE.tdRSchPdf(); await __M.w(300); }));
   add('rozvaděč – výrobní štítek', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await TD_AKCE.tdRStitek(); await __M.w(300); }));
   add('rozvaděč – popisky pod přístroje', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await TD_AKCE.tdRPopisky(); await __M.w(300); }));
@@ -637,6 +639,15 @@ function vsechnyStavy(zalozky) {
     await __M.psc(); __rz.knihVyber = 'v-qf-3-250'; rozvKnihovnaVykreslit(); rozvPohledVykreslit(); await __M.w(100);
   }));
   add('rozvaděč PSC – náhled PDF', 'Tvorba dokumentace', E(async () => { await __M.psc(); await dokNahled(); await __M.w(400); }));
+  // rozvaděč PSC (etapa 5b) — dokumenty, schéma, štítek
+  add('rozvaděč PSC – záložka Dokumenty, všechny oddíly otevřené (ověření návrhu)', 'Tvorba dokumentace', E(async () => {
+    await __M.psc(); rozvZalozkaNastavit('dok'); document.querySelectorAll('#rz-pan-dok details').forEach(d => { d.open = true; }); await __M.w(150);
+  }));
+  add('rozvaděč PSC – záložka Schéma, jednopólový list', 'Tvorba dokumentace', E(async () => {
+    await __M.psc(); rozvZalozkaNastavit('sch'); await __M.w(200); TD_AKCE.tdRSchList({ getAttribute: () => '1' }); await __M.w(200);
+  }));
+  add('rozvaděč PSC – záložka 3D, tři pole', 'Tvorba dokumentace', E(async () => { await __M.psc(); rozvZalozkaNastavit('3d'); await __M.w(300); }));
+  add('rozvaděč PSC – výrobní štítek', 'Tvorba dokumentace', E(async () => { await __M.psc(); await TD_AKCE.tdRStitek(); await __M.w(300); }));
   add('rozvaděč PSC – vlastní pole (okno)', 'Tvorba dokumentace', E(async () => {
     await __M.psc(); __rzF.tab = 'skrine'; rozvFiltryVykreslit(); rozvKnihovnaVykreslit(); TD_AKCE.tdRVlastni(); await __M.w(100);
   }), '#modal-rz-polozka');
