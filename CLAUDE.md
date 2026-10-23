@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.132 · 2026-10-23**
+**Aktuální verze: v9.133 · 2026-10-23**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -2667,7 +2667,59 @@ Test: `test-vlozit-excel.js` (27 kontrol — hlavička i mapování podle pořad
 IΔn proti A, jedna buňka propadne prohlížeči, ruční přemapování a „nevkládat",
 prázdná buňka nepřepíše naměřené, využití prázdných řádků, delší blok, ZPĚT,
 zamčená zpráva, výběr rozváděče, varování u sloupce Č., buňka s odřádkováním
-v uvozovkách).
+v uvozovkách; od v9.133 chrániče — celkem 56 kontrol).
+
+### Chrániče se vloží jako chrániče (v9.133)
+
+Hlášení kolegy 2026-10-23: tabulka převedená ze schématu (výkres RH01,
+Gemini → Excel) se vložila dobře, **jen chrániče skončily jako obyčejné
+jističe**. Každý datový řádek teď má **druh** (`vlozitJeChranic(radek, mapa)`
+→ `obvod` | `chranic` | `rcbo`, `vlozitDruhy`). Platí i pro načtení `.xlsx`
+(v9.93 — táž cesta).
+
+- **Jistič s chráničem (RCBO) se vyhodnocuje JAKO PRVNÍ** a vkládá se jako
+  **obvod** (Zs mez ho umí): Ch./Typ s lomítkem (`B/A`, `C16/A`), `B16 A`,
+  text „RCBO", „FI/LS", „jistič s chráničem", „s nadproudovou…", nebo
+  **charakteristika B/C/D + IΔn v témž řádku**. Pak se do obvodu zapíše
+  Ch. „B/A" (je-li typ chrániče v řádku uveden — „typ A", buňka „A"), jinak
+  „B", a IΔn převedené (viz níž). Ostatní RCBO se zapíšou beze změny.
+- **Chránič:** Ch./Typ je typ chrániče bez čísla a lomítka (`AC`, `A`, `F`,
+  `B+`, `A-S`, `typ A`, `A SI` — `VLOZIT_TYP_RCD`; **samotné `B` ne**, to je
+  charakteristika jističe), nebo IΔn (sloupec, nebo „30 mA" / „0,03 A" /
+  „0,03A" v nenaměřených buňkách) **bez charakteristiky jističe**, nebo slovo
+  „chránič", „RCD", „FI" + číslo v řádku (`FI20`, `-FI1`, poznámka CHRÁNIČ)
+  bez charakteristiky — **výjimka: „B" + slovo chránič = chránič typu B**.
+- **Vloží se jako hlavička chrániče** (`vlozitNovyRadek` → `addRcdRow`, i
+  s podřádky): typ do rozbalovátka (`vlozitTypChranice`; když v řádku není,
+  zůstane výchozí „A" jako u „+ Přidat chránič"), **IΔn v jednotkách sloupce
+  programu, tedy v A** („30 mA" / „30" → „0,03", `vlozitIdnA`) — zadání
+  chtělo mA, ale sloupec IΔn, `dl_idn` i ručně přidaný chránič mají „0,03";
+  „0,03A" ve sloupci A se vezme jako IΔn (In zůstane prázdné), „FI20" ze
+  sloupce Č. jde do názvu, když je prázdný (číslo přepíše auto-číslování).
+  Naměřené hodnoty prázdné. Řádky za chráničem jdou pod něj — pořadí
+  = příslušnost, nic se nepřeskupuje.
+- **Cílový řádek jiného druhu** (prázdný obvod pro chránič a naopak):
+  prázdný se nahradí (`vlozitOdebratRadek`), vyplněný zůstane a nový se vloží
+  před něj. **ZPĚT vrátí i odebrané prázdné řádky** (test: `getData()` po ZPĚT
+  bajtově jako před vložením).
+- **Náhled:** první sloupec **„Druh řádku"** s přepínačem
+  obvod / 🛡 chránič / obvod – jistič s chráničem (`.vm-druh`,
+  `v.druhRucne` — ruční volba přebije rozpoznání, přepnutí náhled
+  nepřekresluje, jen přebarví — `vlozitDruhyObnovit`); chránič je tučně
+  podbarvený, obvody pod ním odsazené. Nad tabulkou jeden řádek
+  `#vm-chranice`: „Poznáno 1 chránič (FI20) se 14 obvody." (`vlozitSObvody`
+  skloňuje s/se). Náhled ukazuje všechny řádky (`VLOZIT_NAHLED_MAX` = 300,
+  dřív 12) — u každého jde přepnout druh. Mapování sloupce posouvá buňky
+  o jedno (`children[i + 1]`).
+- **Bez chrániče se vkládá přesně jako dosud** — test vkládá tentýž blok
+  (B, B/A, 3x16A, B16 A, gG) do předchozí verze (8902) a porovná `getData()`.
+
+Test: `test-vlozit-excel.js` (+26: RH01 se 14 obvody, souhrn, náhled,
+hlavička chrániče a getData, ZPĚT, 11 tvarů Ch./Typ a IΔn, typ v
+rozbalovátku, převod IΔn, RCBO „B"/„C/A", přepínač v náhledu, Zs mez
+nevyhodnotí chránič a RCBO ano, `.xlsx` s chráničem, bez chrániče jako
+v9.132). V `test-mobil.js` stav „modal-vlozit-mereni (chránič)". Novinky
+se nedělaly.
 
 ## Chytrá lupa v Novinkách (v9.100)
 
