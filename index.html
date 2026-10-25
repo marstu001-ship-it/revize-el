@@ -2138,7 +2138,7 @@ html.dark .rz-imp-chyby{background:#3a1f1c;border-color:#6b2c25}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.133<span class="ver-date"> · 2026-10-23</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.134<span class="ver-date"> · 2026-10-25</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -4659,6 +4659,7 @@ html.dark .rz-imp-chyby{background:#3a1f1c;border-color:#6b2c25}
     <span class="dok-stav" id="dok-stav"></span>
     <span class="dok-lista-akce">
       <button class="dok-mini" data-action="tdUlozit" title="Uložit (Ctrl+S) — ukládá se i samo při psaní">💾 Uložit</button>
+      <button class="dok-mini" data-action="tdSouborKolegovi" title="Uloží tento dokument do souboru .json — kolega ho otevře tlačítkem 📂 Načíst nebo přetažením do okna">📤 Soubor pro kolegu</button>
       <button class="btn btn-gold" data-action="tdNahled" title="Náhled PDF, tisk a uložení (Ctrl+P)">📄 Náhled PDF</button>
     </span>
   </div>
@@ -8452,6 +8453,8 @@ window.addEventListener('drop', function(e) {
       var data = JSON.parse(ev.target.result);
       if (data && data._format === 'revize-el-plan') {
         planNacistData(data);
+      } else if (jeSouborDokumentu(data)) {
+        dokSouborNacist(data);
       } else if (jeBalikZprav(data)) {
         zpravyImportBalik(data);
       } else if (data && (data._format === 'revize-el-backup' || (Array.isArray(data.archiv) && !data.ev_cislo))) {
@@ -20021,6 +20024,8 @@ function zpracovatZpravuData(D) {
   if (D && D._format === 'revize-el-plan') { planNacistData(D); return; }
   // Balík zpráv (v9.87) — jinak by propadl až do nacistData() jako jedna zpráva.
   if (jeBalikZprav(D)) { zpravyImportBalik(D); return; }
+  // Dokument z Tvorby dokumentace (v9.134) — jde do DOK, ne do archivu revizí.
+  if (jeSouborDokumentu(D)) { dokSouborNacist(D); return; }
   var looksLikeBackup =
     Array.isArray(D.archiv) ||
     Array.isArray(D.odberatele) ||
@@ -21098,6 +21103,7 @@ function importDatabaze() {
       try {
         var nactene = JSON.parse(ev.target.result);
         if (nactene && nactene._format === 'revize-el-plan') planNacistData(nactene);
+        else if (jeSouborDokumentu(nactene)) dokSouborNacist(nactene);
         else obnovZeZalohy(nactene);
       } catch (err) {
         alert('Chyba při čtení zálohy: ' + err.message);
@@ -24080,12 +24086,17 @@ function importSouboryZprav(files) {
     return;
   }
   var polozky = [], chybne = 0, hotovo = 0;
+  var dokSoubory = { _format: DOK_SOUBOR_FORMAT, dokumenty: [], objekty: [] };
   seznam.forEach(function (f) {
     var r = new FileReader();
     r.onload = function (ev) {
       try {
         var d = JSON.parse(ev.target.result);
-        if (jeBalikZprav(d)) (d.zpravy || []).forEach(function (x) {
+        if (jeSouborDokumentu(d)) {
+          dokSoubory.dokumenty = dokSoubory.dokumenty.concat(d.dokumenty || []);
+          dokSoubory.objekty = dokSoubory.objekty.concat(d.objekty || []);
+        }
+        else if (jeBalikZprav(d)) (d.zpravy || []).forEach(function (x) {
           var p = zpravaPolozka(x); if (p) polozky.push(p);
         });
         else {
@@ -24101,7 +24112,8 @@ function importSouboryZprav(files) {
   function dokonci() {
     if (chybne) showToast(chybne + ' ze souborů nešlo přečíst jako zprávu — přeskočeny.');
     if (polozky.length) zpravyImportDavka(polozky, seznam.length + ' souborů');
-    else alert('Ani jeden z vybraných souborů neobsahuje zprávu.');
+    if (dokSoubory.dokumenty.length) dokSouborNacist(dokSoubory);
+    if (!polozky.length && !dokSoubory.dokumenty.length) alert('Ani jeden z vybraných souborů neobsahuje zprávu.');
   }
 }
 
@@ -28837,6 +28849,113 @@ async function dokKopirovat(uid) {
     actionLabel: 'Otevřít', action: function () { if (typeof dokOtevrit === 'function') dokOtevrit(n.uid); } });
 }
 
+// ── Soubor pro kolegu (v9.134) ──────────────────────────────────────────
+// Jako „📤 Soubor pro kolegu" u revizí: dokument se uloží do .json a kolega
+// ho načte tlačítkem 📂 Načíst nebo přetažením do okna. Jde rovnou do
+// úložiště tvorby dokumentace (DOK), **ne do archivu revizí**. Rozvaděč si
+// s sebou veze svůj objekt (složku), aby u kolegy nespadl do „Bez objektu".
+var DOK_SOUBOR_FORMAT = 'revize-el-dokumenty';
+
+function jeSouborDokumentu(d) {
+  return !!(d && d._format === DOK_SOUBOR_FORMAT && Array.isArray(d.dokumenty));
+}
+
+function dokSouborNazev(x) {
+  var c = String(x.cislo || '').trim() || 'dokument';
+  return c.replace(/[^\w.-]+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.json';
+}
+
+// Soubor se skládá HNED z formuláře, ne až po uložení: čekání na IndexedDB
+// by prohlížeči sebralo „klepnutí uživatele" a druhé stažení by Chrome
+// zablokoval jako „automatické stahování více souborů". Uložení běží vedle.
+function dokSouborKolegovi() {
+  var o = window.__dokOtevreny; if (!o) return;
+  var data = DOK_TYPY[o.typ].cist(dokForm()), ted = new Date().toISOString();
+  var x = { uid: o.uid, typ: o.typ, cislo: String(data.cislo || '').trim(), vytvoreno: o.vytvoreno || ted, upraveno: ted, data: data };
+  dokUlozitOtevreny();
+  var objekty = [];
+  var oid = x.data && x.data.objekt;
+  if (oid) { var ob = dokObjNajit(oid); if (ob) objekty.push(dokKopie(ob)); }
+  var soubor = {
+    _format: DOK_SOUBOR_FORMAT,
+    verze: 1,
+    vytvoreno: new Date().toISOString(),
+    odesilatel: ((STORE.technik || {}).jmeno || ''),
+    dokumenty: [dokKopie(x)],
+    objekty: objekty
+  };
+  var blob = new Blob([JSON.stringify(soubor, null, 2)], { type: 'application/json' });
+  Promise.resolve(ulozitSoubor(blob, dokSouborNazev(x))).then(function (ok) {
+    if (ok === false) return;
+    showToast('Uloženo: ' + (x.cislo || 'dokument') + ' (' + Math.max(1, Math.round(blob.size / 1024)) +
+      ' kB). Kolega ho otevře tlačítkem 📂 Načíst nebo přetažením do okna.', { timeout: 8000 });
+  });
+}
+
+async function dokSouborNacist(data) {
+  await dokNacist();
+  var polozky = (data.dokumenty || []).filter(function (x) {
+    return x && typeof x === 'object' && DOK_TYPY[x.typ] && x.data && typeof x.data === 'object';
+  }).map(dokKopie);
+  if (!polozky.length) { alert('V souboru není žádný dokument, který by šel načíst.'); return; }
+  // Za otevřený se bere jen dokument v editoru, který je právě na obrazovce
+  // (__dokOtevreny po odchodu z editoru v paměti zůstává).
+  var edit = document.getElementById('screen-dok-form');
+  var otevreny = (window.__dokOtevreny && edit && edit.classList.contains('active')) ? window.__dokOtevreny.uid : '';
+  var nove = [], prepsat = [], vynech = 0;
+  polozky.forEach(function (x) {
+    if (!x.uid) x.uid = dokUid();
+    // Otevřený dokument přepsat nejde — formulář ho drží v paměti a další
+    // uložení by verzi ze souboru přepsalo (totéž pravidlo jako u revizí).
+    if (x.uid === otevreny) { vynech++; return; }
+    var i = -1;
+    DOK.dokumenty.forEach(function (y, j) { if (y.uid === x.uid) i = j; });
+    if (i >= 0) prepsat.push({ x: x, i: i }); else nove.push(x);
+  });
+  if (!nove.length && !prepsat.length) {
+    alert('Soubor obsahuje jen dokument, který máte právě otevřený — přepsat ho nejde.\nZavřete ho nejdřív (← Seznam dokumentů).');
+    return;
+  }
+  var popis = polozky.map(function (x) { return (x.cislo || '(bez čísla)') + ' – ' + DOK_TYPY[x.typ].nazev; }).join('\n• ');
+  if (!confirm('Načíst do Tvorby dokumentace?' + (data.odesilatel ? '\n(od: ' + data.odesilatel + ')' : '') +
+      '\n\n• ' + popis + '\n\n' +
+      'Nových: ' + nove.length + (prepsat.length ? '\nUž ho máte (tentýž dokument): ' + prepsat.length : '') +
+      (vynech ? '\nVynechá se: ' + vynech + ' — máte ho otevřený' : ''))) return;
+  var prepisovat = false;
+  if (prepsat.length) {
+    prepisovat = confirm('Tentýž dokument už máte uložený.\n\nOK = PŘEPSAT ho verzí ze souboru\nZrušit = NECHAT svůj' +
+      (nove.length ? ' a přidat jen nové' : ' — nenačte se nic'));
+    if (!prepisovat && !nove.length) return;
+  }
+  var zaloha = dokKopie({ dokumenty: DOK.dokumenty, rozvObjekty: DOK.rozvObjekty || [] });
+  // Objekty (složky) rozvaděčů: chybějící se přidá, existující se nemění.
+  (data.objekty || []).forEach(function (ob) {
+    if (ob && ob.id && !dokObjNajit(ob.id)) dokObjekty().push(dokKopie(ob));
+  });
+  if (prepisovat) prepsat.forEach(function (t) { DOK.dokumenty[t.i] = t.x; });
+  for (var k = nove.length - 1; k >= 0; k--) DOK.dokumenty.unshift(nove[k]);
+  await dokZapsat();
+  var typ = (nove[0] || prepsat[0].x).typ;
+  // Z rozepsané zprávy nebo dokumentu se neodchází — seznam se jen nabídne.
+  var akt = document.querySelector('.screen.active'), aktId = akt ? akt.id : '';
+  var prace = aktId === 'screen-form' || aktId === 'screen-dok-form';
+  if (!prace) dokOtevritSeznam(typ);
+  var kolik = nove.length + (prepisovat ? prepsat.length : 0);
+  if (prace) showToast('Načteno do Tvorby dokumentace: ' + kolik + (kolik === 1 ? ' dokument' : (kolik < 5 ? ' dokumenty' : ' dokumentů')) +
+    '. Najdete ho v seznamu „' + DOK_TYPY[typ].nazev + '".', { timeout: 10000 });
+  else showToast('Načteno do Tvorby dokumentace: ' + kolik + (kolik === 1 ? ' dokument' : (kolik < 5 ? ' dokumenty' : ' dokumentů')) + '.', {
+    actionLabel: 'ZPĚT', timeout: 10000,
+    action: async function () {
+      await dokNacist();
+      DOK.dokumenty = zaloha.dokumenty;
+      DOK.rozvObjekty = zaloha.rozvObjekty;
+      await dokZapsat();
+      dokPoNacteniZJinehoOkna();
+      showToast('Načtení vzato zpět.');
+    }
+  });
+}
+
 // ── Objekty (složky) v seznamu — rozvaděče jedné stavby pohromadě ───────
 // Jako složky v Plánu revizí a v Průzkumníku: 🏠 objekt, pod ním jeho
 // rozvaděče (podle stromu napájení — hlavní nahoře, podružné odsazené),
@@ -30026,6 +30145,7 @@ TD_AKCE.tdZpetNaSeznam = function () {
   var typ = window.__dokOtevreny ? window.__dokOtevreny.typ : __dokTyp;
   dokDopsat().then(function () { dokOtevritSeznam(typ); });
 };
+TD_AKCE.tdSouborKolegovi = function () { dokSouborKolegovi(); };
 TD_AKCE.tdUlozit = function () { dokUlozitOtevreny().then(function () { showToast('💾 Dokument uložen ✓'); }); };
 TD_AKCE.tdNahled = function () { if (typeof dokNahled === 'function') dokNahled(); };
 TD_AKCE.tdCisloDalsi = function () {

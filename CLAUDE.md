@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.133 · 2026-10-23**
+**Aktuální verze: v9.134 · 2026-10-25**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -483,6 +483,34 @@ ruční kód, restart, číslování, kopie, vlastní vzor, PDF bez vysvětlivek
 záloha a obnova, dvě okna, rozbor seznamu prostorů a **oddělení**: protokol
 není v archivu, naposledy otevřených, plánu ani hledání a data revizí jsou
 po práci s protokoly **bajtově stejná**). Karta v Novinkách se nedělala.
+
+## Tvorba dokumentace: „📤 Soubor pro kolegu" (v9.134)
+
+Pokyn uživatele 2026-10-25: „ve tvorbě dokumentace vedle tlačítek uložit
+i tlačítko soubor pro kolegu, jako máme i u revizí." V liště editoru
+dokumentu (`#screen-dok-form .dok-lista-akce`) hned za 💾 Uložit —
+platí pro všechny typy (protokol vnějších vlivů, DBO, PSC).
+
+- **Formát `revize-el-dokumenty`** (`DOK_SOUBOR_FORMAT`, `jeSouborDokumentu`):
+  `{ _format, verze: 1, vytvoreno, odesilatel, dokumenty: [celá položka DOK],
+  objekty: [objekt rozvaděče, je-li v nějakém] }`. Název `POUVV-0001_RRRR-MM-DD.json`.
+- **Soubor se skládá HNED z formuláře** (`cist(dokForm())`), uložení běží
+  vedle — čekání na IndexedDB před stažením by sebralo klepnutí uživatele.
+  (Pozor v testech: `ulozitSoubor` má pojistku 1,5 s proti dvojímu stažení.)
+- **Načtení** (`dokSouborNacist`) poznají všechny cesty importu: přetažení
+  (i víc souborů naráz — `importSouboryZprav`), hlavní 📂 Načíst
+  (`zpracovatZpravuData`) i obnova zálohy (`importDatabaze`). Jde **do DOK,
+  nikdy do archivu revizí** (test: data revizí bajtově stejná).
+- Identita = `uid`: nový se přidá, tentýž se zeptá **přepsat × nechat svůj**;
+  **dokument otevřený v editoru na obrazovce** se nepřepíše; chybějící objekt
+  se založí, existující se nemění; **ZPĚT / Ctrl+Z** vrátí dokumenty i objekty.
+  Po načtení se otevře seznam typu — **z rozepsané zprávy nebo dokumentu se
+  neodchází**, jen hláška.
+- Do Novinek se nedělalo.
+
+Test: `testy/test-dok-soubor.js` (23 kontrol — dva prohlížeče, protokol
+i rozvaděč s objektem, přetažení i Načíst, přepsat / nechat, ZPĚT,
+otevřený dokument, rozepsaná zpráva, dva soubory naráz, data revizí).
 
 ## Rozvaděč DBO — návrh a dokumentace (v9.127; konfigurátor, `DOK_TYPY.rozv`, blok `ROZVADĚČ DBO`)
 
