@@ -2041,6 +2041,11 @@ nesahá se na něj**; pole Pi / Pm v tabulce listu 1 schématu (`tech.pi`,
   NEVYHOVUJE. V Dokumentech zaškrtávátko **„výpočet soudobého příkonu"**
   (`dokVyber.soudobost`, výchozí zapnuto) **jen když má rozvaděč Pi** (nebo
   byty) — jinak se nenabízí a PDF je beze změny; v PDF za schématem.
+  **Ukládá se jen vypnuté** (`cist` zahodí `soudobost: true`, v9.135) —
+  starý rozvaděč s ručním Pi by jinak pouhým otevřením Dokumentů dostal
+  nový klíč. Hlídá `test-rozvadec-stara-data.js` (rozvaděč, zpráva, záloha
+  a import CSV 43 / 50 / 51 sloupců proti staré verzi na 8902 — při přenosu
+  pustit se `STARA=<předchozí vydání>`).
 
 Test: `test-rozvadec.js` (+17: kuchyně 13,1 × 0,4 = 5,24, souhrn v liště,
 β z Nastavení a přepsané u rozvaděče, EV s limitem 3,7, bojler × TČ, skupina
