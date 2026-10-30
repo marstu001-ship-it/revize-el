@@ -1,6 +1,6 @@
 // Data se novou verzí nemění (přenos konfigurátoru z labu, v9.135).
 // Stará verze z gitu (STARA_PORT, 8902; servery.sh STARA=<commit>) × pracovní kopie:
-//   * starý rozvaděč (s -QM1 a ručním Pi) po otevření, projití záložek a uložení
+//   * starý rozvaděč (s vypínačem — do v9.134 -QM1 — a ručním Pi) po otevření, projití záložek a uložení
 //     bajtově stejný — nic se nepřeznačí, nezapíše se typ obvodu, skupina ani β,
 //   * revizní zpráva (getData i archiv po uložení) bajtově stejná, zmrazený čas,
 //   * záloha ze staré verze se obnoví beze ztráty, nová ve výchozím stavu bez fotek předloh,
@@ -87,7 +87,10 @@ const zpravaOtevritUlozit = async (p) => p.evaluate(async () => {
     const zaloha = await buildZalohaBlob().text();
     return { uid, zaloha, csv: ROZV_CSV.map(c => c[0]) };
   });
-  check("stará verze: rozvaděč má -QM1", /"ozn": ?"-QM1"/.test(st.zaloha));
+  // označení vypínače, jak ho dala stará verze (do v9.134 -QM1, od v9.135 -QH1)
+  const oznQ = j => (j.match(/"ozn": ?"-Q[MH]?\d*"/g) || []).map(x => x.replace(/\s/g, '')).join(',');
+  const oznStare = oznQ(st.zaloha);
+  check('stará verze: rozvaděč má vypínač (' + oznStare + ')', !!oznStare);
   const staryRozv = await otevritUlozit(S.p, st.uid);
   const staraZprava = await zpravaOtevritUlozit(S.p);
 
@@ -108,7 +111,7 @@ const zpravaOtevritUlozit = async (p) => p.evaluate(async () => {
   check('starý rozvaděč: cist() po otevření bajtově jako ve staré verzi', novyRozv.cist === staryRozv.cist,
     novyRozv.cist.length + ' × ' + staryRozv.cist.length);
   check('starý rozvaděč: uložená data po otevření a uložení bajtově jako ve staré verzi', novyRozv.ulozeno === staryRozv.ulozeno);
-  check('starý rozvaděč: -QM1 zůstal, nepřeznačil se', /"ozn":"-QM1"/.test(novyRozv.ulozeno) && !/"-QH/.test(novyRozv.ulozeno));
+  check('starý rozvaděč: označení vypínače se nepřeznačilo (' + oznStare + ')', oznQ(novyRozv.ulozeno) === oznStare, oznQ(novyRozv.ulozeno));
   check('starý rozvaděč: nezapsal se typ obvodu, skupina ani β soudobosti',
     !/"typObv|"soud|"beta"|"obvTyp/.test(novyRozv.ulozeno), (novyRozv.ulozeno.match(/"(typObv|soud\w*|beta|obvTyp)"/g) || []).join(','));
   check('starý rozvaděč: Pi se nedopočítalo (jen ručně zadané 1,5)', (novyRozv.ulozeno.match(/"pi":/g) || []).length === (staryRozv.ulozeno.match(/"pi":/g) || []).length);
