@@ -317,10 +317,10 @@ const presahy = (p, svg) => p.evaluate(svg => {
       'pole;;Pole 600;Výrobce A;VA-P;VA-P-6;;;;;;;;;;;;;600;2000;400;500;1800;;;;volně stojící;oceloplech;;;;IP55;IK10;1600;;;I;ne;\r\n';
     const v = rozvImportRozebrat(t, 'vyrobce-a.csv');
     const stare = rozvImportRozebrat('druh;kategorie;vyrobce;typ;poly;in;charakteristika;sirka_moduly\npristroj;FA;Výrobce B;VB-16;1;16;B;1\n', 'stare.csv');
-    return { sablona: sablona === hl.replace(';ue;', ';ue;vykon;u_vstup;u_vystup;i_vystup;'), pol: v.polozky.map(x => x.polozka), chyby: v.chyby.map(c => c.radek + ': ' + c.text), stare: stare.polozky.map(x => JSON.stringify(x.polozka)), stareCh: stare.chyby.length };
+    return { sablona: sablona === hl.replace(';ue;', ';ue;vykon;u_vstup;u_vystup;i_vystup;').replace(';nastaveni;', ';nastaveni;uc;kontakty;ie_ac1;pe_ac3_kw;rozsah_nastaveni;prislusenstvi_k;montaz;typ_prislusenstvi;'), pol: v.polozky.map(x => x.polozka), chyby: v.chyby.map(c => c.radek + ': ' + c.text), stare: stare.polozky.map(x => JSON.stringify(x.polozka)), stareCh: stare.chyby.length };
   });
   const qf = csv.pol.find(x => x.kat === 'QF') || {}, pl = csv.pol.find(x => x.druh === 'pole') || {};
-  check('šablona CSV = přesně zadaná hlavička (43 sloupců, i výkon a napětí transformátoru / zdroje); soubor ve starém tvaru (39) se načte', csv.sablona, '');
+  check('šablona CSV = přesně zadaná hlavička (51 sloupců, i výkon a napětí transformátoru / zdroje a ovládací obvody); soubor ve starém tvaru (39) se načte', csv.sablona, '');
   check('CSV: MCCB s rozměry v mm, Icu/Ics/Icw, nastavením spouští a Pv celkem', qf.sirkaMm === 105 && qf.vyskaMm === 161 && qf.hloubkaMm === 86 && qf.icu === 36 && qf.icw === 5 &&
     qf.pv === 48 && qf.pvCelkem === true && /Ir 0,4/.test(qf.nastaveni || '') && qf.overeno === false, JSON.stringify(qf));
   check('CSV: MCCB bez rozměrů v mm = chyba řádku (rozměry povinné)', csv.chyby.length === 1 && /^3: /.test(csv.chyby[0]) && /mm/.test(csv.chyby[0]), csv.chyby.join(' | '));
@@ -588,7 +588,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
       const html = document.querySelector('#screen-dok-form .dok-wrap').innerHTML;
       // knihovna se od 2026-10-22 záměrně liší (kategorie Trafa a zdroje, nové obecné položky) — editor bez ní musí být stejný
       // etapa 5c: záložka „🧊 3D" (tlačítko a prázdný panel) přibyla záměrně
-      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d').forEach(e => e.remove());
+      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast').forEach(e => e.remove());   // + tlačítko ⚡ Ovládání (ovládací obvody, 2026-10-29); + souhrn, sbalený panel a nastavení soudobosti (2026-10-29)
       const htmlBez = kopie.innerHTML;
       const knih = document.getElementById('rz-seznam').innerHTML;
       // etapa 5b: dokumenty, štítek, schéma, oteplení, fáze a celé PDF DBO se nesmí změnit (stejný technik v obou verzích)

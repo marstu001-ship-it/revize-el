@@ -557,9 +557,83 @@ function vsechnyStavy(zalozky) {
   add('rozvaděč – čelní pohled', 'Tvorba dokumentace', E(async () => {
     await __M.rozv(); document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(100);
   }));
+  // předloha z fotky: vymyšlená „fotka" řady nakreslená na plátno, jen v paměti
+  const fotka = `(() => { const c = document.createElement('canvas'); c.width = 900; c.height = 600; const g = c.getContext('2d');
+    g.fillStyle = '#777'; g.fillRect(0, 0, 900, 600); for (let m = 0; m < 12; m++) { g.fillStyle = '#fff'; g.fillRect(90 + m * 60 + 2, 220, 56, 180); }
+    return c.toDataURL('image/jpeg', 0.7); })()`;
+  add('rozvaděč – předloha z fotky, ořez (okno)', 'Tvorba dokumentace', E(async F => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = ''; rzpOtevrit(0, eval(F)); await __M.w(400);
+  }, fotka), '#modal-rz-predloha');
+  add('rozvaděč – předloha nad řadou, nastavení čelního pohledu', 'Tvorba dokumentace', E(async F => {
+    await __M.rozv(); await rzpNacist(); __rzpVse[rzpUid()] = { 0: { src: eval(F), w: 900, h: 600, op: 0.5 } };
+    rozvPohledVykreslit(); rozvVlastnostiVykreslit(); const d = document.querySelector('.rz-nast-pohledu'); if (d) d.open = true;
+    document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(150);
+    setTimeout(() => { __rzpVse = {}; }, 3000);   // ať předloha (jen v paměti) nezůstane v dalších stavech
+  }, fotka));
+  add('rozvaděč – barvy podle ampéráže s legendou, ukazatel oteplení', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); localStorage.setItem('revize_el_rz_barvy', 'proud'); __rz.skrin.penc = 20;
+    __rz.rady.forEach(r => r.prvky.forEach(x => { if (x.p.kat === 'FA') x.p.pv = 2; }));
+    rozvPohledVykreslit(); await __M.w(150); const l = document.querySelector('.rz-barvy-leg'); if (l) l.open = true;
+    document.querySelector('.rz-lista').scrollIntoView({ block: 'start' }); await __M.w(100);
+    setTimeout(() => { localStorage.removeItem('revize_el_rz_barvy'); }, 3000);
+  }));
+  add('rozvaděč – odhad instalovaného příkonu Pi (okno)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    const x = __rz.rady[1].prvky[3]; x.spotr = 'spotrebic'; __rz.vyber = x.uid; rozvVlastnostiVykreslit();
+    TD_AKCE.tdRPiOdhad(); await __M.w(100); document.querySelector('.rz-pi-volba[data-v="sporak"]').click();
+    document.querySelector('#rz-pi-obsah .rz-pi-nastaveni').open = true;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); await __M.w(100);
+  }), '#modal-rz-pi');
+  add('rozvaděč – vývod s odhadem Pi ve vlastnostech', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); const x = __rz.rady[1].prvky[3]; x.pi = '1,6'; x.piOdhad = '8 zásuvek × 0,2 kW';
+    __rz.vyber = x.uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.querySelector('#rz-vlastnosti .rp-pi').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  // soudobý příkon a návrh hlavního jističe (2026-10-29)
+  const soudPriprav = `(() => { const pis = ['0,5', '2', '7,4', '3,5', '2', '6', '11', '1,5', '2,2', '1'];
+    let i = 0; __rz.rady.forEach(r => r.prvky.forEach(x => { if (rzsMaPole(x)) x.pi = pis[i++ % pis.length]; }));
+    __rz.soud = { evDyn: true, evLimit: '3,7' }; })()`;
+  add('rozvaděč – panel Soudobost a souhrn Pp v liště', 'Tvorba dokumentace', E(async F => {
+    await __M.rozv(); eval(F); __rz.vyber = null; rozvPohledVykreslit(); rozvVlastnostiVykreslit(); await __M.w(150);
+    document.getElementById('rz-soud-panel').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }, soudPriprav));
+  add('rozvaděč – vývod: skupina soudobosti a „Nepracuje současně s"', 'Tvorba dokumentace', E(async F => {
+    await __M.rozv(); eval(F); const v = rzsVyvody({ rady: __rz.rady }); v[0].soudBlok = [v[1].uid];
+    __rz.vyber = v[0].uid; __rz.soudBlokOtevreno = true; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.querySelector('#rz-vlastnosti .rp-soud').scrollIntoView({ block: 'start' }); await __M.w(100);
+    __rz.soudBlokOtevreno = false;
+  }, soudPriprav));
+  add('rozvaděč – soudobost: více bytů a Nastavení konfigurátoru β', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); __rz.soud = { byty: { zap: true, n: '10', stupen: 'B' } }; __rz.vyber = null; rozvPohledVykreslit(); rozvVlastnostiVykreslit(); await __M.w(150);
+    const n = document.querySelector('#rz-vlastnosti .rz-pi-nastaveni'); n.open = true; n.querySelector('.rz-soud-nast').open = true;
+    document.getElementById('rz-soud-panel').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
   add('rozvaděč – vybraný přístroj a vlastnosti', 'Tvorba dokumentace', E(async () => {
     await __M.rozv(); __rz.vyber = __rz.rady[1].prvky[3].uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
     document.getElementById('rz-vlastnosti').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  // ovládací obvody (2026-10-29)
+  add('rozvaděč – šablony ovládání (okno)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); __rz.vyber = __rz.rady[1].prvky[3].uid; rozvPohledVykreslit(); TD_AKCE.tdROvlSablony(); await __M.w(100);
+  }), '#modal-rz-ovl');
+  add('rozvaděč – příslušenství, dotaz na stranu (okno)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); const q = __rz.rady[0].prvky.find(x => x.p.kat === 'QM'); __rz.vyber = q.uid; rozvVlastnostiVykreslit();
+    TD_AKCE.tdRPrislOtevrit(); await __M.w(50); document.querySelector('#rz-prisl-obsah [data-kid="v-prisl-nap"]').click(); await __M.w(100);
+  }), '#modal-rz-prisl');
+  add('rozvaděč – cívka stykače s ovládáním, prvky mimo rozvaděč, svorky', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    rozvOvlSablona('stop', 'nap'); __rz.vyber = __rz.rady[1].prvky[3].uid; rozvOvlSablona('hdo', 'auto');
+    document.getElementById('toast-wrap').innerHTML = ''; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.querySelector('#rz-vlastnosti .rp-ovl').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – prvek mimo rozvaděč ve vlastnostech', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = ''; rozvOvlSablona('stop', 'podp');
+    document.getElementById('toast-wrap').innerHTML = ''; __rz.vyber = null; __rz.vyberVn = __rz.vnejsi[0].uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.querySelector('.rz-vnejsi').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – záložka Schéma, list ovládacích obvodů', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); rozvOvlSablona('stop', 'nap'); document.getElementById('toast-wrap').innerHTML = '';
+    rozvZalozkaNastavit('sch'); await __M.w(300); __rzSch.list = 99; rozvSchKreslit(); await __M.w(100);
   }));
   add('rozvaděč – výběr více přístrojů (pruh a vlastnosti výběru)', 'Tvorba dokumentace', E(async () => {
     await __M.rozv(); rozvRezimVyberu(__rz.rady[1].prvky[1].uid);

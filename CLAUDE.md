@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.134 · 2026-10-25**
+**Aktuální verze: v9.135 · 2026-10-30**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -890,15 +890,19 @@ informační pruh, karta Skříně".
   sirka_mm;vyska_mm;hloubka_mm;uzitna_sirka_mm;uzitna_vyska_mm;pv;ue;vykon;
   u_vstup;u_vystup;i_vystup;nastaveni;
   provedeni;material;typ_skrine;rady;moduly_v_rade;ip;ik;ina;penc;rozmery;
-  trida_ochrany;overeno;poznamka` (sloupce `icw`, `*_mm` a `nastaveni` přibyly
-  s PSC v etapě 5a, `vykon;u_vstup;u_vystup;i_vystup` 2026-10-22 —
-  staré CSV bez nich se načte beze změny). Pořadí ani všechny sloupce nejsou
+  trida_ochrany;overeno;poznamka;uc;kontakty;ie_ac1;pe_ac3_kw;rozsah_nastaveni;
+  prislusenstvi_k;montaz;typ_prislusenstvi` — **šablona 51 sloupců** (sloupce
+  `icw`, `*_mm` a `nastaveni` přibyly s PSC v etapě 5a, `vykon;u_vstup;
+  u_vystup;i_vystup` 2026-10-22, osm sloupců ovládacích obvodů od `uc` po
+  `typ_prislusenstvi` 2026-10-29 — **staré CSV se 43 i 50 sloupci se načte
+  beze změny**). Pořadí ani všechny sloupce nejsou
   povinné, hlavička se porovnává bez háčků a velikosti písmen (`ROZV_CSV`).
   Oddělovač `;`, `,` nebo tabulátor se pozná sám, uvozovky podle CSV,
   kódování UTF-8, jinak windows-1250 (CSV z českého Excelu).
   - `druh` = `pristroj` / `skrin` (prázdné: skříň, když má řady a nemá
     kategorii), `kategorie` = kód (QM, FA, FI, FI/FA nebo RCBO, AFDD, SPD,
-    FU, KM, KT, KA, PJ, HL, SF, X, REZ, TR, ZD, XS, JINE; i s pomlčkou) nebo
+    FU, KM, KT, KA, PJ, HL, SF (i SB — tlačítko), MS, PRISL, VNEJSI, X, REZ,
+    TR, ZD, XS, JINE; i s pomlčkou; neznámá kategorie řádek přeskočí) nebo
     české slovo (jistič, chránič, svodič přepětí, stykač, transformátor,
     trafo, zdroj, napájecí zdroj, zásuvka, ostatní…), `poly` = 1, 1+N, 2, 3, 3+N,
     4 (projde i „1P", „3P+N"), `in` A, `icn/icu/ics` kA, `idn` mA, `up` kV,
@@ -913,7 +917,26 @@ informační pruh, karta Skříně".
     `material` plast/oceloplech, **`typ_skrine` domovni / prumyslova /
     historicka** (i s háčky a velkým písmenem; prázdné nebo soubor bez
     sloupce = domovní, jiný text = chyba řádku), `trida_ochrany` I/II,
-    `overeno` ano/ne.
+    `overeno` ano/ne, `uc` napětí cívky (text), `kontakty` („2Z", „1Z1V",
+    „1P"), `ie_ac1` A, `pe_ac3_kw` kW, `rozsah_nastaveni` text,
+    `prislusenstvi_k` řady, ke kterým se příslušenství hodí (prázdné =
+    univerzální), **`montaz`** = `lista` / `bok vlevo` / `bok vpravo` /
+    `dvere` / `mimo` (projde i „din", „levý bok", „na dveře", „mimo
+    rozvaděč"; jiný text = „výrobce neuvádí"), **`typ_prislusenstvi`** —
+    u PRISL `nap` (napěťová spoušť), `podp` (podpěťová), `pom` (pomocný
+    kontakt), `sig` (signalizační), `pohon` (motorový pohon); u VNEJSI
+    `hrib` (vyrážecí tlačítko), `tlacitko`, `hdo`, `termostat`, `cidlo`,
+    `vystup`, `jine` — kód i celé české jméno; prázdné = odvodí se z názvu.
+  - **Data výrobců (`knihovna_vyrobcu`) do repozitáře nikdy** — jde
+    o interní soubor, který se importuje přetažením; v testech jen vymyšlení
+    „Výrobce A / B“.
+- **Konvence značení** (uživatel 2026-10-27 a 2026-10-29): **-QH** hlavní
+  vypínač (víc → -QH1, -QH2…), **-Q** ostatní vypínače a odpínače, **-QM**
+  motorový spouštěč (MS), **-KM** stykač, **-KT** časové relé / hodiny,
+  **-KA** relé, **-SB** tlačítko / ovladač / přepínač i vyrážecí tlačítko
+  mimo rozvaděč, **-HL** kontrolka, **-X** svorky; jističe -FA, chrániče -FI,
+  RCBO -FI/FA, pojistky -FU. Starší rozvaděč s -QM u vypínače se sám
+  nepřeznačí (viz „Vypínače: -QH hlavní, -Q ostatní“).
 - **Formát JSON** = export „⬇ Export mé knihovny (JSON)":
   `{ "_format": "revize-el-knihovna-rozvadecu", "_version": 1,
   "pristroje": [ … ], "skrine": [ … ] }`, položky s vnitřními klíči (výš).
@@ -1571,9 +1594,15 @@ záložky a zaškrtávátka), `test-rozvadec-dokumenty.js` a
   B16, 40A/30mA A, T1+T2…), páčka, dole vývod (svisle, u širokých
   vodorovně), vpravo fáze; co přetéká skříň, je šrafované červeně.
   `<title>` u přístroje = celý popis.
-- **Měřítko na obrazovce** `rozvMeritko()`: vejít se do rámečku, ale
-  2,3–4 px/mm (čitelnost); širší skříň se posouvá **ve svém rámečku**
-  (`.rz-svg-ram`), tlačítka − / ＋ zoom (jen v paměti). Rámeček je na PC
+- **Měřítko na obrazovce** `rozvMeritko()`: výchozí **„⇔ Na šířku okna"**
+  (`rozvMeritkoNaSirku`, 2,3–4 px/mm, `RZ_K_MIN` / `RZ_K_MAX` — pod 2,3 není
+  čitelný pruh výrobce ani In; PSC 0,9–3), přepočítá se při změně okna. − / ＋
+  nastaví **ruční měřítko** `__rz.kRucni` (px/mm), které se drží i po změně
+  okna, dokud technik znovu nestiskne „Na šířku okna" (jen v paměti, nové
+  otevření začíná na šířku). Editor rozvaděče nemá pevnou šířku (`.dok-wrap`
+  `max-width:none`, jen záložka Dokumenty 1560 px), takže na 1920 px je
+  čelní pohled 3×12 i 4×24 bez posuvníku. Širší skříň se posouvá **ve svém
+  rámečku** (`.rz-svg-ram`). Rámeček je na PC
   nejvýš `max(380px, 100vh − 150px)` vysoký a posouvá se **v obou směrech**
   (vodorovný posuvník byl u vysoké skříně až pod koncem stránky);
   na telefonu `max-height:none` (blok MOBIL), posouvá se stránka.
@@ -1742,6 +1771,393 @@ z knihovny, byt 3+1 ve 3×18 s mezerami: schéma bez prázdného sloupce
 (jednopólové listy shodné s bytem bez mezer), osazení s přeškrtnutou
 mezerou, popisky 8,75 / 35 / 35 / 70 mm, fáze, oteplení a seznam beze
 změny, telefon 375 px).
+
+### Orientace při překreslování podle fotky — pruh výrobce a čísla pozic (2026-10-26)
+
+Hlášení uživatele: skládá v čelním pohledu existující rozvaděč podle fotky
+a ztrácí se — přístroje vypadají všechny stejně a musí počítat místa od kraje.
+
+- **Pruh se značkou a řadou výrobce** nahoře na každém přístroji
+  (`rozvVyrZnacka(p)`, kreslí `rozvPrvekSvg` — tedy obrazovka, PDF, duch při
+  tažení, PSC i čela ve 3D): „hager MY", „OEZ LSN", „Eaton PLS6". **Barva podle
+  výrobce** (`ROZV_ZNACKY`, pevná tabulka, tmavé tóny s bílým textem —
+  kontrast ≥ 4,5 : 1 hlídá test; kategorii dál rozlišuje barva těla a hodnota).
+  Výrobce se hledá po slovech bez háčků (`moeller` = Eaton, `schneider
+  electric` = Schneider). **Neznámý výrobce = šedá se jménem, obecný
+  (vestavěné položky) = šedý pruh bez textu**, rezerva pruh nemá. Text se
+  **zkracuje, písmo se nezmenšuje** (`rozvZnackaText`: celé → zkratka značky +
+  řada, „SE iC60N", „SIE 5SL6" → značka → „…"); celý název v bublině.
+  Označení, hodnota a páčka jsou o pruh níž, svislý vývod má nejvýš 12 znaků.
+  V PDF pruh zůstává (je to užitečný údaj) — černobíle je to tmavý pruh
+  s bílým textem. „DŘÍVE VYRÁBĚNÝ" v pohledu nic navíc nemá.
+- **Čísla pozic nad řadou** (`rozvCislaPozicSvg`) — drobná šedá čísla modulů
+  jako vylisovaná na skříni. **Jen obrazovka**: kreslí se jen bez `o.tisk`,
+  osazení ve schématu je samostatná větev, takže do PDF, tisku, schématu ani
+  3D nejdou; data rozvaděče ani označení nemění; `pointer-events="none"` —
+  klik na číslo je klik do prázdna. Volba v panelu Vlastnosti (bez výběru)
+  **„⚙ Nastavení čelního pohledu"**: průběžně přes řady (výchozí, 2. řada
+  13–24 u 12 modulů) / každá řada od 1 / nečíslovat — jen v prohlížeči,
+  localStorage `revize_el_rz_cisla`. Písmo aspoň 9 px na obrazovce; když se
+  čísla do modulu nevejdou (oddálení), jen každé druhé. Čísla jsou na mřížce
+  modulů, ne přístrojů (i u šířky 1,5 M). Jen DBO (PSC má pole v mm).
+
+Test: `test-rozvadec.js` (pruh u 1modulového přístroje čitelný a podle
+výrobce, kontrast, neznámý / obecný, 36 čísel průběžně, přepínač od 1,
+data beze změny, každé druhé při oddálení, **klik na číslo skutečnou myší
+nezmění výběr ani scrollLeft**). Novinky se nedělaly.
+
+#### Předloha z fotky nad řadou (POKUSNÁ funkce, 2026-10-26, blok „PŘEDLOHA Z FOTKY")
+
+Cíl: technik nepřebíhá očima mezi fotkou a programem — fotka řady je přímo
+v řadě ve stejném měřítku a přístroje jen „obkresluje".
+
+- **„📷 Předloha z fotky"** v liště nad čelním pohledem (DBO) → okno
+  `#modal-rz-predloha`: řada (předvolená vybraná), „📂 Vybrat nebo vyfotit
+  fotku…" (`accept="image/*"` — telefon nabídne fotoaparát) nebo přetažení.
+  **Ořez a zarovnání jsou jedno a totéž:** obdélník s rohy (myš i prst),
+  **levá hrana = „◀ začátek řady", pravá = „konec řady ▶"**, uvnitř žluté
+  čárky po modulech (podle skříně) — mají sedět na hrany přístrojů na fotce.
+  ⟲ Otočit o 90°, posuvník „Narovnat" ±10° po ½°. Zdroj se nejdřív zmenší
+  na 2400 px (otáčení), výřez se uloží jako **JPEG 0,7, nejvýš 1600 px**.
+- Výřez se kreslí `<image>` **přes** řadu (`rzpObrazekSvg`, roztažený na
+  `modulu × 17,5 mm` a výšku řady, `preserveAspectRatio="none"`, výchozí
+  průhlednost 50 %, `pointer-events="none"` — přístroje jdou dál táhnout
+  a vybírat). Odkaz `blob:` místo `data:` (SVG se při tažení překresluje).
+  Pod lištou řádek na každou předlohu: posuvník **Průhlednost**, 🙈 Skrýt /
+  👁 Ukázat, ✂ Upravit (znovu ořez z uloženého pruhu), 🗑 Smazat (ZPĚT).
+- **Úložiště — mimo data rozvaděče:** jeden klíč IndexedDB
+  **`dok_rzPredlohy`** v téže databázi (`revize-el-db`),
+  tvar `{ uidRozvaděče: { indexŘady: { src, w, h, op, skryto, t } } }`.
+  **NENÍ v `DOK_IDB`** → nejde do localStorage kopie DOK, do souboru dokumentu
+  ani do automatické zálohy. Bez IndexedDB (iOS) localStorage
+  `revize_el_rz_predlohy`. Načítá se poprvé při kreslení editoru
+  (`rzpNacist`), předlohy smazaných rozvaděčů se přitom uklidí.
+  **Nevejde-li se** (`rzpZapsat` vrátí false — tx.onabort / výjimka / plný
+  localStorage): hláška „Fotka se do úložiště prohlížeče nevešla…",
+  předloha se nepřidá, nic nespadne.
+- **Nikdy do PDF, tisku, schématu ani 3D** (jen bez `o.tisk` v `rozvSvg`).
+  **Do ruční zálohy jen na vyžádání:** zaškrtávátko v Nastavení u „Stáhnout
+  zálohu" — „Přiložit i fotky předloh rozvaděčů (soubor bude větší)", výchozí
+  ne; záloha pak nese `rzPredlohy` (`buildZalohaBlob(navic)`), obnova je
+  vrátí (`rzpObnovitZeZalohy`). Na GitHub nic.
+
+Test: `test-rozvadec.js` (nahrání souboru, tažení rohů myší, mřížka,
+narovnání, použití — šířka řady, IndexedDB, ne v datech ani localStorage,
+výběr přístroje přes fotku, průhlednost a skrýt, PDF bez fotky, záloha bez
+fotek a se zaškrtnutím s nimi, obnova po načtení stránky, plné úložiště,
+smazání). V `test-mobil.js` stavy „rozvaděč – předloha z fotky, ořez (okno)"
+a „…předloha nad řadou, nastavení čelního pohledu". Posuvníky průhlednosti a narovnání mají na telefonu 44 px
+(blok MOBIL).
+
+#### Pole s nabídkou v editoru rozvaděče jdou přepsat (2026-10-26)
+
+- **Pole s nabídkou jdou přepsat** (připomínka uživatele
+  2026-10-26 se snímkem „Vývodový kabel / Průřez" — „musím vybrat jen něco ze
+  seznamu, chci tam napsat, že není vývod, jen rezerva"). Obecný trik
+  s datalistem (`focusin` pole s hodnotou z nabídky vyprázdní, ať je vidět celá
+  nabídka) dělal z pole na pohled výběr ze seznamu. V `#screen-dok-form`
+  rozvaděče (DBO i PSC) se pole **nevyprazdňuje, jen se označí** — psaní
+  hodnotu přepíše. Pod kabelem řádek „Do polí jde napsat i vlastní text
+  (např. „rezerva")…", v nabídce kabelu volba „bez kabelu – rezerva".
+
+Test: `test-rozvadec.js` (klepnutí do kabelu „CYKY-J" hodnotu nechá a označí, „rezerva" se zapíše).
+
+### Připomínky z praxe 27. 10. (2026-10-27)
+
+#### Barvy pruhu: výrobce | ampéráž
+
+Přepínač **„Barvy: výrobce | ampéráž"** v liště nad čelním pohledem vedle
+„Přečíslovat označení" (`rozvBarvyPrepinacHtml`, `tdRBarvy`) — jen
+v prohlížeči, localStorage `revize_el_rz_barvy` (`vyrobce` výchozí / `proud`).
+V režimu ampéráž má pruh nahoře na přístroji (ne celý přístroj) barvu podle In
+(`rozvAmpBarva`, tabulka `ROZV_AMP_BARVY` doslova podle zadání: kód páček
+jističů OEZ LSN, katalog 3081-Z01-06 str. 6 pro 0,2–63 A, 80–125 A podle
+terčíků pojistek; 0,2–1,6 A černá). **In je v pruhu vždy textem** („16 A"),
+barva textu podle jasu pozadí, bílá má rámeček. Jiný proud (3 A, 160 A) =
+šedý pruh s textem, přístroj bez In (SPD, zdroje) = šedý bez textu. Legenda
+v „ⓘ" vedle přepínače (na telefonu pod ním). Do PDF jde právě zapnutý režim
+(`rozvSvg` čte tutéž volbu). Data rozvaděče se nemění.
+
+Test: `test-rozvadec.js` (všech 14 barev, 13 A písková, 3 A a SPD šedé,
+bílá s rámečkem, legenda, PDF v obou režimech).
+
+#### Vypínače: -QH hlavní, -Q ostatní
+
+Konvence uživatele (2026-10-27): **-QH** = hlavní vypínač (víc hlavních →
+-QH1, -QH2…), **-Q** = ostatní vypínače a odpínače. Kategorie `QM` zůstává
+(teď „Vypínač / odpínač", skupina knihovny „Vypínače"); předpona se bere
+podle role (`rozvPredponaPrvku`, `rozvHlavniVypinace`): hlavní = výslovně
+zaškrtnuté **„Hlavní vypínač"** ve vlastnostech (`x.hlavni = true`), jinak
+první vypínač v pořadí řad (na přívodu), který nemá `x.hlavni = false`.
+Zaškrtnutí dalšího ponechá i dosavadní hlavní (QH1 + QH2); automatické
+označení -QH/-Q se při změně role přejmenuje samo, ručně napsané ne. Kopie
+hlavní není. **-QM (motorový spouštěč, kategorie `MS`) patří ke zvláštnímu
+zadání ovládacích obvodů — tady se nedělal.**
+
+**Starý rozvaděč s -QM1 se při otevření nepřeznačí** (data se otevřením
+nemění); nad pohledem jeden nenápadný řádek „Rozvaděč používá starší značení
+vypínačů (QM). Přečíslovat na QH/Q?" (`rozvQmUpozHtml`) — „🔢 Přečíslovat
+vypínače" (jen vypínače, se ZPĚT) nebo „Nechat" (localStorage
+`revize_el_rz_qm_nechat`, seznam uid). Schéma, seznam, popisky a dokumenty
+berou `x.ozn`, takže se nové značení promítne samo.
+
+**Upraveno ve stejném commitu:** `test-rozvadec.js`, `-dokumenty`,
+`-faze-otepleni`, `-schema` čekaly -QM1 u nově vloženého vypínače (teď -QH1)
+a skupinu „Hl. vypínače".
+
+#### Typ obvodu a značka zásuvky ve schématu
+
+Pole **„Typ obvodu"** ve vlastnostech vývodu (dřív „Spotřebič ve schématu";
+klíč dat zůstal `x.spotr`, `RS_SPOTR`): zásuvky / světla / spotřebič / motor /
+jiný, první volba „podle názvu (…)" = odhad z názvu vývodu
+(`rsSpotrPredikce`: „zás…", „zásuv…" → zásuvky, „světl…", „osvětl…" →
+světla) — **odhad se neukládá**, do dat jde jen ruční volba. Schéma:
+zásuvky → značka zásuvky ČSN EN 60617-11 (`RS_ZNACKY.zasuvka`, stopka do
+vrcholu oblouku otevřeného dolů, bez příčky — podle značky, kterou uživatel
+zná z výkresů, 2026-10-28), trojfázová navíc text **„3/N/PE"** pod značkou (počet vodičů dál
+lomítky na vývodu), světla → svítidlo ⊗, spotřebič a jiný → obdélník,
+motor → M. Vektorové PDF beze změny cesty. Typ obvodu použije i odhad Pi
+(níž).
+
+**Upraveno:** `test-rozvadec-schema.js` (popisek a volby pole).
+
+#### Průběžný odhad oteplení v liště
+
+Nad čelním pohledem (DBO i PSC) ukazatel **„Oteplení ≈ 38 / 47 W (81 %)"**
+(`#rz-otepl-ukaz`, `rozvOteplUkazatelHned`) — **táž funkce
+`rozvOteplVypocet` jako list „Výpočet oteplení"**, žádný druhý výpočet.
+Semafor: pod 80 % zelená, 80–100 % oranžová, nad 100 % červená. Bez Penc
+šedě „Oteplení: skříň nemá Penc – doplnit", přístroje bez Pv se dopíšou
+„(3 přístroje bez Pv)" — Pv se nevymýšlí. Bublina „Předběžný odhad podle
+čl. 10.10.4.2 – závazný je list Výpočet oteplení."; klepnutí přepne na
+Dokumenty, otevře oddíl oteplení a skočí do Penc. Výpočet nelze (víc polí PSC,
+nad 630 A, prázdný rozvaděč) = ukazatel schovaný. Do PDF nejde. Při plném
+překreslení pohledu se počítá hned (jinak by se lišta posunula až po
+vykreslení a rolování), při tažení se zpožděním 80 ms. V knihovně skříní
+(DBO) má skříň s Penc štítek **„≈ 72 %"** = dosavadní ztráty návrhu proti
+jejímu Penc (`rozvOteplKnihHtml`).
+
+Test: `test-rozvadec.js` (tři barvy, bez Penc, bez Pv, klepnutí, PDF bez
+ukazatele, štítek v knihovně).
+
+#### Instalovaný příkon Pi — rychlý odhad
+
+Pole **Pi (kW)** je ve vlastnostech vývodu hned pod Typem obvodu (dřív ve
+sbalených „Další údaje") s tlačítkem **„🧮 Odhadnout…"** → okno
+`#modal-rz-pi` (`rozvPiDialogHtml`, typ předvybraný z Typu obvodu, v okně jde
+změnit jen pro výpočet): zásuvky a světla počet × příkon, spotřebič rychlé
+volby `ROZV_PI_SPOTR` (bojler 2, sporák 9, varná deska 7,4, trouba 3,5, myčka
+2,2, pračka 2,2, sušička 2,5, klimatizace 1,5, nabíječka EV 11 kW; tepelné
+čerpadlo a jiný = zadat), motor Pn ze štítku, jiný příkon. Výchozí zásuvka
+0,2 kW/ks, svítidlo LED 0,03 kW/ks — **volba technika, ne údaj z normy**;
+všechny jdou změnit v **„⚙ Nastavení konfigurátoru"** (v okně i v panelu
+Vlastnosti bez výběru), jen v prohlížeči: localStorage `revize_el_rz_pi`
+(jen odchylky, „↺ Výchozí hodnoty" klíč smaže), do rozvaděče se neukládají.
+
+- „Použít odhad" zapíše `x.pi` a **`x.piOdhad`** = popis výpočtu („8 zásuvek
+  × 0,2 kW") → u pole štítek **„odhad"** s bublinou. **Ruční přepsání Pi
+  `piOdhad` smaže.** Je-li v Pi ručně zadaná hodnota, odhad ji **nikdy
+  nepřepíše** (tlačítko vypnuté, okno to řekne).
+- Schéma: odhadnuté Pi v tabulce pod schématem s **„≈"** („≈1,6") a pod
+  tabulkou „≈ = odhad instalovaného příkonu" (jen když na listu nějaký je).
+- Součty v tabulce listu 1 (tech.pi, Pm) se nemění; Pi vývodů používá
+  výpočet soudobosti (oddíl níž). Rozvaděč bez odhadu beze změny (klíč
+  vzniká jen použitím odhadu).
+
+Test: `test-rozvadec.js` (8 × 0,2 = 1,6 kW, štítek, ≈ ve schématu, ruční
+přepsání, nepřepíše ruční, spotřebič a motor, nastavení jen v prohlížeči).
+V `test-mobil.js` stavy „…barvy podle ampéráže s legendou, ukazatel
+oteplení", „…odhad instalovaného příkonu Pi (okno)", „…vývod s odhadem Pi".
+
+### Soudobý příkon Pp a návrh hlavního jističe (2026-10-29, blok „ROZVADĚČ — SOUDOBOST")
+
+Zadání uživatele: z Pi vývodů spočítat soudobý příkon Pp, výpočtový proud Ip
+a navrhnout hlavní jistič před elektroměrem. **Jen podle ČSN 33 2130 ed. 4**
+(12/2024, příloha A výpočtové zatížení, příloha B byty) — **plné znění
+nemáme**, proto **žádný koeficient napevno**: výchozí β jsou v **⚙ Nastavení
+konfigurátoru** (jen v prohlížeči, localStorage `revize_el_rz_soud`, jen
+odchylky, „↺ Výchozí β") a jdou **přepsat u rozvaděče**. U každé β se ukazuje
+zdroj; hodnoty z ed. 3 / z podkladů mají štítek **„ověřit v ČSN 33 2130 ed. 4"**.
+Tabulky distributorů se nepoužívají.
+
+**Co v programu bylo (2026-10-29):** soudobost tu nebyla. „Součinitel
+soudobosti RDF" (oddíl Oteplení, `rotRdf`, `tech.rdf`) je jmenovitý
+součinitel rozvaděče podle ČSN EN IEC 61439 pro oteplení — **jiný pojem,
+nesahá se na něj**; pole Pi / Pm v tabulce listu 1 schématu (`tech.pi`,
+`tech.pm`) zůstávají ruční. Výpočet stojí na poli Pi vývodu a odhadu Pi
+(viz „Instalovaný příkon Pi — rychlý odhad“); Ib ani fáze Pi nepoužívají a nezměnily se.
+
+- **Skupiny** `RZS_SKUPINY` (klíč, název, výchozí β, zdroj, ověřit):
+  kuchyně 0,4 (ČSN 33 2130, rozsah 0,35–0,5, ověřit), nabíjení EV 1,0
+  (ČSN 33 2130 – bez dynamického řízení, ověřit), osvětlení, zásuvky, ohřev
+  vody, TČ / vytápění, klimatizace, pračka a sušička, motory 1,0 **bez
+  zdroje** (šedý štítek „β nezadáno" → odkaz do Nastavení), ostatní 1,0.
+  Pp skupiny = Σ Pi × β.
+- **Pole vývodu „Skupina soudobosti"** (`x.soudSk`; jen u vývodů s polem Pi,
+  `rzsMaPole`): první volba „podle typu (…)" = odhad `rzsPredikce` z Typu
+  obvodu (zásuvky / světla / motor), druhu spotřebiče z odhadu Pi (popis
+  `piOdhad` začíná názvem z `ROZV_PI_SPOTR`) a z názvu vývodu — **odhad se
+  neukládá**, do dat jde jen ruční volba.
+- **EV:** „dynamické řízení výkonu" (`evDyn`) → β, nebo **limit nabíjení
+  [kW]** (`evLimit`) = Pp skupiny EV (nejvýš Σ Pi).
+- **„Nepracuje současně s"** (`x.soudBlok` = uid vývodů nebo `sk:skupina`;
+  sbalené pod skupinou, nabízí jen vývody s Pi a skupiny v rozvaděči).
+  Jednotka = vývod, nebo celá odkazovaná skupina; spojené jednotky se počítají
+  jen **největší** (po β), ostatní „bojler 2 kW nezapočten – nepracuje
+  současně s …". Odškrtnutí zruší vztah z obou stran. Jde přes `rozvZmena`
+  (ZPĚT, Ctrl+Z).
+- **Více bytů** (`byty: { zap, n, stupen, pb, beta, pbZ }`): Pp = n × Pb ×
+  β(n); Pb podle stupně A 7 / B 11 kW (Nastavení), C zadat nebo **převzít
+  z výpočtu jiného rozvaděče** (výběr z rozvaděčů s Pp). β(n)
+  `RZS_BYTY_BETA` 1–34 (ed. 3 podle podkladů ČVUT, „ověřit v příloze B
+  ed. 4"), nad 34 hláška „zadejte β ručně". Skupiny vývodů se přičtou jako
+  společné spotřeby domu.
+- **Výpočet** `rozvSoudVypocet(d)` (čistá funkce — panel, lišta i PDF):
+  Ip = Pp·1000 / (√3·400·cos φ) u 3f, Pp·1000 / (230·cos φ) u 1f; cos φ
+  výchozí 0,95 (`cos`); přívod podle soustavy (1… = 1f, 3… = 3f), jde
+  přepnout (`faze`). Navržený jistič = nejbližší vyšší z `RZS_RADA`
+  (10–125 A). **Skutečný** = předřazený jistič z hlavičky (`privodJistic`) →
+  hlavní vypínač -QH / přívodní přístroj → jmenovitý proud přívodu;
+  ✓ vyhovuje / ✗ menší než Ip. **Nic se samo nemění** — jen „✓ Použít
+  navržený" (zapíše „3×25 A" do Předřazeného jističe, ZPĚT), když rozvaděč
+  žádný hlavní jistič nemá. Upozornění: vývody bez Pi (nezapočteny),
+  selektivita (hlavní ≤ největší jistič vývodu), β nezadáno.
+- **Panel „⚡ Soudobost a hlavní jistič"** ve vlastnostech rozvaděče (bez
+  výběru, DBO i PSC): skupiny pod sebou (Pi × β [pole] = Pp, zdroj),
+  blokování, Pp, Ip, návrh, skutečný, upozornění, sbalené „Další nastavení
+  výpočtu" (cos φ, přívod, byty). Psaní přepočítá panel a kurzor zůstane
+  v poli. **Bez Pi** jen sbalený řádek s nápovědou a volbou „Napájí více
+  bytů". Data rozvaděče `d.soudobost` (`__rz.soud`, `cist`) — **jen co
+  technik zadal**, při otevření se nic nezapisuje.
+- **Souhrn v liště** nad čelním pohledem vedle oteplení: **„Pp ≈ 14,2 kW →
+  25 A"** (`#rz-soud-ukaz`, červeně s ✗ když skutečný jistič nestačí; bez Pi
+  schovaný); klik otevře panel.
+- **List „Výpočet soudobého příkonu"** (`rozvSoudListSvg` — A4 na šířku,
+  vektorově, rám se zónami a razítko jako schéma, jen jednoduché prvky):
+  tabulka skupin (vývody s Pi, „(odhad)" u odhadnutého, Pi, β, **zdroj β**,
+  Pp), byty, blokování, Pp, cos φ, Ip, navržený a skutečný jistič,
+  upozornění a „Výpočet podle ČSN 33 2130 ed. 4; koeficienty β zadal
+  zpracovatel." Písmo PDF nemá √ ✓ ✗ — v listu „1,732" a VYHOVUJE /
+  NEVYHOVUJE. V Dokumentech zaškrtávátko **„výpočet soudobého příkonu"**
+  (`dokVyber.soudobost`, výchozí zapnuto) **jen když má rozvaděč Pi** (nebo
+  byty) — jinak se nenabízí a PDF je beze změny; v PDF za schématem.
+  **Ukládá se jen vypnuté** (`cist` zahodí `soudobost: true`, v9.135) —
+  starý rozvaděč s ručním Pi by jinak pouhým otevřením Dokumentů dostal
+  nový klíč. Hlídá `test-rozvadec-stara-data.js` (rozvaděč, zpráva, záloha
+  a import CSV 43 / 50 / 51 sloupců proti staré verzi na 8902 — při přenosu
+  pustit se `STARA=<předchozí vydání>`).
+
+Test: `test-rozvadec.js` (+17: kuchyně 13,1 × 0,4 = 5,24, souhrn v liště,
+β z Nastavení a přepsané u rozvaděče, EV s limitem 3,7, bojler × TČ, skupina
+podle typu se neukládá, byty 10 × 11 × 0,45 = 49,5 a n = 40, Ip 21,6 A →
+25 A a 1f 65 A → 80 A, vývod bez Pi, Použít navržený, ✗ menší jistič,
+list se zdroji β, bez Pi bez listu, starý rozvaděč beze změny, vektorové PDF
+přes pdftotext). V `test-mobil.js` stavy „…panel Soudobost a souhrn Pp
+v liště", „…vývod: skupina soudobosti a „Nepracuje současně s"" a
+„…soudobost: více bytů a Nastavení konfigurátoru β".
+**Upraveno:** `test-rozvadec-psc.js` (DBO porovnání bez souhrnu, sbaleného
+panelu a nastavení soudobosti). Novinky se nedělaly.
+
+### Ovládací obvody — stykače, relé, spouště, tlačítka (2026-10-29, bloky „ROZVADĚČ — OVLÁDACÍ OBVODY")
+
+Zadání uživatele 2026-10-29 (návrh schválen týž den: SF = tlačítko -SB,
+CENTRAL STOP z jističe před hlavním vypínačem, svorky i do čelního pohledu,
+příslušenství s označením přístroje, sloupec `typ_prislusenstvi`).
+
+- **Knihovna:** nové kategorie **MS** motorový spouštěč (-QM; kategorie QM
+  dál = vypínač, -QM u MS nehlásí „starší značení"), **PRISL** příslušenství
+  (napěťová / podpěťová spoušť, pomocný a signalizační kontakt, motorový
+  pohon) a **VNEJSI** prvek mimo rozvaděč (vyrážecí tlačítko, HDO, termostat,
+  čidlo, výstup na svorky). **SF = „Tlačítko / ovladač / přepínač", nová
+  předpona -SB** (kód SF v datech zůstává; starý přístroj bez kontaktů má na
+  čele dál „SF"). KA = „Relé (instalační, impulzní, monitorovací)", HL =
+  „Kontrolka". Skupina knihovny **„Ovládání"** (KM, KA, KT, SF, HL, MS, PRISL,
+  VNEJSI), „Ostatní" už jen PJ, X, XS, JINE, REZ.
+- **Nová pole (nepovinná, ukládají se jen vyplněná — `ROZV_PRISTROJ_NAVIC`):**
+  `uc`, `kontakty` („2Z", „1Z1V", „1P"), `ieAc1` (A), `peAc3` (kW), `rozsah`,
+  `prislK` (řady, ke kterým se příslušenství hodí; prázdné = univerzální),
+  `montaz` (`lista` / `bok vlevo` / `bok vpravo` / `dvere` / `mimo`; neznámý text =
+  „výrobce neuvádí"), `prislTyp` (druh — ze sloupce, jinak z názvu,
+  `rozvPrislTyp`). **CSV:** `uc;kontakty;ie_ac1;pe_ac3_kw;rozsah_nastaveni;
+  prislusenstvi_k;montaz;typ_prislusenstvi` (šablona 51 sloupců); starý soubor
+  beze změny, neznámá kategorie řádek přeskočí, neznámý sloupec se ohlásí.
+- **Vestavěné obecné:** stykače s kontakty a Uc 230 V AC (km-20-2, km-25-2,
+  km-25-4, km-40-4), relé 1P, impulzní relé, schodišťový automat, tlačítko
+  ZAP/VYP 1Z1V, přepínač 0/1/AUTO, motorový spouštěč 3P 6,3–10 A, napěťová
+  a podpěťová spoušť 230 V AC, pomocný kontakt 1Z1V, vyrážecí tlačítko,
+  tlačítko a kontakt HDO (mimo rozvaděč). Montáž příslušenství prázdná.
+
+**Příslušenství** je v řadě samostatný přístroj s `x.prislNa` (uid přístroje)
+a `x.strana`. **`rozvPrislUklid()` v každé `rozvZmena`** ho přisune těsně
+k přístroji (vlevo → přístroj → vpravo) a dá mu jeho označení — posouvá
+se, kopíruje (`rozvKopieSkupiny`) a maže s ním, mezi ně nejde nic vložit,
+tažení / ◀ ▶ / ✥ berou celou skupinu (`rozvSkupinaPrvku`, `rozvSRozsirenim`).
+Čelní pohled, seznam, popisky ani 3D se kvůli tomu neměnily. „＋ Příslušenství"
+ve vlastnostech (okno `#modal-rz-prisl`) nabídne jen kompatibilní
+(`rozvPrislKompat`: spouště ne ke stykači a relé, `prislK` × řada přístroje);
+prázdná montáž = dotaz na stranu. Zatím jen na DIN liště.
+Pozn.: v návrhu bylo `x.prisl = [...]` uvnitř přístroje; samostatný přístroj
+v řadě je jednodušší (kreslení a seznam beze změny), data jsou stejně volitelná.
+
+**Prvky mimo rozvaděč** `d.vnejsi = [{ uid, knih, p, ozn, misto, dvere }]` —
+vlastní seznam „🚪 Prvky mimo rozvaděč" pod pohledem, panel vlastností
+(`__rz.vyberVn`), předpona podle druhu (`ROZV_VNEJSI_OZN`: -SB, -HDO, -BT, -B,
+-A). Do čelního pohledu nejdou; tlačítko s montáží „dveře" taky sem (bez svorek).
+
+**Ovládání** `x.ovl = { z: uid zdroje, retez: [{ u, k: 'Z'|'V', c?, t? } |
+{ par: [[…], …] }] }` u cívky stykače / relé, spouště, pohonu, kontrolky
+a výstupu (`rozvMaCivku`). Vývod `x.spina = uid stykače`, jistič
+ovládacích obvodů `x.predHlavnim = true`. Panel ⚡ Ovládání: Napájení z
+(jistič, transformátor, zdroj), řetěz s ▲ ▼ 🗑, zapínací / rozpínací, popis
+polohy, paralelní větve (jedna úroveň). **Čísla kontaktů přiděluje
+`rozvOvlPridel(d)` při kreslení** (nikam se neukládají): silové stykače 1-2,
+3-4…, pomocné n3-n4 / n1-n2, přepínací n1-n2-n4; ruční `c` má přednost.
+**Ovládací svorky** spočítá `rozvOvlSvorky` (2 na každý úsek mimo
+rozvaděč), v řadě jsou to svorky ½ M `svorkaOvl` s označením `-X1:n`
+(Přečíslovat je nemění), „＋ Doplnit svorky do řady".
+
+**Schéma:** za jednopólovými listy **listy „Ovládací obvody"** (`rsoModel`,
+`rsoList`, `rsoCesta` — jen když je něco zapojené): dráhy číslované, L/N
+(u zdroje DC +/−) po zdrojích, kontakty se značkou ovládacího členu
+(tlačítko, hříbek, přepínač, termostat), svorky `X1:n` na hranici,
+prvky mimo rozvaděč v čárkovaném rámečku s místem, cívka (A1–A2, C1–C2,
+D1–D2, kontrolka X1–X2) a pod ní **tabulka kontaktů s odkazy** (`/list.dráha`
+v ovládacích listech, `/list.zóna` v jednopólovém). U kontaktu odkaz na
+cívku, u spouště čárkovaná mechanická vazba „┄ -QH1 /2.2". V jednopólovém
+listu: silový kontakt stykače ve spínaném vývodu („-KM1 1-2 /3.2"), jistič
+ovládání odbočený před hlavním vypínačem a s šipkou „ovládání /3.1" místo
+spotřebiče (`rozvJenOvladaci` — nechce kabel), u -QH1 „spoušť C1–C2 /3.1",
+motorový spouštěč jako vývod (`RS_OBVODOVE` + MS, značka `spoustec`).
+Poznámka „Ovládací obvody nejsou zakresleny" zůstává jen pro nezapojené.
+**Kontroly** `rozvOvlKontrola(d)` (řádek „⚠ Ovládání" v záložce Schéma
+a upozornění ve vlastnostech): cívka bez napájení, kontakt bez cívky,
+nekompatibilní příslušenství, napětí cívky × napájení (230/400 V AC
+z jističe, transformátor AC, zdroj DC; rozsah „24–240 V AC/DC" projde),
+chybějící kontakty a svorky. Rozvaděč bez ovládání nehlásí nic.
+
+**Šablony** „⚡ Ovládání" v liště nad čelním pohledem (jen DBO), ve
+vlastnostech cívky a na záložce Schéma (`RZO_SABLONY`, okno `#modal-rz-ovl`,
+`rozvOvlSablona`): CENTRAL STOP (napěťová / podpěťová), stykač přes HDO
+(i s přepínačem 0/1/AUTO), stykač s tlačítky ZAP/VYP (přídržný kontakt,
+u 3+N pomocný kontakt) nebo přepínačem 0/1, schodišťový automat,
+signalizace (pomocný kontakt → kontrolka / výstup na svorky), motor
+(spouštěč + stykač + ZAP/VYP). Vloží, propojí, doplní svorky, vybere
+cívku; jedno ZPĚT. Šablony s vývodem vyžadují vybraný jistič.
+
+**Starý rozvaděč beze změny:** bez `vnejsi`, `ovl`, `spina`, `prislNa`,
+`predHlavnim`, `svorkaOvl` se data, čelní pohled i schéma nemění (test).
+
+Test: `test-rozvadec.js` (+15: import v7 se 44 vymyšlenými položkami „Výrobce
+A/B" a starý soubor, kompatibilita a dotaz na stranu, tažení skutečnou myší
+i s příslušenstvím a Ctrl+Z, ▶ a smazání jako celek, šablony, dráha CENTRAL
+STOP odshora dolů s mechanickou vazbou, kontakty -KM1 ve vývodu bojleru
+a tabulka pod cívkou, varování napětí cívky a cívky bez napájení, vektorové
+PDF listu, rozvaděč bez ovládání). V `test-mobil.js` stavy „rozvaděč – šablony
+ovládání (okno)", „…příslušenství, dotaz na stranu", „…cívka stykače
+s ovládáním…", „…prvek mimo rozvaděč…" a „…list ovládacích obvodů".
+**Upraveno:** `test-rozvadec.js` (21 kategorií, skupina „Ovládání"),
+`test-rozvadec-psc.js` (šablona 51 sloupců, DBO porovnání bez tlačítka
+⚡ Ovládání). Novinky se nedělaly.
 
 ### PDF (část 4)
 
