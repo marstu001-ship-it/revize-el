@@ -31629,6 +31629,9 @@ DOK_TYPY.rozv.cist = function (koren) {
   d.rady = __rz ? dokKopie(__rz.rady) : [];
   if (__rz) { if (__rz.faze) d.faze = dokKopie(__rz.faze); else delete d.faze; }   // práh nesymetrie (etapa 4)
   if (__rz) { if (__rz.soud) d.soudobost = dokKopie(__rz.soud); else delete d.soudobost; }   // soudobost (2026-10-29)
+  // „výpočet soudobého příkonu" do PDF: chybí = zapnuto (rozvVyber) — ukládá se jen vypnuté,
+  // jinak by starý rozvaděč s Pi dostal pouhým otevřením Dokumentů nový klíč
+  if (d.dokVyber && d.dokVyber.soudobost === true) delete d.dokVyber.soudobost;
   if (__rz) { if (__rz.vnejsi && __rz.vnejsi.length) d.vnejsi = dokKopie(__rz.vnejsi); else delete d.vnejsi; }   // prvky mimo rozvaděč (ovládání)
   return d;
 };
