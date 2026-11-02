@@ -2098,6 +2098,216 @@ function pomocnik() {
   check('soudobost: PDF listu vektorově, text čitelný (VÝPOČET SOUDOBÉHO PŘÍKONU, β, cos φ, Varná deska)', sdPdf && sdPdf.vekt === true &&
     /VÝPOČET SOUDOBÉHO PŘÍKONU/.test(sdTxt) && /cos φ/.test(sdTxt) && /Varná deska/.test(sdTxt) && /ČSN 33 2130 ed\. 4/.test(sdTxt), sdTxt.slice(0, 160).replace(/\s+/g, ' '));
 
+  // ── výměna s CAD: export DXF a import DXF ze Schémat CAD (2026-11-02) ──
+  {
+    const fs = require('fs'), path = require('path'), cp = require('child_process');
+    const BEH = path.join(__dirname, '_beh'), KON = path.join(__dirname, 'dxf-kontrola.py');
+    const py = (...a) => { try { return cp.execFileSync('python3', [KON, ...a], { maxBuffer: 64 << 20 }).toString(); } catch (e) { return 'CHYBA ' + (e.stderr || e).toString().slice(0, 300); } };
+    const json = s => { try { return JSON.parse(s); } catch (e) { return { chyba: s.slice(0, 200) }; } };
+    // rozvaděč bytu 3+1 s vývodem „Zásuvky – kuchyňka, ř. 1"
+    await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString());
+    const ex = await p.evaluate(async () => {
+      const r = {};
+      try { localStorage.removeItem('revize_el_rz_barvy'); } catch (e) {}
+      await dokNovy('rozv');
+      __T.nast('[data-dk="oznaceni"]', 'RH1'); __T.nast('[data-dk="stavba"]', 'Byt 3+1, Vymyšlená 12');
+      __T.nast('[data-dk="soustava"]', '3NPE ~400/230 V TN-S'); __T.nast('[data-dk="datum"]', '2026-11-02');
+      rozvSkrinNastavit(rozvKnihPolozka('v-sk-3x12-n')); window.__rozvByt();
+      const naj = o => { let y = null; __rz.rady.forEach(rr => rr.prvky.forEach(x => { if (x.ozn === o) y = x; })); return y; };
+      naj('-FA2').vyvod = 'Zásuvky – kuchyňka, ř. 1'; naj('-FA2').pi = '2,5';
+      rozvZmena('t', () => {}); await dokUlozitOtevreny();
+      window.__cadUid = window.__dokOtevreny.uid;
+      const d = window.__dokOtevreny.data;
+      // kolik přístrojů je ve schématu (skupiny data-puid na jednopólových listech)
+      const L = rozvSchemaListy(d), uid = {};
+      L.forEach((l, i) => { if (!i || l.g.ovl) return; const box = document.createElement('div'); box.innerHTML = l.svg;
+        box.querySelectorAll('svg > [data-puid], svg > g:not([data-puid]) [data-puid]').forEach(g => { if (!g.parentNode.closest('[data-puid]')) uid[g.getAttribute('data-puid')] = 1; }); });
+      r.pristroju = Object.keys(uid).length; r.listu = L.length;
+      await dokNahled(); await __T.w(400);
+      const btn = document.getElementById('dok-pdf-dxf');
+      r.btn = !!btn && btn.offsetParent !== null; r.btnText = btn ? btn.textContent : ''; r.btnTitle = btn ? btn.title : '';
+      r.btnZaUlozit = btn && btn.previousElementSibling && btn.previousElementSibling.getAttribute('data-action') === 'tdPdfUlozit';
+      r.nazev = rozvDxfNazev(d);
+      delete window.showSaveFilePicker;
+      return r;
+    });
+    check('CAD export: v náhledu PDF rozvaděče tlačítko „📐 Stáhnout pro CAD (DXF)" hned za Uložit PDF, s bublinou', ex.btn && /Stáhnout pro CAD \(DXF\)/.test(ex.btnText) && ex.btnZaUlozit &&
+      /Schémata CAD, AutoCAD a jiné CAD programy – čáry a texty půjdou upravit/.test(ex.btnTitle), ex.btnText);
+    await p.screenshot({ path: path.join(BEH, 'cad-nahled-pdf-tlacitko.png') });
+    const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 15000 }).catch(() => null), p.click('#dok-pdf-dxf')]);
+    const dxfCesta = path.join(BEH, 'rozvadec-cad-export.dxf');
+    if (dl) await dl.saveAs(dxfCesta);
+    check('CAD export: stáhne se soubor <rozvaděč>_<objekt>.dxf', !!dl && /RH1_Byt_3.1,?_Vym[yý]?[sš]len[aá]_12\.dxf$/.test(dl.suggestedFilename()) && ex.nazev === 'RH1_Byt_3+1,_Vymyšlená_12.dxf', dl ? dl.suggestedFilename() : 'nic');
+    const A = dl ? json(py('rozbor', dxfCesta)) : {};
+    check('CAD export: ezdxf audit bez chyb a oprav, AC1018, ANSI_1250, jednotky mm', A.chyby === 0 && A.opravy === 0 && A.verze === 'AC1018' && A.codepage === 'ANSI_1250' && A.insunits === 4,
+      JSON.stringify([A.chyby, A.opravy, A.verze, A.codepage, A.insunits, A.zpravy, A.chyba]));
+    check('CAD export: vrstvy RAM, SILOVA, OVLADANI, POPISY, CELNI_POHLED, SVORKY', A.vrstvy && ['RAM', 'SILOVA', 'OVLADANI', 'POPISY', 'CELNI_POHLED', 'SVORKY'].every(v => A.vrstvy.includes(v)), (A.vrstvy || []).join());
+    const ins = (A.inserty || []).filter(i => i.vrstva === 'SILOVA');
+    check('CAD export: počet bloků přístrojů = počet přístrojů ve schématu, každý s ATTRIB a skrytým REVIZE_EL_ID', ins.length === ex.pristroju && ex.pristroju > 10 &&
+      ins.every(i => i.atr.REVIZE_EL_ID && i.skryte.REVIZE_EL_ID && 'OZNACENI' in i.atr && 'TYP' in i.atr && 'IN' in i.atr && 'IDN' in i.atr && 'ICN' in i.atr && i.textu > 0), ins.length + ' / ' + ex.pristroju);
+    const fa1 = ins.filter(i => i.atr.OZNACENI === '-FA1')[0] || { atr: {} };
+    check('CAD export: čitelný název bloku bez diakritiky (FA1_JISTIC_3P), atributy = hodnoty přístroje', fa1.blok === 'FA1_JISTIC_3P' && fa1.atr.IN === '25 A' && /B25/.test(fa1.atr.TYP) &&
+      ins.every(i => /^[A-Z0-9_]+$/.test(i.blok)), fa1.blok + ' ' + JSON.stringify(fa1.atr));
+    const fa2 = ins.filter(i => i.atr.OZNACENI === '-FA2')[0] || { atr: {} };
+    check('CAD export: čeština po načtení přes ezdxf beze změny („Zásuvky – kuchyňka, ř. 1")', fa2.atr.VYVOD === 'Zásuvky – kuchyňka, ř. 1' && (A.texty || []).includes('Zásuvky – kuchyňka, ř. 1'), fa2.atr.VYVOD);
+    check('CAD export: jen listy schématu vedle sebe (bez samostatného čelního pohledu), na každém rám (vnější, vnitřní) a razítko', A.ramu === 3 * ex.listu && (A.typy || {}).LINE > 50 && (A.typy || {}).TEXT > 50, A.ramu + ' rámů / ' + ex.listu + ' listů');
+    // schéma samotné (náhled jen schématu) — tlačítko i tam; štítek ho nemá
+    const ex2 = await p.evaluate(async () => {
+      const r = {};
+      await TD_AKCE.tdPdfZpet(); await __T.w(100);
+      await TD_AKCE.tdRSchPdf(); await __T.w(300);
+      r.schema = document.getElementById('dok-pdf-dxf').offsetParent !== null;
+      TD_AKCE.tdPdfZpet(); await __T.w(100);
+      const x = { uid: window.__dokOtevreny.uid, typ: 'rozv', data: window.__dokOtevreny.data };
+      rozvStitekVykreslit(x); await __T.w(200);
+      r.stitek = document.getElementById('dok-pdf-dxf').offsetParent !== null;
+      showScreen('dok-form');
+      return r;
+    });
+    check('CAD export: tlačítko i v náhledu schématu, ve štítku ne', ex2.schema && !ex2.stitek, JSON.stringify(ex2));
+
+    // PDF beze změny: tatáž data v předchozí verzi (8902) — stránky náhledu znak po znaku
+    const data = await p.evaluate(() => JSON.stringify({ x: dokNajit(window.__cadUid), t: STORE.technik }));
+    const html = async (pg) => pg.evaluate(async (s) => {
+      const o = JSON.parse(s); STORE.technik = o.t; await dokNacist();
+      DOK.dokumenty = DOK.dokumenty.filter(x => x.uid !== o.x.uid).concat([o.x]); await dokZapsat();
+      const ven = {};
+      await dokNahledZeSeznamu(o.x.uid); await new Promise(r => setTimeout(r, 400)); ven.dok = document.getElementById('dok-pdf-pages').innerHTML;
+      rozvSchemaVykreslit(o.x); await new Promise(r => setTimeout(r, 200)); ven.sch = document.getElementById('dok-pdf-pages').innerHTML;
+      return ven;
+    }, data);
+    const nyni = await html(p);
+    const c3 = await b.newContext({ viewport: { width: 1366, height: 900 } });
+    await c3.route(/cdnjs\.cloudflare\.com\/.*\/(jspdf\.umd\.min\.js|html2canvas\.min\.js)$/, r => r.fulfill({ path: path.join(__dirname, 'knihovny', r.request().url().split('/').pop()), contentType: 'application/javascript', headers: { 'Access-Control-Allow-Origin': '*' } }));
+    await c3.addInitScript(() => { try { navigator.serviceWorker.register = () => new Promise(() => {}); } catch (e) {} });
+    const ps = await c3.newPage(); await ps.goto('http://127.0.0.1:' + (process.env.STARA_PORT || 8902) + '/index.html'); await w(1200);
+    const stara = await html(ps).catch(e => ({ dok: 'chyba ' + e.message }));
+    await c3.close();
+    check('CAD: PDF dokumentace i schématu beze změny proti předchozí verzi (stránky náhledu znak po znaku)', nyni.dok.length > 5000 && nyni.dok === stara.dok && nyni.sch === stara.sch,
+      nyni.dok.length + ' / ' + (stara.dok || '').length);
+
+    // ── import vymyšleného „elmerovského" výkresu ──
+    const ELMER = path.join(__dirname, 'vstupy', 'elmer-ordinace.dxf');
+    await p.evaluate(async () => {
+      // vymyšlená položka knihovny se shodným typem (zelená shoda) — žádná data výrobců
+      await dokNacist();
+      DOK.rozvKnihovna = (DOK.rozvKnihovna || []).filter(x => x.id !== 'u-test-ltn16');
+      DOK.rozvKnihovna.push(rozvPolozkaNorm({ id: 'u-test-ltn16', druh: 'pristroj', kat: 'FA', nazev: 'Jistič LTN 16B/1 (test)', vyrobce: 'Výrobce A', rada: 'LTN', typ: 'LTN-16B-1', poly: '1', In: 16, char: 'B', sirka: 1, zdroj: 'import' }, 'pristroj'));
+      await dokZapsat(); dokOtevritSeznam('rozv'); await __T.w(200);
+    });
+    const tl = await p.evaluate(() => { const b = [...document.querySelectorAll('#dok-typy button')]; const c = b.filter(x => /Načíst výkres z CAD \(DXF\)/.test(x.textContent))[0];
+      return { ok: !!c && c.classList.contains('dok-druha-akce'), vedle: !!c && /Zakreslit z revizní zprávy/.test(c.previousElementSibling.textContent), hlavni: b[0].classList.contains('dok-hlavni-akce') }; });
+    check('CAD import: na seznamu „📐 Načíst výkres z CAD (DXF)" vedle „Zakreslit z revizní zprávy", hlavní akce zůstala', tl.ok && tl.vedle && tl.hlavni, JSON.stringify(tl));
+    const [fc] = await Promise.all([p.waitForEvent('filechooser', { timeout: 5000 }).catch(() => null), p.evaluate(() => [...document.querySelectorAll('#dok-typy button')].filter(x => /Načíst výkres z CAD/.test(x.textContent))[0].click())]);
+    if (fc) await fc.setFiles(ELMER);
+    await w(800);
+    const nh = await p.evaluate(() => {
+      const m = document.getElementById('modal-rz-dxf'), R = (__rzDxf || {}).radky || [];
+      const po = o => R.filter(r => dxfOznNorm(r.q.ozn) === o)[0] || { q: {} };
+      return { open: m.classList.contains('open'), n: R.length, text: m.innerText,
+        oli: R.filter(r => /^OLI/.test(r.q.typ) && r.q.kat === 'FIFA' && r.q.idn === 30 && r.q.poly === '1+N').length,
+        ltn: R.filter(r => /^LTN/.test(r.q.typ) && r.q.kat === 'FA').length,
+        lfn: R.filter(r => /^LFN/.test(r.q.typ) && r.q.kat === 'FI' && r.q.poly === '4').length,
+        qh: po('QH').q.kat + '|' + po('QH').q.volny + '|' + po('QH').q.In,
+        barvy: ['zelena', 'oranzova', 'cervena'].map(c => m.querySelectorAll('tr.rzd-' + c).length).join('/'),
+        zelene: R.filter(r => r.stav === 'zelena').map(r => r.q.ozn).join(),
+        fa14: po('FA14').stav + '|' + po('FA14').volba + '|' + po('FA14').duvod,
+        ok: document.getElementById('rzd-ok').textContent };
+    });
+    check('CAD import: náhled po výběru souboru — 14 přístrojů, hlavní akce „Založit rozvaděč"', nh.open && nh.n === 14 && /Založit rozvaděč/.test(nh.ok), nh.n + ' ' + nh.ok);
+    check('CAD import: 5× RCBO OLI (1+N, 30 mA), 6× jistič LTN, 1× chránič LFN 4P, QH volným textem (vypínač 32 A)', nh.oli === 5 && nh.ltn === 6 && nh.lfn === 1 && nh.qh === 'QM|true|32', [nh.oli, nh.ltn, nh.lfn, nh.qh].join(' '));
+    check('CAD import: barvy řádků — zelená shoda typu s knihovnou (LTN 16B/1), oranžová odhad, červená nerozpoznáno', nh.barvy === '4/9/1' && nh.zelene === 'FA9,FA10,FA11,FA12' && /^cervena\|__vynechat\|chybí jmenovitý proud/.test(nh.fa14), nh.barvy + ' ' + nh.zelene + ' ' + nh.fa14);
+    check('CAD import: údaje z razítka a tabulky v náhledu (RS-ORD1, soustava, IP40, rozměry, přívod shora, skříň ABB 3×12)', /RS-ORD1/.test(nh.text) && /3 NPE AC 50 Hz 230\/400V \/ TN-C-S/.test(nh.text) && /IP40/.test(nh.text) &&
+      /300x545x90/.test(nh.text) && /shora/.test(nh.text) && /Rozvodnice 3×12 modulů ABB/.test(nh.text) && /data OEZ nemá načtená/.test(nh.text));
+    await p.screenshot({ path: path.join(BEH, 'cad-import-nahled.png') });
+    await p.evaluate(async () => { await TD_AKCE.tdRDxfOk(); await __T.w(400); });
+    const zal = await p.evaluate(() => {
+      const o = window.__dokOtevreny, d = o.data, v = [], naj = {};
+      d.rady.forEach(r => r.prvky.forEach(x => { v.push(x); naj[x.ozn] = x; }));
+      const S = rozvSoudVypocet(DOK_TYPY.rozv.cist(dokForm()));
+      return { scr: document.querySelector('.screen.active').id, ozn: d.oznaceni, stavba: d.stavba, sous: d.soustava, kryti: d.krytiZavreno, smer: d.privodSmer,
+        skrin: [d.skrin.rady, d.skrin.modulu, d.skrin.vyrobce].join('|'), rady: d.rady.map(r => r.prvky.map(x => x.ozn).join(',')).join(' / '),
+        fa1: [naj['-FA1'].vyvod, naj['-FA1'].spotr, naj['-FA1'].obvod, naj['-FA1'].kabel, naj['-FA1'].prurez, naj['-FA1'].pi].join('|'),
+        fa4: naj['-FA4'].vyvod, fa5: naj['-FA5'].vyvod, nadr: ['-FA8', '-FA9', '-FA10', '-FA11', '-FA12', '-FA13'].map(o => naj[o].nadr === naj['-FI7'].uid ? 'FI7' : '-').join(','),
+        fa14: !!naj['-FA14'], qh: naj['-QH'] && naj['-QH'].p.kat + '|' + naj['-QH'].hlavni,
+        obecna: [naj['-FA1'].pozn, (naj['-FA1'].upoz || []).join(), naj['-FA1'].p.vyrobce, naj['-FA1'].p.typ].join('|'),
+        zelena: naj['-FA9'].knih + '|' + (naj['-FA9'].upoz || []).length,
+        schema: rozvSchemaListy(d).length, pp: S && S.pp, napZ: (d.napajenZ || {}).nazev, pj: d.privodJistic };
+    });
+    check('CAD import: založený rozvaděč se otevře v editoru (RS-ORD1, akce z razítka, TN-C-S, IP40, přívod shora, skříň ABB 3×12)', zal.scr === 'screen-dok-form' && zal.ozn === 'RS-ORD1' && /Ordinace MUDr\. Vymyšlená/.test(zal.stavba) &&
+      zal.sous === '3PEN/3NPE ~400/230 V TN-C-S' && zal.kryti === 'IP40' && zal.smer === 'shora' && zal.skrin === '3|12|ABB', JSON.stringify([zal.ozn, zal.sous, zal.kryti, zal.skrin]));
+    check('CAD import: řady podle čelního pohledu, FA14 (vynechaný) chybí', zal.rady === '-QH,-FA1,-FA2,-FA3,-FA4 / -FA5,-FI7,-FA8,-FA9,-FA10 / -FA11,-FA12,-FA13' && !zal.fa14, zal.rady);
+    check('CAD import: obvody podle X — dvouřádkový popis spojený, typ obvodu, číslo, kabel, Pi; čeština beze změny', zal.fa1 === 'Osv. (ordinace, sesterna, čekárna)|svetlo|1|CYKY-J|3×1,5|0,8' &&
+      zal.fa4 === 'Zásuvky – kuchyňka, ř. 1' && zal.fa5 === 'Rezerva', zal.fa1 + ' / ' + zal.fa4);
+    check('CAD import: nadřazený chránič FI7 jen u jističů pod jeho přípojnicí (FA8–FA11), FA12–FA13 z hlavní', zal.nadr === 'FI7,FI7,FI7,FI7,-,-', zal.nadr);
+    check('CAD import: QH = hlavní vypínač; přívod z RH100.2, předřazený jistič FA02 B25/3', zal.qh === 'QM|true' && zal.napZ === 'RH100.2' && zal.pj === 'B25/3', zal.qh + ' ' + zal.napZ + ' ' + zal.pj);
+    check('CAD import: nenalezený typ → obecná položka s poznámkou „z DXF – nenalezeno v knihovně" (výrobce jen podle předpony OEZ)', /^z DXF – nenalezeno v knihovně\|doplňte typ – v knihovně není \(z výkresu CAD\)\|OEZ\|OLI 10B\/2\/030\/A$/.test(zal.obecna), zal.obecna);
+    check('CAD import: shoda typu s knihovnou → kopie položky knihovny bez upozornění', zal.zelena === 'u-test-ltn16|0', zal.zelena);
+    check('CAD import: dál běží všechno jako u ručně složeného (schéma, soudobost z Pi)', zal.schema >= 2 && zal.pp > 5, zal.schema + ' listů, Pp ' + zal.pp);
+
+    // přetažení .dxf na seznam rozvaděčů
+    const b64 = fs.readFileSync(ELMER).toString('base64');
+    const pr = await p.evaluate(async (b64) => {
+      dokOtevritSeznam('rozv'); await __T.w(200);
+      const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0)), dt = new DataTransfer();
+      dt.items.add(new File([bin], 'elmer-ordinace.dxf'));
+      document.getElementById('dok-seznam').dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+      await __T.w(600);
+      const ok = document.getElementById('modal-rz-dxf').classList.contains('open') && __rzDxf && __rzDxf.radky.length === 14;
+      TD_AKCE.tdRDxfZavrit();
+      return ok;
+    }, b64);
+    check('CAD import: přetažení souboru .dxf na seznam rozvaděčů otevře náhled', pr);
+
+    // ── zpětné načtení vlastního exportu se změněným In a popisem ──
+    const zmen = path.join(BEH, 'rozvadec-cad-zmena.dxf');
+    py('zmen', dxfCesta, zmen, '-FA3', 'IN', '20 A', '-FA4', 'VYVOD', 'Zásuvky – ložnice u okna');
+    const zp = await p.evaluate(async (b64) => {
+      const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      await dokNacist(); const pred = DOK.dokumenty.length;
+      rozvDxfSoubor(new File([bin], 'zmena.dxf')); await __T.w(800);
+      const m = document.getElementById('modal-rz-dxf'), r = { open: m.classList.contains('open'), ok: document.getElementById('rzd-ok').textContent, text: m.innerText,
+        zmeny: ((__rzDxf || {}).aktual || {}).zmeny || [] };
+      r.z = r.zmeny.map(c => c.ozn + ':' + c.pole + ':' + c.stare + '→' + c.nove).join(' ; ');
+      await TD_AKCE.tdRDxfOk(); await __T.w(300);
+      await dokNacist(); const d = dokNajit(window.__cadUid).data, naj = {};
+      d.rady.forEach(rr => rr.prvky.forEach(x => naj[x.ozn] = x));
+      r.po = naj['-FA3'].p.In + '|' + naj['-FA4'].vyvod + '|' + naj['-FA2'].vyvod + '|' + (DOK.dokumenty.length - pred);
+      return r;
+    }, fs.readFileSync(zmen).toString('base64'));
+    check('CAD zpětně: vlastní výkres → nabídka „Aktualizovat existující rozvaděč" s přehledem změn (jen In a popis)', zp.open && /Aktualizovat existující rozvaděč/.test(zp.ok) && zp.zmeny.length === 2 &&
+      /-FA3:In:10→20/.test(zp.z) && /-FA4:vyvod:Zásuvky – obývací pokoj→Zásuvky – ložnice u okna/.test(zp.z) && /geometrie[\s\S]*se nepřebírá/i.test(zp.text), zp.z);
+    check('CAD zpětně: aktualizace převezme jen změněné hodnoty, nový rozvaděč nevznikne', zp.po === '20|Zásuvky – ložnice u okna|Zásuvky – kuchyňka, ř. 1|0', zp.po);
+
+    // ── DWG, binární DXF, prázdný soubor, výkres bez přístrojů → hláška, nic nespadne ──
+    const prazdnyDxf = path.join(BEH, 'cad-bez-pristroju.dxf'); py('bez-pristroju', prazdnyDxf);
+    const ch = await p.evaluate(async (bezB64) => {
+      const out = {}, toast = () => { const t = [...document.querySelectorAll('#toast-wrap .toast')].pop(); return t ? t.textContent : ''; };
+      const zkus = async (jm, bajty) => { document.getElementById('toast-wrap') && (document.getElementById('toast-wrap').innerHTML = ''); rozvDxfSoubor(new File([bajty], jm)); await __T.w(500);
+        return toast() + (document.getElementById('modal-rz-dxf').classList.contains('open') ? ' [OKNO]' : ''); };
+      out.dwg = await zkus('vykres.dwg', new TextEncoder().encode('AC1032\0\0\0\0binarni data'));
+      out.bin = await zkus('vykres.dxf', new TextEncoder().encode('AutoCAD Binary DXF\r\n\x1a\0data'));
+      out.prazdny = await zkus('prazdny.dxf', new Uint8Array(0));
+      out.svg = await zkus('vykres.svg', new TextEncoder().encode('<svg/>'));
+      out.nic = await zkus('pudorys.dxf', Uint8Array.from(atob(bezB64), c => c.charCodeAt(0)));
+      return out;
+    }, fs.readFileSync(prazdnyDxf).toString('base64'));
+    check('CAD chyby: DWG → „DWG neumím, v CAD ho uložte jako DXF"', /DWG neumím — v CAD ho uložte jako DXF/.test(ch.dwg) && !/OKNO/.test(ch.dwg), ch.dwg);
+    check('CAD chyby: binární DXF, prázdný soubor a SVG → srozumitelná hláška, okno se neotevře', /uložený binárně/.test(ch.bin) && /prázdný/.test(ch.prazdny) && /DWG a SVG ne/.test(ch.svg) && !/OKNO/.test(ch.bin + ch.prazdny + ch.svg), [ch.bin, ch.prazdny, ch.svg].join(' | '));
+    check('CAD chyby: výkres bez přístrojů → „Tento výkres neobsahuje rozpoznatelné přístroje"', /Tento výkres neobsahuje rozpoznatelné přístroje/.test(ch.nic) && !/OKNO/.test(ch.nic), ch.nic);
+    // karta v Novinkách (uživatel o ni požádal) — tlačítka, na která odkazuje, v programu opravdu jsou
+    const nov = await p.evaluate(() => {
+      const k = [...document.querySelectorAll('#screen-novinky .scard')].filter(c => /Výměna výkresů s CAD/.test(c.textContent))[0];
+      const maxD = [...document.querySelectorAll('#screen-novinky [data-nov-datum]')].map(c => c.getAttribute('data-nov-datum')).sort().pop();
+      return { je: !!k, datum: k && k.getAttribute('data-nov-datum'), prvni: k && k === document.querySelector('#screen-novinky .scard[data-nov-datum]'), maxD, text: k ? k.textContent : '',
+        tl: [document.getElementById('dok-pdf-dxf').textContent.trim(), DOK_TYPY.rozv.zCad] };
+    });
+    check('CAD Novinky: karta „Výměna výkresů s CAD" nahoře s datem 2026-11-02 a návodem (Stáhnout / Načíst, Uložit jako DXF, barvy náhledu, DWG a SVG ne)', nov.je && nov.datum === '2026-11-02' && nov.prvni && nov.maxD === '2026-11-02' &&
+      nov.text.includes(nov.tl[0]) && /Načíst výkres z CAD \(DXF\)/.test(nov.text) && /Uložit jako → DXF – AutoCAD/.test(nov.text) && /oranžové jsou odhad/.test(nov.text) && /DWG ani SVG ne/.test(nov.text) && nov.tl[1] === true, nov.datum);
+    await p.evaluate(() => { showScreen('novinky'); const k = [...document.querySelectorAll('#screen-novinky .scard')].filter(c => /Výměna výkresů s CAD/.test(c.textContent))[0]; k.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); });
+    await w(200); await p.screenshot({ path: path.join(BEH, 'cad-novinky.png') });
+  }
+
   // ── oddělení od revizí ────────────────────────────────────────────────
   const odd = await p.evaluate(async () => {
     showScreen('home'); renderArchiv();
