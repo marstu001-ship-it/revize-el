@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.136 · 2026-11-02**
+**Aktuální verze: v9.137 · 2026-11-03**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -997,8 +997,13 @@ a výsledky zkoušek program nikdy nevymýšlí.**
   adresa, typ, výr. č., rok/měsíc, „ČSN EN IEC 61439-3 (IEC 61439-3)", CE,
   InA (u DBO vždy). Rozšířená část (výchozí zapnutá): druh sítě s Un a fn,
   Icc, IP, třída; značka třídy II jen při zaškrtnutí a třídě II. **CE kreslí
-  `rozvCeSvg`** (dva oblouky na stejných kružnicích se svislým řezem a příčka
-  E, výška ≥ 5 mm), žádný obrázek. Písmo se zmenší, dokud se obsah nevejde.
+  `rozvCeSvg`** podle konstrukční mřížky **přílohy II nařízení (ES)
+  č. 765/2008** (opraveno 2026-11-03 podle nákresu od uživatele; jednotka =
+  R/10): každé písmeno mezikruží R 10 / r 7, svislý řez 1 vpravo od středu,
+  středy C a E 17 od sebe, příčka E tloušťky 3 od vnitřní kružnice po 1
+  vlevo od středu, šířka = 1,4 × výška, výška ≥ 5 mm; žádný obrázek. Dřív
+  byl řez 5 za středem, písmena 20,8 od sebe a příčka přes střed — hlídá
+  test (body uvnitř/vně tvarů). Písmo se zmenší, dokud se obsah nevejde.
 - **Prohlášení** (`rozvPdfProhlaseni`): vzor přílohy č. 4 NV 118/2016 —
   7 bodů a „Podepsáno za a jménem:" **doslova**; bod 5 NV 118/2016 a 117/2016
   (+ 481/2012 jen s RoHS), bod 6 normy ed. 3 / ed. 2 (+ ČSN EN IEC 63000 jen
@@ -2143,6 +2148,20 @@ u 3+N pomocný kontakt) nebo přepínačem 0/1, schodišťový automat,
 signalizace (pomocný kontakt → kontrolka / výstup na svorky), motor
 (spouštěč + stykač + ZAP/VYP). Vloží, propojí, doplní svorky, vybere
 cívku; jedno ZPĚT. Šablony s vývodem vyžadují vybraný jistič.
+
+**Popisky se nesmí překrývat (2026-11-02, hlášení uživatele: hlavní vypínač
++ CENTRAL STOP):** u přívodu jde hodnota vypínače svisle od spodku značky
+nahoru; se spouští jen pod mechanickou vazbu (typ se vynechá, když se nevejde)
+a popisek spouště je ve dvou svislých řádcích („spoušť" / „C1–C2 /3.1") celý
+nad popiskem sběrnice „L1, L2, L3". Text soustavy na sběrnici se zarovná
+vpravo jen, když se vejde celý; jinak začne za lomítky a jističem ovládání
+a smí přesáhnout konec sběrnice (dřív přejel přes „L1, L2, L3" nebo se
+uřízl). Dlouhá hodnota vývodu (MCCB se spouštěmi, NH s vložkou) posune
+označení přístroje výš. Hodnota chrániče a RCBO je o 0,7 mm dál od kroužku
+součtového transformátoru. U PSC začínají texty přívodu nad popiskem
+sběrnice. Kontrola: skript ve scratchpadu porovnal obdélníky všech textů
+ve všech listech (QH + CENTRAL STOP, podpěťová s vývody, byt 3+1 se
+šablonami, hala PSC) — 0 překryvů.
 
 **Starý rozvaděč beze změny:** bez `vnejsi`, `ovl`, `spina`, `prislNa`,
 `predHlavnim`, `svorkaOvl` se data, čelní pohled i schéma nemění (test).
