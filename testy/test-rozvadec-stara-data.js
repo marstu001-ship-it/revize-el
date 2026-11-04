@@ -145,7 +145,7 @@ const zpravaOtevritUlozit = async (p) => p.evaluate(async () => {
   check('starý rozvaděč (uložený starou verzí po návštěvě Dokumentů): načtená data = uložená starou verzí', novyRozv.nacteno === staryRozv.ulozeno);
   check('starý rozvaděč: cist() po otevření bajtově jako uložená data', novyRozv.cist === novyRozv.nacteno,
     novyRozv.cist.length + ' × ' + staryRozv.cist.length);
-  check('starý rozvaděč: po otevření, projití záložek a uložení bajtově beze změny (i stitek.tridaII: false, bez ko.ui / ko.pe)', novyRozv.ulozeno === novyRozv.nacteno && /"tridaII":false/.test(novyRozv.ulozeno) && novyRozv.ulozeno === staryRozv.ulozeno);
+  check('starý rozvaděč: po otevření, projití záložek a uložení bajtově beze změny (i stitek.tridaII: false, bez ko.ui / ko.pe)', novyRozv.ulozeno === novyRozv.nacteno && novyRozv.ulozeno === staryRozv.ulozeno && (staryRozv.ulozeno.match(/"tridaII":[^,}]*/) || [''])[0] === (novyRozv.ulozeno.match(/"tridaII":[^,}]*/) || ['-'])[0]);
   check('starý rozvaděč: označení vypínače se nepřeznačilo (' + oznStare + ')', oznQ(novyRozv.ulozeno) === oznStare, oznQ(novyRozv.ulozeno));
   check('starý rozvaděč: nezapsal se typ obvodu, skupina ani β soudobosti',
     !/"typObv|"soud|"beta"|"obvTyp/.test(novyRozv.ulozeno), (novyRozv.ulozeno.match(/"(typObv|soud\w*|beta|obvTyp)"/g) || []).join(','));
@@ -165,8 +165,9 @@ const zpravaOtevritUlozit = async (p) => p.evaluate(async () => {
   check('rozvaděč se „stupen: B" a „okoli55: true" (Dokumenty poprvé): načtený beze změny, po uložení jako ve staré verzi kromě nově zapsaného tridaII',
     novyRozv2.nacteno === staryRozv2.nacteno && bezTr(novyRozv2.ulozeno) === bezTr(staryRozv2.ulozeno),
     novyRozv2.ulozeno.length + ' × ' + staryRozv2.ulozeno.length);
-  check('rozvaděč (Dokumenty poprvé): stará verze zapsala tridaII: false, nová odvozené ""',
-    /"tridaII":false/.test(staryRozv2.ulozeno) && /"tridaII":""/.test(novyRozv2.ulozeno) && !/"tridaII"/.test(novyRozv2.nacteno));
+  // (se STARA = v9.139 a starší stará verze zapíše false; se STARA = HEAD už '')
+  check('rozvaděč (Dokumenty poprvé): stará verze zapsala tridaII: false nebo "", nová odvozené ""',
+    /"tridaII":(false|"")/.test(staryRozv2.ulozeno) && /"tridaII":""/.test(novyRozv2.ulozeno) && !/"tridaII"/.test(novyRozv2.nacteno));
   check('rozvaděč se „stupen: B": stupen ani okoli55 se nepřepsaly, tmax/okoli/vodice125 nepřibyly',
     /"stupen":"B"/.test(novyRozv2.ulozeno) && /"okoli55":true/.test(novyRozv2.ulozeno) && !/"tmax"|"okoli":|"vodice125"/.test(novyRozv2.ulozeno));
   if (bezTr(novyRozv2.ulozeno) !== bezTr(staryRozv2.ulozeno)) {
