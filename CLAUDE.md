@@ -509,6 +509,17 @@ Test: `testy/test-normy-61439.js` (19 kontrol). **Upraveno:**
 `test-rozvadec-dokumenty.js` (11.5, odvozené zkušební napětí, štítky jen
 u dílu 3), `test-rozvadec-faze-otepleni.js` (podmínky s citací, pole teploty).
 
+**Při přenosu do ostrého programu (v9.140) opraveno:** návštěva záložky
+Dokumenty a uložení zapisovaly uloženému rozvaděči prázdné nové klíče
+`ko.ui`, `ko.pe` a u PSC prázdné řádky tab. D.1 (`ov.z.*`, `ov.p.*`)
+a starší `stitek.tridaII: false` přepisovaly pravidlem `data-odv` na `''`.
+`DOK_TYPY.rozv.cist` je teď ukládá jen vyplněné a uloženou hodnotu
+`tridaII` nechá, dokud technik zaškrtnutí nezmění. Jediný rozdíl proti
+v9.139 zůstává u rozvaděče, jehož Dokumenty nikdo neotevřel: klíč `tridaII`
+zapsaný poprvé je `''` (odvozená hodnota) místo dřívějšího `false` — význam
+stejný. Hlídá `test-rozvadec-stara-data.js` (rozvaděč uložený v9.139 se
+`stupen: 'B'`, `okoli55: true`, PSC hala, zpráva LPS se staršími citacemi).
+
 ## Tvorba dokumentace — Protokol o určení vnějších vlivů (blok `TVORBA DOKUMENTACE`)
 
 Zadání uživatele 2026-10-16: čtvrtá karta na úvodu
