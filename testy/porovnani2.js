@@ -36,6 +36,51 @@ async function otisk(page, v) {
   }, v);
 }
 
+// Záměrně opravené citace norem (FUNKCE: Normy – opravy citací, dávka 1).
+// Ve staré verzi se v textu PDF nahradí novým zněním, takže se porovnání
+// zastaví jen na jiném rozdílu. Které se opravdu uplatnily, se vypíše.
+const OPRAVY_TEXTU = [
+  ['ČSN 33 2000-6 ed.3, čl. 6.4.3.5, příl. B', 'ČSN 33 2000-6 ed.2, čl. 6.4.3.5, příl. B'],
+  ['ČSN 33 2000-6 ed.2, čl. 61.3.10', 'ČSN 33 2000-6 ed.2, čl. 6.4.3.6'],
+  ['ČSN 33 2000-6 ed.2, čl. 64.3.10', 'ČSN 33 2000-6 ed.2, čl. 6.4.3.10'],
+  // dávka 2: ČSN 34 1390 — prohlídka (bod + citace), patička měření, vzorový popis
+  ["Provedení jímacího zařízení (hřebenové vedení, jímací tyče, náhodné jímače)ČSN 34 1390, čl. 35–41Odpovídá", "Provedení jímacího zařízení (hřebenové vedení, jímací tyče, náhodné jímače)ČSN 34 1390, čl. 16 až 19Odpovídá"],
+  ["Uspořádání jímacího vedení po obvodu střechy a ochrana vyčnívajících částíČSN 34 1390, čl. 36Odpovídá", "Uspořádání jímacího vedení po obvodu střechy a ochrana vyčnívajících částíČSN 34 1390, čl. 17, 18Odpovídá"],
+  ["Vzdálenosti jímačů od hořlavých stavebních hmotČSN 34 1390, čl. 42Odpovídá", "Vzdálenosti jímačů od hořlavých stavebních hmotČSN 34 1390, čl. 35Odpovídá"],
+  ["Stav a koroze jímacích vodičů a spojůČSN 34 1390, čl. 124Odpovídá", "Stav a koroze jímacích vodičů a spojůČSN 34 1390, čl. 21 až 24, 54Odpovídá"],
+  ["Počet svodů (obvykle min. 2, v rozích objektu)ČSN 34 1390, čl. 46Odpovídá", "Počet svodů (1 na 15 m hřebene, resp. 30 m obvodu)ČSN 34 1390, čl. 32Odpovídá"],
+  ["Vzdálenost svodů od hořlavých částí budovyČSN 34 1390, čl. 51Odpovídá", "Vzdálenost svodů od hořlavých částí budovyČSN 34 1390, čl. 35Odpovídá"],
+  ["Zkušební svorky — umístění ≈ 1,5 m nad zemí, označeníČSN 34 1390, čl. 50Odpovídá", "Zkušební svorky — asi 2 m nad zemí, přístupnéČSN 34 1390, čl. 45Odpovídá"],
+  ["Mechanická ochrana svodu v dosahu osobČSN 34 1390, čl. 52Odpovídá", "Mechanická ochrana svodu v dosahu osobČSN 34 1390, čl. 38 b) (do výšky asi 1,7 m)Odpovídá"],
+  ["Celistvost a stav spojů svodůČSN 34 1390, čl. 124Odpovídá", "Celistvost a stav spojů svodůČSN 34 1390, čl. 41 až 44Odpovídá"],
+  ["Uzemnění jednotlivých svodů (doporučeno ≤ 15 Ω)ČSN 34 1390, čl. 55Odpovídá", "Uzemnění jednotlivých svodů (≤ 20 Ω)ČSN 34 1390, čl. 55 b)Odpovídá"],
+  ["Celkový zemní odpor soustavyČSN 34 1390, čl. 55Odpovídá", "Skupina zemničů spojená nad zemí (< 15 Ω)ČSN 34 1390, čl. 55 c)Odpovídá"],
+  ["Materiál a průřez zemničů (FeZn, Cu)ČSN 34 1390, čl. 56Odpovídá", "Materiál a průřez zemničů (FeZn, Cu)ČSN 34 1390, čl. 53Odpovídá"],
+  ["Hloubka uložení zemničůČSN 34 1390, čl. 57Odpovídá", "Hloubka uložení zemničůČSN 34 1390, čl. 53 b)Odpovídá"],
+  ["Pospojování kovových částí vstupujících do objektuČSN 34 1390, čl. 62Odpovídá", "Pospojování kovových částí vstupujících do objektuČSN 34 1390, čl. 61 až 66Odpovídá"],
+  ["Provedení svorkových spojů a jejich přístupnostČSN 34 1390, čl. 123Odpovídá", "Provedení svorkových spojů a jejich přístupnostČSN 34 1390, čl. 41 až 45Odpovídá"],
+  ["Celistvost LPS, přechodové odpory (≤ 0,2 Ω)ČSN 34 1390, čl. 124Odpovídá", "Celistvost LPS, přechodové odpory (≤ 0,2 Ω)ČSN 34 1390, čl. 41 až 44; mez 0,2 Ω podle ČSN EN 62305-3Odpovídá"],
+  ["Dokumentace LPS a zápisy z předchozích revizíČSN 34 1390, čl. 129Odpovídá", "Dokumentace LPS a zápisy z předchozích revizíČSN 34 1390, čl. 12, 201Odpovídá"],
+  ["Doporučená hodnota zemního odporu jednotlivých svodů ≤ 15 Ω dle ČSN 34 1390, čl. 55.Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN 34 1390, čl. 124.", "ČSN 34 1390: Zemní odpor zemniče jednoho svodu nemá být větší než 20 Ω (čl. 55 b); skupina zemničů spojená nad zemí < 15 Ω (čl. 55 c).Přechodové odpory spojů vodičů ≤ 0,2 Ω (podle ČSN EN 62305-3)."],
+  ["od hořlavých částí střechy vyhovuje požadavkům ČSN 34 1390 čl. 42.", "od hořlavých částí střechy vyhovuje požadavkům ČSN 34 1390 čl. 35."],
+  ["V dosahu osob (do výšky 1,8 m) jsou svody opatřeny", "V dosahu osob (do výšky asi 1,7 m, čl. 38) jsou svody opatřeny"],
+  ["umístěny ve výšce cca 1,5 m nad zemí, jsou přístupné a označené dle ČSN 34 1390 čl. 50.", "umístěny ve výšce asi 2 m nad zemí, jsou přístupné a označené dle ČSN 34 1390 čl. 45."],
+  ["se doporučuje ≤ 15 Ω (ČSN 34 1390 čl. 55).", "se doporučuje ≤ 20 Ω (ČSN 34 1390 čl. 55)."],
+  ["s uzemňovací soustavou dle ČSN 34 1390 čl. 62.", "s uzemňovací soustavou dle ČSN 34 1390 čl. 61 až 66."],
+  ["požadavek ≤ 0,2 Ω dle ČSN 34 1390 čl. 124.", "požadavek ≤ 0,2 Ω."],
+  // LPS 62305 — prohlídka a patička měření
+  ["Délka zemničů dle třídy LPSČSN EN 62305-3 ed.2, čl. 5.4.2.1, E5.4.2.2Odpovídá", "Délka zemničů dle třídy LPSČSN EN 62305-3 ed.2, čl. 5.4.2.2, E.5.4.2.2Odpovídá"],
+  ["Provedení uzemněníČSN EN 62305-4 ed.2, čl. 5.1Odpovídá", "Provedení uzemněníČSN EN 62305-4 ed.2, čl. 5.2Odpovídá"],
+  ["Zabezpečena co nejnižší hodnota impedance pospojováníČSN EN 62305-4 ed.2, čl. 5.2Odpovídá", "Zabezpečena co nejnižší hodnota impedance pospojováníČSN EN 62305-4 ed.2, čl. 5.3Odpovídá"],
+  ["SPD koordinovaně umístěny na vstupu vedení do každé zónyČSN EN 62305-4 ed.2, tab. 4.3Odpovídá", "SPD koordinovaně umístěny na vstupu vedení do každé zónyČSN EN 62305-4 ed.2, kap. 7Odpovídá"],
+  ["Minimální hodnota zemního odporu jednoho zemniče ≤ 10 Ω dle ČSN EN 62305-3 ed.2, čl. 5.4.1.Přechodové odpory spojů vodičů ≤ 0,2 Ω dle ČSN EN 62305-3 ed.2, čl. 5.3.5.", "Doporučuje se odpor uzemnění nižší než 10 Ω, je-li to možné (ČSN EN 62305-3 ed.2, čl. 5.4.1). Nejúčinnějším opatřením zůstává pospojování.Přechodové odpory spojů ≤ 0,2 Ω – doporučení z praxe. U výztuže železobetonu použité jako náhodný svod je 0,2 Ω požadavek normy (ČSN EN 62305-3 ed.2, čl. 5.3.5)."]
+];
+const opravyPouzite = new Set(), zlomy = [];
+function opravText(t) {
+  OPRAVY_TEXTU.forEach(([a, b]) => { if (t.includes(a)) { opravyPouzite.add(a + ' → ' + b); t = t.split(a).join(b); } });
+  return t;
+}
+
 (async () => {
   const varianty = [
     { jmeno:'elektro / rodinný dům', typ:'elektro', podtyp:'dum' },
@@ -61,8 +106,14 @@ async function otisk(page, v) {
   let vse = true;
   for (const v of varianty) {
     const a = await otisk(stara.p, v);
+    a.text = opravText(a.text); a.data = opravText(a.data);
     const c = await otisk(nova.p, v);
-    const shodaText = a.text === c.text, shodaData = a.data === c.data, shodaKap = a.kap === c.kap;
+    // Kratší opravený text smí posunout zlom stránky — porovná se i bez
+    // záhlaví a patičky stránek (počet stran se hlídá dál).
+    const bezZlomu = t => t.split('\n§\n').map(s => s.replace(/^.{0,12}\d{3}\/\d{3}RE-\d\d-\d{4}/, '').replace(/M\. Technik, Zkušební 1, 697 01 Kyjovev\. číslo: Revize EL \d{4}$/, '')).join('');
+    const zlom = a.text !== c.text && bezZlomu(a.text) === bezZlomu(c.text);
+    if (zlom) zlomy.push(v.jmeno);
+    const shodaText = a.text === c.text || zlom, shodaData = a.data === c.data, shodaKap = a.kap === c.kap;
     const ok = shodaText && shodaData && shodaKap && a.stran === c.stran;
     if (!ok) vse = false;
     res.push((ok ? '✅' : '❌') + ' ' + v.jmeno.padEnd(26) +
@@ -90,6 +141,8 @@ async function otisk(page, v) {
     }
   }
   console.log(res.join('\n'));
+  if (zlomy.length) console.log('\nposunutý zlom stránky (po opravených textech): ' + zlomy.join(', '));
+  console.log('\nzáměrně změněné řetězce v PDF (' + opravyPouzite.size + '):' + (opravyPouzite.size ? '\n   ' + [...opravyPouzite].join('\n   ') : ' žádné'));
   console.log('\nchyby stránky — stará: ' + (stara.err.length ? stara.err.join(' | ') : 'žádné') +
               ', nová: ' + (nova.err.length ? nova.err.join(' | ') : 'žádné'));
   console.log(vse && !nova.err.length ? '\n✅ VŠECHNY VARIANTY ELEKTRO I LPS SE CHOVAJÍ IDENTICKY'

@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.139 · 2026-11-03**
+**Aktuální verze: v9.140 · 2026-11-04**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -373,6 +373,181 @@ nedělala (pokyn uživatele).
 **Ověřeno, že se data nemění:** uložený JSON téže zprávy (vyplněné v UI
 i otevřené z archivu a znovu uložené; zmrazený čas a náhoda) je ve verzi
 před funkcí a po ní **bajtově shodný** (archiv i `getData()`, sha256).
+
+## Normy – stav ověření citací (kontrola 2026-11-04, v9.140)
+
+Citace a hodnoty se kontrolovaly proti plnému znění norem, které má uživatel.
+Podrobnosti po dávkách jsou v oddílech níž. **Do repozitáře jdou jen čísla
+článků, hodnoty a citace — nikdy opsaný text norem.**
+
+- **Ověřeno:** ČSN 33 2000-6 ed.2 (+Z1, Z2), 4-41 ed.3, 5-51 ed.3+Z1+Z2
+  (+ TNI 33 2000-5-51), 5-52 ed.2, 5-54 ed.3, 4-443 ed.3, ČSN 33 1500
+  (tab. 1 a 1a), 7-701 ed.2, ČSN EN 61140 ed.3; ČSN 34 1390; ČSN 33 2130 ed.4
+  (přílohy A, B, čl. 8.1.3, 8.7.3); ČSN EN 60204-1 ed.3; ČSN EN IEC 62305-3
+  ed.3, -2 ed.3, ČSN EN 62305-1 ed.2, -4 ed.2; ČSN EN IEC 61439-1 ed.3
+  a 61439-2 ed.3; ČSN EN 50110-1 ed.4.
+- **Dál čeká na ověření** (štítek „čeká na ověření v ČSN" / `overit` zůstává):
+  - **ČSN EN IEC 61439-3 ed.2 (díl 3, DBO)** — RDF DBO, meze 250 A / 125 A,
+    umístění, znečištění, rozměry DBO; u PSC vnější provedení, F / D / W, EMC,
+    znečištění, kategorie přepětí,
+  - **ČSN 33 2000-7-701 ed.3** — koupelnové vady se citují bez vydání,
+    kontrola proběhla proti ed.2,
+  - **ČSN 33 1600 ed.2 Z1 / Z2** — lhůty spotřebičů (tab. 1),
+  - **dvě citace přílohy E ČSN EN 62305-3 ed.2** (čl. E.5.6.2.2 a E.7 —
+    ed.2 uživatel nemá, ověřeno jen přes obsah ed.3) a číslo kap. 8 v ed.2.
+- **Zásada: uložené zprávy a rozvaděče se nepřepisují.** Opravy mění katalog,
+  popisky, výchozí hodnoty pro NOVÉ zprávy a texty skládané za běhu. Vady
+  zapsané ve zprávě, starší klíče (`stupen: 'A'|'B'|'C'`, `okoli55: true`,
+  starší volby LPS) se otevřou a uloží bajtově stejně; jinak se jen
+  zobrazí v nové podobě. Citace skládané za běhu (tabulka zkoušek a–i,
+  patičky měření) se v PDF starých zpráv změní — to je záměr a `porovnani2.js`
+  je vypíše (`OPRAVY_TEXTU`).
+
+## Normy – opravy citací, dávka 1: revize (2026-11-04)
+
+Uživatel nechal citace zkontrolovat proti plnému znění ČSN 33 2000-6 ed.2
+(+Z1, Z2), 4-41 ed.3, 5-51 ed.3+Z1+Z2, 5-52 ed.2, 5-54 ed.3, 33 1500,
+7-701 ed.2, ČSN EN 61140 ed.3 a 4-443 ed.3. **Opravují se jen nahlášená
+místa; data (uložené zprávy, vady ve zprávách) se nemění** — mění se katalog,
+popisky a texty skládané za běhu.
+
+- **Tabulka zkoušek a–i** (formulář i `zkCsn` v PDF): d) `ČSN 33 2000-6 ed.2`
+  (ed.3 neexistuje), g) `čl. 6.4.3.6`, ch) `čl. 6.4.3.10`. Mění se i PDF
+  starých zpráv (citace se skládá za běhu) — záměr. `porovnani2.js` má
+  seznam `OPRAVY_TEXTU` a záměrně změněné řetězce vypíše.
+- **Katalog `TYPICKE_ZAVADY`:** Zs → `411.4.4; 6 ed.2 D.6.4.3.7.3` (bublina
+  meze Zs ji bere z katalogu), čas RCD → `6 ed.2, příloha NA` (popis s typem S),
+  N+PE → `5-54 543.4.3; 4-41 411.4.5`, koupelna rozdělena na dvě vady
+  (`701.415.1`, `701.512.4`, **bez vydání** — kontrola proběhla proti ed.2),
+  chybějící dokumentace skutečného provedení **C1** (Z2 příloha E), přepážky
+  `5-52 ed.2, 527.2`, SPD `4-443 ed.3, 443.4` / `443.4, 443.5`, tlačítko TEST
+  `návod výrobce; 6.4.3.10`.
+- **Lhůty v dialogu „Výpočet termínu"** (ČSN 33 1500 tab. 1 a 1a):
+  staveniště 0,5 roku = **+6 měsíců** (`revizeTerminZ`, čl. 3.9 se nepoužije,
+  31. 8. → 28. 2.), pojízdné a převozné 1 rok, přejmenované shromažďovací
+  prostory a zděné budovy, skupiny „Podle prostředí (tab. 1a)" a „Hořlavé
+  stavby", poznámka „Platí nejkratší ze lhůt (čl. 3.8)". Celé roky se počítají
+  **jako dřív** (datum + N let, na konec roku program nezaokrouhluje).
+  Průmysl 4 roky a stroje 2 roky zůstaly — ověří se s NV 190/2022.
+- **Protokol vnějších vlivů:** kde citoval jen „ČSN 33 2000-5-51 ed.3",
+  je `ČSN 33 2000-5-51 ed.3+Z1+Z2 a TNI 33 2000-5-51` (národní přílohy jsou
+  od 07/2022 v TNI) — dlaždice, popis, titul PDF, věta u skupin, výchozí
+  podklady a upozornění katalogu.
+
+Test: `testy/test-normy.js` (34 kontrol — formulář i PDF, katalog, bublina Zs,
+lhůty, starší zpráva bajtově proti předchozí verzi). **Upraveno:**
+`test-dokumentace.js` (dlaždice a věta s TNI).
+
+## Normy – ČSN 34 1390, dávka 2 (2026-11-04)
+
+Citace u starších hromosvodů se kontrolovaly proti plnému znění ČSN 34 1390.
+Čísla článků v `TYPICKE_ZAVADY_LPS_1390`, `LPS_PROHLIDKA_1390`, nápovědách
+měření, patičce měření v PDF a vzorových popisech teď odpovídají obsahu
+(16–19 jímače, 32 počet svodů, 35 vzdálenost od krytiny, 38 b) úhelník do asi
+1,7 m, 41–45 spoje a zkušební svorka asi 2 m, 51 uzemnění, 53 zemniče,
+54 koroze, 55 b) **20 Ω na svod**, 55 c) skupina **< 15 Ω**, 61–66 pospojování,
+201 revize). Vada „zemní odpor svodu > 20 Ω" má kód z konstanty
+`LPS1390_ZEMNI_KOD` (C2 — norma říká „nemá být"). Mez přechodového odporu
+0,2 Ω ČSN 34 1390 neuvádí — cituje se „podle ČSN EN 62305-3". **Naměřené
+zemní odpory program nebarví** (nic se nevyhodnocuje). Uložené zprávy
+a vady v nich se nemění.
+
+Test: `testy/test-normy-1390.js` (39 kontrol).
+
+## Normy – ČSN EN 60204-1 ed. 3, dávka 2 (2026-11-04)
+
+Katalog vad strojů: nouzové zastavení `čl. 9.2.3.4.2, 10.7` (9.2.5.4 bylo
+číslování ed. 2), výstražné značení `čl. 16.2`, přívodní kabel `kap. 12
+(vodiče a kabely), čl. 13.5`; měření poklesu napětí `(12.5)` (úbytek ≤ 5 % Un).
+Výchozí sada měření se mění jen pro nové zprávy a pro technika bez vlastní
+uložené sady. Test: `testy/test-normy-60204.js` (6 kontrol).
+
+## Normy – revize LPS podle ČSN EN 62305 (2026-11-04)
+
+Kontrola proti plnému znění ČSN EN IEC 62305-3 ed. 3, -2 ed. 3, 62305-1 ed. 2
+a 62305-4 ed. 2. **62305-3 ed. 2 uživatel nemá** — citace ed. 2 se ověřovaly
+přes obsah ed. 3 (stejná struktura kap. 5 a 6). Co se ověřit nedalo, má
+v katalogu `overit` („ověřit v ed. 2", u kap. 8 „ověřit číslo v ed. 2") —
+**ukazuje se jen v nabídce typických vad** (`· [ověřit v ed. 2]`, ne u volby
+ed. 3), do vady ani PDF nejde.
+
+- **Katalog `TYPICKE_ZAVADY_LPS`:** zemní odpor > 10 Ω je **doporučená**
+  hodnota, kód z konstanty `LPS_ZEMNI_KOD` (C2); SPD T1 `62305-3 6.2;
+  62305-4 kap. 7`; koroze `E.5.6.2.2, E.7`; zkušební svorky `5.3.6`;
+  vada „do 1,8 m" nahrazena vadou dotykového napětí (do 3 m, `kap. 8`) a C3
+  „Doporučujeme mechanickou ochranu svodu v dosahu osob" bez článku; přechod
+  materiálů a antikoroze `E.5.6.2.2` (+ 5-54 542.2.5); výpočet rizika
+  `ČSN EN IEC 62305-2 ed.3`; SPD T2 `62305-4 kap. 7`.
+- **Prohlídka:** délka zemničů `5.4.2.2, E.5.4.2.2`, uzemnění `62305-4 5.2`,
+  impedance pospojování `62305-4 5.3`, SPD do zón `62305-4 kap. 7`.
+- **Nápovědy a patička PDF:** odpor uzemnění „doporučuje se nižší než 10 Ω,
+  je-li to možné (5.4.1), nejúčinnější je pospojování"; 0,2 Ω „doporučení
+  z praxe, u výztuže ŽB požadavek normy (5.3.5)".
+
+**Volba „ed. 3" (`62305e3`) cituje s čísly článků** (dřív se vypouštěla):
+`citaceNormy` převádí díl 3 přes ověřenou mapu `CITACE_ED3_CL` / `CITACE_ED3_TAB`
+(5.3.3 tab. 4 → tab. 5, 6.2.2 tab. 8, 9 → tab. 9, 10, kap. 8 → 8.1, příloha
+E → D); co v mapě není, vypíše se bez čísel jako dřív. Díly 1 a 2 → `ČSN EN
+IEC 62305-N ed.3`, **díl 4 zůstává `ČSN EN 62305-4 ed.2` s čísly** (EN IEC
+62305-4:2025 v ČR zatím zavedena není). 1. vydání beze změny (bez čísel).
+Popisky výběru normy uvádějí dobu platnosti, výchozí volba ed. 2 se nemění.
+
+Test: `testy/test-normy-lps.js` (32 kontrol).
+
+## Normy – konfigurátor rozvaděčů podle ČSN EN IEC 61439-1/-2 ed. 3, dávka 3 (2026-11-04)
+
+Údaje se štítkem „čeká na ověření v ČSN", které jsou teď ověřené v plném znění
+61439-1 ed. 3 a 61439-2 ed. 3, štítek ztratily a mají citaci. **Ponechaly ho
+údaje dílu 3 (DBO)** — ČSN EN IEC 61439-3 ed. 2 uživatel nemá: RDF pro DBO
+(0,8 / 0,7 / 0,6 / 0,5), meze DBO 250 A / 125 A, umístění, stupeň znečištění
+a rozměry v technických údajích DBO; u PSC vnější provedení, připojení F / D / W,
+EMC, znečištění a kategorie přepětí (`pscTechHtml`).
+
+- **Kusové ověření:** 11.4 bez štítku, nepovinná pole `ko.pe.i` (A) a `ko.pe.r`
+  (Ω) — zkouška podle 10.5.2, jen porovnání ≥ 10 A, ≤ 0,1 Ω (`rozvPeStav`);
+  odvozená poznámka „prohlídkou; šroubové spoje – namátková kontrola utažení".
+  11.5 „Vestavění vestavných součástí". 11.9 A: **`ko.ui`** (Ui rozvaděče,
+  odvozené 400 V / 1f 250 V) → **zkušební napětí z tab. 8** (`ROZV_TAB8`,
+  `rozvTab8`; odvozené, ukládá se prázdné; při psaní Ui se přepočítá, jen když
+  ho technik nepřepsal). Citace 11.9 u doby, vybavovacího proudu a metody B.
+- **Štítek:** Un a fn jsou na štítku vždy (čl. 6.1 e, f — i bez rozšířené
+  části); IP a IK v technických údajích mají poznámku „na štítku nepovinné
+  (čl. 6.1)". Značka třídy II podle čl. 8.4.4 a) — výchozí podle třídy ochrany
+  (`rozvTridaIIZnak`, zaškrtávátko s `data-odv`, ukládá se jen odchylka);
+  třída II s krytím horším než IP2XC → upozornění (`rozvIp2xc`, čl. 8.4.4 c).
+  RoHS a kvalifikace (NV 194/2022) bez štítku.
+- **Oteplení:** podmínky s citací 10.10.4.1 (35 °C — 7.1.1, 80 % In — e),
+  125 % vodiče — f, ruční potvrzení `otepleni.vodice125`, výsledek neblokuje).
+  Místo „přístroje pro 55 °C" pole **`otepleni.tmax`** (nejnižší maximální
+  provozní teplota vzduchu přístrojů) a `otepleni.okoli` (výchozí 35 °C):
+  dovolené oteplení = tmax − okolí (10.10.4.2.1). Starší `okoli55: true` =
+  55 °C potvrzeno (data se nepřepisují); bez hodnoty výchozí 55 °C „ověřte
+  u výrobce" a výsledek zůstává neúplný jako dřív. Nové klíče se ukládají jen
+  vyplněné. PSC: činitel předpokládaného zatížení (tab. 101, čl. 5.4 dílu 2),
+  motorové vývody (typ obvodu motor, MS) 0,8 / nad 100 kW 1,0 a do počtu
+  hlavních obvodů se nepočítají.
+- **Příloha D:** úplná tab. D.1 (`PSC_OV_D1`, 12 skupin, 24 řádků se způsoby
+  Z / S / H); dřívější klíče (`ko11_x`, `otepleni`, `zkrat`) zůstaly.
+
+**Drobnosti (commit „drobnosti"):** `ČSN EN 50110-1 ed. 4 — Obsluha a práce
+na elektrických instalacích` (od 08/2025; ed. 3 zrušena 29. 5. 2026) v seznamu
+norem a v textu převzetí zprávy o kontrole stroje (uložené zprávy beze změny);
+příklad normy v editoru „ČSN EN 50549-1" (vydání 2 v ČR není).
+
+Test: `testy/test-normy-61439.js` (19 kontrol). **Upraveno:**
+`test-rozvadec-dokumenty.js` (11.5, odvozené zkušební napětí, štítky jen
+u dílu 3), `test-rozvadec-faze-otepleni.js` (podmínky s citací, pole teploty).
+
+**Při přenosu do ostrého programu (v9.140) opraveno:** návštěva záložky
+Dokumenty a uložení zapisovaly uloženému rozvaděči prázdné nové klíče
+`ko.ui`, `ko.pe` a u PSC prázdné řádky tab. D.1 (`ov.z.*`, `ov.p.*`)
+a starší `stitek.tridaII: false` přepisovaly pravidlem `data-odv` na `''`.
+`DOK_TYPY.rozv.cist` je teď ukládá jen vyplněné a uloženou hodnotu
+`tridaII` nechá, dokud technik zaškrtnutí nezmění. Jediný rozdíl proti
+v9.139 zůstává u rozvaděče, jehož Dokumenty nikdo neotevřel: klíč `tridaII`
+zapsaný poprvé je `''` (odvozená hodnota) místo dřívějšího `false` — význam
+stejný. Hlídá `test-rozvadec-stara-data.js` (rozvaděč uložený v9.139 se
+`stupen: 'B'`, `okoli55: true`, PSC hala, zpráva LPS se staršími citacemi).
 
 ## Tvorba dokumentace — Protokol o určení vnějších vlivů (blok `TVORBA DOKUMENTACE`)
 
@@ -1978,12 +2153,29 @@ oteplení", „…odhad instalovaného příkonu Pi (okno)", „…vývod s odha
 
 Zadání uživatele: z Pi vývodů spočítat soudobý příkon Pp, výpočtový proud Ip
 a navrhnout hlavní jistič před elektroměrem. **Jen podle ČSN 33 2130 ed. 4**
-(12/2024, příloha A výpočtové zatížení, příloha B byty) — **plné znění
-nemáme**, proto **žádný koeficient napevno**: výchozí β jsou v **⚙ Nastavení
-konfigurátoru** (jen v prohlížeči, localStorage `revize_el_rz_soud`, jen
-odchylky, „↺ Výchozí β") a jdou **přepsat u rozvaděče**. U každé β se ukazuje
-zdroj; hodnoty z ed. 3 / z podkladů mají štítek **„ověřit v ČSN 33 2130 ed. 4"**.
-Tabulky distributorů se nepoužívají.
+(12/2024, příloha A výpočtové zatížení, příloha B byty). Výchozí β jsou
+v **⚙ Nastavení konfigurátoru** (jen v prohlížeči, localStorage
+`revize_el_rz_soud`, jen odchylky, „↺ Výchozí β") a jdou **přepsat
+u rozvaděče**. U každé β se ukazuje zdroj. Tabulky distributorů se nepoužívají.
+
+**Dávka 2 norem (2026-11-04) — přílohy A a B ověřeny v plném znění:**
+- **Charakter odběru bytu T1–T6** (čl. 8.1.3) místo stupně elektrizace;
+  Pb (A.1): T1, T2 = 7 kW, T3 = 11 kW, T4–T6 zadat. Ukládá se `'T1'`…`'T6'`;
+  starší `stupen: 'A' | 'B' | 'C'` se **nepřepisuje**, jen se zobrazí jako
+  T1 / T3 / zadat (`rzsTypBytu`). Nastavení `pb.T1…T3` (starší `pb.A`, `pb.B`
+  platí dál).
+- **β(n) = tab. B.1** (`RZS_BYTY_TAB`: n = 1–28, 30, 40, 50, 60, 80, 100),
+  jinak Ruscův vzorec βn = β∞ + (1 − β∞)/√n, β∞ = 0,20 zaokrouhleno na
+  setiny; β∞ v Nastavení (`byty.inf`), jiné než 0,20 = vzorec pro všechna n.
+  Limit „nad 34 zadat ručně" zrušen.
+- **cos φ výchozí 0,9** (čl. A.2, bytový odběr) — v listu PDF se uvádí zdroj.
+- **β skupin spotřebičů norma neuvádí** — kuchyně „zpracovatel (praxe)",
+  EV „zpracovatel; … ověřit v ČSN 33 2000-7-722 ed. 3". Štítek „ověřit v ČSN
+  33 2130 ed. 4" už nikde není.
+- Tabulka zkoušek i) cituje `ČSN 33 2130 ed.4, čl. 8.7.3, tab. 7`, výchozí
+  podklady protokolu vnějších vlivů `ČSN 33 2130 ed. 4` (jen nové protokoly).
+
+Test: `testy/test-normy-soudobost.js` (17 kontrol).
 
 **Co v programu bylo (2026-10-29):** soudobost tu nebyla. „Součinitel
 soudobosti RDF" (oddíl Oteplení, `rotRdf`, `tech.rdf`) je jmenovitý
