@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.140 · 2026-11-04**
+**Aktuální verze: v9.141 · 2026-11-09**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -374,7 +374,7 @@ nedělala (pokyn uživatele).
 i otevřené z archivu a znovu uložené; zmrazený čas a náhoda) je ve verzi
 před funkcí a po ní **bajtově shodný** (archiv i `getData()`, sha256).
 
-## Normy – stav ověření citací (kontrola 2026-11-04, v9.140)
+## Normy – stav ověření citací (kontrola 2026-11-04 a 2026-11-05, v9.141)
 
 Citace a hodnoty se kontrolovaly proti plnému znění norem, které má uživatel.
 Podrobnosti po dávkách jsou v oddílech níž. **Do repozitáře jdou jen čísla
