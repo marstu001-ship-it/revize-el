@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.141 · 2026-11-09**
+**Aktuální verze: v9.142 · 2026-11-10**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -748,6 +748,188 @@ platí pro všechny typy (protokol vnějších vlivů, DBO, PSC).
 Test: `testy/test-dok-soubor.js` (23 kontrol — dva prohlížeče, protokol
 i rozvaděč s objektem, přetažení i Načíst, přepsat / nechat, ZPĚT,
 otevřený dokument, rozepsaná zpráva, dva soubory naráz, data revizí).
+
+## Tvorba dokumentace: Výpočet rizika LPS (ČSN EN IEC 62305-2 ed. 3, blok „RIZIKO LPS")
+
+Zadání uživatele 2026-11-04, návrh schválen týž den. Čtvrtá dlaždice
+**„Výpočet rizika LPS"** (`DOK_TYPY.rlps`, číslo **`RLPS-0001`**, fialová
+`#6a3d9a` / tmavý `#c9a6ee`, objekty sdílené s rozvaděči). Výsledek: je
+ochrana potřeba a jaká (LPS, SPD), protokol PDF, porovnání s revizí LPS.
+Uživatel to počítá i v **OEZ Prozik (ed. 2)** — odstrašující příklad (prázdná
+pole, Td = 5, výsledek ×100 při jednom nevyplněném poli). Proto **každé pole
+má platnou hodnotu**; povinné jsou jen rozměry budovy a Td (bez výchozí
+hodnoty), chybějící výpočet zastaví srozumitelnou hláškou s odkazem do pole.
+
+**Autorská práva:** norma je placená — v kódu jen čísla koeficientů a vzorce
+s odkazem („tab. B.6", „rov. A.5"), popisky vlastními slovy. Žádné opsané
+odstavce, poznámky ani obrázky.
+
+**Ed. 3 proti ed. 2** (proč se liší od Proziku): jedno riziko R = RL1 + RL2
+proti **RT = 10⁻⁵**, ztráta služeb jako **četnost škod F** proti FT = 1 (0,1
+u kritických systémů), **NSG = k·NG, k = 2** (bez LLS), **bez koeficientu
+paniky hz** (ztráty z kategorie objektu, tab. C.2), **rM = 350/Uw**,
+rI = 2000/Uw^1,8 (ed. 2 měla pevných 500 m). TWS: PTWS = 1 (jen v Pokročilých).
+
+### Datový model (vše volitelné; výsledek se NEUKLÁDÁ, `rlVypocet(d)` vždy znovu)
+`d.typ` (RL_TYPY: rd, bd, zem, kanc, skola, hotel, obchod, kostel, muzeum,
+nemocnice, prumysl, datac, sklad, vybus), `d.v` = **jen co technik zadal**
+(klíč → text), `d.prevz[klíč] = { v, z: odkud, ok: potvrzeno }`,
+`d.prevzato = { lps, el, vv }` (uid a číslo zdroje, u LPS i třída a zemina),
+`d.vedeni = [{ uid, druh: 'nn'|'tel', sekce: [{ uid, vn }] }]`,
+`d.zony = [{ uid, druh: 'vnitrni'|'venku'|'strecha', nazev }]` + hlavička
+(`cislo, objekt, nazev, misto, investor.nazev, zpracovatel, datum`).
+Klíče: globální (`L`, `cd`, `lps`, `kat`, `hodnotitF`…), vedení
+`v.<uid>.peb`, sekce `s.<uid>.ll`, zóna `z.<uid>.rt` (popisy v `RL_PAR`).
+**Platná hodnota (`rlHod`) = zadáno → převzato → typ objektu → kategorie
+ztrát → výchozí podle normy**; u každého pole je štítek zdroje
+(`rlChip`: „zadáno ↺ výchozí", oranžové „revize LPS RE-… ✓ Potvrdit",
+„z typu objektu", „výchozí – …") a v bublině odkaz na tabulku normy.
+Typ objektu předvyplní kategorii ztrát, riziko požáru, PS, povrch, tz
+a F / FT — **rozhodnutí programu, ne údaj normy**, vše přepsatelné.
+
+### Výpočet (`rlVypocet`, tabulky `RL_CD … RL_ZTRATY`)
+Rovnice A.1–A.12, B.2–B.15, tab. 3 a 4 podle zadání (ověřeno přepočtem
+příkladu F.2). Rozhodnutí, která norma (podle zadání) neřeší výslovně:
+- **R se hodnotí po zónách** (R každé zóny ≤ RT), vnitřní zóna má všechny
+  složky kromě RAD, „venku do 3 m" jen RAT, „na střeše" jen RAD (PO
+  výchozí 1 — upřesnit).
+- Víc vedení: RU, RV, RW, RZ se sčítají; **PC a PM = 1 − Π(1 − Pi)**.
+- PLD (tab. B.11) jen u stínění spojeného s přípojnicí, Uw mezi sloupci →
+  nižší sloupec (opatrnější). NDJ bere CT poslední sekce vedení.
+- **AL = 0,6·√ρ·LL jen u podzemního vedení se zaškrtnutým ρ > 400 Ωm a
+  zadaným ρ** (doslova podle zadání; vychází menší než 40·LL do ρ ≈ 4 400 Ωm —
+  ověřit v pozn. 3 k A.10). Zemina z revize LPS je jen připomínka.
+- rp = 1 vynuceně u výbuchu (rf v0–v2) a Li-ion; LO u normální a nízké
+  kategorie jen se zaškrtnutím „porucha vnitřních systémů ohrožuje život".
+- **F se zobrazí vždy, o potřebě ochrany rozhoduje jen se zaškrtnutím
+  „hodnotit četnost škod"** — výchozí ano u nemocnice, průmyslu / řídicího
+  provozu, datového centra (FT 0,1) a výbušného prostředí (FT 1); muzeum ne.
+
+### Obrazovky
+Nový výpočet → **14 dlaždic typu objektu** (a „Převzít údaje…"). Editor:
+vlevo karty Objekt · Budova (CD jako 4 dlaždice s náčrtem) · Bouřková
+činnost (Td povinné, nápověda 15–40, přepočet NG = 0,1·Td „orientačně",
+poslední Td v localStorage `revize_el_rlps_td` → nový výpočet ho nabídne
+jako převzatou hodnotu) · Vedení (karty, výchozí NN 1000 m, „＋ telekom.",
+„＋ VN část s transformátorem", CE jako dlaždice, sbalené Rs / KS3 /
+sousední budova) · Ochrana (LPS) · Zóny · sbalené Ztráty a Pokročilé.
+Vpravo (na telefonu nahoře) **výsledek**: „✓ Ochrana vyhovuje" / „⚠ Ochrana
+je potřeba", R po zónách, F, sloupcový graf složek RA…RZ s čarou RT,
+**hlavní akce „🛡 Navrhnout ochranu"**, „🔄 Spočítat" (přepočet je průběžný).
+Strukturní změny jdou přes `rlZmena` (ZPĚT i Ctrl+Z).
+
+**Navrhnout ochranu** (`rlNavrh`): kombinace SPD na vstupu (PEB, stejná na
+všech vedeních) × koordinované SPD × rp × LPS, jen zvýšení oproti
+současnému stavu; cena = SPD na vstupu → koordinované SPD → ruční (50) /
+automatická (70) protipožární opatření → LPS IV…I (100+). **Varianta s LPS
+má vždy SPD na vstupu aspoň odpovídající třídy** (ČSN EN 62305-3, rozhodnutí
+uživatele). Dominované varianty se vynechají, ukážou se nejvýš 3; rp jen
+s upozorněním „započtěte jen, když opatření opravdu jsou". „Použít" zapíše
+hodnoty jako zadané (ZPĚT).
+
+**Převzetí (jen čtení — data revizí bajtově stejná, test)** `rlPrevzit`:
+okno s revizemi LPS, elektro (archiv) a protokoly vnějších vlivů (DOK),
+předvybraná shoda s názvem / místem / objektem. LPS: třída → PLPS, SPD /
+LPZ 1 → PEB podle třídy („odhad"), zemina → připomínka. Elektro: přívod
+CYKY / AYKY / kabel → podzemní, AES / AlFe / venkovní → nadzemní, řádek
+SPD / svodič v hlavním rozvaděči → PEB III–IV („ověřte typ 1"). Protokol:
+BE3 → kategorie velmi vysoká + rf zóna 1, BE2 → požár vysoký, BD3 / BD4 /
+BA3 → kategorie vysoká. Převzetí nahradí i ručně zadanou hodnotu (ZPĚT ji
+vrátí). **Porovnání s revizí LPS**: nejnižší třída LPS, se kterou výpočet
+vyhoví (`rlLpsPotreba`, SPD doplněné podle třídy) proti třídě v revizi.
+
+**PDF** (`rlPdfBloky`, 2026-11-04 — **protokol není výkres**, pokyn
+uživatele): textový dokument **A4 na výšku** ve stylu protokolu o vnějších
+vlivech přes společný stránkovač `dokPdfVykreslit` (záhlaví „Výpočet rizika
+LPS · č. RLPS-…", patička s názvem objektu a „Strana i / N", tabulky
+`delit` se dělí po řádcích se záhlavím): titul, identifikace, výsledek
+(rámeček, tabulka zón, graf složek jako jednoduché SVG), ochranná opatření,
+navržená opatření, porovnání s revizí, závěr; vstupní údaje se **zdrojem
+a odkazem na normu**; sběrné oblasti, N, P, složky rizika a F po zónách;
+věta „Výpočet podle ČSN EN IEC 62305-2 ed. 3; hodnoty ztrát a koeficientů
+zvolil zpracovatel."; na konci „Vypracoval … V … dne …" a podpisová
+tabulka. **Výkresový rám a razítko (`rsRam`, `rsRazitko`) zůstávají jen
+výkresům** (schéma, čelní pohled, list soudobosti).
+`dokPdfVykreslit(x, cil, trida)` umí kreslit i do jiného viditelného
+kontejneru (příloha k revizi) — stránky se číslují zvlášť.
+
+**Panel výsledku pod lištou** (2026-11-04): na PC `.rl-vys` drží
+`position:sticky` s `top` = změřená spodní hrana přilepených lišt
+(`rlPanelOdsazeni` → `--rl-top`, při vykreslení i změně okna) a výškou
+nejvýš okno minus lišty (`overflow:auto`). Do 1050 px se nelepí a je pod
+formulářem. Test 1366 × 768 a 1920 × 1080.
+
+**Příloha k revizi LPS** (`rlPrilohaPanelHtml`, `rlPrilohaRevize`,
+`rlPrilohaPripojit`): v panelu tisku **jen u revize LPS a jen když existuje
+výpočet rizika** skupina „Přílohy" s volbou „Přiložit výpočet rizika"
+(výpočty seřazené podle shody s místem revize). **Bez volby se nic nemění —
+PDF revize je znak po znaku stejné a data zprávy taky (test proti verzi bez
+přílohy na STARA_PORT, při přenosu pustit se `STARA=<předchozí vydání>`).**
+Se zvolenou přílohou se uid uloží jen v nastavení tisku zprávy
+(`D.tisk.rlpsPriloha`, do výchozích nastavení tisku nejde), listy výpočtu se
+připojí na konec PDF (strany protokolu na výšku se svým číslováním, nepočítají se do „Počet listů") a do
+seznamu příloh **v PDF** přibude řádek — pole Seznam příloh se nemění.
+
+Test: `testy/test-riziko-lps.js` (116 kontrol — každá tabulka koeficientů,
+F.2 nechráněný i chráněný na 1 %, druhý příklad spočtený v testu vlastními
+vzorci, povinné Td, Navrhnout ochranu (nejlevnější = SPD LPL IV na obou
+vedeních) a Ctrl+Z, F/FT podle typu, převzetí z vymyšlené revize LPS,
+elektro a protokolu, zdroje v PDF, otevření uloženého a staršího dokumentu
+beze změny dat, data revizí bajtově stejná, telefon). V `test-mobil.js`
+stavy „riziko LPS – …". **Upraveno:** `test-rozvadec-psc.js` (dlaždice
+protokol, DBO, PSC a za nimi výpočet rizika). Novinky se nedělaly.
+
+### Bouřkové dny Td podle okresu (2026-11-04, blok „Bouřkové dny podle okresu")
+
+Zadání uživatele: technik nevěděl, odkud Td vzít. **Výchozí volba „Bouřková
+činnost zadaná jako" = „Td podle místa stavby (okres)"**; NG / NSG z LLS
+zůstávají s vysvětlivkou „jen když máte naměřenou hustotu pro lokalitu
+(EUCLID / ČHMÚ)".
+
+- **Data v kódu** (161 kB celkem, test hlídá < 250 kB):
+  - `RL_OKRESY_CSV` — 77 okresů: kraj, okres, kód, **Td_navrh**, převažující
+    pásmo a podíly pásem 15–20 … 35–40. Odečetl uživatel s Claude strojově
+    z **izokeraunické mapy ČHMÚ (Atlas podnebí Česka 2007)**; Td_navrh =
+    horní mez nejvyššího pásma, které pokrývá aspoň 10 % okresu (bezpečná
+    strana). **Obrázek mapy ČHMÚ v programu není** (autorská práva).
+  - `RL_OKRESY_GEO` — hranice okresů **© ČÚZK, CC BY 4.0** (INSPIRE ÚSJ přes
+    github.com/siwekm/czech-geojson, okresy.json). Zjednodušené vlastním
+    skriptem (scratchpad `geokod/topo.py`): topologie se staví na
+    **přesných** souřadnicích (sdílené hranice mají v datech shodné body),
+    každý sdílený úsek se zjednoduší jednou (Douglas–Peucker 0,002°) → bez
+    děr a překryvů; pak ×10⁴ a delta-kódování (`arcs` = úseky „;", `o[kód]`
+    = kruhy jako odkazy na úseky, záporné = obráceně). **Kvantovat až po
+    zjednodušení** — zaokrouhlení předem rozdrobilo hranice na tisíce úseků.
+  - `RL_OBCE` — jména obcí po okresech (tentýž zdroj, obce.json, bez geometrie).
+- `rlOkresy()` (líně dekóduje), `rlOkresBod(lon, lat)` (sudý–lichý počet
+  průsečíků), `rlOkresZAdresy(text)` — „okres X", nebo jméno obce **jen
+  z poslední části adresy a z částí s PSČ** (ulice „Ulice 5" by našla obec
+  Ulice), i části jména se spojovníkem (Mistřín ze „Svatobořice-Mistřín");
+  víc okresů (Kyjov) = kandidáti, **nic se nevyplní**.
+- **Formulář:** „🗺 Vybrat na mapě" (okno `#modal-rl-mapa`: SVG okresů
+  v 5 pásmech modré, legenda, ＋/− a přiblížení dvěma prsty, klik vybere
+  okres; vedle **Kraj → Okres**; „📍 Moje poloha" jen na vyžádání, poloha se
+  nikam neposílá ani neukládá; patička „Hranice okresů © ČÚZK, CC BY 4.0"),
+  „📍 Moje poloha" i přímo ve formuláři, řádek okresu s krajem a podíly pásem
+  a **návrh z adresy** objektu (místo, převzatá revize): „Okres Uherské
+  Hradiště → Td 30 – použít?" / kandidáti / „nepoznám — vyberte na mapě".
+- **Data:** `d.tdOkres` = kód okresu (volitelné). `rlHod('td')`: zadáno →
+  **okres** (štítek „podle okresu X (mapa ČHMÚ)", `z: 'okres'`) → převzato.
+  Ruční Td přepíše okres (zadáno), ↺ vrátí okres. Starý dokument s ručním Td
+  beze změny (test).
+- **NG = 0,1·Td** — zdroj **ČSN 33 2000-4-443 ed. 3, pozn. 2 k čl. 443.5**
+  (odkaz na IEC 62305-2:2010, čl. A.1), ověřeno v normě uživatelem; přesněji
+  z LLS. Vzorec NG = 0,04·Td^1,25 (ed. 2, Prozik) se nepoužívá.
+- **PDF:** „Td = 30 dní/rok – okres Uherské Hradiště, odečteno
+  z izokeraunické mapy ČHMÚ (Atlas podnebí Česka 2007), horní mez
+  převažujícího pásma." (`rlTdText`).
+
+Test: `test-riziko-lps.js` (+18: 77 okresů s Td a polygonem, bod
+v Uherském Hradišti, adresy Mistřín / Uherské Hradiště / ulice, velikost
+dat, výchozí volba, návrh z adresy bez vyplnění, klik na okres v mapě,
+kraj → okres, ruční přepsání, PDF se zdrojem Td i NG, starý dokument).
+V `test-mobil.js` stavy „riziko LPS – mapa okresů…" a „…Td podle okresu,
+návrh z adresy".
 
 ## Rozvaděč DBO — návrh a dokumentace (v9.127; konfigurátor, `DOK_TYPY.rozv`, blok `ROZVADĚČ DBO`)
 
