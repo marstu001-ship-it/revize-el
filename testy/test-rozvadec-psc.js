@@ -24,6 +24,7 @@ const STARA = 'http://127.0.0.1:' + (process.env.PORT_STARA || 8902) + '/index.h
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
 const w = ms => new Promise(r => setTimeout(r, ms));
 const path = require('path');
+const bezKresby = require('./bez-kresby');   // 2026-11-08: kresba přístrojů v čelním pohledu se mění záměrně
 
 function pomocnik() {
   window.__T = {
@@ -539,9 +540,10 @@ const presahy = (p, svg) => p.evaluate(svg => {
     const d2 = dokKopie(d); d2.tech.ina = '800'; const v2 = rozvOteplVypocet(d2);
     return { stav: v.stav, privod: qf.privod, pvIn: rq && rq.pvIn, pvInc: rq && Math.round(rq.pvInc * 1000) / 1000, inc: rq && rq.eff, penc: v.penc, celkem: Math.round(v.celkem * 100) / 100, stav2: v2.stav, rad: v.radky.length };
   });
-  // QF přívod 250 A: Inc = nejvíc zatížená fáze = 32 + 16 = 48 A → 30 × (48/250)² = 1,106 W; FA 3P: 3×3 = 9 W; B16 1P 2 W → Σ 12,106 × 1,3 = 15,74 W
+  // bez Ib → Inc 0,8 In (2026-11-09): QF přívod 250 A: Inc = nejvíc zatížená fáze = 25,6 + 12,8 = 38,4 A → 30 × (38,4/250)² = 0,708 W;
+  // FA 3P C32: 3×3×0,64 = 5,76 W; B16 1P 2×0,64 = 1,28 W → Σ 7,748 × 1,3 = 10,07 W
   check('5b oteplení jedno pole do 630 A: počítá se, Penc z pole, Pv MCCB celkem (ne × póly), Inc = vývody za přívodem', o1.stav === 'vyhovuje' && o1.privod === true && o1.pvIn === 30 &&
-    o1.inc === 48 && o1.pvInc === 1.106 && o1.penc === 150 && o1.celkem === 15.74, JSON.stringify(o1));
+    o1.inc === 38.4 && o1.pvInc === 0.708 && o1.penc === 150 && o1.celkem === 10.07, JSON.stringify(o1));
   check('5b oteplení PSC nad 630 A: výpočet se nedělá', o1.stav2 === 'nelze', o1.stav2);
   await p.evaluate(async () => { const u = __dokOtevreny.uid; await dokNacist(); DOK.dokumenty = DOK.dokumenty.filter(x => x.uid !== u); await dokZapsat(); });
 
@@ -588,8 +590,11 @@ const presahy = (p, svg) => p.evaluate(svg => {
       const html = document.querySelector('#screen-dok-form .dok-wrap').innerHTML;
       // knihovna se od 2026-10-22 záměrně liší (kategorie Trafa a zdroje, nové obecné položky) — editor bez ní musí být stejný
       // etapa 5c: záložka „🧊 3D" (tlačítko a prázdný panel) přibyla záměrně
-      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast').forEach(e => e.remove());   // + tlačítko ⚡ Ovládání (ovládací obvody, 2026-10-29); + souhrn, sbalený panel a nastavení soudobosti (2026-10-29)
-      const htmlBez = kopie.innerHTML;
+      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast, .rz-nap-btn, .rz-svorky-rady').forEach(e => e.remove());
+      kopie.querySelectorAll('.rz-vstup-nast-box').forEach(e => e.remove());   // 2026-11-06: nastavení „Přístroje napájím shora / zespodu"   // + tlačítko ⚡ Ovládání (ovládací obvody, 2026-10-29); + souhrn, sbalený panel a nastavení soudobosti (2026-10-29); + 🔗 Napájení a svorkové lišty (2026-11-05)
+      // oprava skákajícího zoomu (2026-11-06): dřív se kreslilo první vykreslení o 2 px širší než všechna další —
+      // měřítko čelního pohledu na obrazovce se proto porovnává bez rozměrů SVG (obsah stejný)
+      const htmlBez = kopie.innerHTML.replace(/(class="rz-svg" viewBox="[^"]*") width="\d+" height="\d+"/g, '$1').replace(/(<text class="rz-cislo"[^>]*?) font-size="[\d.]+"/g, '$1');
       const knih = document.getElementById('rz-seznam').innerHTML;
       // etapa 5b: dokumenty, štítek, schéma, oteplení, fáze a celé PDF DBO se nesmí změnit (stejný technik v obou verzích)
       const t0 = STORE.technik; STORE.technik = { jmeno: 'Petr Vymyšlený', firma: 'Vymyšlená elektro s.r.o.', ico: '12345678', mesto: 'Kyjov' };
@@ -606,12 +611,31 @@ const presahy = (p, svg) => p.evaluate(svg => {
       return { pred, po, svg, svgT, html, htmlBez, knih, pdf, dbo5b };
     }, data);
     const A = await zkus(s), B = await zkus(p);
+    // 2026-11-08 (čelní pohled „jako v dílně"): kresby přístrojů, vývodka, tlačítko 🪮 Hřeben a popisek „Přívod do skříně" se mění záměrně
+    const bezCp = s0 => require('./bez-n')(bezKresby(s0)).replace(/<button class="dok-mini rz-hr-btn[^>]*>🪮 Hřeben<\/button>/g, '').replace(/Přívod do skříně/g, 'Přívod');
+    [A, B].forEach(X => { ['svg', 'svgT', 'htmlBez', 'pdf'].forEach(k => { X[k] = bezCp(X[k]); }); Object.keys(X.dbo5b).forEach(k => { X.dbo5b[k] = bezCp(X.dbo5b[k]); }); });
     check('starý DBO: otevření a uložení nezmění data (nová verze, bajtově)', B.pred === B.po, B.pred.length + ' / ' + B.po.length);
     check('DBO: uložená data po otevření a uložení stejná jako ve předchozí verzi', A.po === B.po, '');
     check('DBO: čelní pohled (obrazovka i tisk) znak po znaku stejný jako ve předchozí verzi', A.svg === B.svg && A.svgT === B.svgT, A.svg.length + ' / ' + B.svg.length);
     const rozdil = (a, c) => { let i = 0; while (i < a.length && a[i] === c[i]) i++; return i + ': …' + a.slice(Math.max(0, i - 60), i + 80) + ' ⟷ …' + c.slice(Math.max(0, i - 60), i + 80); };
     check('DBO: editor (hlavička, pohled, vlastnosti) stejný jako ve předchozí verzi', A.htmlBez === B.htmlBez, A.htmlBez === B.htmlBez ? '' : rozdil(A.htmlBez, B.htmlBez));
     check('DBO: PDF návrhu stejné jako ve předchozí verzi', A.pdf === B.pdf, A.pdf === B.pdf ? '' : rozdil(A.pdf, B.pdf));
+    // dávka 4 norem (ČSN EN IEC 61439-3 ed. 2): záměrné doplňky Dokumentů DBO se z porovnání vyjmou (hlídá je test-rozvadec.js)
+    const bezD4 = t => t.replace(/<div id="rz-dbo-upoz">(?:<div class="[^"]*">[^<]*<\/div>)*<\/div>/g, '')
+      .replace(/<div class="dk-nepov rz-ko-nap(?: rz-ko-pe)?">[^<]*<\/div>/g, '').replace(/<option value="C"[^>]*>[^<]*<\/option>/g, '')
+      .replace(/<label class="teren-radek rz-zatrh"><input type="checkbox" data-dk="otepleni\.evRizeni"[^>]*> [^<]*<\/label>/g, '')
+      .replace(/ <span class="rz-ceka"[^>]*>[^<]*<\/span>/g, '').replace(/ <span class="dk-nepov">ČSN EN IEC 61439-3 ed\. 2, čl\. 5\.4, tab\. 101<\/span>/g, '')
+      .replace(/(data-dk="tech\.(?:ik|znec)") placeholder="[^"]*"/g, '$1')
+      // „nechat prázdné" a dokumentace pro jiného výrobce (2026-11-05)
+      .replace(/<label class="teren-radek rz-zatrh rz-bez-profilu">.*?<\/label>/g, '').replace(/<button type="button" class="rz-odv-btn"[^>]*>[^<]*<\/button>/g, '').replace(/ rz-odv-f"/g, '"');
+    A.dbo5b.dok = bezD4(A.dbo5b.dok); B.dbo5b.dok = bezD4(B.dbo5b.dok);
+    // 2026-11-09: výchozí Inc 0,8 In (oprava čl. 10.10.4.1 e) a tlačítko „Doplnit Pv z knihovny" — záměrně; hlídá test-otepleni-pv.js
+    const bezInc = t => t.replace(/<div class="rot-pvk-lista"[^>]*>.*?<\/div>/g, '').replace(/(class="rot-inc"[^>]*?) placeholder="[^"]*"/g, '$1')
+      .replace(/(class="rot-inc"[^>]*?) title="[^"]*"/g, '$1').replace(/Prázdné Inc = Ib[^<]*<\/div>/g, '</div>')
+      .replace(/<td class="c" data-rot="(?:pvinc|08)">.*?<\/td>/g, '').replace(/<div id="rot-vysledek"><div class="rot-vys[^"]*">.*?<\/div>(?:<div class="rot-souc">.*?<\/div>)?<\/div>/g, '<div id="rot-vysledek"></div>');
+    A.dbo5b.dok = bezInc(A.dbo5b.dok); B.dbo5b.dok = bezInc(B.dbo5b.dok);
+    const bezIncJ = t => JSON.stringify(JSON.parse(t, (k, v) => ['odv', 'odv08', 'inc', 'eff', 'nad08', 'zadano', 'pvInc', 'sumPv', 'celkem', 'prirW', 'rezerva', 'rezervaPct', 'stav'].indexOf(k) !== -1 ? undefined : v));
+    A.dbo5b.otepl = bezIncJ(A.dbo5b.otepl); B.dbo5b.otepl = bezIncJ(B.dbo5b.otepl);
     for (const [k, n] of [['dok', 'záložka Dokumenty'], ['stitek', 'štítek'], ['schema', 'schéma zapojení (všechny listy)'], ['otepl', 'výpočet oteplení'], ['faze', 'součty fází'], ['pdfVse', 'celé PDF dokumentace']])
       check('DBO (etapa 5b): ' + n + ' znak po znaku stejné jako ve předchozí verzi', A.dbo5b[k] === B.dbo5b[k], A.dbo5b[k] === B.dbo5b[k] ? A.dbo5b[k].length + ' znaků' : rozdil(A.dbo5b[k], B.dbo5b[k]));
     await s.evaluate(() => TD_AKCE.tdPdfZpet && TD_AKCE.tdPdfZpet());

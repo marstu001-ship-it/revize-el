@@ -557,6 +557,60 @@ function vsechnyStavy(zalozky) {
   add('rozvaděč – čelní pohled', 'Tvorba dokumentace', E(async () => {
     await __M.rozv(); document.getElementById('rz-pohled').scrollIntoView({ block: 'start' }); await __M.w(100);
   }));
+  // kdo koho napájí (zapojení podle vzoru): režim 🔌 Zapojení s panelem „Kdo koho napájí" a vybraný vodič
+  add('rozvaděč – režim Zapojení, panel Kdo koho napájí', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    TD_AKCE.tdRNapRezim();
+    document.querySelector('.rz-banner-nap').scrollIntoView({ block: 'start' }); await __M.w(100);
+    setTimeout(() => { if (__rz) { __rz.napRezim = false; } }, 3000);
+  }));
+  add('rozvaděč – režim Zapojení, vybraný vodič v panelu', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    TD_AKCE.tdRNapRezim();
+    const a = __rz.rady[0].prvky[0], c = __rz.rady[1].prvky[0], pr = rzpPredpoved({ uid: a.uid, strana: 'b', pol: 0 }, { uid: c.uid, strana: 't', pol: 0 });
+    if (pr.nw) { pr.nw.uid = 'wm1'; rozvZmena('t', () => { __rz.vodice = (__rz.vodice || []).concat([pr.nw]); }); __rz.napVodic = 'wm1'; rozvSvgPrekreslit(); rozvVlastnostiVykreslit(); }
+    document.getElementById('toast-wrap').innerHTML = '';
+    document.getElementById('rz-vlastnosti').scrollIntoView({ block: 'start' }); await __M.w(100);
+    setTimeout(() => { if (__rz) { __rz.napRezim = false; __rz.napVodic = null; } }, 3000);
+  }));
+  add('rozvaděč – nástroj Hřeben a vybraný hřeben v panelu', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    const r = __rz.rady[1], poz = rozvPozice(r);
+    if (r.prvky.length > 1) { const h = rzhNovy(1, poz[0], poz[r.prvky.length - 1] + rozvW(r.prvky[r.prvky.length - 1]), '1'); __rz.hrebeny = [h]; __rz.hrVyber = h.uid; }   // bez rozvZmena — stav se neukládá
+    __rz.hrNastroj = true; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.getElementById('toast-wrap').innerHTML = '';
+    document.querySelector('.rz-banner-hr').scrollIntoView({ block: 'start' }); await __M.w(100);
+    setTimeout(() => { if (__rz) { __rz.hrNastroj = false; __rz.hrVyber = null; __rz.hrebeny = []; } }, 3000);
+  }));
+  add('rozvaděč – navrhnout hřebeny (okno)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    rzhNavrhyOtevrit(); await __M.w(100);
+  }), '#modal-rz-hrebeny');
+  add('rozvaděč – režim Zapojení, vodič s průřezem a barvou', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    TD_AKCE.tdRNapRezim();
+    const a = __rz.rady[0].prvky[0], c = __rz.rady[1].prvky[0], pr = rzpPredpoved({ uid: a.uid, strana: 'b', pol: 0 }, { uid: c.uid, strana: 't', pol: 0 });
+    if (pr.nw) { pr.nw.uid = 'wm2'; pr.nw.prurez = '10'; __rz.vodice = (__rz.vodice || []).concat([pr.nw]); __rz.napVodic = 'wm2'; rozvSvgPrekreslit(); rozvVlastnostiVykreslit(); }
+    document.getElementById('toast-wrap').innerHTML = '';
+    (document.querySelector('#rz-vlastnosti .rz-vodic-pole') || document.getElementById('rz-vlastnosti')).scrollIntoView({ block: 'start' }); await __M.w(100);
+    setTimeout(() => { if (__rz) { __rz.napRezim = false; __rz.napVodic = null; __rz.vodice = (__rz.vodice || []).filter(q => q.uid !== 'wm2'); } }, 3000);
+  }));
+  add('rozvaděč – vlastnosti: Napájen z a → napájí', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); const x = __rz.rady[1].prvky[0]; __rz.vyber = x.uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.querySelector('#rz-vlastnosti .rp-napaji-deti').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – svorkovnice ve vlastnostech a svorkové lišty', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); const x = rozvVlozit('v-x-svork', 2, __rz.rady[2].prvky.length); __rz.rady[2].svorky = true;
+    __rz.vyber = x.uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
+    document.querySelector('#rz-vlastnosti .rp-svorkovnice').scrollIntoView({ block: 'start' }); await __M.w(100);
+  }));
+  add('rozvaděč – Dokumenty: nechat prázdné a jiný výrobce', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); window.__dokOtevreny.data.bezOdv = { 'ko.zkousel.jmeno': true }; window.__dokOtevreny.data.bezProfilu = true;
+    rozvZalozkaNastavit('dok'); await __M.w(150);
+    dokForm().querySelectorAll('details.rz-dok-oddil').forEach(x => x.open = true);
+    document.querySelector('.rz-bez-profilu').scrollIntoView({ block: 'start' }); await __M.w(100);
+    setTimeout(() => { if (window.__dokOtevreny) { delete window.__dokOtevreny.data.bezOdv; delete window.__dokOtevreny.data.bezProfilu; } }, 3000);
+  }));
   // předloha z fotky: vymyšlená „fotka" řady nakreslená na plátno, jen v paměti
   const fotka = `(() => { const c = document.createElement('canvas'); c.width = 900; c.height = 600; const g = c.getContext('2d');
     g.fillStyle = '#777'; g.fillRect(0, 0, 900, 600); for (let m = 0; m < 12; m++) { g.fillStyle = '#fff'; g.fillRect(90 + m * 60 + 2, 220, 56, 180); }
@@ -584,6 +638,15 @@ function vsechnyStavy(zalozky) {
     document.querySelector('#rz-pi-obsah .rz-pi-nastaveni').open = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); await __M.w(100);
   }), '#modal-rz-pi');
+  add('rozvaděč – doplnit Pv z knihovny výrobců (okno)', 'Tvorba dokumentace', E(async () => {
+    await __M.rozv(); document.getElementById('toast-wrap').innerHTML = '';
+    const pred = DOK.rozvKnihovna.slice();
+    [['FA', '1', 10, 'B', 'LSN 10B/1'], ['FA', '1', 16, 'B', 'LSN 16B/1'], ['FI', '4', 40, '', 'LFN 40/4/030/A']].forEach(a => DOK.rozvKnihovna.push(rozvPolozkaNorm({
+      id: 'u-m-' + a[4], druh: 'pristroj', kat: a[0], poly: a[1], In: a[2], char: a[3], idn: a[0] === 'FI' ? 30 : '', rcdTyp: a[0] === 'FI' ? 'A' : '',
+      vyrobce: 'Výrobce A', rada: a[4].split(' ')[0], typ: a[4], pv: 2, sirka: 1, zdroj: 'import' }, 'pristroj')));
+    rozvZalozkaNastavit('dok'); TD_AKCE.tdRPvkOtevrit(); await __M.w(150);
+    setTimeout(() => { DOK.rozvKnihovna = pred; }, 3000);
+  }), '#modal-rz-pvknih');
   add('rozvaděč – vývod s odhadem Pi ve vlastnostech', 'Tvorba dokumentace', E(async () => {
     await __M.rozv(); const x = __rz.rady[1].prvky[3]; x.pi = '1,6'; x.piOdhad = '8 zásuvek × 0,2 kW';
     __rz.vyber = x.uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit();
@@ -760,6 +823,7 @@ function vsechnyStavy(zalozky) {
   }));
   S[S.length - 1].koren = '#modal-vlozit-mereni';
   D('modal-sp-pristroje', E(async () => { await __M.otevri('RSP-26-0001'); showScreen('form'); spotrPristrojeOtevrit(); await __M.w(100); }));
+  D('modal-sp-lhuty', E(async () => { await __M.otevri('RSP-26-0001'); showScreen('form'); spotrLhutyOtevrit(); await __M.w(100); }));
   D('modal-vnorit', E(async () => { showScreen('home'); otevritVnoritModal(0); await __M.w(100); }));
   D('modal-dok-vzor', E(async () => { await __M.dok(); TD_AKCE.tdVzorZeSkupiny(document.querySelector('.dk-skupina [data-action="tdVzorZeSkupiny"]')); await __M.w(100); }));
   D('modal-dok-vlozit', E(async () => { await __M.dok(); dokVlozitDialog(document.querySelector('.dk-skupina')); await __M.w(100); }));

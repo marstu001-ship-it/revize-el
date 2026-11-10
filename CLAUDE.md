@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.140 · 2026-11-04**
+**Aktuální verze: v9.141 · 2026-11-09**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -374,7 +374,7 @@ nedělala (pokyn uživatele).
 i otevřené z archivu a znovu uložené; zmrazený čas a náhoda) je ve verzi
 před funkcí a po ní **bajtově shodný** (archiv i `getData()`, sha256).
 
-## Normy – stav ověření citací (kontrola 2026-11-04, v9.140)
+## Normy – stav ověření citací (kontrola 2026-11-04 a 2026-11-05, v9.141)
 
 Citace a hodnoty se kontrolovaly proti plnému znění norem, které má uživatel.
 Podrobnosti po dávkách jsou v oddílech níž. **Do repozitáře jdou jen čísla
@@ -382,19 +382,19 @@ Podrobnosti po dávkách jsou v oddílech níž. **Do repozitáře jdou jen čí
 
 - **Ověřeno:** ČSN 33 2000-6 ed.2 (+Z1, Z2), 4-41 ed.3, 5-51 ed.3+Z1+Z2
   (+ TNI 33 2000-5-51), 5-52 ed.2, 5-54 ed.3, 4-443 ed.3, ČSN 33 1500
-  (tab. 1 a 1a), 7-701 ed.2, ČSN EN 61140 ed.3; ČSN 34 1390; ČSN 33 2130 ed.4
+  (tab. 1 a 1a), 7-701 ed.2 a **ed.3** (06/2025, dávka 4), ČSN EN 61140 ed.3;
+  **ČSN 33 1600 ed.2 + Z1 + Z2 (+ Z2/Opr. 2)** (dávka 4); ČSN 34 1390; ČSN 33 2130 ed.4
   (přílohy A, B, čl. 8.1.3, 8.7.3); ČSN EN 60204-1 ed.3; ČSN EN IEC 62305-3
   ed.3, -2 ed.3, ČSN EN 62305-1 ed.2, -4 ed.2; ČSN EN IEC 61439-1 ed.3
-  a 61439-2 ed.3; ČSN EN 50110-1 ed.4.
+  a 61439-2 ed.3; **ČSN EN IEC 61439-3 ed.2** (08/2025, EN IEC 61439-3:2024;
+  ed.1 z 10/2012 platí souběžně do 30. 11. 2027 — kap. 1, 5.4 + tab. 101, 6.1 h,
+  6.3, 7.1.2, 8.2.1, 8.2.2, 8.5.3, 8.8, 11.9, příl. CC; dávka 4); ČSN EN 50110-1 ed.4.
 - **Dál čeká na ověření** (štítek „čeká na ověření v ČSN" / `overit` zůstává):
-  - **ČSN EN IEC 61439-3 ed.2 (díl 3, DBO)** — RDF DBO, meze 250 A / 125 A,
-    umístění, znečištění, rozměry DBO; u PSC vnější provedení, F / D / W, EMC,
-    znečištění, kategorie přepětí,
-  - **ČSN 33 2000-7-701 ed.3** — koupelnové vady se citují bez vydání,
-    kontrola proběhla proti ed.2,
-  - **ČSN 33 1600 ed.2 Z1 / Z2** — lhůty spotřebičů (tab. 1),
   - **dvě citace přílohy E ČSN EN 62305-3 ed.2** (čl. E.5.6.2.2 a E.7 —
     ed.2 uživatel nemá, ověřeno jen přes obsah ed.3) a číslo kap. 8 v ed.2.
+  - Štítek `rozvCeka` v programu zůstává jen u údajů, které rešerše uváděla
+    z paměti a které dávky nepotvrdily: rozměry DBO, u PSC umístění, vnější
+    provedení, F / D / W, EMC, znečištění a kategorie přepětí.
 - **Zásada: uložené zprávy a rozvaděče se nepřepisují.** Opravy mění katalog,
   popisky, výchozí hodnoty pro NOVÉ zprávy a texty skládané za běhu. Vady
   zapsané ve zprávě, starší klíče (`stupen: 'A'|'B'|'C'`, `okoli55: true`,
@@ -418,7 +418,7 @@ popisky a texty skládané za běhu.
 - **Katalog `TYPICKE_ZAVADY`:** Zs → `411.4.4; 6 ed.2 D.6.4.3.7.3` (bublina
   meze Zs ji bere z katalogu), čas RCD → `6 ed.2, příloha NA` (popis s typem S),
   N+PE → `5-54 543.4.3; 4-41 411.4.5`, koupelna rozdělena na dvě vady
-  (`701.415.1`, `701.512.4`, **bez vydání** — kontrola proběhla proti ed.2),
+  (`701.415.1`, `701.512.4`; od dávky 4 s oběma vydáními — viz níž),
   chybějící dokumentace skutečného provedení **C1** (Z2 příloha E), přepážky
   `5-52 ed.2, 527.2`, SPD `4-443 ed.3, 443.4` / `443.4, 443.5`, tlačítko TEST
   `návod výrobce; 6.4.3.10`.
@@ -437,6 +437,33 @@ popisky a texty skládané za běhu.
 Test: `testy/test-normy.js` (34 kontrol — formulář i PDF, katalog, bublina Zs,
 lhůty, starší zpráva bajtově proti předchozí verzi). **Upraveno:**
 `test-dokumentace.js` (dlaždice a věta s TNI).
+
+## Normy – ČSN 33 2000-7-701 ed. 3 a ČSN 33 1600 ed. 2 + Z1 + Z2, dávka 4 (2026-11-05)
+
+Plné znění dodal uživatel: **ČSN 33 2000-7-701 ed. 3** (06/2025; ed. 2 ze 09/2007
+platí souběžně do 6. 12. 2027) a **ČSN 33 1600 ed. 2** se Z1 (04/2021), Z2 (09/2021)
+a Z2/Opr. 2 (02/2022). Data se nemění — jen katalog, seznam norem a předvyplňovaný
+text nových protokolů.
+
+- **Seznam norem:** `csn2000701` (ed.3) `od 07/2025`; nová `csn2000701e2` (ed.2,
+  souběžně do 6. 12. 2027, nezaškrtnutá) pro instalace zřízené podle ed.2.
+  Předvolby `dum` / `byt` beze změny. Do PDF jdou názvy norem, takže se PDF nemění.
+- **Katalog:** RCD 30 mA → `ČSN 33 2000-7-701 ed.2, čl. 701.415.1; ed.3, čl.
+  701.415.101` (ed.3 platí i pro obvody procházející zónou 1 nebo 2); zásuvka
+  v zóně → popis „(v zóně 0 žádná, v zónách 1 a 2 jen obvody SELV nebo PELV)",
+  `ed.2, čl. 701.512.4; ed.3, čl. 701.512.2.4.101` (701.512.4 v ed.3 není).
+- **Protokol vnějších vlivů** (`DOK_VV_ZONY_701`): „obrázek 701 A-f" (v žádném
+  vydání není) → „čl. 701.30 (ed.2: obrázky 701.1 a 701.2; ed.3: čl. 701.30.102
+  až 701.30.104, obrázky 1 až 11)". Určení AD4 / AD2 je zpracovatele, beze změny.
+  Uložené protokoly mají text uložený a nemění se (test).
+- **ČSN 33 1600 ed.2 + Z1 + Z2** — ověřeno bez změny kódu: skupiny A–E (kap. 4),
+  tab. 1 podle Z2, pozn. 6 k tab. 1 (prodlužovací a odpojitelné přívody s ochranným
+  vodičem → lhůty třídy I) a vysvětlivky ve vzoru protokolu. Volba lhůt 6/12/24
+  měsíců je ze vzoru technika a schválil ji uživatel.
+
+Test: `testy/test-normy.js` (38 kontrol — seznam norem, obě vady, zóny, starý
+protokol se „701 A-f" a stará zpráva s `csn2000701` bajtově beze změny).
+**Upraveno:** `test-dokumentace.js` (text zón vzoru koupelny).
 
 ## Normy – ČSN 34 1390, dávka 2 (2026-11-04)
 
@@ -497,11 +524,10 @@ Test: `testy/test-normy-lps.js` (32 kontrol).
 ## Normy – konfigurátor rozvaděčů podle ČSN EN IEC 61439-1/-2 ed. 3, dávka 3 (2026-11-04)
 
 Údaje se štítkem „čeká na ověření v ČSN", které jsou teď ověřené v plném znění
-61439-1 ed. 3 a 61439-2 ed. 3, štítek ztratily a mají citaci. **Ponechaly ho
-údaje dílu 3 (DBO)** — ČSN EN IEC 61439-3 ed. 2 uživatel nemá: RDF pro DBO
-(0,8 / 0,7 / 0,6 / 0,5), meze DBO 250 A / 125 A, umístění, stupeň znečištění
-a rozměry v technických údajích DBO; u PSC vnější provedení, připojení F / D / W,
-EMC, znečištění a kategorie přepětí (`pscTechHtml`).
+61439-1 ed. 3 a 61439-2 ed. 3, štítek ztratily a mají citaci. Ponechaly ho
+údaje dílu 3 (DBO) — ty ověřila až dávka 4 (oddíl níž): RDF DBO, meze, umístění
+a znečištění štítek ztratily, rozměry DBO ho mají dál; u PSC vnější provedení,
+připojení F / D / W, EMC, znečištění a kategorie přepětí (`pscTechHtml`).
 
 - **Kusové ověření:** 11.4 bez štítku, nepovinná pole `ko.pe.i` (A) a `ko.pe.r`
   (Ω) — zkouška podle 10.5.2, jen porovnání ≥ 10 A, ≤ 0,1 Ω (`rozvPeStav`);
@@ -548,6 +574,42 @@ v9.139 zůstává u rozvaděče, jehož Dokumenty nikdo neotevřel: klíč `trid
 zapsaný poprvé je `''` (odvozená hodnota) místo dřívějšího `false` — význam
 stejný. Hlídá `test-rozvadec-stara-data.js` (rozvaděč uložený v9.139 se
 `stupen: 'B'`, `okoli55: true`, PSC hala, zpráva LPS se staršími citacemi).
+
+## Normy – rozvaděč DBO podle ČSN EN IEC 61439-3 ed. 2, dávka 4 (2026-11-05)
+
+Ověřeno v plném znění ČSN EN IEC 61439-3 ed. 2 (08/2025; ed. 1 platí souběžně
+do 30. 11. 2027). **Jen upozornění na obrazovce** (`rozvDboUpoz`, box
+`#rz-dbo-upoz` v Technických údajích, překresluje se s řádkem „Chybí"), do PDF
+nic jako požadavek normy — kromě štítku a metody 11.9 C. Data se nemění, nové
+klíče (`otepleni.evRizeni`, `ko.metoda: 'C'`) jen když je technik nastaví.
+
+- **Bez štítku „čeká na ověření":** RDF DBO 0,8 / 0,7 / 0,6 / 0,5 (čl. 5.4, tab. 101
+  — `ROT_RDF`, popisek a text v `rotRdf` s citací), hranice DBO (kap. 1),
+  umístění vnitřní / venkovní (kap. 1, 8.2.1; u PSC štítek zůstává).
+- **RDF a EV / FV** (tab. 101, poslední řádek): v režimu `tabulka` u DBO se vývody
+  nabíjení EV (`rzsSk(x) === 'ev'`) a FV (`ROT_FV_RE` v názvu vývodu) nepočítají do n
+  a násobí se 1; zaškrtávátko „Řízení zátěže EV/FV je v zařízení nebo v DBO"
+  (`otepleni.evRizeni`, ukládá se jen zaškrtnuté) je počítá jako ostatní.
+  Text RDF: „RDF 0,7 podle počtu vývodů (5); vývody nabíjení EV / FV (1) činitel 1
+  — ČSN EN IEC 61439-3 ed. 2, tab. 101". **Mění se tím text RDF v oddílu
+  a na stránce oteplení v PDF** u rozvaděčů s RDF podle tabulky.
+- **Upozornění:** znečištění < 2 (čl. 7.1.2, placeholder „nejméně 2 …"), krytí
+  pod IP2XC — kontroluje se `krytiOtevreno`, jinak zavřené (čl. 8.2.2, každý DBO;
+  kontrola třídy II 61439-1 8.4.4 c zůstává), IK pod IK05 vnitřní / IK07
+  venkovní (8.2.1, placeholder podle umístění), vstupní přístroj QF nebo NH
+  (`rozvDboVstup`, 8.5.3), FV vývod → informace přílohy CC (InA ≥ In hlavního
+  přístroje + In jističů FV).
+- **Štítek (čl. 6.1 h):** krytí vyšší než IP2XC (`rozvIpNad2xc`) je i na základním
+  štítku bez rozšířené části (tabulka i jednoduché rozvržení) — **mění PDF štítku**
+  takových rozvaděčů.
+- **Kusové ověření:** nápovědy 11.7 (čl. 8.8) a 11.10 (čl. 6.3) jen ve formuláři
+  (`napDbo`); 11.9 třetí volba **C – nevyžaduje se** (`ROZV_KO_METODA_C`, jen DBO),
+  v PDF věta „Zkouška se nevyžaduje: …".
+
+Test: `test-rozvadec.js` (+13). **Upraveno:** `test-rozvadec-dokumenty.js`
+(IP40 na základním štítku, metody A/B/C, štítky jen u rozměrů),
+`test-rozvadec-faze-otepleni.js` (štítek jen u 55 °C), `test-rozvadec-psc.js`
+(porovnání Dokumentů DBO bez doplňků dávky 4).
 
 ## Tvorba dokumentace — Protokol o určení vnějších vlivů (blok `TVORBA DOKUMENTACE`)
 
@@ -1312,8 +1374,13 @@ co chybí, je prázdné, „L?" nebo „–".
   „z RH1 (-FA3)" u napájeného rozvaděče, **čárkovaný „Elektroměrový rozvaděč"
   s předřazeným jističem jen při vyplněném `privodJistic`** (hlavička,
   + `privodIn`), **první hlavní vypínač (QM) na přívodu**. **Chránič** visí
-  z L, má vlastní sběrnici skupiny a vlastní N můstek; přístroje bez chrániče
-  visí přímo z L. Každý vývod = jeden sloupec 11 mm: značka se svorkami 1/2,
+  z L, má vlastní sběrnici skupiny a vlastní N můstek s popiskem **„N-FI1"**;
+  přístroje bez chrániče visí přímo z L. **Jističochránič (RCBO) má vlastní
+  průchozí N** — N vývodu vede čárkovaně z jeho výstupu (popisek „N-FI/FA1"),
+  ne ze společné sběrnice; přes ni přechází bez tečky (připomínka uživatele
+  2026-11-09 podle výkresu kolegy: N ze sběrnice by šel mimo součtový
+  transformátor a RCBO by vybavil). Prázdná soustava v hlavičce = upozornění
+  v řádku „Ve schématu chybí" (na sběrnici by zůstalo jen „50 Hz"). Každý vývod = jeden sloupec 11 mm: značka se svorkami 1/2,
   označení nad ní, svisle hodnota (B16 6 kA, 40 A 30 mA typ A…) a typ, L plnou
   čarou ven, **N a PE čárkovanými odbočkami**, lomítka podle počtu vodičů,
   svisle „L1 · CYKY-J 3×2,5" a název vývodu, dole **značka spotřebiče**
@@ -1438,15 +1505,19 @@ In, kopie v rozvaděči), `skrin.penc`, nebo co technik zadá.
 Technickými údaji a Prohlášením):
 - **Jen DBO a InA ≤ 630 A** (`rotInA`: tech.ina → privodIn → QM), jinak
   stav `nelze` a řádek „platí jen pro jeden prostor do 630 A – ověřte jinak".
-- Řádky `ROT_KAT` (QM, FA, FI, FIFA, AFDD, FU, KM): Inc = ručně → Ib → In
-  (vývody × RDF); u chrániče a QM součet vývodů za ním (nejzatíženější fáze
-  u 3/4pólových), nejvýš In. **Pv při Inc = Pv/pól × póly × (Inc / In)²**,
-  „Inc ≤ 0,8 In" [ověřit]. Chybí Pv → oranžový řádek „doplňte Pv", výsledek
+- Řádky `ROT_KAT` (QM, FA, FI, FIFA, AFDD, FU, KM): Inc = ručně → Ib →
+  **0,8 In** (čl. 10.10.4.1 e — oprava 2026-11-09, dřív plné In: všechny vývody
+  hlásily „> 0,8 In" a Pv vycházelo o 56 % vyšší; náznak v poli „0,8 In = 12,8",
+  `rotIncPh`) (vývody × RDF); u chrániče a QM součet vývodů za ním (nejzatíženější fáze
+  u 3/4pólových), nejvýš In. **Pv při Inc = Pv/pól × póly × (Inc / In)²**.
+  „> 0,8 In" jen u Inc zadaného ručně nebo z Ib (u chrániče / QM jen když
+  součet obsahuje ruční Inc nebo Ib vývodu). Mění výsledek a PDF oteplení jen
+  u rozvaděčů bez Inc a Ib; data se nemění. Chybí Pv → oranžový řádek „doplňte Pv", výsledek
   neúplné. **Pv psané v tabulce jde do kopie přístroje (`x.p.pv`), ne do
   knihovny.**
 - Pevné ztráty (W), přirážka **50 % (odhad BEAMA) / 30 % (Schneider – jen
   spoje) / vlastní**, RDF **bez** (výchozí) / tabulka 2–3 0,8 · 4–5 0,7 ·
-  6–9 0,6 · 10+ 0,5 [ověřit IET] / výrobce — RDF jde jako odvozená hodnota
+  6–9 0,6 · 10+ 0,5 (ČSN EN IEC 61439-3 ed.2, tab. 101; EV / FV × 1, dávka 4) / výrobce — RDF jde jako odvozená hodnota
   do `tech.rdf`. Penc ze skříně (přepsatelné), ΔT z poznámky skříně
   („ΔT = 30 K") nebo ručně. **Bez zaškrtnutí „Přístroje jsou určeny pro
   teplotu okolí 55 °C" je výsledek neúplný.**
@@ -1469,6 +1540,39 @@ s 2P skupinou, zámkem, 3f, náhled + Zrušit, Použít + Ctrl+Z, jen vybrané;
 oteplení na W přesně, (Inc/In)², přirážka 30 %, RDF tabulka, ruční Inc,
 chybějící Pv / Penc / 55 °C, Pv do kopie, nevyhovuje, nad 630 A, PDF stránka
 a odkazy jen při vyhovuje, uložená data, starý rozvaděč, data revizí, telefon).
+
+**Doplnit Pv z knihovny výrobců** (2026-11-09, blok „Doplnit Pv z knihovny
+výrobců" za `rozvOteplObnovit`): obecné položky Pv nemají a vypisovat ho
+u 40 jističů ručně nikdo nechce. Nad tabulkou oteplení **„📚 Doplnit Pv
+z knihovny…"** — vidět jen s načtenou knihovnou výrobců (položky mimo
+vestavěné s Pv) a aspoň jedním řádkem bez Pv (`rozvPvKnihSkupiny`; jen
+`ROT_KAT`, TR / ZD / JINE ne). Okno `#modal-rz-pvknih`: skupiny podle
+kategorie a pólů („Jistič 1P – 40 ks", „RCBO 1+N", „Hlavní vypínač 4P"),
+u každé výběr **řady výrobce, která má Pv u té kategorie** (`rozvPvKnihRady`,
+klíč výrobce|řada). Předvolba (`rozvPvKnihPredvolba`): řada, kterou v rozvaděči
+už má přístroj téže kategorie (FI1 = OEZ LFN), jinak řada výrobce, jehož přístroj
+v rozvaděči je, jinak „— nedoplňovat —". Shoda (`rozvPvKnihShoda`): kategorie,
+póly, In, charakteristika, u FI / FIFA i IΔn a typ; zapíše se **jen `p.pv`
+a `p.pvZdroj` = „výrobce typ"** (v tabulce šedá poznámka „z OEZ LSN 16B/1",
+ruční přepsání Pv ji smaže). Co v řadě není, okno vypíše „-FA7 B16 1P: v řadě
+OEZ LTN není – doplňte ručně" a zůstane bez Pv. Celé doplnění vrátí jedno
+ZPĚT / Ctrl+Z. **Žádné „typické" Pv bez výrobce.**
+
+**Penc skříně z knihovny** (2026-11-09, týž dialog): řádek **„Skříň – Penc"**
+(u PSC „Pole – Penc") jen když skříň / první pole nemá Penc a technik ho
+nezadal ručně (`rozvPencPotreba`) a knihovna má skříně (u PSC pole) s Penc.
+Nabídka seřazená podle shody (`rozvPencKandidati`: řady × moduly, u pole šířka
+× výška, provedení, materiál), filtr výrobce, výchozí „— nedoplňovat —".
+Zapíše se **jen `skrin.penc` a `skrin.pencZdroj`** = „výrobce typ" (rozměry,
+řady ani přístroje se nemění); u pole Penc šedá poznámka „z OEZ RZG-N-4S56".
+Ctrl+Z vrátí Pv i Penc najednou.
+
+Test: `testy/test-otepleni-pv.js` (výchozí Inc 0,8 In, ruční Inc a Ib nad
+0,8 In, náznak, poznámka; vymyšlené řady „Test LSN / LFN / ASN", tlačítko jen
+s knihovnou, skupiny, předvolba, C16 a RCBO bez shody, zápis jen pv + zdroj,
+Ctrl+Z, ruční přepsání, uložení, starý rozvaděč bajtově). V `test-mobil.js`
+stav „rozvaděč – doplnit Pv z knihovny výrobců (okno)". **Upraveno:**
+`test-rozvadec-faze-otepleni.js` (ΣPv 7,42 W — jistič a zásuvka při 0,8 In).
 V `test-mobil.js` stavy „rozvaděč – panel fází…", „…přefázovat, náhled změn"
 a „…oteplení výpočtem (Dokumenty)".
 
@@ -1499,9 +1603,8 @@ projít i touhle kontrolou.
   (byty, domy, kanceláře) – do 250 A, vývody do 125 A. ČSN EN IEC 61439-3",
   PSC „Výkonové rozvaděče – nad 250 A nebo s obsluhou jen poučenou osobou.
   ČSN EN IEC 61439-2".
-- **Meze 250 A / 125 A** jsou z **rešerše k ČSN EN IEC 61439-3:2024, kterou
-  dodal uživatel (dva nezávislé zdroje)** — normu samotnou nikdo nečetl.
-  Ve formuláři se ukazují bez štítku „čeká na ověření" (rozhodnutí uživatele).
+- **Meze 250 A / 125 A** (InA do 250 A, vývody do 125 A, napětí proti zemi do
+  300 V AC) — ověřeno v ČSN EN IEC 61439-3 ed. 2, kap. 1 (dávka 4 norem).
 - **Výstraha u DBO** (`rozvPscDuvody`: InA / přívod přes `rotInA` > 250 A nebo
   vývod `rfVyvod` s In > 125 A): jeden oranžový řádek nad hlavičkou
   `.rz-psc-upoz` „⚠ Nad 250 A / 125 A jde o PSC – převést na PSC?
@@ -1786,6 +1889,16 @@ záložky a zaškrtávátka), `test-rozvadec-dokumenty.js` a
   nejvýš `max(380px, 100vh − 150px)` vysoký a posouvá se **v obou směrech**
   (vodorovný posuvník byl u vysoké skříně až pod koncem stránky);
   na telefonu `max-height:none` (blok MOBIL), posouvá se stránka.
+- **Měřítko „Na šířku okna" se při výběru přístroje NEMĚNÍ** (oprava 2026-11-06,
+  „skákající zoom"): dřív se počítalo z vnitřní šířky rámečku, která závisí na
+  jeho svislém posuvníku — a ten na měřítku, takže při výšce okna na hraně každé
+  klepnutí (překreslení) přepnulo posuvník i měřítko tam a zpět. Teď
+  `rozvMeritkoNaSirku` bere šířku plochy `#rz-pohled` (−16 px), posuvník rámečku
+  odečte jen když ho obsah při tom měřítku potřebuje (`rozvSirkaPosuvniku`,
+  `rozvSvgVyska`) a výsledek drží v `__rz.__kSir` s klíčem okno × režim × skříň
+  (přepočet jen při změně okna, režimu Napájení / PSC nebo skříně, „⇔ Na šířku
+  okna" ho vynutí). Test: `test-rozvadec-napajeni.js` se skutečnými posuvníky
+  (`ignoreDefaultArgs: ['--hide-scrollbars']`), 1920 × 910 / 905, 1366, 360 px.
 - **Poloha posuvníku se překreslením NIKDY nemění** (chyba „klik vedle
   přístroje odroluje rámeček"): `rozvPohledVykreslit()` staví rámeček znovu
   přes `innerHTML`, takže si **před přepsáním zapamatuje `scrollLeft/Top`
@@ -2423,6 +2536,362 @@ s ovládáním…", „…prvek mimo rozvaděč…" a „…list ovládacích ob
 **Upraveno:** `test-rozvadec.js` (21 kategorií, skupina „Ovládání"),
 `test-rozvadec-psc.js` (šablona 51 sloupců, DBO porovnání bez tlačítka
 ⚡ Ovládání). Novinky se nedělaly.
+
+### Napájení — kdo koho napájí (2026-11-05, blok „ROZVADĚČ — REŽIM NAPÁJENÍ")
+
+Připomínka uživatele: skutečný rozvaděč RS2 (škola) nešel v programu
+zreprodukovat — pojistkový odpojovač před svodičem, jističe přímo z hlavního
+vypínače, chránič se dvaceti jističi. Dřív smělo `x.nadr` ukazovat jen na
+chránič.
+
+- **Data se nemění, jen rozšiřuje význam `x.nadr` / `x.nadrRucne`:** `nadr` =
+  uid **kteréhokoli napájecího přístroje** (`ROZV_NAPAJECI`: QM, QS, QF, FA, FU,
+  FI, FIFA, AFDD, MS), `''` = přímo z hlavního vypínače. Hlavní vypínač
+  (`rozvKoren` = první QM / výslovně hlavní) `nadr` nemá; podřízený QM ano.
+  Starý rozvaděč má `nadr` ∈ chránič ∪ '' — chová se, kreslí a počítá **beze
+  změny** (test proti předchozí verzi: data, schéma, oteplení, fáze,
+  soudobost, PDF, DXF).
+- **Automatika se nemění** (`rozvNadrazeneAuto`: jistič pod chráničem vlevo
+  v řadě). Ruční volba má přednost, dokud nadřazený existuje, je napájecí a
+  nevznikl by kruh; smazaný nadřazený → děti zpátky na automatiku.
+- Pomocníci na jednom místě: `rozvDeti`, `rozvPotomci`, `rozvNadrazeny`,
+  `rozvLzeNapajet` (ne sebe, ne potomka, ne REZ / PRISL / VNEJSI / X — kromě
+  přípojnice N `p.prip === 'N'`), `rozvRodice` (kdo napájí jiné, bez svorek),
+  `rozvNapajeniUpoz` (In podřazeného > nadřazeného mimo SPD, 3f pod 1f, SPD nad
+  „max. předjištění N A" z poznámky knihovny — jen upozornění v panelu).
+- **Panel:** volba **„Napájen z"** (dřív „Nadřazený chránič") u všeho kromě
+  kořenového QM, REZ, PRISL, VNEJSI a X: automaticky / přímo z hlavního
+  vypínače / napájecí přístroje v pořadí čelního pohledu bez sebe a potomků
+  (`rozvNapajeciPopis`: „-FU1 Pojistkový odpojovač 50 A 3P"). U nadřazeného
+  řádek **„→ napájí: -SPD1, -FA25…FA44"** (`rozvOznRada`). Totéž ve výběru víc.
+  Změna jde přes `rozvZmena` (ZPĚT, Ctrl+Z) — `rozvNapajeniNastavit`.
+- **Režim 🔌 Zapojení** (nejdřív „🔗 Napájení" se šipkami; teď vodiče po
+  pólech podle schváleného vzoru — oddíl „Zapojení podle vzoru" níž). Přesouvání
+  tažením je v režimu vypnuté. Do PDF nic.
+- **Fáze, oteplení, soudobost:** napájecí přístroj větve se nepočítá, počítají
+  se jeho koncové vývody (`rozvRodice`) — u starých dat žádný takový není.
+  Oteplení: Inc nadřazeného = jeho potomci (u chrániče jako dřív).
+- **Schéma** (`rsModel` = strom): chránič a jeho jističe **přesně jako dřív**;
+  skupina pod jiným přístrojem (`model.hlavy`, `rsHlavaHtml` — značka na úrovni
+  chrániče, sběrnice skupiny, N můstek jen u RCD); **řetěz** (přístroj, který
+  není chránič, s jediným dítětem bez dětí, např. FU → SPD) v jednom sloupci
+  (`model.retez`); **podskupina** ve skupině s vlastní sběrnicí a přechodem
+  (`model.pod`, `vPod`); hlubší úroveň **zploštěle** s poznámkou „z -FAx · název"
+  (`model.zplost`). Přívodní svorky (`x.privodni`) na přívodu před hlavním
+  vypínačem (`rozvSvorkyRozsah`: „-X1…X3"). Pojistka: volitelné **`x.vlozka`**
+  („40 gG", „Vložka (A, char.)" v Dalších údajích) → „vložka 40 gG" ve schématu,
+  **„40 A gG" v čelním pohledu, v seznamu přístrojů (sloupec In) a na popiscích**
+  (`rozvVlozkaText`); bez vložky In jako dřív. Vložka větší než In odpojovače →
+  upozornění v panelu „Vložka 40 A je větší než jmenovitý proud odpojovače
+  32 A." (`rozvVlozkaUpoz`). Kontroly In podřazeného (i max. předjištění SPD)
+  berou u pojistky vložku (`rozvInEff`). Data se nemění.
+
+**Svorková lišta, přípojnice, obecné položky (commit 2):**
+- Řada jako **svorková lišta** (`rady[i].svorky = true`, zaškrtávátka „Svorkové
+  lišty" ve vlastnostech bez výběru): nepočítá se do volného místa ani
+  přeplnění (`rozvVolnoCelkem`, `rozvPreplnene`), do fází ani oteplení (`rfVse`)
+  ani soudobosti (`rzsVyvody`); v pohledu šedý podklad a „svorková lišta".
+  **Poloviční výšku nemá** — výšku řady počítá `rozvRadaY` napříč pohledem,
+  tažením, 3D i PDF; měnit ji by sáhlo do všech starých rozvaděčů.
+- Obecné položky (kategorie X, neověřené): **Svorkovnice – řadové svorky
+  (počet)**, **Přípojnice N / PE (počet svorek)** — `p.svorky`, `p.pocet`
+  (výchozí 10), `p.prurez`, `p.prip` ('N' / 'PE'); šířka = počet × 6 mm
+  v modulech (`rozvSvorkySirka`). Označení s rozsahem `-X4…X46` (pohled,
+  osazení, seznam — jedna řádka s „43 ks · průřez"); `rozvDalsiOzn` a
+  přečíslování počítají celý rozsah. Přípojnice N má volbu „Napájen z" (N1 za
+  chráničem). Svorkovnice: **„Přívodní svorky (před hlavním vypínačem)"**
+  (`x.privodni`) → schéma. Pojistkové odpojovače 14×51 50 A 3P (4,5 M) a 1P
+  (1,5 M), **Svodič přepětí T2 3+1**.
+- Kusové ověření 11.7 (DBO): bez přípojnice / svorek PE nenápadná poznámka
+  „V návrhu chybí přípojnice / svorky PE – aspoň 2 svorky pro ochranné
+  pospojování (čl. 8.8)." (`rozvMaPe`, jen formulář).
+- Knihovna výrobců `knihovna_vyrobcu_v9.csv` (OEZ ASN, Hager LR603, Saltek SLP)
+  se do repozitáře **nedává** — test importuje syntetické CSV se stejnými
+  sloupci (i SPD s prázdnými póly).
+
+**„Nechat prázdné" a dokumentace pro jiného výrobce (commit 3):**
+- Odvozená hodnota (`data-odv`) šla dřív jen přepsat, ne smazat (prázdné =
+  „použij odvozenou"). U pole s odvozenou hodnotou je teď **✕ „nechat
+  prázdné"** → `d.bezOdv[cesta] = true`, pole prázdné s náznakem „(prázdné –
+  vyplní se ručně)", v PDF prázdná kolonka; **↺ „doplnit automaticky"** klíč
+  smaže (`TD_AKCE.tdRBezOdv`). Napsaný text platí a `bezOdv` pro pole zmizí
+  (`cist`).
+- **„Dokumentace pro jiného výrobce – nepřebírat údaje z mého profilu"**
+  (zaškrtávátko v hlavičce Dokumentů, `d.bezProfilu = true`, ukládá se jen
+  zaškrtnuté): z profilu se nebere jméno a místo v prohlášení, jméno
+  zkoušejícího (`ROZV_Z_PROFILU`), razítko, podpis, logo ani „Vypracoval"
+  ve výkresech (`rozvProfil(d)`). Ručně vyplněné platí dál.
+- Obojí na jednom místě: `rozvDokOdvozene` (odvozená hodnota → '') a
+  `rozvDokEff`, takže obrazovka i PDF ukazují totéž. Údaje výrobce
+  předvyplněné při založení jsou uložená data — nemění se.
+
+**Napájení z přívodu, přes svorky a před hlavním vypínačem (2026-11-06):**
+zásada uživatele „bez takových možností, jaké jsou v reálu, to
+nejsem schopný udělat" — napájení jde zadat u každého prvku včetně hlavního
+vypínače, svorek a SPD (kromě REZ, PRISL, VNEJSI).
+- **Data (jen co uživatel nastaví):** `x.nadr = '@privod'` = přímo z přívodu
+  před hlavním vypínačem (přívodní svorky, SPD T1, elektroměr, jistič
+  ovládání); starší `predHlavnim: true` a `privodni: true` (blok svorkovnice)
+  se čtou stejně (`rozvZPrivodu`, `rozvPredHlavnim`) a nepřepisují se.
+  Hlavní vypínač (kořen) bez `nadr` = z přívodu jako dřív; nově `nadr` = uid
+  svorky, nebo **sada svorek `nadrSvorky = [uid…]`** (`nadr` = první,
+  `rozvNadrSeznam`, `rozvKorenSvorky` — svorky bez vlastního napájení se při
+  tom připojí k přívodu). Hlavní vypínač smí být napájen jen ze svorky nebo
+  z přístroje před ním (`rozvPredKorenem`); kruh hlídá `rozvLzeNapajet`,
+  neplatné napájení kořene vrátí `rozvKorenNadrPlatne` na „z přívodu".
+- **Svorky (kategorie X) jsou průchozí prvek** — `ROZV_NAPAJECI` obsahuje X,
+  napájet i být napájeny smí řadová svorka, svorkovnice i přípojnice N
+  (`rozvSvorkaNap`; ne PE ani ovládací svorky). Zaškrtávátko „Přívodní svorky
+  (před hlavním vypínačem)" je u každé svorky (i `x-rad`) a zapisuje
+  `nadr: '@privod'` (přes `rozvZmena`, ZPĚT).
+- **Kořen stromu je přívod:** `rozvDeti('@privod')` = prvky před hlavním
+  vypínačem (+ hlavní vypínač, když není ze svorek).
+- **Panel:** „Napájen z" i u hlavního vypínače (z přívodu / svorka / přístroj
+  před ním; sada svorek jako jedna volba), u ostatních navíc „z přívodu (před
+  hlavním vypínačem)"; „→ napájí: -QH1 (L1)" u svorky s fází.
+- **Režim Zapojení:** nad skříní (u spodního přívodu pod ní) pás s kabelovou
+  vývodkou (`rozvNapPas`, `rozvVyvodkaGeom`, popis z hlavičky — kabel, průřez,
+  soustava; jen obrazovka, jen DBO). Ovládání viz „Zapojení podle
+  vzoru" níž; sada svorek hlavního vypínače vzniká natažením vodičů z X1…X3.
+- **Schéma (`rsPrivod`):** přívod → přívodní svorky (z `'@privod'`,
+  `nadrSvorky`, `privodni`) s označením „-X1…X3" a fázemi → hlavní vypínač;
+  prvky z přívodu, které nejsou svorky, odbočí před hlavním vypínačem stejně
+  jako jistič ovládání (`rsPredHl`, i řetěz FU → SPD přes `rsHlavaHtml`).
+  Rozvaděč jen se starým blokem `privodni` a `predHlavnim` beze změny.
+  **Přívodní svorky leží UVNITŘ čárkovaného rámu** (oprava 2026-11-06,
+  `rsSvorkyNove`, `rsRamLevy`): s nimi rám na prvním listu začíná na x 36
+  (s předřazeným jističem 41), svorky od rámu + 3,5 mm, lomítka a popis kabelu
+  vně rámu (kabel do rozvaděče vstupuje zvenku). Bez nových přívodních svorek
+  (i se samotným starším blokem `privodni`) je rám přesně jako dřív — test
+  kontroluje geometricky, že obdélník každé svorky leží v rámu.
+- **Kontroly (upozornění):** hlavní vypínač 3P z méně než tří fázových svorek,
+  svorka z přívodu, která nic nenapájí; **informace** u SPD před hlavním
+  vypínačem (`rozvNapajeniInfo`).
+
+Test: `test-rozvadec-napajeni.js` oddíl 10 (RS2 s `x-rad` -X1…X3, sada svorek,
+Ctrl+Z, kruh, SPD z přívodu ve schématu, kontroly) a starý rozvaděč proti
+předchozí verzi.
+
+**Zapojení podle vzoru (2026-11-06, blok „ROZVADĚČ — REŽIM ZAPOJENÍ").**
+Tři kola se slovním zadáním nevyšla, uživatel si ovládání odladil
+na samostatném vzoru (`vzor-zapojeni.html`, schválen: „takhle jsem si to
+představoval"). **Vzor je závazný** — pravidla, chování myši i texty bublin;
+kód vzoru (`vodic`, `autoWires`, `spocti`, `predpoved`) je přenesený jako
+`rzpVodic`, `rzpAuto`, `rzpSpocti`, `rzpPredpoved`.
+
+- **Model:** každý pól má svorku nahoře i dole (uzel `uid:t:k` / `uid:b:k`),
+  pól k je uvnitř přístroje propojený shora dolů (kromě SPD). Kabel ve vývodce
+  má jen **L1, L2, L3** (`@privod:o:0..2`); **N a PE se zapojují automaticky**,
+  pól N (4. u 3P+N, 2. u 1+N, přípojnice N) je modrý s „N" a nedá se uchopit.
+- **Vodiče** `r.vodice = [{ uid, a, b, n }]`, konec `{ uid | '@privod', strana:
+  't' | 'b' | 'o', pol }`, uložené **ve směru proudu** (a = zdroj), `n` = svazek
+  (póly a.pol + k ↔ b.pol + k). Pole vznikne s prvním vodičem a s posledním
+  zmizí (`cist`), takže starý rozvaděč se otevře i uloží bajtově stejně.
+  Svazek: mezi vícepólovými min(fáze A, fáze B), z kabelu na vícepólový celý
+  3f, svorka X (1 pól) na vícepólový na pól podle své fáze, jinak jeden vodič.
+- **Napětí** `rzpSpocti` = prohledání do šířky od kabelu po pólech; **vstup =
+  strana, kam napětí přišlo vodičem jako první** (nikdy se nezadává), fáze se
+  nesou od kabelu. Rodič: z výstupní svorky A → z A; ze vstupní svorky A →
+  paralelně na vstup A; z kabelu → přívod; přes SPD (nenapájí) se jde zpátky
+  ke skutečnému zdroji. `rzpStav` přidá automatická spojení a ustálí strany
+  (5 průchodů).
+- **Automatika** (`rzpAuto`, čárkovaně): přístroj, do kterého nevede natažený
+  vodič, se napájí **přesně podle `nadr`** (`rozvZdrojEff` — i ruční „Napájen z",
+  `nadrSvorky`, `pres`). Vstup automatiky: strana v téže mezeře jako výstup
+  zdroje (jinak shora) — jinak by sběrnice objížděla řadu.
+- **Synchronizace** (`rzpSync` v `rozvZmena` přes `rzpPoZmene`): u přístrojů,
+  **kam vede natažený vodič** a jsou pod napětím, se zapíše `nadr`,
+  `nadrRucne: true`, `nadrSvorky` (hlavní vypínač ze svorek — `rozvKorenSvorky`),
+  `pres` (paralelně na vstup) a fáze 1P přístroje (ne u svorek X — jejich `faze`
+  je štítek pólu). Schéma, fáze, soudobost, oteplení i DXF dál čtou `nadr`.
+  Přístroj, který přišel o poslední natažený vodič, jde zpátky na automatiku
+  (`rzpReset`); ruční volba „Napájen z" v panelu vodiče do přístroje odpojí
+  (`rzpOdebratPrichozi`). Smazaný přístroj → jeho vodiče zmizí. ZPĚT / Ctrl+Z
+  vrací i `vodice`.
+- **Ovládání** (jako vzor): najetí na svorku ji zvětší, kurzor ruka, bublina
+  „táhni = nový vodič" / „táhni na svorku = další vodič · pusť do prázdna =
+  odpojit" / u vybraného vodiče „táhni = přepojit vybraný vodič · pusť do
+  prázdna = odpojit". Tah ze svorky na svorku (i na tělo — bližší polovina,
+  nejbližší pól), trasa pravoúhle už během tahu, **bublina předem ukáže
+  výsledek** (`rzpPredpoved`: „-FA91 z -FI1 · vstup shora · L2", „SPD1
+  paralelně na vstup -QH1 (před -QH1) · vstup shora · L1,L2,L3 · svazek 3f",
+  „spojit (zatím bez napětí)"), nepovolený cíl červeně („tento pól už je pod
+  napětím na obou koncích – nejdřív jeden vodič odpoj", „stejná strana
+  přístroje", „stejný přístroj") a nic se neuloží. Tah z obsazené svorky do
+  prázdna odpojí její vodič („pusť sem = odpojit vodič -FU1 → SPD1", lišta
+  „Odpojen vodič … · ZPĚT"). Klik na vodič ho vybere, jeho koncové svorky
+  pulzují, tah za ně přepojí, Delete odpojí, pravý klik „Odpojit vodič".
+  Dosah svorky 13 px, prstem 18 px (po podržení 300 ms).
+- **Kreslení** (`rozvNapSvg`, `rzpTrasovac`): každý pól svazku vlastní čarou
+  v barvě skutečné fáze (L1 hnědá, L2 černá, L3 šedá), bez napětí čárkovaně,
+  popis „3f". Trasa: svisle do mezery na straně svorky, vodorovně; cíl v jiné
+  mezeře po levém okraji skříně (automatické sběrnice po pravém); z kabelu
+  svisle do mezery cíle. Pruhy se rozdělí až nakonec (uprostřed mezery, 1,1 mm,
+  při nedostatku místa hustěji), žlab vlevo mimo svislé vodiče kabelu; svazek
+  drží pořadí pólů, aby se nekřížil. Svorky: bez napětí bílé s šedým okrajem,
+  pod napětím zelený okraj, vstupní strana plná zelená; šipka ↓/↑ a fáze 1P.
+- **Panel** v režimu (bez vybraného přístroje): vybraný vodič (Z → Na, Odpojit),
+  strom **„Kdo koho napájí"** (souvislé stejné jističe „-FA1…FA22 B10
+  [L1,L2,L3]", „∥ paralelně na vstup", „(zespodu)", „z -X1…X3") a seznam
+  přístrojů s výsledkem („-QH1 z -X1…X3, vstup shora, L1,L2,L3", oranžově
+  „bez napětí" a „– chybí fáze") — `rzpPanelHtml`.
+- **Pole z mezikroků vývoje (2026-11-05 a 06):** `x.vstup` se už nečte a zahodí se při první
+  změně zapojení přístroje; `pres` zůstává jako odvozené pole (automatika ho
+  kreslí od vstupních svorek vzoru); ruční „šipky" (`nadrRucne` + `nadr`) se
+  kreslí jako automatické spojení. Nastavení „Přístroje napájím shora /
+  zespodu", klik a klik, „Napájet z…", „Napájí…", úchyty konců a vodiče
+  odvozené z `nadr` zmizely.
+
+Test: `test-rozvadec-napajeni.js` oddíl 3 (skutečnou myší scénáře ze vzoru:
+kabel → X1…X3 → QH1 s bublinami, SPD1 paralelně na vstup QH1 a odbočka ve
+schématu, nový jistič z horní svorky na FI1 pól 2 bez ztráty automatiky FI1,
+napájení zespodu, svazek QH1 → FU1 ve 3 barvách, odpojení do prázdna a ZPĚT,
+přepojení pulzujícím koncem, Ctrl+Z, Delete, dva póly pod napětím, N
+neuchopitelné, přehozené fáze, geometrie bez šikmých čar, přes přístroj ani
+překryvu), oddíl 6 (telefon), starý rozvaděč z ostrého programu v9.140
+(`STARA=upstream/main testy/servery.sh`) bajtově beze změny. V `test-mobil.js`
+stavy „rozvaděč – režim Zapojení, panel Kdo koho napájí" a „…vybraný vodič
+v panelu".
+
+Karta v Novinkách **„🔗 Rozvaděč – kdo koho napájí"** (5. 11. 2026) — o ni si
+řeklo zadání.
+
+Test: `testy/test-rozvadec-napajeni.js` (vzorek RS2 `testy/rozvadec-rs2.js`;
+model, panel, režim Napájení skutečnou myší, klik a klik, rámeček, Ctrl+Z,
+kontextové menu, telefon 360 px, schéma, fáze, svorková lišta, import CSV,
+nechat prázdné, jiný výrobce, starý rozvaděč proti `STARA_PORT` — při přenosu
+pustit se `STARA=<předchozí vydání>`). **Upraveno:** `test-rozvadec.js`
+(volba „Napájen z", hledání bez výsledku jiným slovem — „svodič" teď najde
+svodič 3+1), `test-rozvadec-psc.js` (porovnání DBO bez 🔌 Zapojení,
+svorkových lišt, poznámky 11.7 a „nechat prázdné"), `test-spotrebice-lhuty.js`
+(karta Novinek se nepinuje na první místo), `test-mobil.js` (stavy režimu
+Napájení, svorkovnice, Dokumenty s ✕).
+
+### Čelní pohled „jako v dílně" — ZÁSADY přestavby (pokyn uživatele 2026-11-08, platí i pro další fáze)
+
+Uživatel je revizní technik a výrobce rozvaděčů: „Chci přemýšlet tak, jak se
+rozvaděč vyzbrojuje v praxi. „Pěkné kolo, na kole jezdit umím – ale jak se jezdí
+na tomhle?" – takhle to být nesmí." Každá další fáze čelního pohledu se řídí:
+
+1. **Vypadá to jako skutečnost.** Každý druh prvku má vlastní kresbu ve stylu
+   čistého technického výkresu (ne fotky). Elektrikář pozná přístroj na první pohled.
+2. **Ovládá se to, jak se rozvaděč skutečně vyzbrojuje:** DIN lišta → přístroje →
+   hřebeny → propojky a vodiče → svorky. Napájení („kdo koho napájí") **vzniká samo**
+   z hřebenů a propojek. Šipky a volba „Napájen z" zůstávají jako kontrolní pohled
+   a ruční oprava.
+3. **Žádné pojmy programu tam, kde stačí pojem z dílny.** Popisky, tlačítka
+   a nápovědy: hřeben, propojka, svorka, přípojnice, krytka, vývodka.
+4. **Data se nesmí změnit.** Starý rozvaděč se otevře a uloží bajtově beze změny,
+   jeho PDF, schéma i DXF se nemění, dokud uživatel nepřidá hřeben nebo propojku.
+   Nová kresba přístrojů smí změnit **jen vzhled čelního pohledu** (obrazovka i PDF).
+   Testy, které porovnávají rozvaděč se starou verzí znak po znaku, porovnávají čelní
+   pohled přes `testy/bez-kresby.js` (skupina `<g class="rz-pr">` → značka s
+   `data-puid`, vývodka pryč); vše ostatní dál znak po znaku.
+
+#### Fáze 1a — věrné kresby prvků (2026-11-08, blok „ČELNÍ POHLED „JAKO V DÍLNĚ"")
+
+- **`rozvPrvekDinSvg(d, x, y, o)`** kreslí modulový přístroj na DIN liště (obrazovka,
+  PDF, duch při tažení, čela ve 3D); tělo podle druhu dělá **`cpKresba`** (vrací SVG
+  a rozvržení textů). Přístroj na montážní desce PSC (`o.h`) má dřívější kresbu.
+  Barvy `CP`: šedé tělo, světlé čelo, bílý štítek; barevné jen to, co je barevné ve
+  skutečnosti. Rozvržení `CP_R` (šrouby 7,3 / 45,6 mm, označení, štítek, páčka).
+- Druhy: jistič / QF páčka; **chránič a RCBO páčka + tlačítko T** (`.cp-tl-T`);
+  vypínač širší červená páčka (jako dřív); **SPD výměnné moduly se zeleným okénkem**
+  (`.cp-spd-okno`); **pojistkový odpojovač víčka s okénkem vložky** (`.cp-viko`,
+  `.cp-vlozka`); stykač / relé A1 / A2; hodiny, elektroměr (displej), kontrolka,
+  tlačítko, zásuvka, trafo / zdroj (štěrbiny); **rezerva = krytka s rýhou**.
+- **Řadová svorka** (`X` bez `svorky`): úzká, **barva podle funkce** — šedá fáze, **modrá
+  N, zelenožlutá PE** (`CP_SVORKA`). Volba ve vlastnostech **„Svorka je pro"**
+  (`x.funkce` = `'L' | 'N' | 'PE'`, ukládá se jen zadaná); bez ní `rozvSvorkaFunkce`
+  podle přípojnice, označení / názvu („PE", „N"). Šroub nahoře a dole, bílý štítek
+  s označením svisle, bez pruhu výrobce.
+- **Svorkovnice** (blok): řada úzkých svorek (`p.pocet`) se zarážkami a koncovou deskou,
+  rozsah `-X4…X46` nahoře, počet dole. Šířka bloku zůstává `pocet × 6 mm` (svorka +
+  podíl zarážek a desek) — staré rozvaděče se nemění. **Přípojnice N / PE**: mosazná
+  lišta se šrouby, izolátory na koncích, štítek N (modrý) / PE (zelenožlutý).
+- **Svorky ve skutečné šířce** (nové vestavěné položky): `v-x-rad-25` 2,5 mm² 5,2 mm,
+  `v-x-rad-4` 4 mm² 6,2 mm, `v-x-rad-10` 10 mm² 8,2 mm (`sirka` v modulech ≈ mm / 17,5,
+  `sirkaMm` pro popis). Starší `v-x-rad` (½ modulu) zůstává.
+- **Hustota detailu podle měřítka:** na obrazovce pod 1,8 px/mm (a ve 3D, `o.lod`)
+  se šrouby a drobnosti vynechají. Do PDF vždy plná kresba.
+- Pruh výrobce / ampéráže, označení, hodnota (`rozvCelo`), vývod, fáze, výběr, kolize
+  a upozornění zůstávají; texty se jen posunuly pod pruh a šrouby.
+
+Test: `testy/test-rozvadec-dilna.js` (oddíl 1). **Upraveno:** `test-rozvadec-psc.js`,
+`test-rozvadec-mezery.js`, `test-rozvadec-napajeni.js`, `test-rozvadec.js` (CAD) —
+porovnání se starou verzí přes `bez-kresby.js`.
+
+#### Fáze 1b — propojovací hřebeny (2026-11-08, blok „ROZVADĚČ — PROPOJOVACÍ HŘEBENY")
+
+- **Data:** `d.hrebeny = [{ uid, rada, od, do, poly, strana, prurez, krytky, In? }]`
+  (`od`/`do` = pozice v řadě v modulech, `poly` `'1' | '3' | '1+N' | '3+N'`, `strana`
+  `'nahore' | 'dole'`, `krytky` = indexy zubů, `In` jen z položky knihovny výrobce).
+  Pole vznikne s prvním hřebenem (`cist`), v `rozvZmena` je ve snímku pro ZPĚT, úklid
+  `rzhUklid` (neexistující řada, konec za skříní). **Jen DBO** (`rzhVse` u PSC prázdné).
+- **Hřeben je součást zapojení po pólech** (model zapojenÃ­ podle vzoru): sběrnice podle fází jako uzly
+  `<uid>:h:k`; každý zub (`rzhZuby`) spojí svorku přístroje na straně hřebenu (nahoře
+  `t`, dole `b`) se sběrnicí své fáze — 1P všechny L, **3P L1, L2, L3, L1…**, 1P+N / 3P+N
+  N zub se nezapojuje (`rzhHrany` → `rzpSpocti`). Krytka nebo volné místo = zub nic
+  nespojí. **Vodič na hřeben** má konec `{ uid: <hřeben>, strana: 'h', pol }`
+  (`rzpFazi`, `rzpBod`, trasovač). Hřeben **bez vodiče** se napájí automaticky ze
+  společného zdroje přístrojů pod ním (`rzhAuto`, čárkovaně). Přístroj na hřebenu
+  ztratí automatiku jako po vodiči (`rzpMset`), `rzpSync` mu zapíše `nadr` / `nadrRucne`
+  a **fázi 1P podle zubu** (zamčenou fázi `fazeZamek` ne). Zkrácený / smazaný hřeben →
+  odkryté přístroje zpátky na automatiku (`rzpReset`). Přes sběrnici hřebenu se
+  `rodic` vrací k přístroji, který hřeben napájí; panel „Kdo koho napájí" je pod ním.
+- **Ovládání:** tlačítko **🪮 Hřeben** v liště (nástroj: tah myší přes přístroje v řadě,
+  náhled během tahu; samé 1P → 1P, přes trojfázový přístroj → 3P). **Kraj hřebenu
+  = úchyt s kurzorem ↔** (`.rz-hr-kraj`, `ew-resize`), tažení roztáhne / zkrátí po
+  pólech, bublina „21 pólů · 40 A"; **tělo = posun** po ½ modulu; klepnutí vybere,
+  u vybraného **klepnutí na zub = krytka / zub**. Delete smaže, **S** přepne stranu,
+  pravý klik: Přepnout nahoru/dolů, 1P ↔ 3P, Průřez, Smazat. Dotyk: větší úchyty.
+  Výběr víc přístrojů → **„🪮 Propojit hřebenem"**. Položka knihovny „Propojovací
+  hřeben" (PRISL, `typ_prislusenstvi` **`hreben`**) dá hřeben přes vybrané přístroje,
+  jinak zapne nástroj; jako příslušenství přístroje se nenabízí.
+- **Strana:** nastavení **„Hřebeny osazuji: shora / zespodu"** v liště nástroje,
+  pamatuje si ho profil (`STORE.technik.rz_hreben_strana`, jde se zálohou); první hřeben
+  bez nastavení nabídne v hlášce druhou stranu. Hřeben zespodu se kreslí pod přístroji.
+- **Navrhnout hřebeny…** (lišta nástroje, pravý klik na řadu nebo přístroj) `rzhNavrhy`:
+  souvislé jističe (FA, FIFA, AFDD) se stejným `rozvZdrojEff` v řadě, aspoň dva → hřeben
+  (3P, když je zdroj trojfázový) **s napájecím vodičem** z výstupní svorky zdroje. Okno
+  `#modal-rz-hrebeny`, nic se nedělá bez potvrzení, jedno ZPĚT. RS2: 3 hřebeny
+  (FA1…14 a FA15…24 z -QH1, FA25…44 z -FI1 — chránič sám na hřebenu není, vodič vede
+  z jeho výstupu).
+- **Zátěž a průřez** (`rzhZatez`): In napájejícího přístroje, nebo menší proud větve ze
+  soudobosti (Pi × β vývodů pod hřebenem, cos φ z výpočtu soudobosti). Řada **10 mm²
+  63 A, 16 mm² 80 A, 25 mm² 100 A** (`RZH_RADA`, „ověřte podle výrobce hřebenu") —
+  nový hřeben dostane nejmenší vyhovující; při změně jen upozornění „Hřeben 10 mm²
+  nestačí pro zátěž 80 A – navrhuji 16 mm²" + Použít.
+- **Kontroly** (`rzhKontroly`, panel): zatížitelnost, hřeben přes chránič / vypínač
+  s jističi („hřeben pro chránič + jističe"), trojfázový přístroj na 1P hřebenu, fázový
+  zub na pólu N, přístroj s hřebenem i nataženým vodičem.
+- **PDF:** hřebeny v čelním pohledu, tabulka **„Propojovací materiál"** za seznamem
+  přístrojů (`rzhMaterial`: „Propojovací hřeben 3P 16 mm², 21 pólů (zkrátit z 57), 1 ks
+  + krytky 3 ks"). Do schématu se hřeben nekreslí (schéma čte `nadr`).
+
+Test: `testy/test-rozvadec-dilna.js` (oddíly 2–6, 8, 9: RS2, myš, vodič na hřeben,
+průřez, kontroly, knihovna, výkon 150 přístrojů + 10 hřebenů < 200 ms). V `test-mobil.js`
+stavy „rozvaděč – nástroj Hřeben a vybraný hřeben v panelu" a „…navrhnout hřebeny
+(okno)". **Upraveno:** `test-rozvadec.js` (kontextová nabídka má „🪮 Navrhnout
+hřebeny…" a „🪮 Propojit hřebenem").
+
+#### Fáze 1c — průřez a barva vodičů, vývodka (2026-11-08)
+
+- U vybraného vodiče (režim 🔌 Zapojení) **Průřez** a **Barva** (`vodice[i].prurez`,
+  `vodice[i].barva`, jen po zadání; přepojení je drží). Výchozí průřez je jen návrh
+  podle In zdroje (`rzvNavrhPrurez`: do 25 A 2,5 mm², 32 A 4, 40 A 6, 63 A 10, 80 A 16),
+  barva podle fáze (hnědá, černá, šedá; zadaná barva platí pro celý svazek i v kresbě).
+- Vodiče se zadaným průřezem jdou do **„Propojovací materiál"** (`rzvMaterial`: „Vodič
+  H07V-K 10 mm² hnědý – propojky 3 ks", po pólech a barvách).
+- **Kabelová vývodka** se kreslí na okraji skříně (`rozvVyvodkaSvg`, obrazovka i PDF,
+  mimo režim Zapojení — ten má vlastní vývodku v pásu) podle pole hlavičky **„Přívod
+  do skříně"** (`privodSmer`, dřív popisek „Přívod"), výchozí shora.
+- Karta v Novinkách **„🛠 Čelní pohled jako v dílně"** (8. 11. 2026) se třemi obrázky
+  postupu (vložit přístroje, protáhnout hřeben, propojka z hlavního vypínače) — o ni
+  si řeklo zadání.
+
+Test: `testy/test-rozvadec-dilna.js` (oddíly 1 vývodka a 7). V `test-mobil.js` stav
+„rozvaděč – režim Zapojení, vodič s průřezem a barvou".
 
 ### Výměna výkresů s CAD — export a import DXF (2026-11-02, bloky „ROZVADĚČ — VÝMĚNA S CAD")
 
@@ -3283,6 +3752,46 @@ přepínač „Rozsah kontroly"), důvod mimořádné revize (tab „A. Popis
 instalace"). Ostatní karty sedí — některé nejsou úplné, ale nelžou.
 Hlídá to `test-novinky-pravda.js` (8 kontrol — i to, že tab a přepínač,
 na které karty odkazují, v programu opravdu existují).
+
+## Spotřebiče — lhůty podle ČSN 33 1600 ed.2/Z2, tabulka 1, s vysvětlením (2026-11-05)
+
+Zadání uživatele: dosud jen 6/12/24 měsíců ze vzoru kolegy; tab. 1 ve znění Z2
+má u revizí i 48 a 96 měsíců a u zkoušek 3 měsíce. **Data se nemění** — uložené
+protokoly (i `lhuta` 6/12/24, bez `druh`) se otevřou a vytisknou bajtově stejně.
+
+- **`SPOTR_TAB1_Z2`** — jediná konstanta s čísly tab. 1 (zkouška / revize ×
+  držené v ruce / ostatní, skupiny B–E, A „před vydáním, pak podle skupiny
+  užívání"). Text normy se neopisuje; vysvětlení vlastními slovy s číslem poznámky.
+- **`SPOTR_LHUTY` = 3, 6, 12, 24, 48, 96** (výchozí 24), `SPOTR_LHUTY_POPIS` = kdy
+  která platí. Nadpis karty, PDF i text „1x N měsíců" beze změny.
+- **Karta `#sp-lhuta-karta`** nad protokolem (mimo list → do PDF nejde):
+  volba **„Spotřebiče na protokolu"** `f_sp_druh` (`ruka` / `ostatni` /
+  `smisene`, výchozí nevyplněno; do dat `S.druh` jen po výběru a jen u zprávy
+  o spotřebičích), popisek zvolené lhůty, **návrh** `spotrLhutaNavrh(S)` =
+  nejkratší lhůta revize ze všech řádků podle skupiny, třídy a druhu:
+  PP = držené v ruce a třída I (pozn. 6, 7), OP se nezapočítává (pozn. 7),
+  skupina A se nezapočítává (lhůta podle skupiny u nájemce), řádek bez skupiny
+  nebo třídy se přeskočí a spočítá („2 spotřebiče bez skupiny – lhůtu nelze
+  navrhnout"), bez druhu = sloupec „držené v ruce" s poznámkou, smíšené =
+  přísnější sloupec. **„Použít návrh"** jen na klepnutí (lhůta + přepočet
+  příští revize přes `spotrLhutaZmena`). Delší než návrh = oranžové upozornění
+  s důvodem, kratší = šedá informace (pozn. 4, 11), rovná = nic.
+- **„ⓘ Kdy jaká lhůta?"** → `#modal-sp-lhuty` (`spotrLhutyOtevrit`): tab. 1 se
+  zvýrazněným řádkem a sloupcem aktuálního návrhu, revize × zkouška
+  (ČSN EN 50699, § 6 vyhl. 50/1978 Sb., Z2 příloha E.2), skupiny A–E, držené
+  v ruce × ostatní (čl. 3.2.2, 3.2.4, 3.2.5, Z2 pozn. 1 k 3.2.3), zvláštní
+  případy (pozn. 1–11), proč je lhůta jedna pro celý protokol. Tlačítko má
+  `ro-ok` (jen čte).
+- **Karta v Novinkách** „🔌 Spotřebiče – lhůty podle ČSN 33 1600 Z2"
+  (5. 11. 2026) — o ni si řekl uživatel v zadání.
+
+Test: `testy/test-spotrebice-lhuty.js` (31 kontrol — návrh pro všechny
+kombinace ze zadání, upozornění, Použít návrh, PDF bez karty, překryv i na
+360 px, starý protokol bajtově proti předchozí verzi, Novinky). V `test-mobil.js`
+stav „dialog modal-sp-lhuty". **Upraveno:** `test-rozvadec.js` (karta CAD
+v Novinkách už není nahoře — kontroluje se, že nad ní není nic staršího),
+`test-spotrebice.js` (nabídka 3–96 měsíců), `test-novinky.js` (karta
+„Revize elektrických spotřebičů" se hledá celým názvem).
 
 ## Protokol jen pro JEDEN spotřebič (v9.78)
 
@@ -4883,11 +5392,9 @@ další. Testy na zavírání jsou proto tři (výběr, Esc, klepnutí jinam).
 - **Třída ochrany** (`SPOTR_TRIDY`) — I / II / III podle ČSN EN 61140,
   poznámka o prodlužovacích přívodech je z legendy, položka 8).
 - **Skupina A–E** (`SPOTR_SKUPINY_VOLBY`) — ČSN 33 1600 ed.2 kap. 4.
-  ⚠️ **Znění NENÍ opsané z normy** — sandbox na `csnonline.agentura-cas.cz`
-  nesmí (viz oddíl u v9.51). Je to popis podle obecné znalosti té tabulky;
-  vzor od kolegy ho potvrzuje jen zčásti (kancelářská technika = E,
-  trafopáječka = C). **Uživatel byl upozorněn, ať si znění ověří** —
-  skupina určuje lhůtu, takže špatný popis by vedl ke špatnému termínu.
+  **Ověřeno proti plnému znění ČSN 33 1600 ed.2 + Z1 + Z2 (dávka 4 norem,
+  2026-11-05)** — skupiny A–E (kap. 4), tab. 1 podle Z2 a vysvětlivky vzoru.
+  Popisy jsou vlastními slovy, text normy se neopisuje.
 - **Test hlídá, že žádná nabízená volba nezůstala bez vysvětlení** — přidat
   volbu do `SPOTR_SLOUPCE` a zapomenout na nápovědu tedy neprojde.
 

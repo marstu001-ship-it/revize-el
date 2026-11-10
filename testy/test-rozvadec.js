@@ -182,7 +182,7 @@ function pomocnik() {
   await p.click('#rz-filtry-hlavni .rz-skup[data-k="jine"]'); f.jine = await p.evaluate(() => Array.from(new Set(Array.from(document.querySelectorAll('#rz-seznam .rz-ikona')).map(x => x.textContent))).sort().join());
   await p.evaluate(() => TD_AKCE.tdRFiltrZrusit());
   await p.evaluate(() => __T.filtr('q', 'rcbo c16')); f.q = await p.evaluate(() => Array.from(document.querySelectorAll('#rz-seznam .rz-polozka b')).map(x => x.textContent).join());
-  await p.evaluate(() => __T.filtr('q', 'svodič')); f.qNic = await p.evaluate(() => document.getElementById('rz-seznam').innerText);
+  await p.evaluate(() => __T.filtr('q', 'kávovar')); f.qNic = await p.evaluate(() => document.getElementById('rz-seznam').innerText);
   await p.evaluate(() => { TD_AKCE.tdRFiltrZrusit(); __T.filtr('overene', true); }); f.over = await p.evaluate(() => __T.nalezeno());
   await p.evaluate(() => TD_AKCE.tdRFiltrZrusit());
   check('skříně: výrobce, počet řad, modulů v řadě, provedení a materiál jsou vidět vždy', f.skrineViditelne === 'vyrobce,rady,modulu,provedeni,material', f.skrineViditelne);
@@ -667,7 +667,10 @@ function pomocnik() {
   });
   check('klepnutí na přístroj ho vybere, vlastnosti se zapíšou a hned ukážou v pohledu', sel.vybrany && /^Zásuvky – obývací pokoj, TV\|L2\|CYKY-O\|true\|true$/.test(sel.data) &&
     /Zásuvky – obý/.test(sel.svg), sel.data);
-  check('nadřazený chránič jde změnit ručně (nabídka: automaticky, žádný, chrániče)', /^automaticky — -FI1 \| žádný \(přímo z přívodu\) \| -FI1 \(řada 2\) \| -FI2 \(řada 3\)$/.test(sel.volby), sel.volby);
+  // „Napájen z" (2026-11-05, dřív „Nadřazený chránič"): automaticky, přímo z hlavního vypínače, napájecí přístroje v pořadí pohledu (bez sebe a hlavního vypínače)
+  check('napájení jde změnit ručně (nabídka: automaticky, z přívodu, přímo z hlavního vypínače, napájecí přístroje)', /^automaticky — -FI1 \| z přívodu \(před hlavním vypínačem\) \| přímo z hlavního vypínače \| /.test(sel.volby) &&
+    /-FI1 Chránič 40 A\/30 mA 4P/.test(sel.volby) && /-FI2 Chránič/.test(sel.volby) && !/-QH1/.test(sel.volby.split(' | paralelně')[0]) && !/-FA4\b/.test(sel.volby) &&
+    /\| paralelně na vstup -QH1 \(před vypínačem\) \| paralelně na vstup -FA1 /.test(sel.volby), sel.volby);   // 2026-11-06: skupina „paralelně na vstupních svorkách"
   check('smazaný ručně zvolený chránič → zpátky automaticky', sel.poSmazani === 'false|true', sel.poSmazani);
   // klávesy: Delete, Ctrl+Z, šipky, Ctrl+D, přečíslovat
   await p.evaluate(() => { document.activeElement && document.activeElement.blur(); __rz.vyber = __rz.rady[1].prvky[2].uid; rozvPohledVykreslit(); rozvVlastnostiVykreslit(); });
@@ -745,7 +748,7 @@ function pomocnik() {
   const m1 = await menu();
   const vyb1 = await p.evaluate(() => (rozvNajit(__rz.vyber) || { x: {} }).x.ozn);
   check('pravý klik na přístroj: menu programu se stejnými akcemi jako panel + schránka a rezerva, přístroj se vybere',
-    vyb1 === '-FA1' && m1 && m1.join('|') === 'Vlastnosti|Duplikovat|Kopírovat|(Vložit za něj)|Vložit rezervu vedle|Přesunout do řady 2|Přesunout do řady 3|🔢 Přečíslovat označení|Smazat', vyb1 + ' · ' + (m1 || []).join('|'));
+    vyb1 === '-FA1' && m1 && m1.join('|') === 'Vlastnosti|Duplikovat|Kopírovat|(Vložit za něj)|Vložit rezervu vedle|Přesunout do řady 2|Přesunout do řady 3|🔢 Přečíslovat označení|🪮 Navrhnout hřebeny…|Smazat', vyb1 + ' · ' + (m1 || []).join('|'));
   const kl = await p.evaluate(() => Array.from(document.querySelectorAll('.kt-menu .kt-kl')).map(x => x.textContent).join(','));
   check('menu ukazuje klávesy (Ctrl+D, Ctrl+C, Ctrl+V, Delete) a má vzhled menu tabulky měření', kl === 'Ctrl+D,Ctrl+C,Ctrl+V,Delete' &&
     await p.evaluate(() => document.querySelector('.kt-menu').className === 'kt-menu' && !!document.querySelector('.kt-menu .kt-pata')), kl);
@@ -961,8 +964,8 @@ function pomocnik() {
   check('Ctrl+klik přidá přístroj, Shift+klik vybere úsek od posledního kliknutého, Ctrl+klik vybraný ubere', s1 === 'A1,A3' && s2 === 'A3,A4,A5,A6' && s3 === 'A3,A5,A6', [s1, s2, s3].join(' | '));
   check('Shift+klik v pohledu neoznačí text stránky (označený text by Chrome začal táhnout a tažení přístroje by se zrušilo)', bezTextu);
   check('Shift+klik úsek přes řady zleva doprava, shora dolů', s4 === 'A12,A13,A14,A15,A16,A17,A18,A19,A20,A21,B0,B1', s4);
-  check('vlastnosti výběru: „Vybráno 3 přístroje", fáze, nadřazený chránič, přesun, smazat', /Vybráno 3 přístroje/.test(pan) && /Fáze všem vybraným/i.test(pan) &&
-    /Nadřazený chránič/i.test(pan) && /Přesunout jinam/.test(pan) && /Smazat vybrané \(3\)/.test(pan), pan.replace(/\n/g, ' | ').slice(0, 200));
+  check('vlastnosti výběru: „Vybráno 3 přístroje", fáze, napájení, přesun, smazat', /Vybráno 3 přístroje/.test(pan) && /Fáze všem vybraným/i.test(pan) &&
+    /Napájen z/i.test(pan) && /Přesunout jinam/.test(pan) && /Smazat vybrané \(3\)/.test(pan), pan.replace(/\n/g, ' | ').slice(0, 200));
   // klik do prázdna výběr zruší
   await p.evaluate(() => document.querySelectorAll('.toast').forEach(t => t.remove())); const pz = await p.evaluate(() => __T.bod(0, 8, RZG.H + 9)); await p.mouse.click(pz.x, pz.y); await w(120); const s5 = await sel();
   check('klik do prázdného místa výběr zruší', s5 === '', s5);
@@ -1109,7 +1112,7 @@ function pomocnik() {
   await klik(0, 1.5); await klik(0, 2.5, 'Control');
   const q = await p.evaluate(() => __T.bod(0, 2.5)); await p.mouse.click(q.x, q.y, { button: 'right' }); await w(150);
   const mv = await p.evaluate(() => ({ m: Array.from(document.querySelectorAll('.kt-menu .kt-pol')).map(b => b.childNodes[0].textContent.trim()).join('|'), sel: __T.sel() }));
-  check('pravý klik nad výběrem: menu pro celý výběr (výběr zůstane)', mv.m === 'Duplikovat|Kopírovat|Vložit za ně|Přesunout do řady 1|Přesunout do řady 2|Přesunout do řady 3|Přesunout do řady 4|Přesunout do řady 5|Přesunout do řady 6|Smazat vybrané (2)' &&
+  check('pravý klik nad výběrem: menu pro celý výběr (výběr zůstane)', mv.m === 'Duplikovat|Kopírovat|Vložit za ně|Přesunout do řady 1|Přesunout do řady 2|Přesunout do řady 3|Přesunout do řady 4|Přesunout do řady 5|Přesunout do řady 6|🪮 Propojit hřebenem|Smazat vybrané (2)' &&
     mv.sel.split(',').length === 2, JSON.stringify(mv));
   await p.evaluate(() => { const b = Array.from(document.querySelectorAll('.kt-menu .kt-pol')).find(b => b.textContent.trim().startsWith('Přesunout do řady 5')); if (b) b.click(); }); await w(150);
   const m5 = await p.evaluate(() => __T.rada(4).split(',').slice(-2).join(','));
@@ -1187,7 +1190,7 @@ function pomocnik() {
     });
     check('telefon: první dlouhý stisk zapne výběr více přístrojů (pruh nahoře), přístroj je vybraný', dl.rezim.zap && !dl.rezim.menu &&
       /Výběr více přístrojů/.test(dl.rezim.banner) && /Vybráno: 1/.test(dl.rezim.banner), JSON.stringify(dl.rezim));
-    check('telefon: ve výběru dlouhý stisk prstem na přístroji otevře totéž menu (položky ≥ 40 px)', /^Vlastnosti\|Duplikovat\|Kopírovat\|Vložit za něj\|Vložit rezervu vedle\|Přesunout do řady 1\|🔢 Přečíslovat označení\|Smazat$/.test(dl.menu) &&
+    check('telefon: ve výběru dlouhý stisk prstem na přístroji otevře totéž menu (položky ≥ 40 px)', /^Vlastnosti\|Duplikovat\|Kopírovat\|Vložit za něj\|Vložit rezervu vedle\|Přesunout do řady 1\|🔢 Přečíslovat označení\|🪮 Navrhnout hřebeny…\|Smazat$/.test(dl.menu) &&
       dl.vyber === '-FI1' && dl.vyska >= 40, JSON.stringify(dl));
     // výběr více prstem: dlouhý stisk -FA1, klepnutí na -FA2, „✥ Přesunout jinam" v pruhu, klepnutí do řady 1
     await t.evaluate(async () => {
@@ -2273,7 +2276,7 @@ function pomocnik() {
     const ps = await c3.newPage(); await ps.goto('http://127.0.0.1:' + (process.env.STARA_PORT || 8902) + '/index.html'); await w(1200);
     const stara = await html(ps).catch(e => ({ dok: 'chyba ' + e.message }));
     await c3.close();
-    check('CAD: PDF dokumentace i schématu beze změny proti předchozí verzi (stránky náhledu znak po znaku)', nyni.dok.length > 5000 && nyni.dok === stara.dok && nyni.sch === stara.sch,
+    check('CAD: PDF dokumentace (čelní pohled bez kresby přístrojů) i schématu beze změny proti předchozí verzi (stránky náhledu znak po znaku)', nyni.dok.length > 5000 && require('./bez-n')(require('./bez-kresby')(nyni.dok)) === require('./bez-n')(require('./bez-kresby')(stara.dok)) && require('./bez-n')(nyni.sch) === require('./bez-n')(stara.sch),   // 2026-11-09: N jističochrániče a popisky N-FI záměrně   // 2026-11-08: kresba přístrojů v čelním pohledu se mění záměrně
       nyni.dok.length + ' / ' + (stara.dok || '').length);
 
     // ── import vymyšleného „elmerovského" výkresu ──
@@ -2389,13 +2392,67 @@ function pomocnik() {
     const nov = await p.evaluate(() => {
       const k = [...document.querySelectorAll('#screen-novinky .scard')].filter(c => /Výměna výkresů s CAD/.test(c.textContent))[0];
       const maxD = [...document.querySelectorAll('#screen-novinky [data-nov-datum]')].map(c => c.getAttribute('data-nov-datum')).sort().pop();
-      return { je: !!k, datum: k && k.getAttribute('data-nov-datum'), prvni: k && k === document.querySelector('#screen-novinky .scard[data-nov-datum]'), maxD, text: k ? k.textContent : '',
+      const vse = [...document.querySelectorAll('#screen-novinky .scard[data-nov-datum]')], ix = vse.indexOf(k);
+      return { je: !!k, datum: k && k.getAttribute('data-nov-datum'), nadStarsi: vse.slice(0, ix).filter(c => c.getAttribute('data-nov-datum') < k.getAttribute('data-nov-datum')).length, maxD, text: k ? k.textContent : '',
         tl: [document.getElementById('dok-pdf-dxf').textContent.trim(), DOK_TYPY.rozv.zCad] };
     });
-    check('CAD Novinky: karta „Výměna výkresů s CAD" nahoře s datem 2026-11-02 a návodem (Stáhnout / Načíst, Uložit jako DXF, barvy náhledu, DWG a SVG ne)', nov.je && nov.datum === '2026-11-02' && nov.prvni && nov.maxD === '2026-11-02' &&
+    check('CAD Novinky: karta „Výměna výkresů s CAD" s datem 2026-11-02, nad ní nic staršího, a návodem (Stáhnout / Načíst, Uložit jako DXF, barvy náhledu, DWG a SVG ne)', nov.je && nov.datum === '2026-11-02' && nov.nadStarsi === 0 &&
       nov.text.includes(nov.tl[0]) && /Načíst výkres z CAD \(DXF\)/.test(nov.text) && /Uložit jako → DXF – AutoCAD/.test(nov.text) && /oranžové jsou odhad/.test(nov.text) && /DWG ani SVG ne/.test(nov.text) && nov.tl[1] === true, nov.datum);
     await p.evaluate(() => { showScreen('novinky'); const k = [...document.querySelectorAll('#screen-novinky .scard')].filter(c => /Výměna výkresů s CAD/.test(c.textContent))[0]; k.scrollIntoView({ block: 'start' }); window.scrollBy(0, -70); });
     await w(200); await p.screenshot({ path: path.join(BEH, 'cad-novinky.png') });
+  }
+
+  // ── dávka 4 norem: DBO podle ČSN EN IEC 61439-3 ed. 2 ─────────────────
+  {
+    const r = await p.evaluate(() => {
+  const kn = id => rozvVestavene().concat(pscVestavene()).find(x => x.id === id);
+  const prv = (id, o) => Object.assign({ uid: 'u' + Math.random().toString(36).slice(2), knih: id, p: dokKopie(kn(id)), ozn: '', vyvod: '', faze: 'L1' }, o || {});
+  const base = (extra) => Object.assign({ rezim: 'DBO', soustava: '3NPE ~50Hz 400/230V TN-S', skrin: { rady: 2, modulu: 12 }, rady: [{ prvky: [
+    prv('v-qm-3-40', { ozn: '-QH1' }),
+    prv('v-fa-1-B16', { vyvod: 'Zásuvky 1' }), prv('v-fa-1-B16', { vyvod: 'Zásuvky 2' }), prv('v-fa-1-B16', { vyvod: 'Zásuvky 3' }),
+    prv('v-fa-1-B10', { vyvod: 'Osvětlení' }), prv('v-fa-1-B16', { vyvod: 'Pračka' }), prv('v-fa-3-B25', { vyvod: 'Nabíjení EV wallbox', faze: '3f' })
+  ] }, { prvky: [] }], otepleni: { rdfRezim: 'tabulka' } }, extra || {});
+  const r = {};
+  const d1 = base(); const r1 = rotRdf(d1); r.rdf1 = { n: r1.n, k: r1.k, evfv: r1.evfv, text: r1.text };
+  const d2 = base({ otepleni: { rdfRezim: 'tabulka', evRizeni: true } }); const r2 = rotRdf(d2); r.rdf2 = { n: r2.n, k: r2.k, text: r2.text };
+  const v1 = rozvOteplVypocet(d1); const ev = v1.radky.find(q => q.x.vyvod === 'Nabíjení EV wallbox'), zs = v1.radky.find(q => q.x.vyvod === 'Zásuvky 1');
+  r.inc = { ev: ev && ev.eff, zas: zs && zs.eff };
+  const up = (extra) => { const d = base(extra); return rozvDboUpoz(d, rozvDokEff(d)); };
+  r.znec1 = up({ tech: { znec: '1' } }); r.znec2 = up({ tech: { znec: '2' } });
+  r.ip20 = up({ krytiZavreno: 'IP40', krytiOtevreno: 'IP20' }); r.ip2xc = up({ krytiZavreno: 'IP40', krytiOtevreno: 'IP2XC' }); r.ip30 = up({ krytiZavreno: 'IP30' });
+  r.ikVen = up({ tech: { umisteni: 'venkovní', ik: 'IK05' } }); r.ikVnitr = up({ tech: { umisteni: 'vnitřní', ik: 'IK05' } });
+  const dq = base(); dq.rady[0].prvky[0] = prv('v-qf-3-250', { ozn: '-QF1', privod: true }); r.qf = rozvDboUpoz(dq, rozvDokEff(dq));
+  const dfv = base({ privodIn: '40' }); dfv.rady[1].prvky.push(prv('v-fa-3-B25', { vyvod: 'FVE střídač', faze: '3f' })); r.fv = rozvDboUpoz(dfv, rozvDokEff(dfv));
+  const st = (extra) => rozvStitekTabulkaHtml(base(extra), ROZV_STITKY['90x45']);
+  r.st54 = /Krytí IP<\/span><span class="rz-sc-v">IP54/.test(st({ krytiZavreno: 'IP54', stitek: { rozsirena: false } }));
+  r.st2xc = /Krytí IP/.test(st({ krytiZavreno: 'IP2XC', stitek: { rozsirena: false } }));
+  // metoda 11.9 C → věta v PDF protokolu; formulář: volba C, zaškrtávátko EV/FV, nápovědy 11.7 / 11.10
+  const dc = base({ ko: { metoda: 'C' } }); r.pdfC = rozvPdfProtokol(dc, rozvDokEff(dc)).map(x => x.html || '').join('');
+  const hc = document.createElement('div'); hc.innerHTML = rozvDokHtml(dc);
+  r.optC = !!hc.querySelector('select[data-dk="ko.metoda"] option[value="C"]');
+  r.evZatrh = !!hc.querySelector('input[data-dk="otepleni.evRizeni"]');
+  r.nap = Array.from(hc.querySelectorAll('.rz-ko-nap')).map(x => x.textContent).join(' | ');
+  r.umistCeka = /Umístění<span class="rz-ceka"/.test(hc.innerHTML) || !!hc.querySelector('[data-dk="tech.znec"]').closest('.f').querySelector('.rz-ceka');
+  r.znecPh = hc.querySelector('[data-dk="tech.znec"]').placeholder; r.ikPh = hc.querySelector('[data-dk="tech.ik"]').placeholder;
+  r.rdfCeka = !!hc.querySelector('[data-dk="otepleni.rdfRezim"]').closest('.f').querySelector('.rz-ceka');
+  // evRizeni se do dat zapíše jen zaškrtnuté
+  const f0 = document.createElement('div'); f0.innerHTML = '<input class="rot-inc">'; const dd = { otepleni: { evRizeni: false, rdfRezim: 'bez' } };
+  rozvOteplCistNavic(f0, dd); r.evData = JSON.stringify(dd.otepleni || {});
+  return r;
+    });
+    check('61439-3 tab. 101: 6 vývodů, 1 EV → n = 5, k = 0,7, EV × 1', r.rdf1.n === 5 && r.rdf1.k === 0.7 && r.rdf1.evfv === 1 && r.inc.ev === 20 && Math.abs(r.inc.zas - 8.96) < 1e-9 /* bez Ib: Inc 0,8 In (2026-11-09) — EV 0,8 × 25 × 1, zásuvky 0,8 × 16 × 0,7 */, JSON.stringify([r.rdf1, r.inc]));
+    check('61439-3 tab. 101: text RDF uvádí činitel 1 u EV/FV a citaci', r.rdf1.text === 'RDF 0,7 podle počtu vývodů (5); vývody nabíjení EV / FV (1) činitel 1 — ČSN EN IEC 61439-3 ed. 2, tab. 101', r.rdf1.text);
+    check('61439-3 tab. 101: zaškrtnuté řízení zátěže → n = 6, k = 0,6', r.rdf2.n === 6 && r.rdf2.k === 0.6, JSON.stringify(r.rdf2));
+    check('61439-3: evRizeni se do dat zapíše jen zaškrtnuté', !/evRizeni/.test(r.evData) && r.evZatrh, r.evData);
+    check('61439-3 7.1.2: znečištění 1 → upozornění, 2 → nic', /nejméně 2 \(čl\. 7\.1\.2/.test(r.znec1) && r.znec2 === '');
+    check('61439-3 8.2.2: IP20 při otevřených dveřích → upozornění, IP2XC / IP30 nic', /alespoň IP2XC \(čl\. 8\.2\.2 ČSN EN IEC 61439-3 ed\. 2\) — teď IP20\./.test(r.ip20) && r.ip2xc === '' && r.ip30 === '', r.ip20);
+    check('61439-3 8.2.1: venkovní IK05 → upozornění, vnitřní IK05 nic', /nejméně IK07/.test(r.ikVen) && r.ikVnitr === '');
+    check('61439-3 8.5.3: přívod QF → upozornění, hlavní vypínač ne', /není určen k obsluze laikem/.test(r.qf) && !/obsluze laikem/.test(r.znec2 + r.ip30));
+    check('61439-3 příl. CC: FV vývod → InA 40 A, hlavní přístroj 40 A + FV 25 A', /teď InA 40 A, hlavní přístroj 40 A \+ FV 25 A\./.test(r.fv), r.fv);
+    check('61439-3 6.1 h: štítek bez rozšířené části — IP54 ano, IP2XC ne', r.st54 && !r.st2xc);
+    check('61439-3 11.9: metoda C ve formuláři a věta v PDF protokolu', r.optC && /Zkouška se nevyžaduje: DBO jen s přípojnicemi nebo hotovými rozvody hlavního obvodu, ověřeno prohlídkou vodičů a uložení \(ČSN EN IEC 61439-3 ed\. 2, čl\. 11\.9\)\./.test(r.pdfC));
+    check('61439-3: nápovědy 11.7 (čl. 8.8) a 11.10 (čl. 6.3) ve formuláři', /čl\. 8\.8/.test(r.nap) && /čl\. 6\.3/.test(r.nap), r.nap);
+    check('61439-3: umístění, znečištění a RDF bez štítku „čeká na ověření", placeholdery', !r.umistCeka && !r.rdfCeka && r.znecPh === 'nejméně 2 (ČSN EN IEC 61439-3, čl. 7.1.2)' && r.ikPh === 'IK05', r.znecPh + ' ' + r.ikPh);
   }
 
   // ── oddělení od revizí ────────────────────────────────────────────────

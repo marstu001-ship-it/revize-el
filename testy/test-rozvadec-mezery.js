@@ -12,6 +12,8 @@ const { chromium } = require('./pw');
 const path = require('path');
 const PORT = process.env.PORT || 8901, STARA = process.env.STARA_PORT || 8902;
 const res = []; const check = (n, ok, d) => res.push((ok ? '✅' : '❌') + ' ' + n + (d ? ' — ' + d : ''));
+// 2026-11-09: výchozí Inc 0,8 In (oprava čl. 10.10.4.1 e) mění Inc a Pv proti starší verzi záměrně — porovnává se bez nich
+const bezIncJ = t => JSON.stringify(JSON.parse(t, (k, v) => ['odv', 'odv08', 'inc', 'eff', 'nad08', 'zadano', 'pvInc', 'sumPv', 'celkem', 'prirW', 'rezerva', 'rezervaPct', 'stav'].indexOf(k) !== -1 ? undefined : v));
 const w = ms => new Promise(r => setTimeout(r, ms));
 const M = 17.5;
 
@@ -83,12 +85,14 @@ async function stranka(b, port, init) {
   check('starý rozvaděč se načte bajtově beze změny', nove.nacteno === stary.data);
   check('… řady v editoru jsou stejné jako uložené a nemají klíč „mezera"', nove.rady === JSON.stringify(sd.rady) && nove.mezer === -1);
   check('… otevřený a uložený beze změny řad', nove.ulozeno === JSON.stringify(sd.rady));
-  check('… čelní pohled (SVG do PDF) znak po znaku stejný jako ve staré verzi', nove.out.svg === stary.out.svg);
-  check('… schéma zapojení (všechny listy) stejné jako ve staré verzi', JSON.stringify(nove.out.schema) === JSON.stringify(stary.out.schema), nove.out.schema.length + ' listů');
+  const BK = require('./bez-kresby');   // 2026-11-08: kresba přístrojů a vývodka se mění záměrně
+  const BN = require('./bez-n');        // 2026-11-09: N jističochrániče a popisky N-FI se mění záměrně
+  check('… čelní pohled (SVG do PDF, bez kresby přístrojů) znak po znaku stejný jako ve staré verzi', BK(nove.out.svg) === BK(stary.out.svg));
+  check('… schéma zapojení (všechny listy) stejné jako ve staré verzi', BN(JSON.stringify(nove.out.schema)) === BN(JSON.stringify(stary.out.schema)), nove.out.schema.length + ' listů');
   check('… popisky pod přístroje stejné jako ve staré verzi', nove.out.popisky === stary.out.popisky);
   // v9.131 přidala do souhrnu fází seznam vývodů bez In (trafa, zdroje) — u bytu je prázdný (stará verze ho mít může i nemusí)
-  check('… součty fází a oteplení stejné jako ve staré verzi', nove.out.faze.replace(',"bezIn":[]', '') === stary.out.faze.replace(',"bezIn":[]', '') && nove.out.otepl === stary.out.otepl);
-  check('… PDF (titul, čelní pohled, seznam) stejné jako ve staré verzi', nove.out.seznam === stary.out.seznam);
+  check('… součty fází a oteplení stejné jako ve staré verzi', nove.out.faze.replace(',"bezIn":[]', '') === stary.out.faze.replace(',"bezIn":[]', '') && bezIncJ(nove.out.otepl) === bezIncJ(stary.out.otepl));
+  check('… PDF (titul, čelní pohled bez kresby přístrojů, seznam) stejné jako ve staré verzi', BN(BK(nove.out.seznam)) === BN(BK(stary.out.seznam)));
   await S.ctx.close();
 
   const p = N.p;
