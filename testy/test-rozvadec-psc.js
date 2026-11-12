@@ -590,11 +590,11 @@ const presahy = (p, svg) => p.evaluate(svg => {
       const html = document.querySelector('#screen-dok-form .dok-wrap').innerHTML;
       // knihovna se od 2026-10-22 záměrně liší (kategorie Trafa a zdroje, nové obecné položky) — editor bez ní musí být stejný
       // etapa 5c: záložka „🧊 3D" (tlačítko a prázdný panel) přibyla záměrně
-      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast, .rz-nap-btn, .rz-svorky-rady').forEach(e => e.remove());
+      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast, .rz-nap-btn, .rz-svorky-rady, .rzc-box, .rzc-nast, .rza-nast, #rz-akce, .rz-pruv-odkaz').forEach(e => e.remove());   // + fáze 2 ovládání (2026-11-11): pole příkazu, lišta akcí, průvodce
       kopie.querySelectorAll('.rz-vstup-nast-box').forEach(e => e.remove());   // 2026-11-06: nastavení „Přístroje napájím shora / zespodu"   // + tlačítko ⚡ Ovládání (ovládací obvody, 2026-10-29); + souhrn, sbalený panel a nastavení soudobosti (2026-10-29); + 🔗 Napájení a svorkové lišty (2026-11-05)
       // oprava skákajícího zoomu (2026-11-06): dřív se kreslilo první vykreslení o 2 px širší než všechna další —
       // měřítko čelního pohledu na obrazovce se proto porovnává bez rozměrů SVG (obsah stejný)
-      const htmlBez = kopie.innerHTML.replace(/(class="rz-svg" viewBox="[^"]*") width="\d+" height="\d+"/g, '$1').replace(/(<text class="rz-cislo"[^>]*?) font-size="[\d.]+"/g, '$1');
+      const htmlBez = kopie.innerHTML.replace(/(šipky posouvají\.) (<\/div>)/, '$1$2')   /* mezera před odebraným odkazem „Ukázat průvodce" */.replace(/(class="rz-svg" viewBox="[^"]*") width="\d+" height="\d+"/g, '$1').replace(/(<text class="rz-cislo"[^>]*?) font-size="[\d.]+"/g, '$1');
       const knih = document.getElementById('rz-seznam').innerHTML;
       // etapa 5b: dokumenty, štítek, schéma, oteplení, fáze a celé PDF DBO se nesmí změnit (stejný technik v obou verzích)
       const t0 = STORE.technik; STORE.technik = { jmeno: 'Petr Vymyšlený', firma: 'Vymyšlená elektro s.r.o.', ico: '12345678', mesto: 'Kyjov' };
@@ -612,7 +612,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
     }, data);
     const A = await zkus(s), B = await zkus(p);
     // 2026-11-08 (čelní pohled „jako v dílně"): kresby přístrojů, vývodka, tlačítko 🪮 Hřeben a popisek „Přívod do skříně" se mění záměrně
-    const bezCp = s0 => require('./bez-n')(bezKresby(s0)).replace(/<button class="dok-mini rz-hr-btn[^>]*>🪮 Hřeben<\/button>/g, '').replace(/Přívod do skříně/g, 'Přívod');
+    const bezCp = s0 => require('./bez-n')(bezKresby(s0)).replace(/<button class="dok-mini rz-hr-btn[^>]*>🪮 Hřeben<\/button>/g, '').replace(/Přívod do skříně/g, 'Přívod').replace(/<details class="rz-chybi"[^>]*>[\s\S]*?<\/details>/g, '').replace(/<details class="dok-sprava rz-dok-oddil" data-oddil="(chybi|svorky)"[^>]*>[\s\S]*?<\/details>/g, '');   /* fáze 3: pruh „Co ještě chybí" a oddíly Svorky / Co ještě chybí */
     [A, B].forEach(X => { ['svg', 'svgT', 'htmlBez', 'pdf'].forEach(k => { X[k] = bezCp(X[k]); }); Object.keys(X.dbo5b).forEach(k => { X.dbo5b[k] = bezCp(X.dbo5b[k]); }); });
     check('starý DBO: otevření a uložení nezmění data (nová verze, bajtově)', B.pred === B.po, B.pred.length + ' / ' + B.po.length);
     check('DBO: uložená data po otevření a uložení stejná jako ve předchozí verzi', A.po === B.po, '');

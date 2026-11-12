@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.142 · 2026-11-10**
+**Aktuální verze: v9.143 · 2026-11-12**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -3074,6 +3074,274 @@ hřebeny…" a „🪮 Propojit hřebenem").
 
 Test: `testy/test-rozvadec-dilna.js` (oddíly 1 vývodka a 7). V `test-mobil.js` stav
 „rozvaděč – režim Zapojení, vodič s průřezem a barvou".
+
+### Čelní pohled „jako v dílně" — fáze 2: ovládání (2026-11-11)
+
+Fáze 2 zrychluje **skládání** (zadání uživatele: RS2 nanejvýš na 25 akcí; akce = příkaz, klik na
+tlačítko nebo tah myší — počítá `test-rozvadec-ovladani.js`). **Data se nemění** — vkládají se tytéž
+položky knihovny jako tažením, výpočty se nedotkly; starý rozvaděč se otevře a uloží bajtově stejně
+a má stejné PDF, schéma i DXF (test proti předchozí verzi). Jen DBO.
+
+#### Vkládání příkazem (blok „ROZVADĚČ — VKLÁDÁNÍ PŘÍKAZEM")
+
+- Pole **„Napiš, co vložit… (např. 22x B10)"** nad čelním pohledem (`#rzc-pole`, `rzcBoxHtml`, v `#rz-pohled`
+  hned pod lištou; překreslení pohledu vrací hodnotu, kurzor i fokus — `rzcStav` / `rzcObnov`). Klávesa
+  **/** do něj skočí (když se nepíše do pole).
+- **Rozbor `rzcRozbor(text)`** — bez háčků a velikosti písmen, `x` i `×` = počet, čárka = tečka; co po
+  rozboru zbude, je chyba („Nerozumím „B10x“ – zkuste např. 22x B10"). Zápisy: `22x B10`, `22 B10`,
+  `B16 3P`, `2x B25 3f` (3f = 3P), `B10 1+N`, `fi 40/30 4p` / `chránič 40 30mA 4P` / `FI 40A 30mA typ A`
+  (výchozí 4P, 30 mA, typ A), `rcbo b16 30` / `fi/fa b16 30mA`, `hl 63 3p` / `vypínač 63A 3P` (proud povinný),
+  `spd t2`, `spd t1+t2 3+1` (třída povinná; „3+1" u T2 = položka Svodič T2 3+1), `pojistky 3p 14x51`,
+  `fu 3p 40gG` (vložka → `x.vlozka`, nad 32 A odpojovač 14×51), `rezerva 2`, `2 M volno`, `svorky 20`
+  (2,5 mm²), `20x svorka 4`, `afdd b16`. Počet 1–200.
+- **Položka `rzcPolozka(q)`**: obecná vestavěná podle parametrů (`rzcShoda`); je-li v Nastavení
+  konfigurátoru zvolená **Výchozí řada** pro kategorii (`rzcNastaveniHtml`, výběr z řad v knihovně —
+  jističe, chrániče, RCBO, AFDD, vypínače, SPD, pojistky; localStorage `revize_el_rz_rada`, jen
+  v prohlížeči) a má shodný přístroj, vloží se ten (i s Pv). Co knihovna nemá, se nevloží a řekne to.
+- **Kam `rzcPlan`**: za vybraný přístroj (i s jeho příslušenstvím), jinak na konec vybrané řady, jinak
+  do první řady s místem (`rozvRadaProVlozeni`). Co se nevejde, pokračuje v další řadě (`rozvRozmistit`,
+  stejné pravidlo jako přesun bloku). Když se nevejde všechno, vloží se **jen kolik se vejde** (řady se
+  nepřeplní) a náhled to říká předem.
+- **Náhled pod polem** (`#rzc-nahled`, při psaní): „22× Jistič 1P B10 · OEZ LSN 10B/1 → řada 4 za -FA22 ·
+  zabere 22 M, zbude 2 M", u přetečení „14 do řady 4, 8 do řady 5", „⚠ Vejde se jen 44 z 50 — Enter
+  vloží 44", u plné skříně chyba. Prázdné pole ukazuje příklady.
+- **Enter** vloží jednou `rozvZmena` (jedno ZPĚT), označení plynule (`rozvDalsiOzn`), vložené přístroje
+  jsou vybrané (další příkaz jde za ně) a pole zůstane připravené. **Esc** pole vyprázdní a opustí,
+  **↑ ↓** historie příkazů (jen v paměti), **Ctrl+Z v prázdném poli** vrátí poslední změnu (v poli
+  s textem vrací psaní prohlížeč).
+- Hřebeny v řadě, které leží od místa vložení vpravo, se posunou s přístroji (`rzhPosunout`).
+
+Test: `testy/test-rozvadec-ovladani.js` (oddíl 1). **Upraveno:** `test-rozvadec-psc.js` (porovnání DBO
+bez pole příkazu a nastavení výchozí řady).
+
+#### Lišta akcí u výběru (blok „ROZVADĚČ — LIŠTA AKCÍ U VÝBĚRU")
+
+- Malá plovoucí lišta `#rz-akce` (v `#rz-pohled`, `position:absolute`; `rzaObnovit` na konci
+  `rozvPohledVykreslit` a `rozvSvgPrekreslit`, `rzaUmistit` i při posunu rámečku a změně okna): **nad
+  první řadou výběru**, když tam není místo (první řada skříně), **pod výběrem** (`data-kde`); výběr
+  nezakrývá. **Telefon: dole na obrazovce** (`position:fixed`, jedna řada, posouvá se do strany — blok
+  MOBIL; tlačítko diktování a hlášky se posunou nad ni — `--rza-h`). Při tažení přístroje, vodiče i rámečku se schová (CSS `body.rz-tahne / rz-oznacuje`), v režimu
+  🔌 Zapojení, s nástrojem Hřeben a při vkládání / přesunu klepnutím se neukazuje. Esc zruší výběr i lištu.
+  **Lišta je vždy jedna řada** (`flex-wrap:nowrap`, na úzkém rámečku se posouvá do strany) — dvouřadá by
+  z mezery mezi řadami přesáhla na sousední přístroje. **Se stisknutým Ctrl / Shift se schová**
+  (`rzaMod`, `body.rz-mod`): tehdy se výběr upravuje klikem nebo rámečkem taženým právě z mezery, kde lišta
+  leží (našla regrese — `test-rozvadec.js` „Ctrl + obdélník přidá k výběru").
+- **⧉ Duplikovat ×n** — klik = 1 kopie hned vedle; počet do políčka `#rza-n` + Enter (kopie bloku,
+  `rozvVlozitBlok`, pokračování do další řady).
+- **🪮 Hřeben** (≥ 2 sousední přístroje v jedné řadě, jinak hláška a nic) — `rzhPridat` z fáze 1
+  (strana z profilu, průřez podle zátěže; **póly jako u „Navrhnout hřebeny“**: společný trojfázový
+  zdroj → 3P a fáze L1, L2, L3… ze zubů, jinak podle přístrojů); výběr přístrojů zůstane.
+- **🛡 Chránič nad** (jen jističe FA / AFDD v jedné řadě) — lišta se změní na malý formulář s návrhem
+  (`rzaFiNavrh`): **40 A, nebo 63 A když je mezi vybranými jistič nad 40 A**, 30 mA, typ A, 4P (2P
+  u soustavy 1f nebo jističů na jedné fázi); ukáže položku knihovny (i z výchozí řady), součet In
+  jističů jako informaci („In chrániče ověřte podle předřazeného jištění") a jde změnit. **„✓ Vložit
+  chránič"** ho vloží vlevo před první vybraný jistič; jističe jdou pod něj automatikou (chránič
+  vlevo v řadě), nebo — s volbou **„Při vkládání chrániče natáhnout hřeben"** (Nastavení
+  konfigurátoru, localStorage `revize_el_rz_fi_hreben`) — hřebenem s vodičem z výstupu chrániče
+  (jako „Navrhnout hřebeny"). Není-li v řadě místo, tlačítko je vypnuté a řekne proč.
+- **⚖ Rozdělit fáze** (≥ 2 jednopólové) — L1, L2, L3, L1…; zamčené fáze vynechá, přístroje na hřebenu
+  nebo vodiči nemění (fáze plyne ze zapojení) a hláška to spočítá.
+- **🔁 Vyměnit za…** (stejné přístroje: kategorie, póly, In, charakteristika, IΔn, typ) — okno
+  `#modal-rz-vymena` s položkami knihovny se stejnými parametry (`rzaVymenaKandidati`); výběr nahradí
+  `x.p` a `x.knih` u všech vybraných, označení, pozice, vývod, kabel i fáze zůstanou.
+- **🗑 Smazat** = `tdRSmazat`. Všechno přes `rozvZmena` (jedno ZPĚT / Ctrl+Z).
+
+Test: `testy/test-rozvadec-ovladani.js` (oddíl 2, i geometrie lišty a telefon 360 px).
+
+#### Průvodce prvním rozvaděčem (blok „ROZVADĚČ — PRŮVODCE PRVNÍM ROZVADĚČEM")
+
+- Čtyři bubliny (`RZV_KROKY`, `#rz-pruvodce`), každá **zvýrazní skutečný prvek** (`.rz-pruv-cil`) a stojí
+  u něj: 1. pole příkazu „Napiš, co vložit – třeba 22x B10", 2. lišta akcí (není-li výběr, čelní pohled)
+  „Vyber jističe a dej Hřeben nebo Chránič nad", 3. tlačítko 🔌 Zapojení „Zapojení: natáhni vodič
+  z kabelu na hlavní vypínač", 4. záložka Dokumenty „Hotovo – dokumentaci najdeš v záložce Dokumenty".
+  Další → / Přeskočit / ✓ Hotovo. **Nic nevkládá.**
+- **Bublina nebere klepnutí** (`pointer-events:none`, jen její tlačítka) — pod ní jde dál pracovat.
+- **Jednou na uživatele:** spustí se po výběru skříně **z obrazovky** (`rzvPoSkrini` v `tdRSkrinPouzit`
+  a v klepnutí na skříň v knihovně) u rozvaděče, který skříň neměl; localStorage `revize_el_rz_pruvodce`
+  (try/catch — bez úložiště se sám neukáže a program běží dál). Programové `rozvSkrinNastavit` (testy,
+  zakreslení z revize, CAD) ho nespouští.
+- **Znovu:** odkaz **„❓ Ukázat průvodce"** v nápovědě pod čelním pohledem (`tdRPruvodce`).
+- Odchod z editoru průvodce zavře (`rzvObnovit` každých 400 ms a při posunu / změně okna).
+
+**RS2 na 21 akcí** (`test-rozvadec-ovladani.js` oddíl 4): skříň, `3x svorka 10`, `hl 63 3p`,
+`pojistky 3p 14x51`, `spd t2 3+1`, klepnutí do řady 2, `22x B10`, Hřeben, `2x B40 3P`, klepnutí do
+řady 4, `fi 40/30 4p`, `20x B16`, Hřeben, 🔌 Zapojení, 3 tahy kabel → X1…X3, 3 tahy X → -QH1, tah
+-FU1 (výstup nahoře) → SPD1. **Past v testu:** u levého kraje rámečku se pohled při tažení sám
+posouvá — cíl tahu se musí dorovnat (jako očima), jinak myš pustí vodič vedle.
+
+Karta v Novinkách „🛠 Čelní pohled jako v dílně" doplněna o tři odrážky (příkaz, lišta, průvodce);
+datum karty se nezměnilo. V `test-mobil.js` stavy „rozvaděč – pole příkazu s náhledem (22x B10)",
+„…lišta akcí u výběru (dole na obrazovce)", „…lišta akcí: chránič nad (návrh parametrů)",
+„…vyměnit za… (okno)" a „…průvodce prvním rozvaděčem (krok 1)".
+
+Test: `testy/test-rozvadec-ovladani.js` (65 kontrol — oddíly 3 až 5: průvodce, RS2, starý rozvaděč
+proti `STARA_PORT`; při přenosu pustit se `STARA=<předchozí vydání>`).
+
+### Čelní pohled „jako v dílně" — fáze 3: svorky, vodiče, kontrola zapojení (2026-11-12)
+
+Platí zásady „jako v dílně" výš. **Data se nemění** — starý rozvaděč se otevře a uloží bajtově stejně a má
+stejné PDF, schéma i DXF; nová pole vznikají jen po zásahu technika. Jen DBO i PSC (svorky sdílí).
+
+#### Svorkový plán (blok „ROZVADĚČ — SVORKY, …")
+
+Elektrikář potřebuje vědět, na kterou svorku jde který vývod a kabel. Všechno se počítá z `rady`
+(`rzsModel(rady, d)` — obrazovka i PDF), nic se neukládá navíc.
+
+- **Zásobník svorek** (`rzsZasobniky`) = každý prvek kategorie X, který není přívodní (`rozvZPrivodu`) ani
+  ovládací (`svorkaOvl`): svorkovnice (`p.svorky`, počet `p.pocet`) = n svorek, řadová svorka = 1; funkce
+  podle `rozvSvorkaFunkce` (L / N / PE; přípojnice podle `p.prip`). Pro vývody jsou to svorky **L**; označení
+  svorky svorkovnice -X4 je -X4, -X5… (`rzsSvorkaOzn`).
+- **Vývod** (`rzsJeVyvod`) = koncový jistič, AFDD, RCBO, pojistka, spouštěč (`rfVyvod`), který nenapájí jiné
+  přístroje než svorky a není jen ovládací. Potřebuje tolik svorek, kolik má fázových pólů (1P 1, 3P 3).
+- **Data:** `x.svorky = [{ u: uid svorkovnice, i: číslo svorky od 1 }]`, jedna na fázový pól, **jen po zásahu**
+  („Přiřadit svorky", výběr v tabulce, vodič ze jističe na svorku). Neplatný odkaz (smazaná svorkovnice,
+  svorka mimo počet) se při čtení ignoruje, nic se nepřepisuje.
+- **Sekce „🔌 Svorky — svorkový plán"** v Dokumentech (před Oteplením; `rzsOddilHtml`): hlavní akce
+  **„🔌 Přiřadit svorky"** (jen vývody bez svorky, volné svorky v pořadí svorkovnic a čelního pohledu, nic nepřepíše),
+  malé „Přiřadit znovu" (po potvrzení smaže a rozdělí znovu), stav „Chybí 8 svorek pro 8 vývodů" s tlačítkem
+  **„Prodloužit svorkovnici o n svorek"** (poslední vývodová svorkovnice; není-li žádná, „＋ Přidat svorkovnici"),
+  tabulka svorka | potenciál | z přístroje | vývod | kabel | průřez; svorku vývodu jde v tabulce vybrat
+  (volné svorky + vlastní). Všechno přes `rozvZmena` (ZPĚT, Ctrl+Z).
+- **Režim 🔌 Zapojení:** vodič ze jističe na svorku X (`rzpTahKonec` → `rzsVodicNaSvorku`) zapíše totéž co výběr
+  v tabulce (první volná svorka té svorkovnice). Vodič sám zůstává jen vodičem; záznam je `x.svorky`.
+- **PDF:** zaškrtávátko **„Svorkový plán do dokumentace"** (`d.svorkovyPlanPdf`, ukládá se jen zapnuté, `data-dk`
+  v oddílu Svorky) → samostatná strana na výšku za seznamem přístrojů (`rzsPdf`, obal `DOK_TYPY.rozv.pdf`).
+  Bez zaškrtnutí je PDF beze změny. Do DXF svorkový plán nejde (svorky mají označení jako dosud).
+
+#### N a PE podle vývodů (jen DBO)
+
+N a PE se nekreslí vodiči (rozhodnutí ze vzoru zapojení), ale musí sedět počty a přiřazení. Nic se neukládá —
+`rzsNP(rady, d)` odvozuje za běhu.
+
+- **Skupina N:** vývod, který potřebuje N (`rzsPotrebaN`: ne RCBO — má vlastní N z výstupu, ne motorový spouštěč /
+  Typ obvodu „motor", 3P jen když kabel nemá 4 žíly), patří na N přípojnici **svého chrániče** (nejbližší FI
+  nad ním v napájení, `rzsFiPredek`; jmenuje se `N-FI1`, `N-FI2` jako ve schématu), jinak na společnou `N`.
+  Přípojnici (X s `p.prip = 'N'`), řadovou svorku N i svorkovnici s funkcí N přiřadí ke skupině totéž pravidlo
+  (přípojnice N „Napájen z" chrániče = jeho skupina).
+- **Potřeba svorek:** N = vývody s N + 1 na přívod N; PE = všechny vývody + 1 na přívod + 2 pro ochranné
+  pospojování (ČSN EN IEC 61439-3, čl. 8.8). Svorka v plánu se odvozuje z pořadí (první = přívod, pak vývody
+  v pořadí čelního pohledu, na konci PE dvě pospojování): `N-FI1 · 3`, `PE · 26`. Vývod bez místa na přípojnici
+  má „—".
+- **Nálezy** (`rzsNPNaleza`, i v kontrole „Co ještě chybí"): přípojnice chybí → **„Přidat přípojnici N-FI1
+  (21 svorek)"** (vloží obecnou přípojnici se správným počtem svorek, N-FI1 s „Napájen z" chrániče, do řady
+  chrániče, když se vejde); má málo svorek → „N-FI1 má 12 svorek, potřeba 21" a **„Upravit počet"**.
+  Obojí jedno ZPĚT. U PSC se N a PE neodvozují (má vlastní přípojnice XN / XPE).
+
+#### Kontrola „Co ještě chybí" (`rzsKontrola`)
+
+Seznam nálezů o zapojení a doplnění; **nikam se neukládá**, počítá se pokaždé znovu. Úroveň: **chyba** (červená,
+brání ověření) / **upozornění** (oranžová) / **tip** (šedá); řazeno chyba → upozornění → tip. Prázdný seznam:
+„✓ Všechno zapojené a doplněné".
+
+- **Kde:** rozbalovací pruh `#rz-chybi` nad čelním pohledem (`rzsChybiPruhHtml`; sbalený, souhrn „⛔ Co ještě
+  chybí: 4 chyby · 9 upozornění · 1 tip", otevření se pamatuje v `__rz.chybiOtevr`) a oddíl „✅ Co ještě chybí"
+  hned pod hlavní kartou v Dokumentech. Pruh se po překreslení **přepočítá se zpožděním 150 ms**
+  (`rzsChybiNaplanovat`; při tažení se nepočítá) a mezitím ukazuje poslední výsledek — stovky přístrojů se tím
+  nezpomalí. Klepnutí na nález vybere přístroj / přístroje / hřeben v čelním pohledu (`tdRChybiKlik`); nález
+  může mít tlačítko akce („Přidat přípojnici …", „Přiřadit svorky", „📚 Doplnit Pv z knihovny…").
+- **Chyba:** přístroj bez napětí (nikam nezapojený, ani automaticky; svorky X se nehlásí), vícepólový přístroj
+  s chybějící fází, přetížený hřeben, vložka pojistky větší než odpojovač, méně než 2 svorky PE pro ochranné
+  pospojování (DBO, čl. 8.8).
+- **Upozornění:** vývody bez názvu / bez kabelu / bez svorky (jen když rozvaděč svorky má; seskupené do jedné
+  řádky „44 vývodů bez svorky: -FA1…FA3 a 41 dalších"), chybí přípojnice N / N-FI1 / PE nebo má málo svorek,
+  SPD bez předjištění (napájený přímo z přívodu / hlavního vypínače), přívodní svorka, která nic nenapájí,
+  ostatní upozornění k napájení (`rozvNapajeniUpoz`), ostatní kontroly hřebenu (`rzhKontroly`).
+- **Tip:** obecné přístroje bez Pv, **je-li oteplení výpočtem zapnuté** (`dokVyber.otepleni === true` nebo
+  vyplněná data oteplení) — odkaz na „Doplnit Pv z knihovny…".
+
+#### Vstup a výstup přístroje, čísla vodičů (režim 🔌 Zapojení)
+
+- **Vstup / výstup** (`rozvNapSvg`): svorky přístroje pod napětím mají na **vstupní** straně plnou výplň (jako dřív),
+  na **výstupní** straně malou šipku ven (`.rz-vyst`: ▼ dole, ▲ nahoře; `data-vyst` = strana) a titulek „vstup" /
+  „výstup" u svorky. SPD šipky nemá (nic dál nepouští). Při **tažení vodiče** se výstupní šipky přístroje, ze kterého
+  se táhne, zvětší a obarví (`.rz-vyst-akt`, `rzpTahPohyb`). Jen obrazovka — do PDF čelního pohledu nejdou.
+- **Čísla vodičů** (volitelná, výchozí **vypnuto**): tlačítko „Číslovat vodiče" nahoře v panelu Zapojení
+  (`tdRCislVod`, stav `__rz.cislVod`, součást snímku ZPĚT v `rozvZmena`). Čísla se přidělují **podle potenciálu**
+  (`rzsCislaDoplnit`): spojí se uzly všech natažených vodičů po pólech i zuby hřebenů, každý uzel má jedno číslo
+  (vodiče na témž uzlu, např. kabel L1 → -QH1 a kabel L1 → -X1, mají stejné); nové uzly dostanou další číslo,
+  existující se drží. Volá se z `rzpPoZmene`, takže každá změna zapojení doplní čísla. „Přečíslovat" (po potvrzení)
+  přidělí znovu od 1.
+- **Data:** `d.cislovatVodice = true` a `vodice[i].cislo` (číslo; u svazku pole čísel po pólech) **jen po zapnutí**;
+  vypnutí čísla smaže (jde ZPĚT), rozvaděč bez zapnutí je beze změny.
+- **Kde se ukážou:** u svorek v čelním pohledu v režimu Zapojení (`rzsCislaSvg`), v **materiálu propojek**
+  (`rzvMaterial`: „vodič 1, H07V-K 10 mm² hnědý – 2 ks") a ve sloupci „Vodič č." svorkového plánu (vodič mezi
+  vývodem a svorkou).
+
+Test: `testy/test-rozvadec-svorky.js` (42 kontrol — RS2 se třemi přívodními svorkami -X1…X3 a svorkovnicí -X4,
+pojistky napájené zespodu, čísla vodičů; starý rozvaděč proti `STARA_PORT` — při přenosu pustit se
+`STARA=<předchozí vydání>`). **Upraveno ve stejném vydání:** testy, které porovnávají rozvaděč se starou verzí
+(`test-rozvadec-psc.js` aj.), nově přeskakují pruh „Co ještě chybí" a oddíly Svorky / Co ještě chybí v Dokumentech.
+
+### Schéma: tečky vodivých spojů (2026-11-12, oprava; `rsTecky`, blok „SCHÉMA ZAPOJENÍ")
+
+Hlášení uživatele: na schématu byly odbočky z přívodního vodiče (-FA1, -FA4) bez tečky a tečky na sběrnicích
+N a PE téměř neviditelné (r 0,45 mm při čáře 0,7). **Záměrná oprava — PDF i DXF schématu všech rozvaděčů
+se mění jen v tečkách** (`porovnani2.js` rozvaděče nekreslí; záznam je tu jako soupis změn).
+
+- **Pravidlo:** každé místo, kde se potkají aspoň **tři čáry a aspoň jedna tam končí** (odbočka T, uzel),
+  má plnou černou tečku bez obrysu; **křížení bez spojení** (dvě čáry přes sebe) a **roh / konec čáry na
+  svorce přístroje** tečku nemají. Platí pro sběrnice L / N / PE, podružné sběrnice chráničů (N-FI…),
+  odbočky propojek a přívodní svorky.
+- **Nekreslí se při psaní čar, ale na konci listu:** `rsListSchema` zapne sběrač `RS_BODY`, `rsBod()` jen
+  zapomene místo (rozhoduje autodetekce), `rsTecky(h, vynucene)` projde čáry a cesty `M/L` listu
+  (kromě čar v `<g transform>` = značky přístrojů, čar s `data-nb` a rámu / razítka / tabulky pod schématem)
+  a vykreslí tečky **nad** všemi čarami. `rsBodSym()` vynutí tečku tam, kde se čára větví před značkou
+  přístroje (odbočka z přívodu před hlavním vypínačem — značka tam není mezi čarami).
+- **Jedna velikost tečky pro celé schéma: průměr 1 mm** (`RS_TECKA_R` = 0,5; ≈ 4× tenký vodič), nezávisle na tloušťce
+  sběrnice (pokyn uživatele 2026-11-12 — první verze s velikostí podle sběrnice dávala na N / PE obří tečky).
+  Střed je v průsečíku os čar. Tečka má atribut `data-spoj="1"`.
+- **Jednoduché prvky:** jen `<circle>` s výplní, žádné třídy ani styly — stejné SVG jde do PDF i DXF.
+- **Zalomení N u RCBO** (šikmá čárkovaná odbočka k vodiči) má `data-nb="1"` a do spojů se nepočítá.
+- **DXF:** tečka = `INSERT` bloku **`SPOJ`** (jednotkový poloměr, měřítko 0,5 = jedna velikost) na vrstvě SILOVA;
+  na ovládacích listech zůstává tečka s pevným poloměrem 0,8 mm (`RS_TECKA_R`) a v DXF jako plný kroužek.
+- Čelní pohled žádné „uzly vodičů" nekreslí — nic se tam nemění.
+
+Test: `testy/test-schema-tecky.js` (vymyšlený vzorek: přívod L1 → FA1, L2 → FA4, L3 → FA5, FA1 → FA2 → FA3):
+tečka právě tam, kde se potkají ≥ 3 čáry, odbočky k FA1 a FA4 z přívodního vodiče mají tečku, poslední
+odbočka (roh) a vodiče -FA4 / -FA5 přes sběrnici L ne, jedna velikost 1 mm a střed v průsečíku (0,2 mm), DXF blok SPOJ (ezdxf audit bez chyb).
+**Upraveno:** `bez-n.js` a `bez-kresby.js` (tečky se z porovnání se starou verzí vypouštějí),
+`test-rozvadec-napajeni.js` (odbočka SPD se hledá mezi `circle[data-spoj]`), `test-rozvadec-ovladani.js`
+a `test-rozvadec-svorky.js` (porovnání přes `bez-n`).
+
+### Přípojnice N/PE kolmo na DIN lištu (2026-11-12, blok „ČELNÍ POHLED „JAKO V DÍLNĚ"")
+
+Zadání uživatele: v praxi se přípojnice N a PE osazují i kolmo na lištu (svislá mosazná lišta přes DIN lištu,
+svorky nad sebou). Jen DBO (PSC má vlastní přípojnice XN / XPE); obecné i z knihovny (`kat X`, `p.svorky`, `p.prip`).
+
+- **Data (volitelná):** `x.orientace = 'kolmo'`; **podél lišty = klíč chybí**, takže starý rozvaděč se otevře
+  i uloží bajtově stejně a jeho čelní pohled se nemění (test proti `STARA_PORT`). Při přepnutí na kolmo si
+  `p.sirkaPodel` pamatuje původní šířku (`rozvSvorkySirka(počet)`) a **`p.sirka` je skutečná šířka v řadě**
+  (1 modul, nebo `p.sirkaKolmo` z knihovny) — proto pohled, volné místo, přeplnění, popisky, tažení i 3D
+  nepotřebovaly žádnou úpravu. Počet svorek se mění přes `rozvPripPocetNastavit` (kolmo zůstává 1 M).
+- **Přepnutí** `rozvPripOrientace(uidy, kolmo)` = jedna `rozvZmena` (ZPĚT, Ctrl+Z): uvolněné místo zavřou jen
+  přístroje těsně za přípojnicí (za mezerou zůstanou), při zvětšení (zpět podél) se přístroje vpravo posunou jen
+  tolik, kolik je potřeba (`rozvZPozic`). Šest svorek podél lišty = 2,5 M, kolmo 1 M.
+- **Kde se přepíná:** vlastnosti přípojnice (volba **Osazení: podél lišty / kolmo na lištu**), **lišta akcí u
+  výběru** (`↕ Kolmo na lištu` / `↔ Podél lišty`, i pro víc přípojnic naráz) a **pravý klik** (`tdRaPrip`).
+- **Nastavení konfigurátoru „Přípojnice N/PE osazuji: podél / kolmo"** (v rozbalovátku „Vkládání příkazem a lišta
+  akcí"; localStorage `revize_el_rz_pripojnice`, jen v prohlížeči, výchozí podél) platí **jen pro nově vložené**
+  přípojnice (`rozvNovyPrvek`); do dat jde klíč jen u kolmých.
+- **Kresba (`cpKresba`):** svislá mosazná lišta (`.cp-pripojnice-kolmo`), šrouby po 6 mm nad sebou, izolátory na
+  obou koncích, štítek N (modrý) / PE (zelenožlutý) nahoře, označení `-X1…X6` ve štítku, počet svorek pod lištou.
+  Celek (štítek 5,4 + 2 × 3,2 izolátor + n × 6 mm) se vystředí na výšku řady (`rozvPripKolmoDelka`).
+- **Přesah:** je-li celek vyšší než řada (`rozvPripPresah`, nad ~6 svorek při řadě 50 mm), kreslí se přes mezeru
+  k sousední řadě a program napíše **„Přípojnice přesahuje řadu – ověřte místo ve skříni"** (vlastnosti přípojnice,
+  hláška po přepnutí a nález „Co ještě chybí"). Nic se neblokuje.
+- **Beze změny:** svorková lišta (řada `svorky`) se do volného místa nepočítá ani s kolmou přípojnicí; svorkový plán
+  a kontrola počtu svorek (fáze 3) berou počet svorek z `x.pocet || p.pocet`, takže fungují stejně; do PDF
+  (seznam přístrojů, popisky) jde jen skutečná šířka.
+
+- **Otočení přímo myší (doplnění 2026-11-12):** v pravém dolním rohu přípojnice je úchyt **↻** (`.rz-rot`, jen na
+  obrazovce — do PDF, tisku ani ducha při tažení nejde). Po najetí myší se ukáže, kurzor nad ním je vlastní (otočení);
+  **klik** přepne podél ↔ kolmo (`rozvPripOrientace`, jedno ZPĚT / Ctrl+Z), totéž **klávesa R** u vybrané přípojnice
+  (i víc naráz). Úchyt se netáhne (`pointerdown` ho přeskočí), **tažení přípojnice** jinam jde jako u jiných přístrojů
+  a natočení se drží (je v datech přístroje). Na telefonu (blok MOBIL) je úchyt **stále vidět a větší** (poloměr
+  5,2 px) a otočení jde i z lišty akcí u výběru.
+
+Test: `testy/test-rozvadec-pripojnice.js` (kresba svisle, 6 šroubů, štítek nahoře, 2,5 → 1 M a přisunutí přístroje,
+ZPĚT, lišta akcí, kontext, vlastnosti, PE štítek, přesah 30 svorek, nastavení kolmo pro nově vložené, svorková lišta,
+starý rozvaděč beze změny; úchyt ↻: najetí, klik tam a zpět, klávesa R, Ctrl+Z, tažení do jiné řady zachová
+natočení, telefon 390 px). Novinky se nedělaly.
 
 ### Výměna výkresů s CAD — export a import DXF (2026-11-02, bloky „ROZVADĚČ — VÝMĚNA S CAD")
 
