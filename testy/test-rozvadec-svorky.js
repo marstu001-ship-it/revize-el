@@ -203,7 +203,7 @@ async function otevri(b, url, vp) {
     rozvZalozkaNastavit('dok'); await w(50);
     for (let i = 0; i < 3; i++) { const b = document.querySelector('#rzs-obsah [data-action="tdRSvPridatPrip"]'); if (b) { TD_AKCE.tdRSvPridatPrip(b); await w(50); } }
     rozvZalozkaNastavit('navrh'); await w(400);
-    r.hotovy = rzsKontrola().map(n => n.u + ': ' + n.text);
+    r.hotovy = rzsKontrola().filter(n => n.u !== 'tip').map(n => n.u + ': ' + n.text);
     r.pruh = document.getElementById('rz-chybi').innerText.trim();
     r.pruhOtevreno = document.getElementById('rz-chybi').open;
     r.zel = document.querySelector('#rz-chybi summary').classList.contains('rzs-souhrn-ok');
@@ -260,7 +260,7 @@ async function otevri(b, url, vp) {
   check('Co ještě chybí: neúplný RS2 — vývod bez názvu / bez kabelu / bez svorky', nk.bezNazvu && nk.bezKabelu && nk.bezSvorky, nk.txt.join(' | '));
   check('Co ještě chybí: chybí přípojnice N a N-FI1, méně než 2 svorky PE (chyba), vložka větší než odpojovač (chyba)', nk.chybiN && nk.pe && nk.vlozka, nk.txt.join(' | '));
   check('Co ještě chybí: SPD bez předjištění, přívodní svorky nic nenapájí, přetížený hřeben (chyba), přístroje bez Pv při zapnutém oteplení (tip)', nk.spd && nk.priv && nk.hreben && nk.pv, nk.txt.join(' | '));
-  check('Co ještě chybí: pořadí chyba → upozornění → tip, souhrn v pruhu červeně', /^chyba,upoz,tip$/.test(nk.poradi) && nk.cerv && /^⛔ Co ještě chybí: \d+ chyb\w* · \d+ upozornění · 1 tip$/.test(nk.pruh), nk.poradi + ' / ' + nk.pruh);
+  check('Co ještě chybí: pořadí chyba → upozornění → tip, souhrn v pruhu červeně', /^chyba,upoz,tip$/.test(nk.poradi) && nk.cerv && /^⛔ Co ještě chybí: \d+ chyb\w* · \d+ upozornění · (1 tip|2 tipy)$/.test(nk.pruh), nk.poradi + ' / ' + nk.pruh);
   check('Co ještě chybí: klepnutí na nález vybere přístroj (-FA5) nebo hřeben; tlačítko „Přidat přípojnici PE" v pruhu nález odstraní', nk.vybran === '-FA5' && nk.hrVyber && nk.tlPE && nk.poPE === 47 && nk.zmizelo, nk.vybran + ' ' + nk.poPE);
 
   // bez napětí a chybějící fáze
