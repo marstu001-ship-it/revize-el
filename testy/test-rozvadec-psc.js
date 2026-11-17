@@ -590,7 +590,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
       const html = document.querySelector('#screen-dok-form .dok-wrap').innerHTML;
       // knihovna se od 2026-10-22 záměrně liší (kategorie Trafa a zdroje, nové obecné položky) — editor bez ní musí být stejný
       // etapa 5c: záložka „🧊 3D" (tlačítko a prázdný panel) přibyla záměrně
-      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast, .rz-nap-btn, .rz-svorky-rady, .rzc-box, .rzc-nast, .rza-nast, #rz-akce, .rz-pruv-odkaz').forEach(e => e.remove());   // + fáze 2 ovládání (2026-11-11): pole příkazu, lišta akcí, průvodce
+      const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast, .rz-nap-btn, .rz-svorky-rady, .rzc-box, .rzc-nast, .rza-nast, #rz-akce, .rz-pruv-odkaz, .rz-privod-pridat-btn, .rz-vybrano').forEach(e => e.remove());   // + fáze 2 ovládání (2026-11-11): pole příkazu, lišta akcí, průvodce; + víc přívodů v liště a pruh Vybráno (2026-11-16)
       kopie.querySelectorAll('.rz-vstup-nast-box').forEach(e => e.remove());   // 2026-11-06: nastavení „Přístroje napájím shora / zespodu"   // + tlačítko ⚡ Ovládání (ovládací obvody, 2026-10-29); + souhrn, sbalený panel a nastavení soudobosti (2026-10-29); + 🔗 Napájení a svorkové lišty (2026-11-05)
       // oprava skákajícího zoomu (2026-11-06): dřív se kreslilo první vykreslení o 2 px širší než všechna další —
       // měřítko čelního pohledu na obrazovce se proto porovnává bez rozměrů SVG (obsah stejný)
@@ -612,7 +612,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
     }, data);
     const A = await zkus(s), B = await zkus(p);
     // 2026-11-08 (čelní pohled „jako v dílně"): kresby přístrojů, vývodka, tlačítko 🪮 Hřeben a popisek „Přívod do skříně" se mění záměrně
-    const bezCp = s0 => require('./bez-n')(bezKresby(s0)).replace(/<button class="dok-mini rz-hr-btn[^>]*>🪮 Hřeben<\/button>/g, '').replace(/Přívod do skříně/g, 'Přívod').replace(/<details class="rz-chybi"[^>]*>[\s\S]*?<\/details>/g, '').replace(/<details class="dok-sprava rz-dok-oddil" data-oddil="(chybi|svorky|navod)"[^>]*>[\s\S]*?<\/details>/g, '').replace(/<label class="teren-radek rz-zatrh"><input type="checkbox" data-dk="dokVyber\.navod"[^>]*> návod k obsluze<\/label>/g, '').replace(/<button class="rz-dok-tisk2 rz-dok-navod-btn"[^>]*>📘 Tisk návodu<\/button>/g, '');   /* fáze 3: pruh „Co ještě chybí" a oddíly Svorky / Co ještě chybí; návod k obsluze: oddíl, zaškrtávátko a tlačítko */
+    const bezCp = s0 => require('./bez-n')(bezKresby(s0)).replace(/<button class="dok-mini rz-hr-btn[^>]*>🪮 Hřeben<\/button>/g, '').replace(/Přívod do skříně/g, 'Přívod').replace(/<details class="rz-chybi"[^>]*>[\s\S]*?<\/details>/g, '').replace(/<details class="dok-sprava rz-dok-oddil" data-oddil="(chybi|svorky|navod)"[^>]*>[\s\S]*?<\/details>/g, '').replace(/<label class="teren-radek rz-zatrh"><input type="checkbox" data-dk="dokVyber\.navod"[^>]*> návod k obsluze<\/label>/g, '').replace(/<button class="rz-dok-tisk2 rz-dok-navod-btn"[^>]*>📘 Tisk návodu<\/button>/g, '').replace(/<div id="rz-privody">[\s\S]*?<\/div>/g, '').replace(/<span class="rz-privod-ukaz" id="rz-privod-ukaz"[^>]*><\/span>/g, '');   /* fáze 3: pruh „Co ještě chybí" a oddíly Svorky / Co ještě chybí; návod k obsluze: oddíl, zaškrtávátko a tlačítko; víc přívodů (2026-11-13): karta „＋ Další přívod" a ukazatel v liště */
     [A, B].forEach(X => { ['svg', 'svgT', 'htmlBez', 'pdf'].forEach(k => { X[k] = bezCp(X[k]); }); Object.keys(X.dbo5b).forEach(k => { X.dbo5b[k] = bezCp(X.dbo5b[k]); }); });
     check('starý DBO: otevření a uložení nezmění data (nová verze, bajtově)', B.pred === B.po, B.pred.length + ' / ' + B.po.length);
     check('DBO: uložená data po otevření a uložení stejná jako ve předchozí verzi', A.po === B.po, '');
@@ -627,7 +627,9 @@ const presahy = (p, svg) => p.evaluate(svg => {
       .replace(/ <span class="rz-ceka"[^>]*>[^<]*<\/span>/g, '').replace(/ <span class="dk-nepov">ČSN EN IEC 61439-3 ed\. 2, čl\. 5\.4, tab\. 101<\/span>/g, '')
       .replace(/(data-dk="tech\.(?:ik|znec)") placeholder="[^"]*"/g, '$1')
       // „nechat prázdné" a dokumentace pro jiného výrobce (2026-11-05)
-      .replace(/<label class="teren-radek rz-zatrh rz-bez-profilu">.*?<\/label>/g, '').replace(/<button type="button" class="rz-odv-btn"[^>]*>[^<]*<\/button>/g, '').replace(/ rz-odv-f"/g, '"');
+      .replace(/<label class="teren-radek rz-zatrh rz-bez-profilu">.*?<\/label>/g, '').replace(/<button type="button" class="rz-odv-btn"[^>]*>[^<]*<\/button>/g, '').replace(/ rz-odv-f"/g, '"')
+      // zpracovatel dokumentace (2026-11-16): karta ve hlavičce Dokumentů, platí pro DBO i PSC stejně
+      .replace(/<div class="g3 rz-zprac">[\s\S]*?(?=<div class="rz-dok-chybi")/g, '');
     A.dbo5b.dok = bezD4(A.dbo5b.dok); B.dbo5b.dok = bezD4(B.dbo5b.dok);
     // 2026-11-09: výchozí Inc 0,8 In (oprava čl. 10.10.4.1 e) a tlačítko „Doplnit Pv z knihovny" — záměrně; hlídá test-otepleni-pv.js
     const bezInc = t => t.replace(/<div class="rot-pvk-lista"[^>]*>.*?<\/div>/g, '').replace(/(class="rot-inc"[^>]*?) placeholder="[^"]*"/g, '$1')

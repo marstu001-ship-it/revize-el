@@ -370,6 +370,40 @@ async function otiskRevizi(p) {
   check('telefon: výsledek pod formulářem a nelepí se, hlavní akce přes celou šířku', !mob.vysNahore && mob.pos === 'static' && mob.btn > 300, JSON.stringify(mob));
   await t.screenshot({ path: __dirname + '/_beh/rlps/telefon.png' });
 
+  // ── prázdný objekt přežije smazání posledního výpočtu rizika (oprava 2026-11-16) ──
+  // Test musí jít poslední v souboru — maže VŠECHNY výpočty rizika z DOK,
+  // aby nastal přesně ten stav, kde dřívější kód seznam objektů přeskočil.
+  const objTest = await p.evaluate(async () => {
+    await dokNacist();
+    const obj = await dokObjZalozit('Prázdný objekt bez výpočtu');
+    DOK.dokumenty.filter(x => x.typ === 'rlps').forEach(x => dokSmazat(x.uid));   // smaže VŠECHNY výpočty rizika
+    await dokNacist();
+    const mel = DOK.dokumenty.filter(x => x.typ === 'rlps').length;
+    dokOtevritSeznam('rlps');
+    return { obj: !!dokObjNajit(obj.id), mel, seznamHtml: document.getElementById('dok-seznam').innerHTML };
+  });
+  check('smazáním posledního výpočtu rizika objekt v `DOK.rozvObjekty` zůstane', objTest.mel === 0 && objTest.obj, JSON.stringify({ mel: objTest.mel, obj: objTest.obj }));
+  check('prázdný objekt je po smazání posledního výpočtu dál vidět v seznamu (ne „Zatím tu nic není")',
+    /Prázdný objekt bez výpočtu/.test(objTest.seznamHtml) && !/Zatím tu nic není/.test(objTest.seznamHtml), objTest.seznamHtml.slice(0, 200));
+
+  // ── zpracovatel není vždy technik z profilu (oprava 2026-11-16) ───────
+  const zprTest = await p.evaluate(() => {
+    const dBase = { cislo: 'RLPS-ZPR', nazev: 'Test', misto: 'Test', typ: 'rd', v: { L: '10', W: '10', H: '5', td: '20' }, vedeni: [], zony: [{ uid: 'z1', druh: 'vnitrni' }] };
+    const stara = JSON.stringify(STORE.technik);
+    const img = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+    STORE.technik = { jmeno: 'Jan Vymyšlený', mesto: 'Kyjov', razitko: img, podpis: img };
+    const vykresli = (zprac) => rlPdfBloky(Object.assign({}, dBase, { zpracovatel: zprac })).map(b => b.html).join('');
+    const prazdne = vykresli(''), jine = vykresli('Petr Jiný'), profil = vykresli('Jan Vymyšlený');
+    STORE.technik = JSON.parse(stara);
+    return { prazdne, jine, profil };
+  });
+  check('prázdné pole zpracovatele: v PDF tečky, ne profil', /Vypracoval: —/.test(zprTest.prazdne) && !/Jan Vymyšlený/.test(zprTest.prazdne),
+    (zprTest.prazdne.match(/Vypracoval:[^<]*/) || [''])[0]);
+  check('jiný zpracovatel: v PDF jeho jméno, žádné razítko ani podpis z profilu', /Vypracoval: Petr Jiný/.test(zprTest.jine) && !/data:image/.test(zprTest.jine),
+    (zprTest.jine.match(/Vypracoval:[^<]*/) || [''])[0]);
+  check('zpracovatel = technik z profilu: razítko i podpis se vloží jako dřív', /Vypracoval: Jan Vymyšlený/.test(zprTest.profil) && (zprTest.profil.match(/data:image/g) || []).length === 2,
+    (zprTest.profil.match(/data:image/g) || []).length);
+
   check('bez chyb na stránce', !err.length, err.join(' | '));
   await b.close();
   console.log(res.join('\n'));

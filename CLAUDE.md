@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.145 · 2026-11-15**
+**Aktuální verze: v9.146 · 2026-11-16**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -721,6 +721,32 @@ záloha a obnova, dvě okna, rozbor seznamu prostorů a **oddělení**: protokol
 není v archivu, naposledy otevřených, plánu ani hledání a data revizí jsou
 po práci s protokoly **bajtově stejná**). Karta v Novinkách se nedělala.
 
+### Smazáním posledního dokumentu objekt nezmizí (oprava 2026-11-16, po vyzkoušení uživatelem)
+
+Uživatel smazal výpočet rizika LPS, který s žádným objektem neměl nic
+společného, a zmizel mu i úplně jiný — prázdný, dřív založený objekt.
+**V `DOK.rozvObjekty` zůstal celou dobu netknutý** — zmizel jen z OBRAZOVKY.
+Příčina byla v `dokSeznamPolozky()`: typ se `t0.objekty` ukazuje po objektech
+jen uvnitř bloku `if (!vse.length) { … „Zatím tu nic není" … }` — a ten se
+vrátí hned, **jakmile v seznamu nezbyl ani jeden dokument TOHOTO TYPU**,
+bez ohledu na to, kolik objektů (i prázdných) v `DOK.rozvObjekty` je.
+Smazání posledního rozvaděče nebo posledního výpočtu rizika tak smazalo
+viditelnost všech objektů daného typu, nikdy ne data.
+
+- **Oprava:** `t0.objekty && dokObjekty().length` se zkontroluje PŘED
+  „Zatím tu nic není" — má-li typ objekty, jde seznam po objektech vykreslit
+  vždycky (`dokObjSeznamHtml` zvládne i prázdný `seznam`, jen se u každého
+  objektu ukáže „Prázdný objekt…").
+- **Platí pro všechny typy s `objekty: true`** (rozvaděč DBO, PSC, výpočet
+  rizika LPS) — jedna oprava na jednom místě, žádný typ ji nemusí řešit
+  zvlášť.
+- ZPĚT po smazání dokumentu (`dokSmazat`) se objektů nedotýká — vracelo
+  a vrací jen ten jeden dokument.
+
+Test: `testy/test-rozvadec-objekty.js` a `testy/test-riziko-lps.js` (po
+smazání VŠECH dokumentů daného typu objekt v datech zůstane a je dál vidět
+v seznamu, ne „Zatím tu nic není"). Na kódu před opravou spadne.
+
 ## Tvorba dokumentace: „📤 Soubor pro kolegu" (v9.134)
 
 Pokyn uživatele 2026-10-25: „ve tvorbě dokumentace vedle tlačítek uložit
@@ -930,6 +956,42 @@ dat, výchozí volba, návrh z adresy bez vyplnění, klik na okres v mapě,
 kraj → okres, ruční přepsání, PDF se zdrojem Td i NG, starý dokument).
 V `test-mobil.js` stavy „riziko LPS – mapa okresů…" a „…Td podle okresu,
 návrh z adresy".
+
+### Zpracovatel nemusí být technik z profilu (oprava 2026-11-16, po vyzkoušení uživatelem)
+
+Technik program používá i pro zakázky jiných firem. Pole **Zpracovatel**
+(string, předvyplněné při založení z `t.jmeno` — `novy()` se neměnil) se dřív
+v PDF (hlavička, „Vypracoval", podpisová tabulka — `rlPdfBloky`) při
+prázdné hodnotě vracelo k profilu (`d.zpracovatel || tech.jmeno`) — prázdné
+pole tak v PDF vždycky vytisklo technika z profilu, i když měl zpracovatel
+zůstat prázdný nebo být jiný.
+
+- **Co je v poli, to platí** — prázdné zůstane v PDF jako „……", jiné jméno
+  se nikdy nenahradí profilem. Žádný jiný dokument tvorby dokumentace tuhle
+  chybu neměl: protokol o vnějších vlivech (`d.vypracoval`) i rozvaděč
+  (prohlášení, kusové ověření, schéma, soudobost přes `rozvProfil(d)`) berou
+  profil jen jako výchozí hodnotu při založení, pole samotné je pak
+  rozhodující — ten vzor platí teď i tady.
+- **Firma zpracovatele** (volitelné, `d.zpracovatelFirma = {ico, nazev,
+  adresa}`) — ARES přes `tdRlZprAres` (totéž volání jako `tdAres`, ale zapisuje
+  přímo do `__rl.d`, ne přes `data-dk`, protože `DOK_TYPY.rlps.cist` jen
+  kopíruje `__rl.d`, nečte formulář jako rozvaděč). V PDF řádek „Firma
+  zpracovatele", jen když je vyplněná.
+- **Razítko a podpis z profilu jen tehdy, když je zpracovatel totožný
+  s technikem** (`rlZpracovatelJeProfil` — shoda jména, bez rozlišení
+  velikosti písmen). Jinak se nevloží; ve formuláři pod polem Zpracovatel
+  nenápadný řádek „zpracovatel není technik z profilu – razítko a podpis se
+  nevloží" (stejná informace, jakou revize dávají u cizí zprávy).
+- **Místa, kde jiné dokumenty tvorby dokumentace doplňují technika z profilu**
+  (zkontrolováno, beze změny — zůstávají na dalším rozhodnutí): protokol
+  o vnějších vlivech `pd.vypracoval || t.jmeno` jen při založení, pak pole;
+  rozvaděč schéma/soudobost/prohlášení/kusové ověření/štítek přes
+  `rozvProfil(d)`, která už sama vrací `{}` při `d.bezProfilu === true`.
+  Žádné z nich nemá živý fallback na profil jako měl výpočet rizika.
+
+Test: `test-riziko-lps.js` (+: prázdné pole → tečky v PDF, přepsané jméno →
+to jméno a žádné razítko ani podpis z profilu, zpracovatel = profil →
+razítko a podpis jako dřív, starý výpočet beze změny dat i PDF).
 
 ## Rozvaděč DBO — návrh a dokumentace (v9.127; konfigurátor, `DOK_TYPY.rozv`, blok `ROZVADĚČ DBO`)
 
@@ -2213,6 +2275,20 @@ záložky a zaškrtávátka), `test-rozvadec-dokumenty.js` a
 - Vymyšlený **byt 3+1** pro testy: `testy/rozvadec-byt.js` (skříň 3×12:
   QM, SPD, sporák B25 3P; dva chrániče 4P 40/30 s jističi; RCBO balkon).
 
+**Oprava — výběr musí být vidět a jít zrušit klikem mimo přístroj (2026-11-16,
+po vyzkoušení uživatelem):** rámeček vybraného přístroje dostal silnější obrys
+a slabé modré podbarvení (dřív jen tenký obrys 1,3 px, na šedé liště přehlédnutelný).
+Navíc **pruh „Vybráno: …" nad čelním pohledem** (`rozvVybranoPruhHtml`,
+`.rz-vybrano`) s tlačítkem „✕ Zrušit výběr" — jmenuje vybraný přístroj, nebo
+u víc vybraných jejich počet. **Klik kamkoli mimo přístroj výběr zruší** —
+dřív to platilo jen na místě, které šlo vyhodnotit jako cíl vložení (`cil`
+z `rozvCilZBodu`); teď i v prázdné části skříně bez cíle, mimo skříň v rámečku
+pohledu i mimo samotné `<svg>` (šedý okraj `#rz-svg-ram`, volná plocha editoru
+mezi knihovnou a vlastnostmi — druhý posluchač `click` mimo `.rz-svg`).
+Výjimky: knihovna, panel vlastností, lišta (`.rz-lista`), lišta akcí u výběru
+(`#rz-akce`) a tlačítka/pole uvnitř — tam klik na výběr nesahá. Výběr
+obdélníkem, dlouhý stisk (výběr víc na dotyku) a Esc fungují beze změny.
+
 ### Mezery mezi přístroji (v9.130)
 
 Pokyn uživatele 2026-10-22: „přidaný přístroj se automaticky řadí doleva,
@@ -3416,6 +3492,162 @@ Test: `testy/test-rozvadec-navod.js`. **Upraveno:** `test-rozvadec-dokumenty.js`
 (seznam zaškrtávátek v Dokumentech má navíc „návod k obsluze"), `test-mobil.js`
 (stavy „rozvaděč – návod k obsluze…" a „…náhled tisku návodu k obsluze (PDF)").
 Karta v Novinkách se nedělala.
+
+### Rozvaděč — víc přívodů (2026-11-13, blok „ROZVADĚČ — VÍC PŘÍVODŮ")
+
+Zadání uživatele: rozvaděč se dvěma (i víc) přívody — dva elektroměry (normální
+sazba + HDO), záložní zdroj, nebo napájení ze dvou nadřazených rozvaděčů. Dosud
+šel zadat jen jeden přívod (pole v hlavičce, uzel `'@privod'`). Jen DBO i PSC.
+
+- **Přívod 1 zůstává beze změny** (pole v hlavičce, uzel `'@privod'`). Id dalšího
+  přívodu je **`'@privod~' + uid`** (vlnovka, ne dvojtečka — dvojtečka by se
+  rozpadla na `uid:strana:pol` v režimu Zapojení, odchylka od znění zadání
+  zdůvodněná technicky). Jeden predikát na obou místech: **`rozvJePrivod(uid)`**
+  (`uid === '@privod'` nebo začíná `'@privod~'`) — desítky míst v kódu (BFS
+  zapojení `rzpSpocti`/`rzpSync`/`rzpAuto`, `rozvDeti`/`rozvZdrojEff`/
+  `rozvNadrazeneAuto`, čelní pohled `rozvNapSvg`/`rzpTrasovac`, hřebeny, soudobost,
+  kontroly) se nezeptala natvrdo na `'@privod'`, ale na tenhle predikát — tím je
+  přívod 1 i další přívody jedna a tatáž logika.
+- **Data (jen po přidání dalšího přívodu):** `d.privody = [{ uid, ozn, kabel,
+  prurez, in, smer: 'shora'|'zespodu', zdrojText, nSpolecne }]`. Klíč zmizí,
+  když se odeberou všechny extra přívody (`DOK_TYPY.rozv.cist`). Starý
+  jednopřívodový rozvaděč se otevře a uloží bajtově stejně — žádný nový klíč,
+  dokud technik nepřidá další přívod.
+- **Hlavička:** pod polem přívodu 1 **„＋ Další přívod"** (`rozvPrivodyHtml`,
+  `rozvPrivodKartaHtml`); karta má stejná pole jako přívod 1 (kabel, průřez, In,
+  shora/zespodu) + **„Napájen z"** jako volný popisný text (ne výběr rozváděče —
+  zjednodušení proti zadání: druhý elektroměr nebo záložní zdroj nejsou
+  rozváděč, který by šlo vybrat ze stromu), **„N sdílené s ostatními přívody"**
+  (výchozí zapnuto) a ▲ ▼ / 🗑 **Odebrat přívod**. Odebrání s napojenými
+  přístroji nebo vodiči se ptá, odpojí vodiče a vrátí napojené přístroje na
+  automatické napájení (přívod 1) — se ZPĚT i Ctrl+Z (`rozvZmena`).
+- **„Napájen z" u přístroje nabízí každý přívod** (`rozvNapajenZHtml`), BFS
+  zapojení (`rzpSpocti`) sije napětí z L1–L3 **každého** přívodu
+  (`rozvPrivodySeznam`), takže přístroj dostane `nadr` na konkrétní přívod podle
+  toho, odkud k němu vede natažený vodič nebo hřeben (`rzpSync`).
+- **Souhrn v liště „Přívod 1: N přístrojů · Přívod 2: M přístrojů"**
+  (`#rz-privod-ukaz`, `rozvPrivodUkazatel`) jen s víc přívody; klik na přívod
+  vybere všechny jím napájené přístroje v pohledu. **Dosah přívodu
+  (`rozvPrivodDosahy` → `rzsPrivodDosah`) je JEDNA funkce pro lištu i pro
+  kontrolu propojení níž** — vlastní BFS z uzlu toho přívodu po natažených
+  i automatických vodičích (`rzpStav().manual.concat(.auto)`), ne strom podle
+  `nadr` (ten by přístroj bez výslovného `nadr`, tedy na automatice, nezapočetl
+  vůbec).
+- **Kontroly (`rzsKontrola`):** **chyba**, když je přístroj dosažitelný ze dvou
+  přívodů najednou (přívody propojené — program ještě neumí přepínače 1-0-2/ATS,
+  nic kolem toho neobcházet), **upozornění** pro přívod, který nenapájí nic, a
+  **tip** (bez čísla článku normy) „označte rozvaděč výstražným štítkem … a před
+  prací vypínejte všechny" u každého vícepřívodového rozvaděče.
+- **Odchylky od zadání (zjednodušení, aby se funkce dala v rozumném rozsahu
+  domyslet a ověřit — vrátit se k nim, až si o to uživatel řekne):**
+  - **Schéma a DXF se nezměnily** — druhý přívod nemá vlastní úsek na výkresu
+    (čárkovaný oddíl, vlastní sběrnici L, pokračování „pokračuje na /…"). Listy
+    schématu dál kreslí jen přívod 1; druhý přívod ve schématu chybí.
+  - **N1/N2 — opravdu oddělené sběrnice N podle `nSpolecne` nejsou.** Pole je
+    uloženo a ukazuje se v kartě, ale živý model zapojení (BFS, kresba, čelní
+    pohled) ho zatím nerozlišuje — N se chová jako dosud (společné).
+  - Svorkový plán, štítek a technické údaje (řádek „Přívody: 2"), fáze (panel
+    ⚖ a Přefázovat), oteplení (vynechání automatického InA s hintem), návod
+    k obsluze (věta o vypnutí všech přívodů) a strom napájení seznamu rozvaděčů
+    (dok Obj Strom, „napájen také z RS2") se **nezměnily** — druhý přívod se
+    tam neprojeví.
+  - 3D pohled druhý přívod nijak neodlišuje.
+
+Test: `testy/test-rozvadec-privody.js` (15 kontrol — byt 3+1 bez druhého
+přívodu beze změny dat a ukazatele, karta a uložení pole, pořadí ▲ ▼, souhrn
+v liště podle skutečného dosahu (ne podle `nadr`), klik vybere napájené
+přístroje, propojení dvou přívodů = chyba a zmizí po odpojení vodiče, odebrání
+s dotazem a ZPĚT/Ctrl+Z, zmizení klíče `privody` po odebrání posledního extra
+přívodu, data revizí bajtově stejná). Karta v Novinkách se nedělala (uživatel
+si o ni řekne sám).
+
+**Opravy po vyzkoušení uživatelem (2026-11-16):**
+
+- **„＋ Další přívod" i přímo v liště nad čelním pohledem** (`rozvPrivodyHtml`
+  v hlavičce zůstává) — jediné tlačítko bylo schované uvnitř sbalené „🗄
+  Hlavička rozvaděče" (`<details>`), technik ho musel nejdřív jít hledat.
+  Klik ho rovnou přepne do režimu 🔌 Zapojení (jen při PRVNÍM přívodu, další
+  nechávají technika tam, kde je), kabel se tím hned vykreslí — nic dalšího
+  se už klikat nemusí. Nový kabel 2 s dvoupulzuje (`.rz-vyvodka-pulse`,
+  třída na `<g data-priv-cable>`) a stavový řádek řekne „Přívod N přidán –
+  natáhni z něj vodiče…".
+- **Pravý klik na kabel přívodu** (`<g data-priv-cable>` i jeho svorky L1–L3,
+  `rozvPrivodKontext`): u přívodu 1 „＋ Přidat další přívod", u dalších navíc
+  „Přejmenovat přívod" a „Odebrat přívod" — sdílí stejné funkce
+  (`rozvPrivodOdebratUid`, `rozvPrivodPrejmenovatUid`) jako karta v hlavičce.
+- **Popisky kabelů se už nesmí překrývat.** Odhad šířky textu v `rozvNapSvg`
+  dostal větší rezervu a navíc po vykreslení doladí **skutečnou** šířku
+  (`rozvNapLabelySrovnat`, `getBBox`) — font se v prohlížeči může vykreslit
+  jinak, než odhad počítá. **Druhá, horší příčina** (nahlásil uživatel na
+  živém náhledu): `rozvVyvodkaGeomMapa` kladla pilíře dalších přívodů **pevně
+  po 10 mm** bez ohledu na délku štítku toho předchozího — u „Přívod" (6 znaků)
+  to ještě vyšlo, ale delší štítek (kabel + vlastní jméno) přejel přes pilíř
+  dalšího kabelu (přímo přes jeho svislou čáru a svorky L1–L3), ne jen přes
+  jeho text. Teď počítá **běžící kurzor** `dalsi[strana]` stejným odhadem
+  šířky jako `rozvNapSvg` — pilíř dalšího přívodu začne až za štítkem toho
+  před ním. Pro `'@privod'` samotný (bez dalších přívodů) vrací úplně stejnou
+  geometrii jako dřív (`rozvVyvodkaGeom(rz)` beze změny) — starý rozvaděč
+  s jedním přívodem se nemění.
+- **Řádek „Přívod 1: N · Přívod 2: M…" je čitelný přepínač** — klik zvýrazní
+  (`.rz-priv-uk-btn.akt`) a vybere přístroje napájené tím přívodem i jeho
+  kabel, druhý klik na totéž tlačítko zvýraznění zruší (`__rz.privodUkazAkt`).
+- **Strom „Kdo koho napájí" má jednotné názvy** — „Přívod 1 · CYKY-J 5×10"
+  místo „Kabel …", u dalších přívodů jejich název z karty.
+
+### Zpracovatel dokumentace nemusí být technik z profilu (2026-11-16)
+
+Dosud se jméno technika z profilu dosazovalo živě při KAŽDÉM tisku na šesti
+nezávislých místech: `rozvPdfProtokol` („Zkoušku provedl"), `rozvPdfProhlaseni`
+(podpis), `rozvPdfOtepleni` a `pscPdfOvereni` (obě natvrdo
+`e.pJmeno || (d.bezProfilu===true?'':t.jmeno)`), razítko `rozvSchemaListy`
+a `rozvSoudListSvg` (`t.jmeno` přes `rozvProfil(d)` — ty dvě `bezProfilu` už
+respektovaly, jen neměly žádné pole k přepsání). Kdo dokumentoval rozvaděč pro
+jinou firmu, musel přepisovat jméno na šesti místech zvlášť a u schématu
+a soudobosti to vůbec nešlo.
+
+- **Jedno pole „Zpracovatel dokumentace"** v hlavičce Dokumentů (hned pod
+  „Dokumentace pro jiného výrobce"), `d.zpracovatel = { jmeno, firma, ico }`
+  (firma/IČO nepovinné, IČO s tlačítkem 🔍 ARES). **Jméno je odvozená hodnota
+  jako ostatní** (`rozvDokOdvozene` → `odv['zpracovatel.jmeno'] = t.jmeno`,
+  v `ROZV_Z_PROFILU` — `bezProfilu` ho nepředvyplní mým jménem) — nový
+  rozvaděč ho ukáže předvyplněné z profilu, ale **ukládá se jen když ho
+  technik změní** (`rzPole`, `data-odv`), přesně jako `prohl.jmeno`.
+- **`rozvZpracovatelJmeno(d)`** čte uloženou hodnotu přímo (`d.zpracovatel.jmeno`,
+  nezávisle na `bezProfilu` — ten řídí jen VÝCHOZÍ hodnotu pole, ne co technik
+  skutečně napsal). Když je vyplněné, `rozvDokOdvozene` jím přepíše odvozené
+  `prohl.jmeno` i `ko.zkousel.jmeno` (**po** wipu kvůli `bezProfilu`, takže
+  explicitní zpracovatel platí i u dokumentace „pro jiného výrobce" — a **před**
+  wipem kvůli „nechat prázdné", to zůstává nejsilnější) — tím se to samo
+  propsalo do prohlášení (`e.pJmeno`) a protokolu (`e.zkJmeno`), beze změny
+  těch dvou PDF funkcí. **Stávající samostatná pole** (`prohl.jmeno` ve
+  formuláři, `ko.zkousel.jmeno`), když je technik vyplní ručně, **mají
+  přednost** jako dřív (`rozvDokHodnota` čte uloženou hodnotu dřív než odvozenou).
+- **Schéma a soudobost** (`rozvSchemaListy`, `rozvSoudListSvg`): razítko
+  `vypracoval: rozvZpracovatelJmeno(d) || t.jmeno || ''` — poprvé mají
+  přepsatelnou hodnotu; bez zpracovatele beze změny (`t.jmeno` přes
+  `rozvProfil(d)`, který `bezProfilu` respektoval už dřív).
+- **`rozvPdfOtepleni` a `pscPdfOvereni`**: zbytečný ternární fallback
+  `(d.bezProfilu===true?'':t.jmeno)` odstraněn — byl mrtvý kód (`e.pJmeno`
+  už sám dává týž výsledek, protože `bezProfilu` i zpracovatel řeší
+  `rozvDokOdvozene`), zůstalo `e.pJmeno || '……………'` jako u prohlášení.
+- **Razítko a podpis z profilu jen když je zpracovatel totožný s technikem**
+  (`rozvZpracovatelJeProfil(d)`, shoda jména bez rozlišení velikosti písmen —
+  nevyplněné pole = platí jako dřív). Jinak se v prohlášení nevloží a místo
+  zaškrtávátka „vložit razítko a podpis z profilu" je řádek „zpracovatel není
+  technik z profilu – razítko a podpis se nevloží" (stejná informace, jakou
+  u cizí zprávy dávají revize a u riziko LPS `rlZpracovatelJeProfil`).
+- **„Zapojení provedl" beze změny** — je to ruční pole, žádný fallback na
+  profil nemělo ani dřív.
+- **Starý rozvaděč bez `d.zpracovatel`: chování přesně jako dřív** — ověřeno
+  `testy/test-rozvadec-stara-data.js` proti STARA_PORT (data i PDF prohlášení,
+  protokolu, oteplení, schématu a soudobosti bajtově stejné).
+
+Test: `testy/test-rozvadec-dokumenty.js` (+11 — předvyplnění a data-odv,
+jiné jméno ve všech šesti listech, žádné razítko/podpis, upozornění,
+`bezProfilu` s prázdným zpracovatelem → „……" i na razítku schématu
+a soudobosti, starý rozvaděč beze změny proti STARA_PORT). **Upraveno:**
+`testy/test-rozvadec-psc.js` (porovnání DBO proti předchozí verzi vynechává
+novou kartu „Zpracovatel dokumentace" v Dokumentech).
 
 ### Výměna výkresů s CAD — export a import DXF (2026-11-02, bloky „ROZVADĚČ — VÝMĚNA S CAD")
 
