@@ -4,7 +4,7 @@ Revize EL je single-page PWA (HTML + JS + service worker). Obsah se cachuje
 v prohlížeči přes `sw.js`, takže uživatel nevidí změny, dokud se neinvalidně
 cache.
 
-**Aktuální verze: v9.146 · 2026-11-16**
+**Aktuální verze: v9.147 · 2026-11-20**
 
 ## Povinné při každé změně kódu před commitem
 
@@ -3648,6 +3648,409 @@ jiné jméno ve všech šesti listech, žádné razítko/podpis, upozornění,
 a soudobosti, starý rozvaděč beze změny proti STARA_PORT). **Upraveno:**
 `testy/test-rozvadec-psc.js` (porovnání DBO proti předchozí verzi vynechává
 novou kartu „Zpracovatel dokumentace" v Dokumentech).
+
+### Víc přívodů — hlavní vypínač KAŽDÉHO přívodu, přepínač zdrojů PZ (2026-11-18)
+
+Uživatel při zkoušení přišel na chybu: rozvaděč se dvěma přívody (QH1 40 A
+z přívodu 2 → FA1, FA2; Q1 63 A z přívodu 1 → FI1 a jističe pod ním) ukazoval
+oba hlavní vypínače, jako by patřily přívodu 1 — a program neuměl přepínač
+zdrojů 1-0-2 / ATS, takže propojení dvou přívodů přes něj vždy hlásil jako
+chybu.
+
+**Příčina:** `rozvKoren(rady)` = `rozvHlavniVypinace(rady)[0]` vrací JEN JEDEN
+kořen pro celý rozvaděč (výslovně zaškrtnuté „Hlavní vypínač" má přednost před
+pořadím). U dvou přívodů to je kořen jen toho jednoho — druhý hlavní vypínač
+(ten druhý byl v tomhle případě i `rozvHlavniVypinace`'s jediný **kandidát**,
+protože zaškrtnutí jednoho QM vyřadí všechny nezaškrtnuté) se chová jako
+BĚŽNÝ přístroj a jeho `rozvZdrojEff`/`rozvDeti` (kořenová větev, `x.uid ===
+kor`) vracely natvrdo `'@privod'`, i když měl `nadr` výslovně na jiný přívod.
+
+- **`rozvKorenPrivodu(rady, privodUid)`** (nová funkce) hledá mezi VŠEMI
+  spínacími přístroji (`ROZV_SPINACI` = QM/QS/QF) toho, kdo je na DANÝ přívod
+  výslovně napojený (`nadr` přímo na přívod, nebo přes svorky z něj) — ne jen
+  mezi kandidáty `rozvHlavniVypinace`. U přívodu 1 bez jakéhokoli výslovného
+  napojení platí dosavadní pravidlo (`rozvKoren`). **`rozvKoren` se neměnil**
+  — `rozvKorenPrivodu(rady, '@privod')` bez dalšího přívodu vrací přesně to,
+  co by vrátil on.
+- **Opraveny kořenové větve `rozvZdrojEff` a `rozvParHodnota`** — když má kořen
+  `nadr` výslovně na (jakýkoli) přívod, vrátí ho; jinak beze změny (fallback
+  na svorky / `'@privod'`).
+- **`rozvDeti('@privod', rady)`** — kořenová větev teď nejdřív zkontroluje
+  `rozvJePrivod(y.nadr)`: patří-li kořen jinému přívodu, nepřičte se přívodu 1.
+- **`rsModel`**: `model.qm` (hlavní vypínač kreslený zvlášť pod kabelem
+  přívodu 1 — do té doby prostě „první QM v pořadí") se s víc přívody (`d.privody.length`)
+  počítá přes `rozvKorenPrivodu(d.rady, '@privod')`, ne podle pořadí v řadách —
+  jinak by se mu mohl plést s hlavním vypínačem jiného přívodu. Bez dalšího
+  přívodu beze změny.
+- **Provizorní upozornění z v9.145** (`rozvPrivod2VeSchematu` — „přívod N:
+  … je ve schématu zakresleno jako z přívodu 1") touhle opravou ZŮSTÁVÁ
+  (nekreslí se samostatná sběrnice druhého přívodu, jen se opravilo, KTERÝ
+  přístroj je čí kořen) — a teď je konečně i přesné, protože `rozvDeti` pro
+  druhý přívod už vrací správný seznam.
+
+**Přepínač zdrojů — nová kategorie PZ** (`ROZV_KAT`, pole `ovladani` [ruční
+1-0-2 / automatický ATS], `In`, `ue`, `uc`, `pv`; předpona **-Q** jako ostatní
+vypínače). PZ má DVA vstupy:
+
+- **Vstup I = `x.nadr`** (běžný mechanismus „Napájen z", funguje beze změny).
+  **Vstup II = nový `x.nadr2`**, nastavuje se druhým výběrem „Napájen z
+  (vstup II)" v panelu vlastností (`rozvNapajenZ2Html`, zapisuje
+  `rozvNapajeni2Nastavit` → `data-rp2="nadr2"`). **Žádné tažení myší v režimu
+  Zapojení** — druhý vstup nemá vlastní svorku k uchopení, je to vědomé
+  zjednodušení (dolů viz).
+- **`rzpAuto`**: vstup I jde přes běžnou smyčku (nic se neměnilo), vstup II
+  dostane vlastní automatický vodič na stranu **„i2"** — nová, dosud
+  nepoužitá hodnota `strana` v modelu zapojení.
+- **Průchod přístrojem v `rzpSpocti` i `rzsPrivodDosah`**: PZ nepropouští
+  `t↔i2` (oba vstupy mezi sebou) ani `b→t`/`b→i2` (zpátky z výstupu) — jen
+  `t→b` a `i2→b`, jako u obyčejného přístroje, jen navíc.
+- **`rzsKontrola`**: propojení DVOU přívodů PŘES PZ není chyba (k tomu PZ
+  je) — `rzsPrivodDosah(…, bezPZ=true)` (PZ se v ní chová jako zeď) najde
+  jen propojení JINUDY, a to zůstává chyba s radou „propojte je přes
+  přepínač zdrojů" (nahrazuje dřívější „Programu ještě chybí přepínače…").
+  PZ samo o sobě je dosažitelné z obou přívodů VŽDY (to je jeho smysl) —
+  nepočítá se. Místo toho upozornění „-Q2: oba vstupy jsou napájené (…)".
+- **Ukazatel v liště** dostal navíc štítek „přes -Q1: N" (počet přístrojů
+  dosažitelných přes PZ z obou vstupů najednou).
+- **CSV**: nový sloupec `ovladani` na KONCI šablony (52. sloupec, před
+  `poznamka`) — pořadí ani přítomnost nejsou povinné (hlavička se párová
+  podle jména), takže starší CSV (43 / 50 / 51 sloupců) se načte beze změny.
+  Nový klíč `ovladani` je i v `ROZV_PRISTROJ_NAVIC`/`_TEXT` (jinak by ho
+  `rozvPolozkaNorm` zahodila jako neznámý).
+
+**Odchylky od zadání (vědomé zjednodušení, aby to šlo v rozumném rozsahu
+ověřit — vrátit se k nim, až si o to uživatel řekne):**
+- ~~Schéma se nekreslí jako dvě samostatné sběrnice vedle sebe… PZ se
+  kreslí jako obyčejný vypínač.~~ **Dořešeno 2026-11-19** — viz oddíl
+  „Výkres se dvěma přívody…" níž: skutečná dvojsběrnice po úsecích, nová
+  dvouvstupová značka PZ.
+- ~~Vstup II nejde natáhnout myší v režimu 🔌 Zapojení.~~ **Dořešeno
+  2026-11-19** — PZ má vlastní svorky na straně `i2`, jde na ně natáhnout
+  vodič stejně jako na kterýkoli jiný vstup (`rzpRodicOdStrany` v `rzpSync`
+  zapisuje `nadr`/`nadr2` nezávisle podle toho, co vede na kterou stranu).
+  Panelové „Napájen z (vstup II)" funguje dál beze změny.
+- **`rzhZdroj`/`rzhZatez`/`rzvMaterial` věc s `rozvKoren` NEBYLA pravda** —
+  ověřeno 2026-11-19 testem (hřeben zavěšený na hlavním vypínači DRUHÉHO
+  přívodu): `rzhZdroj` jede po živém grafu zapojení (`S.E`/`S.vys`
+  z `rzpStav`), ne po `rozvKoren`, takže správně najde QH1 a `rzhZatez`
+  správně napíše „zátěž 40 A (vypínač -QH1 40 A)" — žádná změna nebyla
+  potřeba. `rzvMaterial` zdroj vůbec netrasuje (jen sčítá vodiče podle
+  průřezu a barvy).
+- **Technické údaje / štítek „Přívody: N"** dořešeno 2026-11-19 (viz níž).
+- **Návod k obsluze** věta o vypnutí všech přívodů **čeká na schválení
+  textu uživatelem** — navrženo, nevloženo (viz níž).
+- **3D pohled** druhý přívod nijak neodlišuje — nedělalo se.
+
+Test: `testy/test-rozvadec-privody.js` (+9 — přesně případ uživatele: Q1 a
+QH1 jsou každý kořen svého přívodu, žádný pod tím druhým ve `rsModel.jedn`;
+kategorie PZ se validuje; panel se dvěma vstupy; PZ nehlásí chybu, propojení
+jinudy ano; CSV sloupec `ovladani`). **Upraveno:** `testy/test-rozvadec-stara-data.js`
+a `testy/test-rozvadec-psc.js` (šablona CSV má teď 52 sloupců — čísla se
+tam počítají z `ROZV_CSV.length`, ne napevno, ať příští sloupec test znovu
+nerozbije). Karta v Novinkách se nedělala.
+
+### Výkres se dvěma přívody — sběrnice po úsecích, přepínač zdrojů ve výkresu (2026-11-19)
+
+Dořešení předchozího oddílu: tenkrát bylo hotové jen „kdo je čí kořen"
+(data), ne výkres. Nahlášená chyba uživatele byla přesně tahle: „druhý
+kabel má do rozvaděče vstupovat zvlášť na svůj hlavní vypínač." Zapíná se
+jen při `d.privody` (jen DBO) — bez nich schéma beze změny
+(`porovnani2.js`, `test-rozvadec-schema.js`, `test-rozvadec-psc.js` DBO
+byte-identity — vše čisté).
+
+- **Každý přívod = vlastní úsek** zleva doprava (`rsUseky`, `rsRozlozitVice`,
+  `rsListSchemaVice` — paralelní sada funkcí k jednopřívodovému
+  `rsModel`/`rsRozlozit`/`rsListSchema`, který se NEMĚNIL): vlastní kabel,
+  vlastní hlavní vypínač (`rsPrivodUsekSvg`), vlastní fázová sběrnice, nikdy
+  se nekříží s jiným úsekem. Hranice úseků = čárkovaná svislice přes
+  sběrnice. N sdílené podle `nSpolecne` (`rsNSkupiny` — `nSpolecne: false`
+  začíná novou skupinu N2, N3…), PE vždy JEDNA sběrnice přes všechny úseky.
+  Zlom listu přednostně na hranici úseku (nikdy uprostřed kabel+vypínač),
+  cross-list odkazy „pokračuje na /list.sloupec" fungují jako dřív.
+- **List 1 (osazení):** řádek „Přívod / vývody" vypisuje všechny přívody
+  (`rozvPrivodySeznam`). Provizorní upozornění „zakresleno jako z přívodu 1"
+  (`rozvPrivod2VeSchematu`, `rzsKontrola`, `rozvSchChybiHtml`) **smazáno** —
+  nahrazeno skutečným výkresem.
+- **PZ — dvě podoby podle toho, odkud je napájený** (odpověď uživatele na
+  otázku A/B/C, 2026-11-19):
+  1. **PZ přímo z OBOU přívodů, bez vypínače mezi** (`nadr` i `nadr2` jsou
+     přímo `'@privod'` / `'@privod~…'`) — nejčastější případ (síť/generátor,
+     PZ je zároveň hlavní vypínač). **Žádné dva úseky** — `rozvKorenPrivodu`
+     teď vrací PZ pro OBA přívody najednou (nová větev v
+     `rozvKorenPrivodu`: PZ s oběma vstupy přímo z přívodů má přednost před
+     hledáním mezi `ROZV_SPINACI`), `rsUseky` je podle toho SLOUČÍ do
+     jednoho bloku s PZ jako společným `qm` (`U.most`, `U.zaznam`/`zaznam2`
+     = který přívod jde na vstup I / vstup II). Kreslí **`rsPrivodMostSvg`**
+     (nová funkce vedle `rsPrivodUsekSvg`): kabel `nadr` na vstup I ve výšce
+     dosavadního jediného přívodu, kabel `nadr2` o řádek níž, svislá odbočka
+     nahoru přesně do bodu vstupu III; z výstupu PZ JEDNA sběrnice pro
+     všechny vývody (beze změny stávajícího kódu pro kreslení skupiny — PZ
+     jako `qm` funguje identicky jako běžný hlavní vypínač). N vstupu II
+     s `nSpolecne: false` dostane jen ilustrační odbočenou dashed čáru u
+     kabelu (PZ nemá údaj o počtu pólů pro skutečné přepínání N — drobná
+     odchylka, zadání o „4pólový PZ" nemá v datovém modelu oporu).
+  2. **PZ ZA hlavním vypínačem jednoho z přívodů** (`nadr` nebo `nadr2` je
+     sběrnice / přístroj úseku přívodu) — úseky jako dřív, PZ je BĚŽNÝ
+     přístroj uvnitř úseku přívodu, kterému patří podle `nadr`
+     (`rsPrivodZX`/`rozvZdrojEff` ho tam zařadí samy, beze změny). **Vstup
+     II = jen odkaz, ŽÁDNÁ čára přes hranici úseků** — stejná konvence jako
+     „pokračuje na /3.1": u PZ krátký pahýl + text „ze sběrnice Přívod 2
+     (/list.sloupec)" (`rsPzVstupIIHtml`, volá se z `rsHlavaHtml` i
+     `rsSloupecHtml`), na sběrnici úseku `nadr2` v místě odbočky
+     protiodkaz „na -Q2 vstup II (/list.sloupec)" (v `rsListSchemaVice0`,
+     `rozsahy.forEach`). Obojí počítá **`rsPz2Predpocet`** JEDNOU pro celý
+     výkres (po `rsRozlozitVice`, dřív než se kreslí první list) —
+     `privodStarty` (kde začíná sběrnice KTERÉHOKOLI úseku) a `itemPozice`
+     (kde stojí KTERÝKOLI přístroj), aby odkaz fungoval i na jiný list
+     (dřívější i pozdější). Text soustavy na úseku bez vlastních přístrojů
+     (jen kabel vedoucí do vstupu II vzdáleného PZ) jde na POSLEDNÍ
+     neprázdný úsek listu, ne nutně poslední úsek vůbec — jinak by se
+     srazil s krátkou sběrnicí „L1, L2, L3" takového úseku.
+- **Značka `RS_ZNACKY.prepinac`** přepracována na skutečný dvouvstupový
+  přepínač: dva body nahoře vedle sebe (rozteč 4,4 mm, svorky **1** a **3**),
+  šikmé vodiče k pivotu, krátký šikmý „blade" MEZI nimi (poloha 0 — nedotýká
+  se ani jednoho vstupu), výstup dole (svorka **2**). Vstup I je na ose 0,
+  takže na něj sedí obyčejná svislá přívodní čára stejně jako u každé jiné
+  značky (`RS_ZNACKA_KAT.PZ = 'prepinac'`). Svislý text hodnoty/typu (In,
+  „1-0-2"/„ATS") posunutý o `+4,4 mm` (`rsHlavaHtml`/`rsSloupecHtml`, nová
+  větev `nz === 'prepinac'`), ať nekříží tělo značky ani svorku 3.
+- **Kolize popisků hlídá test** (`testy/test-rozvadec-privody.js`,
+  `getBoundingClientRect` na `<text>` prvky v okolí PZ, oba případy) —
+  ladilo se iterativně podle skutečného vykreslení (viz starší past
+  v oddílu „Zdrojem pravdy je VŽDY skutečné vykreslení" výš v tomhle
+  souboru — platí i tady).
+- **Technické údaje a štítek:** nový řádek **„Přívody: N (Přívod 1, Přívod
+  2…)"** (`rozvPrivodyInfoText`), jen informace (nic se nezadává), jen
+  s víc než jedním přívodem — DBO i PSC, tabulkový i jednoduchý štítek,
+  i v PDF (`rozvPdfTech`/`pscPdfTech`).
+- **Oteplení — `rotInA` smí automaticky sáhnout JEN na hlavní vypínač
+  přívodu 1** (`rozvKorenPrivodu(d.rady, '@privod')`), s víc přívody už ne
+  na „první QM v pořadí" (to by mohlo vzít hlavní vypínač JINÉHO přívodu —
+  výpočet oteplení umí jen jedno pole). Bez automaticky nalezeného InA
+  u vícepřívodového rozvaděče řádek „chybí": **„jmenovitý proud rozvaděče
+  InA — víc přívodů, zadejte ručně (automaticky se bere jen z přívodu 1)"**.
+- **Návod k obsluze — schválená věta VLOŽENA (2026-11-20).** Uživatel
+  schválil přesné znění, doplňuje se do `T.kdo` (`navodVychozi`, oddíl
+  „Kdo smí rozvaděč obsluhovat") — jen má-li rozvaděč `d.privody`
+  (`rozvPrivody(d).length`), platí pro DBO i PSC stejně: „Rozvaděč je
+  napájen z více přívodů (Přívod 1, Přívod 2…). Před prací uvnitř
+  rozvaděče vypněte hlavní vypínače VŠECH přívodů, zajistěte je proti
+  opětovnému zapnutí a ověřte beznapěťový stav. Vypnutím jednoho hlavního
+  vypínače nemusí být rozvaděč bez napětí." Je-li v rozvaděči přepínač
+  zdrojů (kat. `PZ`), za ni se pro KAŽDÝ přidá další věta se skutečným
+  označením: „Poloha 0 přepínače zdrojů -Q… odpojí jen obvody za ním,
+  přívodní svorky a přístroje před ním zůstávají pod napětím." Je to jen
+  **výchozí text** (`navodVychozi`) — pole v Dokumentech ho technik může
+  přepsat nebo oddíl vypnout; uložený rozvaděč s vlastním textem se
+  otevřením nepřepíše. Test: `testy/test-rozvadec-privody.js` (+3 —
+  s víc přívody, bez `d.privody` věta chybí, s přepínačem zdrojů obě věty
+  i se skutečným označením).
+
+Test: `testy/test-rozvadec-privody.js` (+12 — oba případy PZ ve výkresu:
+dva kabely na vstupy I/III a jedna sběrnice u případu 1, dva úseky a
+odkaz+protiodkaz na stejný list u případu 2, kolize popisků getBBox,
+vektorové PDF `pdftotext` najde „Přívod 2"/„vstup II"/„ze sběrnice"). Beze
+změny (byte-identity): `test-rozvadec-schema.js` (60/60), `test-rozvadec-psc.js`
+(90/90 vč. DBO schématu znak po znaku), `porovnani2.js`. V `test-mobil.js`
+stav „rozvaděč – schéma se dvěma přívody". Karta v Novinkách se nedělala.
+
+### Schéma víc přívodů bralo topologii JEN z `x.nadr`, panel z vodičů (2026-11-20)
+
+Hlášení uživatele na rozvaděči **ROZ-0001**: QH1 (přívod 2) je k přívodnímu
+kabelu zapojen **jen nataženým vodičem** v režimu 🔌 Zapojení — pole „Napájen
+z" nikdy nevyplnil — a jističe FA1, FA2, FA3 jsou na jeho výstup napojené
+taky jen vodičem, paralelně (vstup na vstup). Panel „Kdo koho napájí"
+(`rzpStav`, který čte natažené vodiče a dopočítává automatiku) je zobrazoval
+správně pod přívodem 2. **Schéma je kreslilo pod přívodem 1** — `rsModel`
+a `rsUseky` tehdy uměly jen statický strom podle `x.nadr`/`rozvZdrojEff`,
+který o vodiči nic neví.
+
+- **Oprava: schéma bere topologii ZE STEJNÉHO VÝPOČTU jako panel.**
+  `rzsTopologie(d)` zavolá `rzpStav(d)` (dočasně prohodí `__rz`, protože
+  `rzpStav` čte přístroje přes globál, ne přes parametr — PDF/export běží
+  mimo otevřený editor). `rzsPrivodKorene(S, uid)` prochází `S.vys[uid].rodic`
+  nahoru, dokud nenarazí na `typ: 'privod'`. `rsUseky` (dřív jen `x.nadr`)
+  teď u KAŽDÉHO přístroje nejdřív zkusí `rzsPrivodKorene`, na statický
+  `rsPrivodZX` spadne jen tam, kde `rzpStav` o přístroji vůbec neví (PRISL /
+  REZ / ovládací přístroje, nebo nic bez napětí). `rzsKorenPrivodu` (hlavní
+  vypínač přívodu) má stejný fallback.
+- **Paralelní napájení „vstup na vstup" (QH1→FA1→FA2→FA3) se kreslí PLOCHO**
+  — `rsModel`'s `rodic()` dostal volitelné `o.S`: když je `S.vys[x].rodic.typ
+  === 'par'`, projde řetězem `par` odkazů až na skutečný zdroj (`typ: 'z'`)
+  a vrátí TEN, takže FA1/FA2/FA3 jsou ve `model.jedn` tři samostatné
+  jednosloupcové záznamy (sourozenci), ne vnořený řetězec FA1→FA2→FA3.
+- **Vzhled upraven podle skutečných výkresů kolegy** (uživatel poslal
+  `RSpra1.pdf`, `RM702.pdf`, `PP-RS01.1.pdf` k porovnání), postupně:
+  - titulek listu u víceprivodového schématu je **nad** čárkovaným rámečkem
+    rozvaděče (`rsListSchemaVice0`), ne uvnitř — kolidoval s popiskem
+    „Přívod 2"; jednopřívodové schéma (`rsListSchema`) beze změny;
+  - **lomítka na vrcholu přívodního kabelu = POČET FÁZÍ** (`rsLomitkaVodorovne`,
+    `tri ? 3 : 1`, dřív `tri ? 5 : 3` — počítalo L+N+PE dohromady, což
+    vypadalo jako víc fází, než kolik jich doopravdy je) a kreslí se **přes**
+    čáru kabelu, ne vedle ní;
+  - **lomítka počtu vodičů NA VÝVODU zrušena úplně** (`rsLomitka`, dřív 3/5
+    čárek za jističem, 2 za výstupem transformátoru/zdroje) — mohla se
+    zaměnit za počet fází a v referenčních výkresech kolegy nejsou;
+  - **koncový RCBO** (žádný další přístroj za ním nevisí) se připojuje na
+    společnou sběrnici N **plným spojem jako kterýkoli jiný přístroj** —
+    žádný vlastní popisek „N-FI/FAx" (ten zůstává jen u RCBO, které samo
+    dál něco napájí — „hlava" skupiny, `model.hlavy`);
+  - **N a PE sběrnice mají jen textový popisek** („N" / „PE"), **žádnou
+    značku původu** — vyzkoušely se a zase zavrhly dvě podoby (kolečko
+    s lomítkem jako přívodní svorka, pak šikmá čárka s tečkou) a uživatel
+    je nakonec nechtěl vůbec.
+- **Postup schválení** (pokyn uživatele, platí jako vzor pro podobné větší
+  vizuální změny příště): dokreslování se pushovalo na vedlejší větev
+  `wip-privody-vodice` (bez bumpu verze), po každé úpravě šel screenshot
+  listu schématu a krátký popis, co je kde — teprve po slovech „výkres
+  schválen" se napsaly testy a sloučilo do `main` s bumpem verze.
+
+Test: `testy/test-rozvadec-privody.js` (+5 — **skutečná fixtura uživatele**
+`testy/rozvadec-roz0001.json`: panel i schéma řadí QH1+FA1+FA2+FA3 pod
+přívod 2 STEJNĚ, jsou to plochí sourozenci, list obsahuje oba přívody,
+otevření a uložení beze změny dat). `test-rozvadec-schema.js`: upravena
+kontrola pro koncový RCBO (žádný popisek „N-…"). `testy/bez-n.js` rozšířen
+o obě zrušená/zúžená lomítka (geometrie čárky je rozlišuje od ostatních
+čar ve schématu) — byte-identity testy (`test-rozvadec-psc.js`,
+`test-rozvadec-stara-data.js`, `test-rozvadec.js`, `test-rozvadec-mezery.js`,
+`test-rozvadec-napajeni.js`, `test-rozvadec-svorky.js`, `test-rozvadec-ovladani.js`
+aj.) tím zase vycházejí bajtově stejně — mění se jen vzhled, ne data.
+Karta v Novinkách se nedělala (je to oprava chyby, ne nová funkce).
+
+### Propojovací hřeben jako položka knihovny (2026-11-18)
+
+Zadání uživatele: hřeben (dosud jen obecný, `d.hrebeny[]`, viz fáze 1b „jako
+v dílně") má v praxi svého výrobce, typ, počet pólů a rozteč — stejně jako
+jističe nebo skříně. **Nový `druh: 'hreben'`** v knihovně, vedle `pristroj`,
+`skrin` a `pole`. **Hřeben jako takový se do řady NIKDY nevkládá** (nemá
+šířku v modulech) — je to jen zdroj údajů pro existující `d.hrebeny[]`.
+
+- **Pole** (`ROZV_HREBEN_KLICE`): `vyrobce, rada, typ, nazev`; `poly` (1, 1+N,
+  3, 3+N — jiné hodnoty odmítne `rozvValidovat`); `prurez` (mm², povinný),
+  `In` (A, dovolený proud hřebenu, nepovinný — bez něj se kapacita dál
+  odvozuje z `prurez` přes `RZH_RADA` jako u obecného hřebenu); `polu`
+  (počet zubů/modulů, povinný, celé číslo ≥ 2), `roztecMm` (17,5 / 18;
+  prázdné = 17,5 — `rzhKnihDelka`); `prislK` (existující sloupec jako
+  u příslušenství — řady, ke kterým se hodí, stejná syntaxe i stejná
+  funkce párování); `krytky` (text), `pozn`, `zdroj`, `overeno`.
+- **CSV** — nové sloupce `prurez;polu;roztec_mm;krytky` **na konci šablony**
+  (po `ovladani`, před `poznamka`) — **šablona má teď 56 sloupců**. Staré
+  CSV (39 / 43 / 50 / 51 / 52 sloupců) se načte beze změny.
+- **Instance hřebenu** (`h` v `d.hrebeny[]`) dostane **volitelné** `h.knih`
+  (id knihovny) + `h.p` (kopie položky, `dokKopie`) — stejný vzor jako
+  `knih`/`p` u přístroje v řadě. **`h.prurez` a `h.In` zůstávají stejná pole
+  jako dřív** — `rzhKapacita`/`rzhZatez` je čtou beze změny, takže se
+  nemusely upravovat. Bez `knih` je hřeben úplně obecný jako dřív
+  (`test-rozvadec-hreben-knihovna.js`: obecný hřeben beze změny textu
+  materiálu „…, 1 ks").
+- **Panel hřebenu** (`rzhPanelHtml`) má navíc **„Hřeben z knihovny"**
+  (`rzhKnihVolby(h)`): nabízí jen položky se stejnými póly jako hřeben,
+  **předvolená řada** podle výrobce/řady přístrojů POD hřebenem (`prislK`
+  shoda > shoda výrobce > ostatní, `rzhKnihVolby` řadí sestupně). Výběr
+  (`rzhKnihNastavit`) zapíše `knih`+`p` a přepíše `prurez`/`In` z katalogu;
+  **„— obecný (zadat ručně) —"** je smaže a `prurez`/`In` zůstanou, jak byly
+  (technik je může dál upravit ručně). **Ruční přepsání Průřezu** (existující
+  rozbalovátko) hřeben vždy vrátí na obecný (smaže `knih`/`p`) — jinak by
+  popisek ukazoval výrobce k jinému průřezu, než je skutečně nastavený.
+- **Délka z knihovny jen zkracuje, nikdy neprodlužuje:** `rzhKnihDelka`
+  (`polu × roztecMm`) proti skutečné délce hřebenu (`rzhPolu(h) ×
+  ROZV_MODUL_MM`). Je-li hřeben delší, než kolik knihovní položka pokrývá,
+  `rzhKnihKontrola` vrátí upozornění **„potřeba N kusy za sebou"**
+  (zobrazuje ho `rzhKontroly` v panelu i `rzhMaterial` v seznamu
+  propojovacího materiálu — číslo kusů je stejné na obou místech, počítá se
+  jen jednou). Kratší hřeben (zkrácení z delšího kusu) nic nehlásí.
+- **`rzhMaterial`** (seznam do PDF dokumentace) ukáže u hřebenu z knihovny
+  navíc `(výrobce typ)` a správný počet kusů; bez knihovny je řádek přesně
+  jako dřív (`, 1 ks`, „zkrátit z 57").
+- **Správa knihovny** (⚙ na seznamu rozvaděčů): filtr kategorie dostal
+  položku **„Propojovací hřebeny"** (`__rzSF.skup === 'hreben'`), takže
+  importované hřebeny jde najít a hromadně smazat stejně jako u přístrojů
+  a skříní.
+
+**Odchylky od zadání (zjednodušení):**
+- **Hřeben z knihovny se nedá vybrat táhnutím z karty „Přístroje" ani
+  „Skříně"** — knihovna má dva taby (přístroje / skříně) a `druh: 'hreben'`
+  do žádného z nich nepatří (`rozvKnihVidet` ho proto správně v obou tabech
+  skryje). Výběr je jen přes rozbalovátko v panelu konkrétního hřebenu —
+  hřeben se napřed vytvoří obvyklou cestou (nástroj 🪮, „Navrhnout hřebeny…",
+  obecná knihovní položka PRISL/hreben), pak se mu v panelu přiřadí
+  konkrétní výrobce.
+- **„Navrhnout hřebeny…" (`rzhNavrhy`) dál vytváří jen obecný hřeben** —
+  nehledá automaticky odpovídající knihovní položku. Výběr výrobce se dodělá
+  v panelu po vytvoření.
+- **„＋ Vlastní…" dialog nemá volbu „hřeben"** — nová knihovní položka
+  tohoto druhu jde jen z CSV importu (jako u ostatních výrobců).
+
+Test: `testy/test-rozvadec-hreben-knihovna.js` (13 kontrol — rozvValidovat
+s chybami i bez, CSV sloupce a import, panel s nabídkou a předvolbou podle
+výrobce, zápis knih/p/prurez/In, délková kontrola i v materiálu, návrat na
+obecný, obecný hřeben beze změny). Karta v Novinkách se nedělala.
+
+### Pojistková vložka jako položka knihovny (2026-11-18)
+
+Zadání uživatele: stejně jako hřeben výš, pojistková vložka má svého
+výrobce, velikost (10×38, 14×51…) a charakteristiku, přestože se do řady
+nikdy nevkládá (jen uvnitř pojistkového odpínače, kat FU). **Nový
+`druh: 'vlozka'`**, stejný vzor jako `hreben`.
+
+- **Pole** (`ROZV_VLOZKA_KLICE`): `vyrobce, rada, typ, nazev`; **`velikost`**
+  (10×38, 14×51, 22×58, NH000, NH00, NH1, NH2, D01, D02, DII, DIII —
+  `rozvVelikostZTextu`, povinná, jinak chyba řádku); `In` (povinné), `char`
+  (gG, aM, gR, gS, gPV, aR — jiný text je chyba řádku), `ue`, `icu`
+  (vypínací schopnost, kA), `pv` (W při In, **celkem za jednu vložku**).
+- **FU dostal nová volitelná pole** `velikost` (stejný výčet, stejná funkce
+  `rozvVelikostZTextu` — sdílí se s katalogem vložek) a **`pv_max_vlozky`**
+  (W, max. zátěž vložky, kterou odpínač snese — jen když to výrobce uvádí).
+- **CSV** — nové sloupce `velikost;pv_max_vlozky` **na konci šablony** (po
+  `krytky`, před `poznamka`) — **šablona má teď 58 sloupců**. Sloupec
+  `velikost` slouží oběma druhům (FU i vlozka) jedním společným názvem.
+- **Data (vše volitelné, starý rozvaděč beze změny):** `x.vlozka` (text,
+  **beze změny formátu** — „40 gG", čte ho `rozvVlozkaA`/`rozvVlozkaText`
+  jako dřív) + **nové `x.vlozkaP`** = kopie vybrané položky z knihovny, jen
+  pro přesný Pv a zobrazení výrobce. Bez `vlozkaP` je FU úplně stejné jako
+  dřív — `test-otepleni-pv.js` beze změny.
+- **Panel odpínače** (`rozvVlozkyHtml`, v „Další údaje" u FU): nad polem
+  „Vložka (A, char.)" je **„Vložka z knihovny"** — nabízí jen vložky se
+  stejnou `velikost` jako odpínač (`rozvVlozkyVolby`, bez velikosti u
+  odpínače nabídne všechny). Výběr (`rozvVlozkaKnihNastavit`) zapíše
+  `x.vlozkaP` + přepíše `x.vlozka` na text „N A char" — **stará pole se
+  nerozcházejí od polí z knihovny**, dál platí přesně totéž `rozvVlozkaA`.
+  **Ruční přepis textového pole „Vložka" `x.vlozkaP` smaže** — jinak by
+  popisek lhal o výrobci k jiné vložce, než je skutečně napsaná.
+- **Oteplení** (`rozvOteplVypocet`): u FU se k dosavadnímu Pv odpínače
+  (nezměněný výpočet) **přičte Pv vložky** `Pv_vložky × (Inc/In_vložky)² ×
+  počet pólů`, jen když je `x.vlozkaP` vyplněná a má svůj Pv a In. **Klíč
+  `pvVlozka` se do řádku zapíše JEN s vybranou vložkou** — starý rozvaděč
+  (bez `vlozkaP`) nemá v datech oteplení ani nový prázdný klíč, `pvInc`
+  počítá přesně jako dřív (`test-rozvadec-psc.js`: DBO výpočet oteplení
+  znak po znaku stejný). **Obě složky se zobrazí zvlášť** (`rotPvIncText`):
+  „39 W (z toho vložka 39 W)" v tabulce na obrazovce i v PDF — bez vložky
+  z knihovny beze změny.
+- **Překročení `pv_max_vlozky`** hlásí stávající `rozvVlozkaUpoz` (rozšířená
+  o druhou větev) stejným panelovým upozornění jako „vložka větší než
+  odpínač" — žádné druhé místo pro totéž.
+- **Správa knihovny**: filtr kategorie dostal „Pojistkové vložky".
+
+**Odchylky od zadání (zjednodušení):**
+- **„📚 Doplnit Pv z knihovny…" dialog vložky NEDOPLŇUJE.** Dialog řeší
+  jednu řadu výrobce pro celou skupinu stejných přístrojů (shoda In +
+  charakteristika + póly) — u vložek by se musela řešit zvlášť shoda
+  velikosti ODPÍNAČE a zvlášť In/char VLOŽKY, které spolu přímo nesouvisí
+  (dvě různé knihovní položky). Rozšíření by potřebovalo druhou, nezávislou
+  skupinovací logiku uvnitř téhož dialogu — necháno na později, až bude
+  jasné, jak si to uživatel v praxi představuje. Výběr v panelu konkrétního
+  odpínače funguje a stačí na běžné použití.
+- **Rychlé zadávání příkazem** („3× FU 10x38 25 gG") **vložku z knihovny
+  nehledá** — vloží se obecný odpínač s textem vložky jako dřív
+  (`rzcRozbor`/`rzcPolozka` se neměnily). Vazbu na knihovnu jde doplnit
+  v panelu po vložení.
+
+Test: `testy/test-rozvadec-vlozky.js` (16 kontrol — rozvValidovat, nové
+pole FU, CSV sloupce a import, panel s nabídkou podle velikosti, zápis
+vlozka+vlozkaP, výpočet Pv vložky podle vzorce, zobrazení obou složek,
+upozornění při překročení `pv_max_vlozky`, ruční přepis textu odpojí
+knihovnu). **Upraveno:** `test-rozvadec-psc.js` a `test-rozvadec-stara-data.js`
+(CSV šablona má teď 58 sloupců). Karta v Novinkách se nedělala.
 
 ### Výměna výkresů s CAD — export a import DXF (2026-11-02, bloky „ROZVADĚČ — VÝMĚNA S CAD")
 
