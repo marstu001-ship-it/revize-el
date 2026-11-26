@@ -2897,6 +2897,20 @@ html.dark .rz-imp-chyby{background:#3a1f1c;border-color:#6b2c25}
   </div>
   <div id="nov-hledat-info" class="nov-lupa-info"></div>
 
+  <div class="scard" data-nov-datum="2026-11-26">
+    <div class="scard-title">🗄 Rozvaděče – zásuvková skříň, víc přívodů a další <span class="nov-datum">26. 11. 2026</span></div>
+    <div style="font-size:.85rem;line-height:1.7">
+      <ul style="margin:.3rem 0 0 1.4rem;padding:0">
+        <li><strong>Zásuvková skříň</strong> je čtvrtý typ rozvaděče v Tvorbě dokumentace: zásuvky na čele (CEE i domovní), pohyblivý přívod a vidlice, kontrola jmenovitého proudu vidlice proti jističi, upozornění na chránič nad 30 mA, výkresový čelní pohled s kótami a vlastní editor čela.</li>
+        <li>K zásuvkové skříni přibyl <strong>tisk Předání a poučení obsluhy</strong> podle NV 194/2022 Sb.</li>
+        <li><strong>Hřeben a vodiče:</strong> v režimu 🔌 Zapojení jde vodič natáhnout přesně na zub hřebenu, kterého se chytíte, a fáze svazku se rozloží na sousední šroubky bez křížení. Hřeben napájený paralelně, nebo navzájem propojené hřebeny, program zvládne — a nehrozí, že se krytka omylem vloží místo vodiče.</li>
+        <li><strong>Svorkovnice od výroby:</strong> rozvaděč (DBO i zásuvková skříň) může mít víc lišt N od výrobce, každou s vlastním přiřazením. List osazení teď kreslí přístroje černobíle jako technický výkres, ne jen obrysem.</li>
+        <li>Dvě svorky, které spolu souvisí, jde propojit <strong>„Párovat" jedním klepnutím</strong>.</li>
+        <li>Záložka 🧊 3D je u rozvaděčů DBO i PSC dočasně schovaná — data se nikde nemažou, kdykoli se dá zase zapnout.</li>
+      </ul>
+    </div>
+  </div>
+
   <div class="scard" data-nov-datum="2026-11-08">
     <div class="scard-title">🛠 Čelní pohled jako v dílně <span class="nov-datum">8. 11. 2026</span></div>
     <div style="font-size:.85rem;line-height:1.7">
@@ -31889,7 +31903,7 @@ var ROZV_SOUSTAVY = ['1NPE ~230 V', '3NPE ~400/230 V TN-S', '3PEN ~400/230 V TN-
 var ROZV_FAZE = ['L1', 'L2', 'L3', '3f'];
 
 function rozvKat(k) {
-  if (k === 'XS2') k = 'XZ';   // zásuvka na čele: kód XS2 z LAB v1.97 (data, která už vznikla) = XZ
+  if (k === 'XS2') k = 'XZ';   // zásuvka na čele: starší kód XS2 (data, která už vznikla) = XZ
   for (var i = 0; i < ROZV_KAT.length; i++) if (ROZV_KAT[i].k === k) return ROZV_KAT[i];
   return null;
 }
@@ -31971,7 +31985,7 @@ function rozvPolozkaNorm(o, druh) {
       var v = ROZV_PRISTROJ_NAVIC_TEXT.indexOf(k) !== -1 ? String(o[k] == null ? '' : o[k]).trim() : rozvCislo(o[k]);
       if (v !== '') r[k] = v;
     });
-    if (r.kat === 'XS2') r.kat = 'XZ';   // starší kód zásuvky na čele (LAB v1.97)
+    if (r.kat === 'XS2') r.kat = 'XZ';   // starší kód zásuvky na čele
     if (r.kat !== 'JINE') delete r.ozn;   // předponu si nese jen „Ostatní přístroj"
     if (r.kat === 'QF') r.pvCelkem = true;   // u MCCB je Pv celkem za přístroj, ne na pól
   }
@@ -38041,7 +38055,7 @@ function rzpTahZaklad(cx, cy) {
 // Přesun pólu `k` konce vodiče na hřebenu pod zub `zub`: ok = cílová lišta je jeho vlastní, nebo
 // ji nepoužívá jiný pól téhož vodiče (jinak by to byl zkrat dvou fází).
 // Šroubek na liště, kterou má jiný pól j téhož vodiče: póly se PROHODÍ — j jde na šroubek,
-// který pól k uvolnil (2026-11-24 LAB: „L2 na FA27" → L3 jde tam, kde byla L2). Jinak by to byl zkrat.
+// který pól k uvolnil (příklad: „L2 na FA27" → L3 jde tam, kde byla L2). Jinak by to byl zkrat.
 function rzpPresunPolu(wuid, konec, k, zub) {
   var w = rzpWNajit(wuid); if (!w) return null;
   var e0 = w[konec], hr = rzhNajit(e0.uid); if (!hr) return null;

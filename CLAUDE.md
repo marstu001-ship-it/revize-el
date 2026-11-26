@@ -4157,7 +4157,7 @@ Makety a výkres schválil uživatel („výkres schválen" s úpravou svorkovni
 - **Upozornění 30 mA**: chránič > 30 mA a zásuvka ≤ 32 A bez zaškrtnutého poučení
   s přebírajícím → nenápadný řádek nad pohledem a nález v „Co ještě chybí" (`zsUpozorneni`).
 
-**Připomínky 2026-11-26 (LAB v1.98):**
+**Připomínky 2026-11-26 (po vyzkoušení uživatelem):**
 
 - **Šířka okna:** editor ZS má `.dok-wrap` bez `max-width` jako DBO/PSC (CSS `data-typ="zs"`).
   Od šířky plochy pohledu **`ZS_VEDLE` = 1300 px** (na 2560 px) je čelo **vedle** čelního pohledu
