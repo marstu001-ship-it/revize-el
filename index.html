@@ -2687,7 +2687,7 @@ html.dark .rz-imp-chyby{background:#3a1f1c;border-color:#6b2c25}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.147<span class="ver-date"> · 2026-11-20</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.148<span class="ver-date"> · 2026-11-26</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -9390,6 +9390,36 @@ function getNapetoveSoustavy() {
     }
   });
   return result.join(', ');
+}
+
+// Zaškrtnutá ochranná opatření ze scard-ochrana-char (ČSN 33 2000-4-41
+// ed.3 / ČSN EN 61140 ed.3) — do v9.148 se zaškrtnutí jen ukládalo pro
+// obnovu formuláře (ochrana_checks), ale nikam se netisklo: zaškrtnutá
+// opatření se ve vygenerované zprávě neobjevila vůbec (nahlásil uživatel
+// 2026-11-26). Volá se v getData() a ukládá do D.ochrana_vybrane, ať je
+// k dispozici i při tisku uložené zprávy z archivu.
+function getOchranaVybrane() {
+  var result = [];
+  var items = document.querySelectorAll('#ochrana-checkboxy .char-row input[type=checkbox]');
+  items.forEach(function(chk) {
+    if (chk.checked) {
+      var lbl = document.querySelector('label[for="' + chk.id + '"]');
+      if (lbl) result.push(lbl.textContent.trim());
+    }
+  });
+  return result;
+}
+
+// Krátký text pro tisk — spojí volný text pole „Ochrana před úrazem el.
+// proudem" s krátkými popisky zaškrtnutých opatření (bez citace článku
+// normy za pomlčkou — ta je dlouhá a do krátké kolonky se nevejde).
+function ochranaPdfText(D) {
+  var parts = [];
+  if (D.ochrana) parts.push(String(D.ochrana).trim());
+  var vybrane = Array.isArray(D.ochrana_vybrane) ? D.ochrana_vybrane : [];
+  var kratke = vybrane.map(function(s) { return String(s).split(' — ')[0].trim(); }).filter(Boolean);
+  if (kratke.length) parts.push(kratke.join('; '));
+  return parts.join(' · ');
 }
 
 var OCHRANA = [
@@ -16427,6 +16457,9 @@ function getData() {
     rt_ico: gv('f_rt_ico') || (rtPrazdny ? t.ico || '' : ''),
     trida: gv('f_trida'),
     zdroj: gv('f_zdroj'), ochrana: gv('f_ochrana'),
+    // Jen při skutečném zaškrtnutí — jinak by i zpráva, kde se checklistu
+    // nikdo nedotkl, dostala nový prázdný klíč (porovnani2.js).
+    ochrana_vybrane: (function() { var v = getOchranaVybrane(); return v.length ? v : undefined; })(),
     predano_misto: gv('f_predano_misto'), predano_datum: gv('f_predano_datum'),
     predchozi: gv('f_predchozi'),
     prebira: gv('f_prebira'), vyhotoveni: gv('f_vyhotoveni'), rozdelovnik: gv('f_rozdelovnik'),
@@ -17315,7 +17348,7 @@ function generujPDF() {
              '<div>' +
                (isStrojePdf ? '' :
                  '<div class="pbox-label">Ochrana před úrazem:</div>' +
-                 '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(D.ochrana) + '</div>') +
+                 '<div class="pbox" style="min-height:8mm;font-size:9pt">' + esc(ochranaPdfText(D)) + '</div>') +
                // Bez kolonky nad sebou nesmí „Síť" začínat odsazením — srovnala by
                // se špatně s „Použitými normami" v levém sloupci.
                '<div' + (isStrojePdf ? '' : ' style="margin-top:1mm"') + '><div class="pbox-label">Síť:</div>' +
@@ -17423,7 +17456,7 @@ function generujPDF() {
       ? ((vicStroju ? '<strong>' + PJ.pocetStroju + '</strong> ' + strojList.length + '<br>' : '')
         + (!vicStroju && strojList[0] && strojList[0].nazev ? '<strong>Stroj:</strong> ' + esc(strojList[0].nazev) + (strojList[0].typ ? ', typ ' + esc(strojList[0].typ) : '') + '<br>' : '')
         + (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '')
-        + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>'
+        + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(ochranaPdfText(D) || '—') + '<br>'
         + (D.normy ? '<strong>' + PJ.provedenaDle + '</strong> ' + esc(D.normy) + '<br>' : ''))
       : isLpsPdf
       ? ((D.lps && D.lps.trida) ? '<strong>Třída LPS:</strong> ' + esc(D.lps.trida) + '<br>' : '')
@@ -17432,7 +17465,7 @@ function generujPDF() {
         + (D.normy ? '<strong>' + PJ.provedenaDle + '</strong> ' + esc(D.normy) + '<br>' : '')
       : (D.trida ? '<strong>Třída VTEZ (§4 NV 190/2022 Sb.):</strong> ' + esc(D.trida) + '<br>' : '')
         + (D.napetova_soustava ? '<strong>Napěťová soustava:</strong> ' + esc(D.napetova_soustava) + '<br>' : '')
-        + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(D.ochrana || '—') + '<br>') +
+        + '<strong>Ochrana před úrazem el. proudem:</strong> ' + esc(ochranaPdfText(D) || '—') + '<br>') +
     (D.preruseni_od || D.preruseni_do ? '<strong>' + PJ.preruseniPdf + '</strong> ' + (D.preruseni_od ? fmtDate(D.preruseni_od) : '—') + ' – ' + (D.preruseni_do ? fmtDate(D.preruseni_do) : '—') + '<br>' : '') +
     (D.objednatel ? '<strong>' + PJ.objednatelPdf + '</strong> ' + esc(D.objednatel) + '<br>' : '') +
     (D.pritomen2 ? '<strong>' + PJ.pritomenPdf + '</strong> ' + esc(D.pritomen2) + '<br>' : '') +
