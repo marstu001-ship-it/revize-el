@@ -23,6 +23,11 @@
 // (Mimochodem: koncový RCBO se teď taky připojuje na N plným spojem jako
 // kterýkoli jiný přístroj, bez vlastního popisku „N-FI/FAx" — to řeší už
 // filtr o pár řádků výš, nic dalšího tu nepotřebuje.)
+//
+// 2026-11-26: list osazení (list 1) se porovnává bez obsahu — viz konec funkce.
+// 2026-11-25: rozvaděč BEZ zadané soustavy s 3pólovým hlavním vypínačem se kreslí jako
+// trojfázový (dřív „L" a jedno lomítko — vypadal jednofázově, hlášení uživatele). Popisek
+// sběrnice „L1, L2, L3" se porovnává jako „L"; lomítka přívodu výš už vynechává bezGeom.
 module.exports = function bezN(s) {
   const bezGeom = (txt, dx, dy) => txt.replace(/<line x1=\\?"(-?[\d.]+)\\?" y1=\\?"(-?[\d.]+)\\?" x2=\\?"(-?[\d.]+)\\?" y2=\\?"(-?[\d.]+)\\?" stroke=\\?"#000\\?" stroke-width=\\?"0\.22\\?" fill=\\?"none\\?"\s*(?:\/>|><\/line>)/g,
     (m, x1, y1, x2, y2) => (Math.abs((+x2 - +x1) - dx) < 0.02 && Math.abs((+y2 - +y1) - dy) < 0.02) ? '' : m);
@@ -33,5 +38,9 @@ module.exports = function bezN(s) {
     .replace(/<circle [^>]*data-spoj=\\?"1\\?"[^>]*?(?:\/>|><\/circle>)/g, '');   // 2026-11-12: tečky vodivých spojů (OPRAVA schématu)
   t = bezGeom(t, 2, -1.2);    // 2026-11-20: lomítka vývodu zrušena
   t = bezGeom(t, 1.2, -2);    // 2026-11-20: lomítka přívodního kabelu 5/3 → 3/1
+  t = t.replace(/(font-weight=\\?"bold\\?" fill=\\?"#000\\?">)L1, L2, L3(<\/text>)/g, '$1L$2');   // 2026-11-25: 3f bez zadané soustavy
+  // 2026-11-26: list osazení (list 1 schématu) kreslí přístroje ČB čárovou kresbou s kótami skříně —
+  // záměrná změna listu 1 VŠECH DBO; porovnání se starou verzí list osazení vynechá celý (zbytek dál znak po znaku).
+  t = t.replace(/<svg\b(?:(?!<\/svg>)[\s\S])*?Osazení rozvaděče(?:(?!<\/svg>)[\s\S])*<\/svg>/g, '');
   return t;
 };

@@ -119,6 +119,7 @@ function pomocnik() {
     rozvSkrinNastavit(rozvKnihPolozka('v-sk-3x12-n'));
     if (window.__rozvByt) window.__rozvByt();   // testy/rozvadec-byt.js
     await dokUlozitOtevreny();
+    __M.rozvRH1 = dokKopie(DOK.dokumenty.find(x => x.uid === window.__dokOtevreny.uid));   // stav „seznam s objekty" seznam rozvaděčů přepisuje — M.rozv si RH1 vrátí
     // ROZVADĚČ PSC — tři pole, DIN segment, montážní deska, sběrnice přes dvě pole
     await dokNovy('psc');
     dk('[data-dk="oznaceni"]', 'RH-hala'); dk('[data-dk="stavba"]', 'Hala Vymyšlená 3');
@@ -141,7 +142,13 @@ function pomocnik() {
           { uid: 'm-rs1', nazev: 'RS1 kuchyň', umisteni: 'Kuchyň', mereni: [o('1', 'Chránič', '', 'A', '40', { rowtype: 'rcd-header', idn: '0,03' }), o('2', 'Zásuvky', '', 'B', '1x16')] }] } });
     dokOtevritSeznam('rozv'); await w(100); TD_AKCE.tdRZRevize(); await w(100);
   };
-  M.rozv = async () => { await dokOtevrit(DOK.dokumenty.find(x => x.typ === 'rozv').uid); await w(200); };
+  // RH1 z fixture, ne „první rozvaděč v seznamu" — jiné stavy seznam mění (seznam s objekty, zakreslení, CAD)
+  // a stav by pak závisel na pořadí; každý stav musí jít spustit sám i s filtrem STAVY
+  M.rozv = async () => {
+    const z = M.rozvRH1, i = z ? DOK.dokumenty.findIndex(x => x.uid === z.uid) : -1;
+    if (z) { if (i === -1) DOK.dokumenty.push(dokKopie(z)); else DOK.dokumenty[i] = dokKopie(z); }
+    await dokOtevrit(z ? z.uid : DOK.dokumenty.find(x => x.typ === 'rozv').uid); await w(200);
+  };
   M.rlps = async (pln) => {
     await dokNovy('rlps'); await w(100);
     if (!pln) return;
@@ -822,6 +829,22 @@ function vsechnyStavy(zalozky) {
     o.scrollIntoView({ block: 'start' }); await __M.w(150);
   }));
   add('rozvaděč – náhled tisku návodu k obsluze (PDF)', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await TD_AKCE.tdRNavod(); await __M.w(300); }));
+  // zásuvková skříň (2026-11-25): editor s čelem, vlastnosti zásuvky, hlavička s vidlicí, předání a poučení
+  add('zásuvková skříň – editor s čelem a zásuvkami', 'Tvorba dokumentace', E(async () => { await window.__zsSkrin(); document.getElementById('zs-celo').scrollIntoView({ block: 'start' }); await __M.w(150); }));
+  add('zásuvková skříň – vlastnosti vybrané zásuvky', 'Tvorba dokumentace', E(async () => {
+    await window.__zsSkrin(); __rz.vyberZas = 'z2'; rozvPohledVykreslit(); rozvVlastnostiVykreslit(); document.getElementById('rz-vlastnosti').scrollIntoView({ block: 'start' }); await __M.w(150); }));
+  add('zásuvková skříň – hlavička s pohyblivým přívodem a vidlicí', 'Tvorba dokumentace', E(async () => {
+    await window.__zsSkrin(); const h = document.querySelector('.rz-hlavicka'); h.open = true; h.scrollIntoView({ block: 'start' }); await __M.w(150); }));
+  add('zásuvková skříň – Dokumenty, předání a poučení obsluhy', 'Tvorba dokumentace', E(async () => {
+    await window.__zsSkrin(); rozvZalozkaNastavit('dok'); const o = document.querySelector('[data-oddil="pouceni"]'); o.open = true; o.scrollIntoView({ block: 'start' }); await __M.w(150); }));
+  add('zásuvková skříň – čelo: výběr víc zásuvek (vlastnosti, zarovnání)', 'Tvorba dokumentace', E(async () => {
+    await window.__zsSkrin(); zsVyberNastavit(['z1', 'z2', 'z3']); rozvPohledVykreslit(); rozvVlastnostiVykreslit(); document.getElementById('rz-vlastnosti').scrollIntoView({ block: 'start' }); await __M.w(150); }));
+  add('zásuvková skříň – čelo v pohledu Zapojení s vodiči', 'Tvorba dokumentace', E(async () => {
+    await window.__zsSkrin(); __rz.zsPohled = 'zapojeni'; zsZapojAuto(); rozvPohledVykreslit(); document.getElementById('zs-celo').scrollIntoView({ block: 'start' }); await __M.w(150); document.querySelectorAll('.toast').forEach(t => t.remove()); }));
+  add('zásuvková skříň – Dokumenty, vrtací plán a šablona 1:1', 'Tvorba dokumentace', E(async () => {
+    await window.__zsSkrin(); rozvZalozkaNastavit('dok'); const v = document.querySelector('.zs-vrt'); v && v.scrollIntoView({ block: 'start' }); await __M.w(150); document.querySelectorAll('.toast').forEach(t => t.remove()); }));
+  add('zásuvková skříň – náhled štítků na čelo', 'Tvorba dokumentace', E(async () => { await window.__zsSkrin(); await TD_AKCE.tdZsStitky(); await __M.w(300); }));
+  add('zásuvková skříň – náhled tisku předání a poučení (PDF)', 'Tvorba dokumentace', E(async () => { await window.__zsSkrin(); await TD_AKCE.tdZsPouceni(); await __M.w(300); }));
   // výměna s CAD (2026-11-02): náhled PDF s „Stáhnout pro CAD (DXF)", seznam s „Načíst výkres z CAD", náhled importu
   add('rozvaděč – náhled PDF s tlačítkem Stáhnout pro CAD (DXF)', 'Tvorba dokumentace', E(async () => { await __M.rozv(); await dokNahled(); await __M.w(400); }));
   add('rozvaděč – seznam s Načíst výkres z CAD (DXF)', 'Tvorba dokumentace', E(async () => { dokOtevritSeznam('rozv'); await __M.w(150); }));
@@ -1033,7 +1056,7 @@ async function zvlastni(p, vp) {
     await p.goto('http://127.0.0.1:' + PORT + '/index.html', { waitUntil: 'load' });
     await p.waitForTimeout(900);
     await p.evaluate(pomocnik);
-    await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString());
+    await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString()); await p.evaluate('window.__zsSkrin = ' + require('./zasuvkova-skrin.js').toString());
     await p.evaluate(() => __M.fixture());
     const zalozky = await rozbalitZalozky(p);
     const S = vsechnyStavy(zalozky).filter(s => !JEN || JEN.test(s.id));
@@ -1088,8 +1111,8 @@ async function zvlastni(p, vp) {
       await p.goto('http://127.0.0.1:' + PORT + '/index.html', { waitUntil: 'load' });
       await p.waitForTimeout(900);
       await p.evaluate(pomocnik);
-      await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString());
-    await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString());
+      await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString()); await p.evaluate('window.__zsSkrin = ' + require('./zasuvkova-skrin.js').toString());
+    await p.evaluate('window.__rozvByt = ' + require('./rozvadec-byt.js').toString()); await p.evaluate('window.__zsSkrin = ' + require('./zasuvkova-skrin.js').toString());
       await p.evaluate(() => __M.fixture());
       const v = await p.evaluate(async () => {
         const out = { mq: matchMedia('(max-width:600px), (pointer:coarse) and (max-height:500px)').matches, spatne: [], n: 0 };

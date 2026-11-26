@@ -2110,6 +2110,8 @@ porovnává bez prázdného `bezIn` u obou verzí.
 
 ### Pohled 3D — etapa 5c (v9.132; DBO i PSC; blok „ROZVADĚČ — 3D NÁHLED")
 
+**Od 2026-11-26 schované** (`ROZV_3D_SKRYTO`, oddíl „3D schované u DBO i PSC" níž) — kód beze změny.
+
 Zadání uživatele 2026-10-22. Editor má čtyři záložky **„🧩 Návrh | ⚡ Schéma |
 🧊 3D | 📄 Dokumenty"** (u DBO i PSC). **V 3D se nic needituje**; kreslí se
 z aktuálního `cist()` při každém přepnutí (`rozvZalozkaNastavit('3d')` →
@@ -4096,6 +4098,217 @@ vlozka+vlozkaP, výpočet Pv vložky podle vzorce, zobrazení obou složek,
 upozornění při překročení `pv_max_vlozky`, ruční přepis textu odpojí
 knihovnu). **Upraveno:** `test-rozvadec-psc.js` a `test-rozvadec-stara-data.js`
 (CSV šablona má teď 58 sloupců). Karta v Novinkách se nedělala.
+
+### Zásuvková skříň — návrh a dokumentace (2026-11-25, bloky „ZÁSUVKOVÁ SKŘÍŇ")
+
+Zadání uživatele 2026-11-25 (podklad: výkres přenosného zásuvkového adaptéru zákazníka —
+**cizí výkres, do repozitáře nepatří**, testy mají vymyšlenou skříň ZS1 podobné stavby).
+Makety a výkres schválil uživatel („výkres schválen" s úpravou svorkovnic od výroby).
+
+- **Typ `zs`** = `Object.create(DOK_TYPY.rozv)` jako PSC — žádný druhý editor. Číslo **ZS-0001**,
+  barva **tyrkysová #00727a** (tmavý #5cc8cf), `data.rezim = 'ZS'`, `zsJe(d)` (i `__rz.zs`).
+  **Bez 3D** (záložka ani zaškrtávátko; od 2026-11-26 schované i u DBO a PSC). Dlaždice ve dvou řádcích (`dokDlazdiceVykreslit`:
+  pořadí DBO · PSC · zásuvkové skříně / riziko LPS · vnější vlivy, na PC 3 sloupce).
+- **Čelo skříně** (`d.celo.zasuvky = [{ uid, knih, ozn, napajen, pos {x, y}, p }]`, `pos` v mm
+  od levého horního rohu skříně): editor pod čelním pohledem (`zsCeloEditorHtml`) kreslí
+  **tatáž funkce jako list 1** (`zsCeloVykres`, `o.edit`, `o.tf` = větší písmo). Tažení myší /
+  prstem, mřížka 5 mm, přichycení k ose sousední zásuvky (4 mm), šipky 5 mm, Delete, Esc,
+  kolize červeně (`zsKolize`: jiná zásuvka, okno s DIN lištou, mimo skříň), vše přes
+  `rozvZmena` (snímek obsahuje `celo`, ZPĚT i Ctrl+Z). Vlastnosti zásuvky (`zsZasPanelHtml`:
+  označení, **Napájí ji** = jistič, druh, póly, In, Un, IP, typ, poloha), u jističe řádek
+  „→ napájí zásuvku: -XZ2…". Wrappery `rozvPohledVykreslit` / `rozvVlastnostiVykreslit`.
+- **Kategorie `XZ`** (zásuvka na čele, **-XZ**; do 2026-11-26 kód `XS2` — `rozvKat`, CSV i knihovna
+  ho čtou jako XZ, uložená data se nepřepisují) a **`XP`** (vidlice přívodu, -XP), `zs: true`
+  — nabízí se jen v zásuvkové skříni (`rozvKnihZs`, skupina „Zásuvky a vidlice"). Pole
+  `druhZas` (cee / dom), `polyZ` (2P+E = „3P", 3P+E = „4P", 3P+N+E = „5P", dom), `ip` —
+  ukládají se jen vyplněná. Vestavěné jen **obecné, neověřené, bez krytí**. `rozvVlozit`
+  zásuvku dá na čelo (`zsZKnihovny`, napájí ji vybraný jistič, jinak první volný), vidlici
+  do polí přívodu. Bez šířky v modulech (validace ji u nich nevyžaduje).
+- **Svorkovnice od výroby** (`skrin.svorkovnice` = text „N pod, PE pod 8", funkce N / PE / PEN,
+  místo pod / nad / bok, volitelně počet) a **`skrin.rukojet`** = 'ano' — nepovinné, u skříně
+  v knihovně, vlastní velikosti i v CSV; ukládají se jen vyplněné (staré skříně beze změny).
+  **Nezabírají moduly DIN** (kreslí se v okně jako pás se šrouby, `zsGeo` přidá místo),
+  ve schématu jsou to sběrnice N a PE jako dosud. Doplní chybějící svorky N/PE (`rzsNP`)
+  a splní 11.7 (`rozvMaPe`) — **od 2026-11-26 i u DBO** (oddíl níž). N na DIN liště
+  zůstává jako možnost (zabírá moduly jako dřív).
+- **Přívod**: v hlavičce „Pohyblivý přívod a vidlice" (`privodOzn` -WL1, `privodDelka`,
+  `vidlice.{ozn, In, poly, ue, ip, typ}`). Ve schématu kabel dolů k vidlici (`rsPrivod`,
+  větev `zsV`). **InA odvozené** = menší z In hlavního přístroje (QM, jinak první chránič)
+  a vidlice (`zsInaOdv`); ruční vyšší → upozornění pod polem i v „Co ještě chybí".
+  **Bez hlavního vypínače** se první přístroje u ZS napájí automaticky z přívodu
+  (wrapper `rozvNadrazeneAuto`, `x.zsAuto`).
+- **Schéma**: vývod se zásuvkou má lomítka podle fází (1 / 3), soustavu vývodu („1/N/PE",
+  „3/N/PE", „3/PE"), „L1 · H07V-K 3×4", značku zásuvky z DBO a pod ní -XZ, In Un póly, IP.
+  Hodnoty přístrojů `zsHodnoty` („C32/3 10 kA" + typ, chránič „40 A 4P 100 mA" / „typ A" / typ
+  zalomené). List 1 = **jeden výkresový čelní pohled** (`zsCeloVykres`: obrys s kótami,
+  rukojeť, okno s DIN a ČB čely přístrojů, svorkovnice od výroby, zásuvky CEE / domovní,
+  vývodka), provedení „přenosná na stojanu" (`ROZV_PROVEDENI_ZS`), ochrana podle třídy skříně
+  (třída II → „dvojitou nebo zesílenou izolací a automatickým odpojením od zdroje").
+- **Norma** `d.norma` = '2' (výchozí, ČSN EN IEC 61439-2 — obsluha poučenou osobou) nebo '3';
+  `e.n2` v `rozvDokEff` řídí normy v prohlášení, protokolu, štítku a tech. údajích.
+  ČSN EN IEC 61439-4 (staveniště) a ČSN EN IEC 60309 jen jako „[ověřit]". Technické údaje
+  a prohlášení: „přenosné zařízení, pohyblivý přívod".
+- **Předání a poučení obsluhy** (`d.pouceni`, NV 194/2022 Sb. § 4): zaškrtávátko
+  `dokVyber.pouceni` + oddíl v Dokumentech + „🤝 Tisk předání a poučení" (`zsPouceniBloky`,
+  `__zsPouSam`). Předávající z profilu (odvozené, ukládá se prázdné), přebírající v řádcích
+  osob, rozsah a pokyny výchozí z návrhu (vlastními slovy, ukládají se jen změněné), obsah
+  poučení (chybí = vše zaškrtnuto), ověření znalostí, věta o výjimce z 30 mA s odkazem na
+  ČSN 33 2000-4-41 ed.3 čl. 411.3.3 (jen číslo článku), podpisy a 8 řádků poučených osob.
+- **Upozornění 30 mA**: chránič > 30 mA a zásuvka ≤ 32 A bez zaškrtnutého poučení
+  s přebírajícím → nenápadný řádek nad pohledem a nález v „Co ještě chybí" (`zsUpozorneni`).
+
+**Připomínky 2026-11-26 (po vyzkoušení uživatelem):**
+
+- **Šířka okna:** editor ZS má `.dok-wrap` bez `max-width` jako DBO/PSC (CSS `data-typ="zs"`).
+  Od šířky plochy pohledu **`ZS_VEDLE` = 1300 px** (na 2560 px) je čelo **vedle** čelního pohledu
+  (`#rz-pohled.zs-vedle` = mřížka 3 : 2, `rozvMeritkoNaSirku` pak počítá měřítko z 60 % plochy),
+  užší okno = čelo pod pohledem.
+- **Tažení zásuvky (XZ) z knihovny jde jen na ČELO:** duch = kresba zásuvky ve stejném měřítku
+  jako editor čela (`zsDuchHtml` → `zsZasKresba`, tatáž funkce kreslí čelo i list 1), cíl jen
+  plocha skříně v editoru čela (`zsCilZBodu`, mm po 5 mm), čelo se při tažení čárkovaně vyznačí
+  (`.zs-cil`), puštění → `zsVlozitNaCelo` → `zsZKnihovny(it, pos)`. Do DIN řady ji pustit ani
+  klepnout nejde (hláška). Klepnutí na zásuvku v knihovně: pruh „klepněte na čelo skříně, kam
+  zásuvku dát", klepnutí na čelo ji položí. **Vidlice (XP) se netáhne** — klepnutí ji dá rovnou
+  do přívodu.
+- **Přívod shora / zespodu** (a kabel, průřez): změna v hlavičce hned překreslí čelní pohled,
+  čelo i otevřené schéma (posluchač `change` na `privodSmer|privodKabel|privodPrurez`, zruší
+  `__rz.__kSir`). Platí pro DBO, PSC i ZS; PSC vývodku v čelním pohledu nekreslí vůbec.
+
+### 3D schované u DBO i PSC (2026-11-26, `ROZV_3D_SKRYTO`)
+
+Pokyn uživatele: záložku 🧊 3D a zaškrtávátko „pohled 3D (ilustrační)" v Dokumentech
+nezobrazovat, **kód nemazat**. `ROZV_3D_SKRYTO = true` (u `ROZV_KAT_ZS`) schová záložku
+i zaškrtávátko a `rozvVyber().pohled3d` je vždy false — 3D strana nejde do PDF, ani když ji
+rozvaděč má uloženou. **Uložené `d.pohled3d` a `dokVyber.pohled3d` se nemažou** (`cist`
+začíná kopií otevřených dat) — otevřený a uložený rozvaděč je bajtově stejný (test).
+`test-rozvadec-3d.js` si 3D pro svůj běh zapne (`ROZV_3D_SKRYTO = false`) a navíc hlídá, že je
+ve výchozím stavu schované. **Upraveno:** `test-rozvadec-psc.js`, `test-rozvadec-dokumenty.js`,
+`test-rozvadec-schema.js`, `test-zasuvkova-skrin.js` (záložky bez 3D, zaškrtávátka bez 3D).
+
+### Svorkovnice od výroby i u DBO (2026-11-26)
+
+Totéž pravidlo jako u zásuvkové skříně, i u DBO (pokyn uživatele): skříň s vyplněným
+`skrin.svorkovnice` (N / PE / PEN, pod / nad lištou, na boku).
+
+- **PE (PEN) od výroby splní kontrolu svorek PE i 11.7** (`rozvMaPe` bez podmínky ZS) a „Co
+  ještě chybí" PE přípojnici na liště nevyžaduje (`rzsNP` doplní chybějící sloty „PE (od
+  výroby) · n").
+- **N od výroby pokryje JEDNU skupinu N** — společné N, nebo jedinou skupinu, které svorky
+  chybí (v ZS1 je to N-FI1). Víc skupin za různými chrániči (N-FI1, N-FI2) jedna svorkovnice
+  nepokryje a dál se hlásí „Chybí přípojnice N-FI…".
+- **Kreslí se** (`rozvTovSvorkySvg`, volá ji `rozvSvg` — obrazovka, tisk i větev osazení listu 1)
+  do okraje skříně: pod lištou pod poslední řadou, nad lištou nad první řadou (vlevo místo pro
+  vývodku), na boku v pravém okraji. Mosazný pás se šrouby, štítek N (modře) / PE (zeleně),
+  „od výroby"; na listu osazení černobíle a jen jednoduché prvky. **Geometrie skříně se nemění**
+  a skříň bez svorkovnic dostane prázdný řetězec — ostatní DBO znak po znaku jako dřív
+  (`test-rozvadec-psc.js` proti předchozí verzi).
+- Popis skříně na listu osazení: „…, svorkovnice od výroby: N pod lištou, PE pod lištou".
+- Svorkový plán: sloty „N (od výroby) · 1", „PE (od výroby) · 1"… Popisky pod přístroje se
+  nemění (svorkovnice od výroby není přístroj v řadě).
+
+Test: `testy/test-rozvadec-tovarni-svorky.js` (17 kontrol — PE 11/11 (s párováním vodičů), N jen pro jednu
+skupinu, víc lišt N, volno beze změny, kresba na obrazovce, v tisku i na osazení, svorkový plán, popis skříně,
+nad lištou / na boku, skříň bez svorkovnic beze změny, 3D schované u DBO i PSC s bajtově
+stejnými daty, přívod zespodu ↔ shora).
+
+### Víc lišt N od výroby (2026-11-26)
+
+Dělená N lišta / dvě lišty N: text `skrin.svorkovnice` smí mít víc položek N (i PEN), např.
+„N pod, N pod, PE pod". **Přiřazení ke skupině** = `skrin.svN` (pole podle pořadí lišt N v textu:
+`''` společné N, uid chrániče = N-FIx, `null` = automaticky), ukládá se jen když ho technik nastaví
+(jen v kopii skříně v rozvaděči).
+- `rzsNP`: přiřazená lišta doplní svou skupinu (`dopl`), nepřiřazené: **jedna lišta = dosavadní pravidlo**
+  (společné N, nebo jediná skupina, které svorky chybí — ZS1 beze změny), víc lišt se rozdělí po pořadí
+  na skupiny, kterým svorky chybí (společné N, pak chrániče zleva). `np.listyN` = jméno skupiny každé lišty.
+- Kresba (`rozvTovSvorkySvg`): štítek lišty „N-FI1"… jen když jsou lišty N dvě a víc nebo je některá
+  přiřazená — jinak beze změny.
+- Panel **„🔩 Svorkovnice od výroby"** ve vlastnostech rozvaděče bez výběru (DBO, ZS; `rozvTovPanelHtml`):
+  u lišty N / PE / PEN, místo, počet svorek, u N „pro skupinu", 🗑 Smazat, ＋ Lišta N / ＋ Lišta PE
+  (`rozvTovUpravit` přes `rozvZmena` — ZPĚT, přiřazení putuje s lištou).
+
+### List osazení DBO — ČB čárová kresba přístrojů (2026-11-26)
+
+List 1 schématu (`rozvSvg` s `o.osazeni`, u PSC DIN segmenty v `pscOsazeniSvg`) kreslí přístroje
+**stejnou funkcí jako čelo zásuvkové skříně** — `rsCeloPrvek(x, px, py, pw, ph, F, zT, o)`: obrys,
+páčka, svorky podle pólů, T u chrániče, přípojnice se šrouby a štítkem N/PE, označení a hodnota nad
+přístrojem (úzké přístroje svisle uvnitř); rezervy a mezery přeškrtnuté jako dřív. **Kóty skříně**
+(šířka dole, výška vpravo) když jsou vyplněné `skrin.rozmery`. Jen jednoduché SVG prvky (vektorové PDF).
+U PSC při zmenšení pod ~2 mm na papíře jen obrys. **Mění se list 1 všech DBO** (záměr); editor, data,
+ostatní listy a PDF beze změny — testy porovnávající se starou verzí vynechávají list osazení
+(`testy/bez-n.js`, konec funkce).
+
+### Dva vodiče pod jedním šroubem (2026-11-26)
+
+Svorka N / PE (od výroby i přípojnice na DIN) i řadová svorka L smí vzít **dva vodiče stejného průřezu**.
+- N a PE: `rzsParovat(vyv)` páruje vývody téže skupiny se stejným průřezem (`rzsPrurezVodice`) v pořadí
+  čelního pohledu; skupina má `jednotky`, `potreba = jednotky + 1` (PE + 2 pospojování). Přívod
+  a pospojování se nepárují. Řádek plánu „N-FI1 · 2 · 2 vodiče │ -FA2, -FA3 │ 2× 1,5" (`rzsRadekJednotky`).
+- Ruční zrušení: **„✂ Rozdělit"** u řádku = `x.svorkaSama = <uid prvního vývodu>` u obou vývodů (klíč dvojice,
+  vlastní svorky), **„⇄ Párovat"** u kteréhokoli z nich jedním klepnutím smaže klíč u celé dvojice
+  (jedno ZPĚT; starší `svorkaSama: true` platí jen pro vývod sám). Klíč se ukládá jen po zásahu.
+- L svorky (`rzsModel`): druhý vývod na témž slotu = `s.dalsi`; jiný průřez → `s.ruzne` = **upozornění**
+  „různé průřezy v jedné svorce – použijte samostatné svorky", třetí vodič = **chyba** (v plánu
+  i v „Co ještě chybí"). Výběr svorky v tabulce nabízí i svorku s jedním vývodem („druhý vodič k -FA1").
+- Data rozvaděče se nemění — mění se jen počty svorek a nálezy (starý rozvaděč otevřený a uložený bajtově stejně).
+
+Test: `testy/test-rozvadec-svorky.js` (oddíl 2b — počty s párováním, řádek plánu, Rozdělit / Párovat,
+jiný průřez, L svorka se dvěma / různými / třemi vodiči; oddíl 2 počítá bez párování přes `svorkaSama`).
+
+Test: `testy/test-zasuvkova-skrin.js` (54 kontrol, vymyšlená skříň `testy/zasuvkova-skrin.js`; od 2026-11-26
+i kód XZ, tažení zásuvky skutečnou myší na čelo a do řady, klepnutí, vidlice, šířka 1920 / 2560 px, směr přívodu).
+V `test-mobil.js` stavy „zásuvková skříň – …". **Upraveno:** `test-rozvadec-psc.js` (pořadí
+dlaždic, šablona CSV 62 sloupců), `test-rozvadec.js` (pořadí dlaždic, 23 kategorií, zásuvka
+a vidlice bez šířky v modulech). Novinky se nedělaly.
+
+### Editor čela zásuvkové skříně „jako profesionální program" (2026-11-26, bloky „ZÁSUVKOVÁ SKŘÍŇ — editor čela")
+
+Zadání uživatele 2026-11-26 (snímky a GIF schváleny: „Výkres schválen"). Ovládání čela sjednocené s DIN lištou.
+**DBO a PSC beze změny; ČB kresba `zsCeloVykres` zůstává pro PDF (list 1), editor má vlastní `zsCeloEditorSvg`.**
+
+- **Výběr společný s DIN** (`__rz.vyberZas`, `__rz.vicZas`, jen v paměti): klik, Ctrl+klik, Shift+klik, obdélník
+  z prázdného místa (`__zsObd`), Ctrl+A na čele, Esc a klik do prázdna zruší; klik na DIN výběr zásuvek zruší
+  a naopak. **Vybraný přístroj na DIN nikdy neblokuje vložení** — zásuvka jde na čelo a napájí ji ten jistič.
+- **„＋ Zásuvka s jističem"** (`zsZasSJisticem`): zásuvka na čelo + jistič do DIN, propojené, jedno ZPĚT; jistič
+  `zsJisticPro` (In zásuvky, 3P u 400 V, CEE char. C, domovní B) obecný nebo z výchozí řady výrobce (`rzcPolozka`).
+  Volné místo `zsVolneMisto` (po 5 mm, s víčkem, pod oknem, pak kdekoli; není-li, nejmenší kolize + hláška).
+- **Nabídka (pravý klik / dlouhý stisk, `zsKontextZkusit`)**: zásuvka — Vlastnosti, Napájí ji ▸, Duplikovat,
+  Kopírovat, Vložit, (u výběru) Zarovnat ▸, Rozmístit ▸, Vycentrovat, Přečíslovat (i s jističi), Smazat / Smazat
+  i s jističem; prázdné čelo — Vložit zásuvku sem ▸ (oblíbené / poslední), s jističem, Vložit, Vybrat vše,
+  Přečíslovat; vodič, přívod a vidlice vlastní.
+- **Pohyb**: tažení myší i prstem, duch v měřítku, mřížka 5 mm (Shift 1 mm), přichycení k hranám a středům zásuvek
+  i čela se žlutým vodítkem (`zsPrichytit`, `.zs-vodx` / `.zs-vody`), blok se táhne celý, tažení = jedno ZPĚT;
+  šipky 5 mm / Shift 1 mm. **Při stisku se překresluje jen čelo na místě (`zsPrekreslitCelo`, `zsCeloPrekreslit`
+  ponechá tentýž prvek `<svg>`)** — nahrazený prvek by ztratil prst (setPointerCapture) a dlouhý stisk.
+- **Kolize (jen nález, neblokuje)** `zsKolizeDuvody`: mimo čelo, okno DIN, jiná zásuvka, **víčko** (narazí na okno,
+  zásuvku, rukojeť). Prostor pro víčko `zsVicko`: `p.vicko` z knihovny / zadaný, jinak **výchozí návrh programu**
+  CEE 16 A 60 · 32 A 70 · 63 A 90 · domovní 35 mm — ověřte u výrobce.
+- **Kontroly** (`zsKontroly` v `rzsKontrola`, klikatelné): jistič In > zásuvka In, 1P na 4P/5P, 3P na 230 V,
+  Un ≠ napětí vývodu (chyby), zásuvka bez napájení (upozornění), jistič bez vývodu i zásuvky, součet In proti
+  vidlici (tipy). Jistič, který napájí zásuvku, se nehlásí jako vývod bez názvu / kabelu.
+- **Přečíslování podle polohy** (shora zleva, volitelně i jističe), **štítky na čelo** („-XZ2 · 230 V 32 A · -FA2",
+  50 × 12 mm, ořezové značky, úsečka 50 mm, `tdZsStitky`).
+- **Vrtací plán** (`dokVyber.vrtani`, `d.vrtani = { meritko, koty, sablona }`, ukládá se jen zvolené): list s kótami
+  v měřítku, které se vejde (1:1 / 1:2 / 1:2,5 / 1:5 na A4 / A3, titulek měřítka), kóty řetězově / od základny,
+  tabulka otvorů; výřez a rozteč šroubů z knihovny (`p.vyrez`, `p.roztecSroubu`), jinak „výřez – doplňte".
+  **Šablona 1:1 (víc listů A4)** `zsSablonaListy`: čelo ve skutečné velikosti na listy A4 na výšku (plocha
+  190 × 277 mm, přesah 10 mm vyznačený „přesah – přiložte list N"), ořezové značky, „list i / N (sloupec, řada)",
+  schéma skládání (2 × 3), středy otvorů křížkem, obrys výřezu, úsečka 50 mm, pokyn 100 %. Jen jednoduché prvky —
+  co přesahuje plochu, zakryjí bílé okraje (bez clipPath). **Vektorové PDF list na výšku neotáčí** (`vektorStrana`).
+- **Čelo „jako v dílně"** (jen editor): CEE barvou podle napětí **[ověřit v ČSN EN IEC 60309-2]**, přepínač
+  **Zvenku / Zapojení**. V Zapojení svorky jističů, N / PE (svorkovnice od výroby, přípojnice) a zásuvek; vodič se
+  natáhne tažením (L jen z jističe, N z N, PE z PE), `celo.vodice = [{ uid, a, b: { u, s }, prurez }]` jen po
+  natažení, **⚡ Zapojit automaticky** podle „Napájí ji", vodič L určuje „Napájí ji". Vodiče k zásuvkám jdou do
+  **svorkového plánu** (`zsVodiceTabHtml`, i PDF) a **kusovníku** (`rzvMaterial`, „– k zásuvkám na čele N ks").
+- Nové volitelné klíče knihovny / CSV: `vicko_mm`, `vyrez_mm`, `roztec_sroubu_mm` (šablona 65 sloupců).
+- **Nabídka otevřená dlouhým stiskem** (obecně, `ktOtevrit`): zvednutí prstu nad položkou ji nespustí — platí až
+  další klepnutí (dřív se tak na telefonu spustila položka pod prstem).
+
+Test: `testy/test-zs-celo.js` (skutečná myš: vložení s vybraným jističem, výběr, nabídky, zarovnání, tažení
+s vodítkem a ZPĚT, šipky, kolize víčka, Zásuvka s jističem, kontroly a klik na nález, přečíslování, štítky,
+vrtací plán a šablona 1:1, Zapojení a vodiče, svorkový plán a kusovník; telefon 375 px: dlouhý stisk, tah prstem,
+dva prsty; data beze změny po otevření). V `test-mobil.js` stavy „zásuvková skříň – čelo…", „…vrtací plán
+a šablona 1:1", „…náhled štítků". **Upraveno:** `test-zasuvkova-skrin.js` (nový editor: popisky, přichycení,
+kolize s víčkem, text přívodu). Novinky se nedělaly.
 
 ### Výměna výkresů s CAD — export a import DXF (2026-11-02, bloky „ROZVADĚČ — VÝMĚNA S CAD")
 

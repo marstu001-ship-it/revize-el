@@ -109,7 +109,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
   dl.tmave = await p.evaluate(() => window.__info());
   await p.evaluate(() => document.documentElement.classList.remove('dark')); await w(700);
   const T = (typ, m) => (dl[m || 'svetle'].find(x => x.typ === typ) || {});
-  check('dlaždice: protokol, DBO, PSC (a za nimi výpočet rizika LPS)', dl.svetle.map(x => x.typ).join() === 'pouvv,rozv,psc,rlps', dl.svetle.map(x => x.typ).join());
+  check('dlaždice: DBO, PSC, zásuvkové skříně, pak výpočet rizika LPS a protokol (2026-11-25)', dl.svetle.map(x => x.typ).join() === 'rozv,psc,zs,rlps,pouvv', dl.svetle.map(x => x.typ).join());
   check('text dlaždice DBO doslova', T('rozv').text.includes('Rozvodnice pro obsluhu laiky (byty, domy, kanceláře) – do 250 A, vývody do 125 A. ČSN EN IEC 61439-3'), T('rozv').text);
   check('text dlaždice PSC doslova', T('psc').text.includes('Výkonové rozvaděče – nad 250 A nebo s obsluhou jen poučenou osobou. ČSN EN IEC 61439-2'), T('psc').text);
   check('barvy: protokol modrý, DBO zelený, PSC oranžový (okraj i nadpis)', T('pouvv').okraj === 'rgb(43, 87, 154)' && T('rozv').okraj === 'rgb(15, 123, 95)' &&
@@ -322,11 +322,11 @@ const presahy = (p, svg) => p.evaluate(svg => {
     // víc přívodů 2026-11-18…) — na KONEC, před poznámkou, ať se tenhle test nemusí
     // přepisovat při každém dalším přidaném sloupci
     const hl51 = hl.replace(';ue;', ';ue;vykon;u_vstup;u_vystup;i_vystup;').replace(';nastaveni;', ';nastaveni;uc;kontakty;ie_ac1;pe_ac3_kw;rozsah_nastaveni;prislusenstvi_k;montaz;typ_prislusenstvi;');
-    const hlAkt = hl51.replace(';poznamka', ';ovladani;prurez;polu;roztec_mm;krytky;velikost;pv_max_vlozky;poznamka');
+    const hlAkt = hl51.replace(';poznamka', ';ovladani;prurez;polu;roztec_mm;krytky;velikost;pv_max_vlozky;druh_zasuvky;poly_zasuvky;svorkovnice_od_vyroby;rukojet;vicko_mm;vyrez_mm;roztec_sroubu_mm;poznamka');   // + zásuvková skříň 2026-11-25, editor čela 2026-11-26
     return { sablona: sablona === hlAkt, pol: v.polozky.map(x => x.polozka), chyby: v.chyby.map(c => c.radek + ': ' + c.text), stare: stare.polozky.map(x => JSON.stringify(x.polozka)), stareCh: stare.chyby.length };
   });
   const qf = csv.pol.find(x => x.kat === 'QF') || {}, pl = csv.pol.find(x => x.druh === 'pole') || {};
-  check('šablona CSV = přesně zadaná hlavička (58 sloupců, i výkon a napětí transformátoru / zdroje, ovládací obvody, přepínač zdrojů, hřeben a pojistková vložka z knihovny); soubor ve starém tvaru (39) se načte', csv.sablona, '');
+  check('šablona CSV = přesně zadaná hlavička (65 sloupců, i výkon a napětí transformátoru / zdroje, ovládací obvody, přepínač zdrojů, hřeben, pojistková vložka a zásuvková skříň); soubor ve starém tvaru (39) se načte', csv.sablona, '');
   check('CSV: MCCB s rozměry v mm, Icu/Ics/Icw, nastavením spouští a Pv celkem', qf.sirkaMm === 105 && qf.vyskaMm === 161 && qf.hloubkaMm === 86 && qf.icu === 36 && qf.icw === 5 &&
     qf.pv === 48 && qf.pvCelkem === true && /Ir 0,4/.test(qf.nastaveni || '') && qf.overeno === false, JSON.stringify(qf));
   check('CSV: MCCB bez rozměrů v mm = chyba řádku (rozměry povinné)', csv.chyby.length === 1 && /^3: /.test(csv.chyby[0]) && /mm/.test(csv.chyby[0]), csv.chyby.join(' | '));
@@ -359,7 +359,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
   const H = await p.evaluate(require('./rozvadec-psc-hala.js'));
   const h0 = await p.evaluate(() => ({ zal: Array.from(dokForm().querySelectorAll('.rz-zal')).map(b => b.getAttribute('data-z')).join(),
     rady: __rz.rady.map(r => r.prvky.map(x => x.ozn + (x.privod ? '*' : '') + (x.mezera ? '@' + x.mezera : '')).join(',')).filter(Boolean).join(' / ') }));
-  check('5b: PSC má záložky Návrh | Schéma | 3D | Dokumenty (3D od etapy 5c); první MCCB je přívodní (*)', h0.zal === 'navrh,sch,3d,dok' && /-QF1\*,-TA1,-PM1,-XN1,-XPE1/.test(h0.rady) && /-QF2,-QF3,-FU1,-QS1/.test(h0.rady), h0.zal + ' | ' + h0.rady);
+  check('5b: PSC má záložky Návrh | Schéma | Dokumenty (3D schované od 2026-11-26); první MCCB je přívodní (*)', h0.zal === 'navrh,sch,dok' && /-QF1\*,-TA1,-PM1,-XN1,-XPE1/.test(h0.rady) && /-QF2,-QF3,-FU1,-QS1/.test(h0.rady), h0.zal + ' | ' + h0.rady);
 
   // ── fáze: 3f vývody QF / QS na všechny fáze, přívodní QF1 ne ──
   const fz = await p.evaluate(() => { const s = rozvFazeSouhrn(__rz.rady); return { L1: s.F.L1.In, L2: s.F.L2.In, L3: s.F.L3.In, n: s.vyvodu }; });
@@ -596,7 +596,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
       // knihovna se od 2026-10-22 záměrně liší (kategorie Trafa a zdroje, nové obecné položky) — editor bez ní musí být stejný
       // etapa 5c: záložka „🧊 3D" (tlačítko a prázdný panel) přibyla záměrně
       const kopie = document.querySelector('#screen-dok-form .dok-wrap').cloneNode(true); kopie.querySelectorAll('.rz-knihovna, .rz-zal[data-z="3d"], #rz-pan-3d, .rz-ovl-btn, .rz-sch-ovl, #rz-soud-ukaz, .rz-soud-zap, .rz-soud-nast, .rz-nap-btn, .rz-svorky-rady, .rzc-box, .rzc-nast, .rza-nast, #rz-akce, .rz-pruv-odkaz, .rz-privod-pridat-btn, .rz-vybrano').forEach(e => e.remove());   // + fáze 2 ovládání (2026-11-11): pole příkazu, lišta akcí, průvodce; + víc přívodů v liště a pruh Vybráno (2026-11-16)
-      kopie.querySelectorAll('.rz-vstup-nast-box').forEach(e => e.remove());   // 2026-11-06: nastavení „Přístroje napájím shora / zespodu"   // + tlačítko ⚡ Ovládání (ovládací obvody, 2026-10-29); + souhrn, sbalený panel a nastavení soudobosti (2026-10-29); + 🔗 Napájení a svorkové lišty (2026-11-05)
+      kopie.querySelectorAll('.rz-vstup-nast-box, .rz-tov-panel').forEach(e => e.remove());   // 2026-11-06: nastavení „Přístroje napájím shora / zespodu"   // + tlačítko ⚡ Ovládání (ovládací obvody, 2026-10-29); + souhrn, sbalený panel a nastavení soudobosti (2026-10-29); + 🔗 Napájení a svorkové lišty (2026-11-05)   // + panel „Svorkovnice od výroby" (víc lišt N, 2026-11-26)
       // oprava skákajícího zoomu (2026-11-06): dřív se kreslilo první vykreslení o 2 px širší než všechna další —
       // měřítko čelního pohledu na obrazovce se proto porovnává bez rozměrů SVG (obsah stejný)
       const htmlBez = kopie.innerHTML.replace(/(šipky posouvají\.) (<\/div>)/, '$1$2')   /* mezera před odebraným odkazem „Ukázat průvodce" */.replace(/(class="rz-svg" viewBox="[^"]*") width="\d+" height="\d+"/g, '$1').replace(/(<text class="rz-cislo"[^>]*?) font-size="[\d.]+"/g, '$1');

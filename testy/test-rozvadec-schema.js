@@ -92,7 +92,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
 
   // ── 1. záložky a záložka Schéma ───────────────────────────────────────
   const z0 = await p.evaluate(() => Array.from(document.querySelectorAll('.rz-zal')).map(b => b.textContent + (b.classList.contains('akt') ? '*' : '')).join('|'));
-  check('editor: záložky „🧩 Návrh | ⚡ Schéma | 🧊 3D | 📄 Dokumenty", otevřený Návrh', z0 === '🧩 Návrh*|⚡ Schéma|🧊 3D|📄 Dokumenty', z0);
+  check('editor: záložky „🧩 Návrh | ⚡ Schéma | 📄 Dokumenty" (3D schované od 2026-11-26), otevřený Návrh', z0 === '🧩 Návrh*|⚡ Schéma|📄 Dokumenty', z0);
   await p.click('.rz-zal[data-z="sch"]'); await w(500);
   const z1 = await p.evaluate(() => {
     const g = document.querySelector('#rz-pan-sch .rz-sch-tisk'), pan = document.getElementById('rz-pan-sch').getBoundingClientRect();
@@ -114,7 +114,8 @@ const presahy = (p, svg) => p.evaluate(svg => {
   check('výkres bytu: 2 listy A4 297 × 210 (osazení + jednopólové schéma)', L.length === 2 && L.every(l => l.W === 297 && l.H === 210 && l.fmt === 'A4'), L.length);
   check('list 1: nadpis „Osazení rozvaděče RH1" a „Rozvodnice 3×12 modulů, IP40 / IP20"', t1.includes('Osazení rozvaděče RH1') && t1.includes('Rozvodnice 3×12 modulů, IP40 / IP20'), t1.slice(0, 4).join(' | '));
   const osaz = ['-QH1', 'SPD1', '-FA1', '-FI1', '-FA9', '-FI2', '-FI/FA1', '-FA14'].every(o => t1.includes(o));
-  check('list 1: osazení ze čelního pohledu (svislé označení přístrojů)', osaz && /rotate\(-90/.test(L[0].svg), t1.filter(x => /^-|SPD/.test(x)).join(' '));
+  // 2026-11-26: ČB čárová kresba přístrojů (označení a hodnota nad přístrojem, T u chrániče, svorky podle pólů)
+  check('list 1: osazení ze čelního pohledu — ČB kresba přístrojů s označením, hodnotou a T u chrániče', osaz && t1.includes('T') && t1.some(x => /B16/.test(x)) && !/class=/.test(L[0].svg), 'T:' + t1.includes('T') + ' B16:' + t1.some(x => /B16/.test(x)) + ' class:' + /class=/.test(L[0].svg));
   const rad = ['Rozvaděč', 'Rozvodná soustava', 'Ochrana před nebezpečným dotykem', 'Typ', 'Provedení', 'Přívod / vývody', 'Rozměr', 'Krytí', 'Vnější vlivy', 'Pi [kW]', 'Pm [kW]', 'Hmotnost'];
   check('list 1: tabulka údajů má všech 12 řádků v pořadí', rad.every((r, i) => t1.indexOf(r) !== -1 && (i === 0 || t1.indexOf(r) > t1.indexOf(rad[i - 1]))), rad.filter(r => !t1.includes(r)).join(','));
   check('tabulka: RH1 – Předsíň, 3/N/PE AC 400/230 V 50 Hz TN-S, nástěnná, plast, přívod shora, IP40 / IP20',
@@ -252,7 +253,7 @@ const presahy = (p, svg) => p.evaluate(svg => {
   await p.evaluate(() => rozvZalozkaNastavit('dok')); await w(300);
   const vyb = await p.evaluate(() => Array.from(document.querySelectorAll('.rz-dok-vyber input')).map(i => (i.checked ? '☑' : '☐') + i.parentNode.textContent.trim()).join('|'));
   // rozvaděč má Pi → přibylo „výpočet soudobého příkonu" (soudobost, 2026-10-29)
-  check('Dokumenty: zaškrtávátko „schéma zapojení" (výchozí zapnuté) za čelním pohledem', vyb === '☑čelní pohled a seznam přístrojů|☑schéma zapojení|☐pohled 3D (ilustrační)|☑výpočet soudobého příkonu|☑technické údaje|☑prohlášení o shodě|☑protokol o kusovém ověření|☐ověření oteplení (příloha)|☐návod k obsluze|☐popisky pod přístroje', vyb);
+  check('Dokumenty: zaškrtávátko „schéma zapojení" (výchozí zapnuté) za čelním pohledem', vyb === '☑čelní pohled a seznam přístrojů|☑schéma zapojení|☑výpočet soudobého příkonu|☑technické údaje|☑prohlášení o shodě|☑protokol o kusovém ověření|☐ověření oteplení (příloha)|☐návod k obsluze|☐popisky pod přístroje', vyb);
   await p.evaluate(async () => { await TD_AKCE.tdRDokPdf(); }); await w(600);
   const sou = await p.evaluate(() => dokPdfStranky().map(s => s.classList.contains('rz-sch-strana') ? 'S' + (s.classList.contains('rz-sch-a3') ? '3' : '4') : (s.classList.contains('a4-landscape') ? 'L' : 'P')).join(''));
   check('souhrnné PDF: čelní pohled (na šířku), pak 2 listy schématu A3, list soudobosti A4, pak strany na výšku', /^L+S3S3S4P+$/.test(sou), sou);
