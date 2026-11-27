@@ -2733,7 +2733,7 @@ html.dark .rz-imp-chyby{background:#3a1f1c;border-color:#6b2c25}
 <body>
 
 <div class="topbar">
-  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.148<span class="ver-date"> · 2026-11-26</span></span></div>
+  <div class="brand" data-action="home" style="cursor:pointer" title="Hlavní stránka">⚡ Revize <em>EL</em> <span class="ver">v9.149<span class="ver-date"> · 2026-11-27</span></span></div>
   <div class="topbar-right">
     <button class="btn btn-ghost" id="theme-toggle" data-action="toggleTheme" title="Přepnout světlý / tmavý režim">🌙</button>
     <button class="btn btn-ghost" id="view-toggle" data-action="toggleView" title="Přepnout zobrazení PC / Mobil">💻 PC</button>
@@ -2901,12 +2901,18 @@ html.dark .rz-imp-chyby{background:#3a1f1c;border-color:#6b2c25}
     <div class="scard-title">🗄 Rozvaděče – zásuvková skříň, víc přívodů a další <span class="nov-datum">26. 11. 2026</span></div>
     <div style="font-size:.85rem;line-height:1.7">
       <ul style="margin:.3rem 0 0 1.4rem;padding:0">
-        <li><strong>Zásuvková skříň</strong> je čtvrtý typ rozvaděče v Tvorbě dokumentace: zásuvky na čele (CEE i domovní), pohyblivý přívod a vidlice, kontrola jmenovitého proudu vidlice proti jističi, upozornění na chránič nad 30 mA, výkresový čelní pohled s kótami a vlastní editor čela.</li>
-        <li>K zásuvkové skříni přibyl <strong>tisk Předání a poučení obsluhy</strong> podle NV 194/2022 Sb.</li>
-        <li><strong>Hřeben a vodiče:</strong> v režimu 🔌 Zapojení jde vodič natáhnout přesně na zub hřebenu, kterého se chytíte, a fáze svazku se rozloží na sousední šroubky bez křížení. Hřeben napájený paralelně, nebo navzájem propojené hřebeny, program zvládne — a nehrozí, že se krytka omylem vloží místo vodiče.</li>
-        <li><strong>Svorkovnice od výroby:</strong> rozvaděč (DBO i zásuvková skříň) může mít víc lišt N od výrobce, každou s vlastním přiřazením. List osazení teď kreslí přístroje černobíle jako technický výkres, ne jen obrysem.</li>
-        <li>Dvě svorky, které spolu souvisí, jde propojit <strong>„Párovat" jedním klepnutím</strong>.</li>
-        <li>Záložka 🧊 3D je u rozvaděčů DBO i PSC dočasně schovaná — data se nikde nemažou, kdykoli se dá zase zapnout.</li>
+        <li><strong>Zásuvková skříň</strong> – nová dlaždice vedle DBO a PSC. Do DIN lišty dáte přístroje, na čelo skříně zásuvky CEE a domovní a myší je rozmístíte v mm. Každá zásuvka má svůj jistič (<strong>„＋ Zásuvka s jističem"</strong> vloží obojí naráz), zásuvky jde zarovnat, rozmístit, přichytávají se k sobě; pravým tlačítkem menu jako u přístrojů.</li>
+        <li>V pohledu <strong>Zapojení</strong> na čele natáhnete vodiče od jističe k zásuvce tahem; „Zapojit automaticky" doplní N a PE.</li>
+        <li>Přívod je pohyblivý kabel s vidlicí – program hlídá, aby InA nebyl vyšší než vidlice, a upozorní na jistič větší než zásuvka, špatný počet pólů nebo napětí zásuvky, které neodpovídá vývodu.</li>
+        <li>V Dokumentech: <strong>výkres skříně v měřítku</strong>, vrtací plán čela s kótami a šablona 1:1 na více listů A4, štítky na čelo a <strong>Předání a poučení obsluhy</strong> k podpisu (s chráničem nad 30 mA smí skříň používat jen poučená osoba).</li>
+        <li><strong>Víc přívodů:</strong> rozvaděč může mít dva a více přívodů, každý s vlastním hlavním vypínačem (-QH1, -QH2), nebo přepínač zdrojů 1-0-2; schéma, štítek i návod k obsluze s tím počítají.</li>
+        <li><strong>Návod k obsluze a údržbě</strong> rozvaděče se sestaví z návrhu – v Dokumentech k zaškrtnutí.</li>
+        <li><strong>Svorkovnice od výroby:</strong> u skříně zadáte, že má lišty N a PE od výroby (pod lištou, nad lištou, na boku, i víc lišt N); nezabírají moduly a PE na DIN liště program už nechce.</li>
+        <li><strong>Dva vodiče stejného průřezu pod jedním šroubem:</strong> program je ve svorkovém plánu spáruje, „⇄ Párovat" dvojici spojí nebo rozdělí.</li>
+        <li><strong>Hřebeny a pojistkové vložky</strong> jdou vybrat z knihovny výrobců; hřeben jde napájet vodičem pod šroub kteréhokoli přístroje na něm a z kabelu jdou natáhnout všechny fáze.</li>
+        <li><strong>Doplnit Pv a Penc z knihovny</strong> u oteplení vyplní ztrátové výkony přístrojů a skříně z dat výrobce.</li>
+        <li><strong>List osazení</strong> ve výkresu kreslí přístroje jako skutečné (páčka, svorky, tlačítko T).</li>
+        <li>Záložka <strong>3D</strong> je u rozvaděčů dočasně schovaná, připravuje se nová; uložená data se nemažou.</li>
       </ul>
     </div>
   </div>
